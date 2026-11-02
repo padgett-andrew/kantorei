@@ -1,22 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import {
-  BookOpen,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  ExternalLink,
-  Eye,
-  FileText,
-  FolderOpen,
-  Headphones,
-  Maximize2,
-  Music2,
-  Play,
-  Search,
-  Sparkles,
-  Video,
-  X,
-} from 'lucide-react';
+import { FolderOpen, Music2, Search, Sparkles } from 'lucide-react';
 import type { DriveMusicFile, RepertoirePiece, Singer } from '../../types/choir';
 import { doesFilenameMatchSection } from '../../lib/utils';
 import { parseYouTubeUrl, type ReferenceRecordingLink } from '../../lib/youtube';
@@ -24,7 +7,14 @@ import {
   buildConcertPrograms,
   type LoadedConcertDoc,
   type ProgramPiece,
+  type ProgramRecording,
 } from '../../lib/program';
+import AudioPlayer, { type ActiveAudioState } from './music/AudioPlayer';
+import DocMarkingsModal, { type ModalDocFileState } from './music/DocMarkingsModal';
+import PdfPreviewModal, { type PreviewPdfState } from './music/PdfPreviewModal';
+import ProgramSection from './music/ProgramSection';
+import VideoPlayer, { type ActiveVideoState } from './music/VideoPlayer';
+import { prettifyScoreName } from './music/utils';
 
 interface Props {
   singer: Singer;
@@ -39,57 +29,6 @@ interface LoadedDocPayload {
   referenceLinks: ReferenceRecordingLink[];
 }
 
-function formatFileSize(bytes?: number): string {
-  if (!bytes) return '';
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function prettifyScoreName(filename: string): string {
-  return filename
-    .replace(/\.(pdf|mp3|m4a|wav|aac|ogg|flac|docx?|doc|txt|rtf)$/i, '')
-    .replace(/w_\s*/gi, 'w/ ')
-    .replace(/_+/g, ' ')
-    .replace(/\s+-\s+/g, ' — ')
-    .trim();
-}
-
-function highlightVoicePartInHtml(
-  html: string,
-  voicePart: string,
-  sectionGroup: string
-): string {
-  const partNum = voicePart.slice(1); // '1' or '2'
-  const letter = voicePart.charAt(0); // 'S', 'A', 'T', 'B'
-  const comboTokens =
-    letter === 'S' || letter === 'A'
-      ? ['SSA', 'SSAA', 'SA', `${letter}1/${letter}2`, `${letter}1-${letter}2`]
-      : ['TTB', 'TTBB', 'TB', 'T/B', `${letter}1/${letter}2`, `${letter}1-${letter}2`];
-
-  const escapedTokens = [
-    voicePart,
-    `${sectionGroup}s`,
-    `${sectionGroup}es`,
-    sectionGroup,
-    `${sectionGroup} ${partNum}`,
-    ...comboTokens,
-  ].map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-
-  const pattern = new RegExp(`\\b(${escapedTokens.join('|')})\\b`, 'gi');
-
-  // Only transform text nodes outside HTML tags
-  return html
-    .split(/(<[^>]+>)/g)
-    .map((chunk) => {
-      if (chunk.startsWith('<')) return chunk;
-      return chunk.replace(
-        pattern,
-        '<mark class="rounded bg-amber-200/85 px-1 py-0.5 font-semibold text-navy-950">$1</mark>'
-      );
-    })
-    .join('');
-}
-
 export default function MusicLibrary({ singer, pieces }: Props) {
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'my-part'>('all');
@@ -102,23 +41,10 @@ export default function MusicLibrary({ singer, pieces }: Props) {
   const [expandedPieceNotes, setExpandedPieceNotes] = useState<Record<string, boolean>>({});
   const [highlightMyPart, setHighlightMyPart] = useState(true);
 
-  const [modalDocFile, setModalDocFile] = useState<{
-    concertTitle: string;
-    file: DriveMusicFile;
-  } | null>(null);
-
-  const [activeAudio, setActiveAudio] = useState<{
-    pieceTitle: string;
-    file: DriveMusicFile;
-  } | null>(null);
-  const [activeVideo, setActiveVideo] = useState<{
-    concertTitle: string;
-    link: ReferenceRecordingLink;
-  } | null>(null);
-  const [previewPdf, setPreviewPdf] = useState<{
-    pieceTitle: string;
-    file: DriveMusicFile;
-  } | null>(null);
+  const [modalDocFile, setModalDocFile] = useState<ModalDocFileState | null>(null);
+  const [activeAudio, setActiveAudio] = useState<ActiveAudioState | null>(null);
+  const [activeVideo, setActiveVideo] = useState<ActiveVideoState | null>(null);
+  const [previewPdf, setPreviewPdf] = useState<PreviewPdfState | null>(null);
 
   const videoPlayerRef = useRef<HTMLDivElement | null>(null);
 
@@ -267,12 +193,6 @@ export default function MusicLibrary({ singer, pieces }: Props) {
     singer.sectionGroup,
   ]);
 
-  function streamUrl(file: DriveMusicFile, download = false): string {
-    const params = new URLSearchParams({ name: file.name });
-    if (download) params.set('download', '1');
-    return `/api/music/${encodeURIComponent(file.id)}?${params.toString()}`;
-  }
-
   function toggleDocExpanded(file: DriveMusicFile) {
     void ensureDocLoaded(file);
     setExpandedDocIds((prev) => ({ ...prev, [file.id]: !prev[file.id] }));
@@ -305,9 +225,29 @@ export default function MusicLibrary({ singer, pieces }: Props) {
     }
   }
 
+  function handlePlayAudio(pieceTitle: string, file: DriveMusicFile) {
+    setActiveVideo(null);
+    setActiveAudio({ pieceTitle, file });
+  }
+
+  function handlePlayVideo(concertTitle: string, rec: ProgramRecording) {
+    setActiveAudio(null);
+    setActiveVideo((prev) =>
+      prev?.link.url === rec.url ? null : { concertTitle, link: rec }
+    );
+  }
+
+  function handlePreviewPdf(pieceTitle: string, file: DriveMusicFile) {
+    setPreviewPdf({ pieceTitle, file });
+  }
+
+  function handleOpenModalDoc(concertTitle: string, file: DriveMusicFile) {
+    setModalDocFile({ concertTitle, file });
+  }
+
   return (
     <div className="space-y-6 pb-24">
-      {/* Concert Program Switcher (Supports Overlapping Cycles e.g. Día de los Muertos + Advent) */}
+      {/* Concert Program Switcher */}
       <div className="flex flex-wrap items-center gap-2">
         {rawPrograms.length > 1 ? (
           <>
@@ -406,698 +346,95 @@ export default function MusicLibrary({ singer, pieces }: Props) {
         </div>
       </div>
 
-      {/* Inline Reference YouTube Video Player (Triggered from Any Song's Reference Button) */}
-      {activeVideo && activeVideo.link.embedUrl && (
-        <div
-          ref={videoPlayerRef}
-          className="overflow-hidden rounded-3xl border border-navy-800 bg-navy-950 text-white shadow-xl transition-all"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-3.5">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gold-500 text-white">
-                <Video className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gold-300">
-                  Director Reference Recording · {activeVideo.concertTitle}
-                </p>
-                <p className="truncate text-sm font-semibold text-white">
-                  {activeVideo.link.label || 'Reference Recording'}
-                </p>
-              </div>
-            </div>
+      {/* Inline Reference YouTube Video Player */}
+      <VideoPlayer
+        activeVideo={activeVideo}
+        videoPlayerRef={videoPlayerRef}
+        onClose={() => setActiveVideo(null)}
+      />
 
-            <div className="flex items-center gap-2">
-              <a
-                href={activeVideo.link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-ivory-50 transition hover:bg-white/20"
-              >
-                Open on YouTube
-                <ExternalLink className="h-3.5 w-3.5 text-gold-300" />
-              </a>
-              <button
-                type="button"
-                onClick={() => setActiveVideo(null)}
-                className="cursor-pointer rounded-xl p-1.5 text-zinc-400 transition hover:bg-white/10 hover:text-white"
-                aria-label="Close reference video"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="aspect-video max-h-[420px] w-full bg-black">
-            <iframe
-              src={activeVideo.link.embedUrl}
-              title={activeVideo.link.label || 'Reference Recording'}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="h-full w-full border-0"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Grouped Concert Program Sections (Ordered by Director Doc) */}
+      {/* Grouped Concert Program Sections */}
       {filteredPrograms.length === 0 ? (
         <div className="rounded-3xl border border-zinc-200 bg-white p-12 text-center text-sm text-zinc-500">
-          {filterMode === 'my-part' ? (
+          {search ? (
             <div className="space-y-2">
-              <p className="font-semibold text-zinc-700">
-                No files tagged specifically for {singer.voicePart} / {singer.sectionGroup}
+              <Music2 className="mx-auto h-8 w-8 text-zinc-300" />
+              <p className="font-semibold text-navy-950">No music found matching &ldquo;{search}&rdquo;</p>
+              <p className="text-xs text-zinc-400">Try searching for a different piece, composer, or score name.</p>
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="mt-2 text-xs font-semibold text-gold-600 underline hover:text-gold-700"
+              >
+                Clear Search
+              </button>
+            </div>
+          ) : filterMode === 'my-part' ? (
+            <div className="space-y-2">
+              <Sparkles className="mx-auto h-8 w-8 text-gold-400" />
+              <p className="font-semibold text-navy-950">No specific rehearsal tracks for {singer.voicePart} found.</p>
+              <p className="text-xs text-zinc-400">
+                Switch back to &ldquo;All Scores & Tracks&rdquo; to view full SATB scores and tutti reference recordings.
               </p>
-              <p className="text-xs text-zinc-500">
-                Full SATB scores apply to all sections—switch back to{' '}
-                <button
-                  type="button"
-                  onClick={() => setFilterMode('all')}
-                  className="cursor-pointer font-semibold text-gold-500 underline"
-                >
-                  All Scores & Tracks
-                </button>{' '}
-                to view full choir editions.
-              </p>
+              <button
+                type="button"
+                onClick={() => setFilterMode('all')}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-xs font-semibold text-white"
+              >
+                Show All Scores & Tracks
+              </button>
             </div>
           ) : (
-            'No scores, markings, or rehearsal tracks match your search.'
+            <div className="space-y-2">
+              <Music2 className="mx-auto h-8 w-8 text-zinc-300" />
+              <p className="font-semibold text-navy-950">No repertoire pieces found.</p>
+              <p className="text-xs text-zinc-400">Upload PDF scores and MP3 part tracks to your Google Drive repertoire folder.</p>
+            </div>
           )}
         </div>
       ) : (
         <div className="space-y-10">
           {filteredPrograms.map((prog) => (
-            <div key={prog.id} className="space-y-4">
-              {/* Concert Program Header */}
-              <div className="flex flex-col justify-between gap-2 border-b border-zinc-200/70 pb-3 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-navy-900 text-sm font-bold text-gold-300 shadow-2xs">
-                    ♫
-                  </span>
-                  <div>
-                    <h2 className="font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
-                      {prog.title}
-                    </h2>
-                    {prog.orderDocTitle && (
-                      <p className="text-xs text-zinc-500">
-                        Running concert order from{' '}
-                        <strong className="text-zinc-700">{prog.orderDocTitle}</strong>
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-ivory-100 px-3 py-1 text-xs font-semibold text-navy-900">
-                    {prog.visibleFileCount}{' '}
-                    {prog.visibleFileCount === 1 ? 'score / track' : 'scores & tracks'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Director's Markings Doc(s) Header Card */}
-              {prog.docs.map((doc) => {
-                const isExpanded = Boolean(expandedDocIds[doc.file.id]);
-                const renderedHtml = highlightMyPart
-                  ? highlightVoicePartInHtml(doc.html, singer.voicePart, singer.sectionGroup)
-                  : doc.html;
-
-                return (
-                  <div
-                    key={doc.file.id}
-                    className="overflow-hidden rounded-3xl border border-gold-400/40 bg-gradient-to-br from-ivory-50 via-white to-amber-50/20 shadow-xs"
-                  >
-                    <div className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center sm:px-6">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-gold-300 shadow-2xs">
-                          <BookOpen className="h-4 w-4" />
-                        </span>
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-gold-600">
-                              Director&apos;s Markings & Concert Order
-                            </span>
-                            <span className="rounded-full border border-gold-300/60 bg-white px-2 py-0.5 text-[9px] font-semibold text-navy-900">
-                              {doc.file.mimeType === 'application/vnd.google-apps.document'
-                                ? 'Google Doc'
-                                : 'Word / Docx'}
-                            </span>
-                          </div>
-                          <h3 className="truncate text-sm font-bold text-navy-950 sm:text-base">
-                            {prettifyScoreName(doc.file.name)}
-                          </h3>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => toggleDocExpanded(doc.file)}
-                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-navy-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-800"
-                        >
-                          {isExpanded ? (
-                            <>
-                              <ChevronUp className="h-3.5 w-3.5 text-gold-400" />
-                              Hide Document
-                            </>
-                          ) : (
-                            <>
-                              <ChevronDown className="h-3.5 w-3.5 text-gold-400" />
-                              Inline Markings
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setModalDocFile({ concertTitle: prog.title, file: doc.file })
-                          }
-                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-navy-900 hover:text-navy-950"
-                          title="Open distraction-free full document reader"
-                        >
-                          <Maximize2 className="h-3.5 w-3.5" />
-                          Full Reader
-                        </button>
-
-                        {doc.canExportPdf ? (
-                          <a
-                            href={streamUrl(doc.file, false)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-navy-900 hover:text-navy-950"
-                            title="Open Director's Markings as PDF in a new tab"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5 text-gold-500" />
-                            Export PDF
-                          </a>
-                        ) : (
-                          <a
-                            href={streamUrl(doc.file, true)}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-navy-900 hover:text-navy-950"
-                            title="Download original document"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Inline Document Prose */}
-                    {isExpanded && (
-                      <div className="border-t border-zinc-200/80 bg-white px-5 py-5 sm:px-7">
-                        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-3">
-                          <p className="text-xs text-zinc-500">
-                            Reference links and part callouts parsed from document. Tap any YouTube
-                            link to play.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => setHighlightMyPart((v) => !v)}
-                            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition ${
-                              highlightMyPart
-                                ? 'bg-amber-100 text-amber-950 ring-1 ring-amber-300'
-                                : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900'
-                            }`}
-                          >
-                            <Sparkles className="h-3 w-3 text-gold-500" />
-                            Highlight {singer.voicePart} / {singer.sectionGroup} Callouts
-                          </button>
-                        </div>
-
-                        <div
-                          onClick={(e) => handleProseClick(prog.title, e)}
-                          className="handbook-prose max-w-none overflow-x-auto text-sm"
-                          dangerouslySetInnerHTML={{ __html: renderedHtml }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* General Reference Recordings (Unassigned to any single piece) */}
-              {prog.unassignedRecordings && prog.unassignedRecordings.length > 0 && (
-                <div className="rounded-2xl border border-zinc-200/80 bg-ivory-50/70 p-3.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="mr-1 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-navy-900">
-                      <Video className="h-3.5 w-3.5 text-gold-500" />
-                      General Reference Recordings:
-                    </span>
-                    {prog.unassignedRecordings.map((link) => {
-                      const isCurrentVideo = activeVideo?.link.url === link.url;
-                      return link.embedUrl ? (
-                        <button
-                          key={link.url}
-                          type="button"
-                          onClick={() => {
-                            setActiveAudio(null);
-                            setActiveVideo(isCurrentVideo ? null : { concertTitle: prog.title, link });
-                          }}
-                          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition ${
-                            isCurrentVideo
-                              ? 'bg-gold-500 text-white shadow-2xs'
-                              : 'border border-zinc-200 bg-white text-navy-950 hover:border-gold-400 hover:bg-ivory-50'
-                          }`}
-                        >
-                          <Play className="h-3 w-3 fill-current text-gold-500" />
-                          <span className="max-w-[220px] truncate">{link.label || 'Reference Video'}</span>
-                        </button>
-                      ) : (
-                        <a
-                          key={link.url}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-navy-950 transition hover:border-gold-400"
-                        >
-                          <span className="max-w-[220px] truncate">{link.label || link.host}</span>
-                          <ExternalLink className="h-3 w-3 text-gold-500" />
-                        </a>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Ordered Pieces List */}
-              <div className="space-y-4">
-                {prog.pieces.map((piece) => {
-                  const hasNotes = Boolean(piece.notesHtml);
-                  const isNotesExpanded = Boolean(expandedPieceNotes[piece.id]);
-
-                  return (
-                    <article
-                      key={piece.id}
-                      className="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-2xs transition hover:border-zinc-300"
-                    >
-                      {/* Piece Header Bar: Order Number, Title, Subtitle, Direct YouTube Links & Notes Toggle */}
-                      <div className="flex flex-col justify-between gap-3 border-b border-zinc-100 bg-gradient-to-r from-ivory-50/90 via-white to-ivory-50/40 p-4 sm:flex-row sm:items-center sm:px-6">
-                        <div className="flex min-w-0 items-start gap-3">
-                          {piece.order !== null ? (
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-xs font-bold text-gold-300 shadow-2xs">
-                              {piece.order}
-                            </span>
-                          ) : (
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-xs font-semibold text-zinc-500">
-                              <Music2 className="h-4 w-4 text-zinc-400" />
-                            </span>
-                          )}
-
-                          <div className="min-w-0">
-                            <h3 className="font-editorial text-lg font-bold text-navy-950 sm:text-xl">
-                              {piece.title}
-                            </h3>
-                            {piece.subtitle && (
-                              <p className="mt-0.5 text-xs font-medium text-gold-600 sm:text-sm">
-                                {piece.subtitle}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Direct Reference Recording Links + Director Notes Drawer Button */}
-                        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-                          {/* Attached YouTube / Audio Recordings for this specific piece */}
-                          {piece.recordings.map((rec) => {
-                            const isCurrentVideo = activeVideo?.link.url === rec.url;
-                            return (
-                              <button
-                                key={rec.url}
-                                type="button"
-                                onClick={() => {
-                                  setActiveAudio(null);
-                                  setActiveVideo(
-                                    isCurrentVideo ? null : { concertTitle: prog.title, link: rec }
-                                  );
-                                }}
-                                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                                  isCurrentVideo
-                                    ? 'bg-gold-500 text-white shadow-xs'
-                                    : 'border border-amber-300/80 bg-gradient-to-r from-amber-50 to-ivory-50 text-navy-950 hover:border-gold-500 hover:bg-gold-50'
-                                }`}
-                                title={rec.url}
-                              >
-                                <Play className="h-3 w-3 fill-current text-gold-500" />
-                                <span className="max-w-[180px] truncate">
-                                  {rec.label || (rec.isYouTube ? 'Reference' : `${rec.host}`)}
-                                </span>
-                                <span className="rounded bg-black/10 px-1 py-0.2 text-[9px] font-bold uppercase tracking-wider text-navy-900">
-                                  {rec.host}
-                                </span>
-                              </button>
-                            );
-                          })}
-
-                          {/* Director Notes Toggle */}
-                          {hasNotes && (
-                            <button
-                              type="button"
-                              onClick={() => togglePieceNotes(piece.id)}
-                              className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                                isNotesExpanded
-                                  ? 'bg-navy-900 text-gold-300'
-                                  : 'border border-zinc-200 bg-white text-zinc-700 hover:border-navy-900 hover:text-navy-950'
-                              }`}
-                            >
-                              <BookOpen className="h-3.5 w-3.5 text-gold-500" />
-                              <span>Markings</span>
-                              {isNotesExpanded ? (
-                                <ChevronUp className="h-3 w-3 text-gold-400" />
-                              ) : (
-                                <ChevronDown className="h-3 w-3 text-zinc-400" />
-                              )}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Piece Director Notes Drawer */}
-                      {hasNotes && isNotesExpanded && (
-                        <div className="border-b border-amber-200/60 bg-amber-50/40 px-5 py-4 sm:px-6">
-                          <div className="mb-2 flex items-center justify-between">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-gold-600">
-                              Director&apos;s Markings for {piece.title}
-                            </span>
-                            <span className="text-[11px] text-zinc-500">
-                              Part assignments, repeats & measure callouts
-                            </span>
-                          </div>
-                          <div
-                            onClick={(e) => handleProseClick(prog.title, e)}
-                            className="handbook-prose max-w-none text-xs text-zinc-800"
-                            dangerouslySetInnerHTML={{
-                              __html: highlightMyPart
-                                ? highlightVoicePartInHtml(
-                                    piece.notesHtml,
-                                    singer.voicePart,
-                                    singer.sectionGroup
-                                  )
-                                : piece.notesHtml,
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {/* File Items (PDFs and Audio Tracks) */}
-                      {piece.files.length === 0 ? (
-                        <div className="px-5 py-4 text-xs text-zinc-500 italic">
-                          Score / rehearsal tracks pending upload to Google Drive folder.
-                        </div>
-                      ) : (
-                        <ul className="divide-y divide-zinc-100">
-                          {piece.files.map((file) => {
-                            const isHighlighted = Boolean(file.matchesUserSection);
-                            const isPlaying = activeAudio?.file.id === file.id;
-                            const prettyTitle = prettifyScoreName(file.name);
-
-                            return (
-                              <li
-                                key={file.id}
-                                className={`flex flex-col justify-between gap-3 px-5 py-3.5 transition sm:flex-row sm:items-center sm:px-6 ${
-                                  isHighlighted ? 'bg-amber-50/40' : 'hover:bg-ivory-50/50'
-                                }`}
-                              >
-                                <div className="flex min-w-0 items-start gap-3.5">
-                                  <span
-                                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                                      file.isPdf
-                                        ? 'border border-rose-200/80 bg-rose-50 text-rose-600'
-                                        : 'border border-sky-200/80 bg-sky-50 text-sky-700'
-                                    }`}
-                                  >
-                                    {file.isPdf ? (
-                                      <FileText className="h-4 w-4" />
-                                    ) : (
-                                      <Headphones className="h-4 w-4" />
-                                    )}
-                                  </span>
-
-                                  <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className="text-sm font-semibold text-zinc-900">
-                                        {prettyTitle}
-                                      </span>
-                                      {isHighlighted && (
-                                        <span className="rounded-full bg-gold-300/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-navy-950">
-                                          {singer.sectionGroup}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="mt-0.5 truncate text-xs text-zinc-500">
-                                      {file.isPdf ? 'PDF Score' : 'Audio Track'}
-                                      {file.sizeBytes ? ` · ${formatFileSize(file.sizeBytes)}` : ''}
-                                      <span className="hidden text-zinc-400 md:inline">
-                                        {' '}
-                                        · {file.name}
-                                      </span>
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Tablet-Friendly Action Buttons */}
-                                <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-                                  {file.isPdf && (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setPreviewPdf({ pieceTitle: piece.title, file })
-                                        }
-                                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-navy-900 hover:text-navy-950"
-                                      >
-                                        <Eye className="h-3.5 w-3.5" />
-                                        Preview
-                                      </button>
-                                      <a
-                                        href={streamUrl(file, false)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-navy-800"
-                                        title="Open PDF score in a new browser tab (iPad: tap Share → Copy to forScore)"
-                                      >
-                                        <ExternalLink className="h-3.5 w-3.5 text-gold-400" />
-                                        Open PDF
-                                      </a>
-                                    </>
-                                  )}
-
-                                  {file.isAudio && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setActiveVideo(null);
-                                        setActiveAudio({ pieceTitle: piece.title, file });
-                                      }}
-                                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
-                                        isPlaying
-                                          ? 'bg-gold-500 text-white'
-                                          : 'bg-navy-900 text-white hover:bg-navy-800'
-                                      }`}
-                                    >
-                                      <Play className="h-3.5 w-3.5 fill-current" />
-                                      {isPlaying ? 'Playing' : 'Play Track'}
-                                    </button>
-                                  )}
-
-                                  <a
-                                    href={streamUrl(file, true)}
-                                    className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
-                                    title="Download file"
-                                  >
-                                    <Download className="h-3.5 w-3.5" />
-                                  </a>
-                                </div>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
+            <ProgramSection
+              key={prog.id}
+              prog={prog}
+              singer={singer}
+              expandedDocIds={expandedDocIds}
+              onToggleDocExpanded={toggleDocExpanded}
+              onOpenModalDoc={handleOpenModalDoc}
+              highlightMyPart={highlightMyPart}
+              onToggleHighlight={() => setHighlightMyPart((v) => !v)}
+              expandedPieceNotes={expandedPieceNotes}
+              onTogglePieceNotes={togglePieceNotes}
+              activeAudio={activeAudio}
+              activeVideo={activeVideo}
+              onPlayAudio={handlePlayAudio}
+              onPlayVideo={handlePlayVideo}
+              onPreviewPdf={handlePreviewPdf}
+              onProseClick={handleProseClick}
+            />
           ))}
         </div>
       )}
 
       {/* Sticky Bottom Rehearsal Audio Player */}
-      {activeAudio && (
-        <div className="fixed right-0 bottom-0 left-0 z-40 border-t border-navy-800 bg-navy-950 px-4 py-3 text-white shadow-2xl">
-          <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-gold-400">
-                {activeAudio.pieceTitle}
-              </p>
-              <p className="truncate text-sm font-medium text-ivory-50">
-                {prettifyScoreName(activeAudio.file.name)}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 sm:w-96">
-              <audio
-                key={activeAudio.file.id}
-                src={streamUrl(activeAudio.file, false)}
-                controls
-                autoPlay
-                preload="metadata"
-                className="h-9 w-full"
-              />
-              <button
-                type="button"
-                onClick={() => setActiveAudio(null)}
-                className="cursor-pointer rounded-lg p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white"
-                aria-label="Close player"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AudioPlayer activeAudio={activeAudio} onClose={() => setActiveAudio(null)} />
 
       {/* Full-Screen Director's Markings Modal */}
-      {modalDocFile && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/75 p-3 sm:p-6"
-          onClick={() => setModalDocFile(null)}
-        >
-          <div
-            className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-ivory-50 px-5 py-4 sm:px-6">
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gold-500">
-                  {modalDocFile.concertTitle} · Director&apos;s Markings
-                </p>
-                <h3 className="truncate text-base font-bold text-navy-950">
-                  {prettifyScoreName(modalDocFile.file.name)}
-                </h3>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setHighlightMyPart((v) => !v)}
-                  className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                    highlightMyPart
-                      ? 'bg-amber-100 text-amber-950 ring-1 ring-amber-300'
-                      : 'border border-zinc-200 bg-white text-zinc-700'
-                  }`}
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-gold-500" />
-                  Highlight {singer.voicePart}
-                </button>
-                {modalDocFile.file.canExportPdf ? (
-                  <a
-                    href={streamUrl(modalDocFile.file, false)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-3 py-1.5 text-xs font-semibold text-white"
-                  >
-                    Open PDF
-                    <ExternalLink className="h-3.5 w-3.5 text-gold-300" />
-                  </a>
-                ) : (
-                  <a
-                    href={streamUrl(modalDocFile.file, true)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-3 py-1.5 text-xs font-semibold text-white"
-                  >
-                    Download Doc
-                    <Download className="h-3.5 w-3.5 text-gold-300" />
-                  </a>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setModalDocFile(null)}
-                  className="cursor-pointer rounded-xl p-1.5 text-zinc-500 hover:bg-zinc-200/70"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 sm:p-8">
-              {docLoading[modalDocFile.file.id] ? (
-                <p className="py-12 text-center text-sm text-zinc-500">
-                  Loading Director&apos;s Markings…
-                </p>
-              ) : docCache[modalDocFile.file.id] ? (
-                <div
-                  onClick={(e) => {
-                    handleProseClick(modalDocFile.concertTitle, e);
-                    setModalDocFile(null);
-                  }}
-                  className="handbook-prose max-w-none text-sm"
-                  dangerouslySetInnerHTML={{
-                    __html: highlightMyPart
-                      ? highlightVoicePartInHtml(
-                          docCache[modalDocFile.file.id].html,
-                          singer.voicePart,
-                          singer.sectionGroup
-                        )
-                      : docCache[modalDocFile.file.id].html,
-                  }}
-                />
-              ) : (
-                <p className="py-12 text-center text-sm text-rose-700">
-                  {docError[modalDocFile.file.id] || 'Unable to load document.'}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <DocMarkingsModal
+        modalDocFile={modalDocFile}
+        singer={singer}
+        docCache={docCache}
+        docLoading={docLoading}
+        docError={docError}
+        highlightMyPart={highlightMyPart}
+        onToggleHighlight={() => setHighlightMyPart((v) => !v)}
+        onProseClick={handleProseClick}
+        onClose={() => setModalDocFile(null)}
+      />
 
       {/* Inline PDF Score Preview Modal */}
-      {previewPdf && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/75 p-3 sm:p-6"
-          onClick={() => setPreviewPdf(null)}
-        >
-          <div
-            className="flex h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3.5">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-zinc-500">{previewPdf.pieceTitle}</p>
-                <h3 className="truncate text-sm font-bold text-navy-950">
-                  {prettifyScoreName(previewPdf.file.name)}
-                </h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="hidden text-[11px] text-zinc-400 sm:inline">
-                  iPad: tap Share (⎋) in Safari &rarr; Copy to forScore
-                </span>
-                <a
-                  href={streamUrl(previewPdf.file, false)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-3 py-1.5 text-xs font-semibold text-white"
-                >
-                  Open in New Tab
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setPreviewPdf(null)}
-                  className="cursor-pointer rounded-xl p-1.5 text-zinc-500 hover:bg-zinc-100"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <iframe
-              title={previewPdf.file.name}
-              src={streamUrl(previewPdf.file, false)}
-              className="h-full w-full flex-1 bg-zinc-100"
-            />
-          </div>
-        </div>
-      )}
+      <PdfPreviewModal previewPdf={previewPdf} onClose={() => setPreviewPdf(null)} />
     </div>
   );
 }
