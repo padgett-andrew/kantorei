@@ -72,7 +72,7 @@ export default function AbsenceManager({
       setReason('');
       setFeedback({
         type: 'success',
-        text: `Absence recorded for ${formatEventDate(saved.date)}. Your ${singer.sectionGroup} Section Leader and Artistic Director have been notified.`,
+        text: `Absence recorded for ${formatEventDate(saved.date)}. Your ${singer.sectionGroup} Section Leader and leadership team have been notified.`,
       });
     } catch {
       setFeedback({ type: 'error', text: 'Network error submitting absence.' });
@@ -120,7 +120,7 @@ export default function AbsenceManager({
             Report an Upcoming Absence
           </h2>
           <p className="mt-1 text-sm text-zinc-600">
-            Submitting notifies the Artistic Director, Choir Manager, and your{' '}
+            Submitting notifies the Artistic Director, attendance administration, and your{' '}
             <strong>{singer.sectionGroup}</strong> Section Leader automatically.
           </p>
 
@@ -179,13 +179,11 @@ export default function AbsenceManager({
                 htmlFor="absence-reason"
                 className="block text-xs font-semibold uppercase tracking-wider text-zinc-600"
               >
-                Brief Note / Reason
+                Note / Reason <span className="font-normal lowercase text-zinc-400">(optional)</span>
               </label>
               <textarea
                 id="absence-reason"
                 rows={3}
-                required
-                placeholder="e.g., Out of town for work conference; reviewing Bach fugue markings independently."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 className="mt-1.5 w-full rounded-xl border border-zinc-300 px-3.5 py-2.5 text-sm text-zinc-900 focus:border-navy-900 focus:outline-none"

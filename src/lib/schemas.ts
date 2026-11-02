@@ -61,34 +61,63 @@ export const SingerRowSchema = z
   });
 
 export const ScheduleRowSchema = z
-  .tuple([
-    trimmedString.pipe(z.string().min(1, 'Missing Event_ID')),
-    trimmedString.pipe(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')),
-    trimmedString,
-    trimmedString,
-    trimmedString.pipe(z.string().min(1, 'Missing Event Title')),
-    trimmedString,
-    trimmedString,
-    trimmedString,
-    trimmedString,
-  ])
-  .transform(
-    ([eventId, date, time, rawType, title, location, snack1Name, snack2Name, notes]): ScheduleEvent => {
-      const type =
-        EVENT_TYPES.find((t) => t.toLowerCase() === rawType.toLowerCase()) ?? 'Rehearsal';
-      return {
-        eventId,
-        date,
-        time: time || '7:00 PM - 9:30 PM',
-        type,
-        title,
-        location: location || 'TBD',
-        snack1Name,
-        snack2Name,
-        notes,
-      };
+  .array(trimmedString)
+  .refine((arr) => arr.length >= 6, { message: 'Schedule row must have at least 6 columns' })
+  .refine((arr) => Boolean(arr[0] && arr[0].trim().length > 0), { message: 'Missing Event_ID' })
+  .refine((arr) => /^\d{4}-\d{2}-\d{2}$/.test(arr[1] || ''), {
+    message: 'Date must be YYYY-MM-DD',
+  })
+  .refine((arr) => Boolean(arr[4] && arr[4].trim().length > 0), { message: 'Missing Event Title' })
+  .transform((row): ScheduleEvent => {
+    const eventId = row[0];
+    const date = row[1];
+    const time = row[2] || '7:00 PM - 9:30 PM';
+    const rawType = row[3] || 'Rehearsal';
+    const title = row[4];
+    const location = row[5] || 'TBD';
+
+    let snack1Name = '';
+    let snack2Name = '';
+    let snack3Name = '';
+    let snack4Name = '';
+    let notes = '';
+
+    if (row.length >= 11) {
+      // Columns: [id, date, time, type, title, location, s1, s2, s3, s4, notes]
+      snack1Name = row[6] || '';
+      snack2Name = row[7] || '';
+      snack3Name = row[8] || '';
+      snack4Name = row[9] || '';
+      notes = row[10] || '';
+    } else if (row.length === 10) {
+      snack1Name = row[6] || '';
+      snack2Name = row[7] || '';
+      snack3Name = row[8] || '';
+      notes = row[9] || '';
+    } else {
+      // Legacy 9-column format: [id, date, time, type, title, location, s1, s2, notes]
+      snack1Name = row[6] || '';
+      snack2Name = row[7] || '';
+      notes = row[8] || '';
     }
-  );
+
+    const type =
+      EVENT_TYPES.find((t) => t.toLowerCase() === rawType.toLowerCase()) ?? 'Rehearsal';
+
+    return {
+      eventId,
+      date,
+      time,
+      type,
+      title,
+      location,
+      snack1Name,
+      snack2Name,
+      snack3Name,
+      snack4Name,
+      notes,
+    };
+  });
 
 export const AbsenceRowSchema = z
   .tuple([

@@ -8,6 +8,7 @@ import {
   getRepertoire,
   getSchedule,
 } from '../../lib/google';
+import { parseSnackEntry } from '../../types/choir';
 import {
   eventTypeBadgeColor,
   formatEventDate,
@@ -35,15 +36,23 @@ const myUpcomingAbsences = absences.filter(
     a.date >= today
 );
 
-const mySnackDates = upcomingEvents.filter(
-  (ev) =>
-    ev.snack1Name.toLowerCase() === singer.name.toLowerCase() ||
-    ev.snack2Name.toLowerCase() === singer.name.toLowerCase()
+const mySnackDates = upcomingEvents.filter((ev) =>
+  [ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name].some(
+    (raw) => parseSnackEntry(raw).name.toLowerCase() === singer.name.toLowerCase()
+  )
 );
 
 const openSnackSlotsCount = upcomingEvents
   .filter((ev) => ev.type !== 'Concert')
-  .reduce((acc, ev) => acc + (ev.snack1Name ? 0 : 1) + (ev.snack2Name ? 0 : 1), 0);
+  .reduce(
+    (acc, ev) =>
+      acc +
+      (ev.snack1Name ? 0 : 1) +
+      (ev.snack2Name ? 0 : 1) +
+      (ev.snack3Name ? 0 : 1) +
+      (ev.snack4Name ? 0 : 1),
+    0
+  );
 
 const totalScoreFiles = repertoire.reduce(
   (sum, p) => sum + p.files.filter((f) => !f.isDoc).length,
@@ -329,13 +338,16 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                 </div>
               </div>
 
-              {(ev.snack1Name || ev.snack2Name) && (
+              {(ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name) && (
                 <div class="shrink-0 rounded-xl bg-zinc-50 px-3 py-1.5 text-xs text-zinc-600 sm:text-right">
                   <span class="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                     Hospitality
                   </span>
                   <span class="font-medium text-zinc-700">
-                    {[ev.snack1Name, ev.snack2Name].filter(Boolean).join(' & ')}
+                    {[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name]
+                      .filter(Boolean)
+                      .map((s) => parseSnackEntry(s).name)
+                      .join(', ')}
                   </span>
                 </div>
               )}

@@ -140,7 +140,7 @@ const NAMED_ENTITIES: Record<string, string> = {
   iexcl: '¡',
 };
 
-function decodeHtmlEntities(str: string): string {
+export function decodeHtmlEntities(str: string): string {
   return str
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) =>
       String.fromCodePoint(parseInt(hex, 16))
@@ -149,7 +149,7 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&([a-zA-Z]+);/g, (full, name: string) => NAMED_ENTITIES[name] ?? full);
 }
 
-function stripTagsToText(htmlFragment: string): string {
+export function stripTagsToText(htmlFragment: string): string {
   return decodeHtmlEntities(htmlFragment.replace(/<[^>]+>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim();

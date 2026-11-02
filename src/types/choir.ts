@@ -41,7 +41,38 @@ export interface ScheduleEvent {
   location: string;
   snack1Name: string;
   snack2Name: string;
+  snack3Name: string;
+  snack4Name: string;
   notes: string;
+}
+
+export interface ParsedSnackSlot {
+  name: string;
+  item: string;
+}
+
+export function parseSnackEntry(raw?: string | null): ParsedSnackSlot {
+  const trimmed = (raw || '').trim();
+  if (!trimmed) return { name: '', item: '' };
+  // Pattern 1: "Andrew Padgett (Cheese & crackers)"
+  const parenMatch = /^([^(]+?)\s*\(([^)]+)\)$/.exec(trimmed);
+  if (parenMatch) {
+    return { name: parenMatch[1].trim(), item: parenMatch[2].trim() };
+  }
+  // Pattern 2: "Andrew Padgett — Cheese & crackers" or "Andrew Padgett - Cheese"
+  const dashMatch = /^([^-—:]+?)\s*[-—:]\s*(.+)$/.exec(trimmed);
+  if (dashMatch) {
+    return { name: dashMatch[1].trim(), item: dashMatch[2].trim() };
+  }
+  return { name: trimmed, item: '' };
+}
+
+export function formatSnackEntry(name: string, item?: string): string {
+  const trimmedName = (name || '').trim();
+  const trimmedItem = (item || '').trim();
+  if (!trimmedName) return '';
+  if (!trimmedItem) return trimmedName;
+  return `${trimmedName} (${trimmedItem})`;
 }
 
 export interface AbsenceRecord {
@@ -80,7 +111,11 @@ export interface MediaItem {
 export interface PortalConfig {
   Choir_Name: string;
   Conductor_Email: string;
+  Associate_Director_Email?: string;
   Manager_Email: string;
+  Attendance_Admin_Emails?: string;
+  Absence_Notification_Emails?: string;
+  Notify_All_Admins_On_Absence?: string;
   Repertoire_Drive_Folder_ID: string;
   Handbook_Google_Doc_ID: string;
   Strategic_Plan_Google_Doc_ID: string;
@@ -90,7 +125,7 @@ export interface PortalConfig {
   YouTube_URL: string;
   Instagram_URL: string;
   Facebook_URL: string;
-  [key: string]: string;
+  [key: string]: string | undefined;
 }
 
 export interface SheetWarning {

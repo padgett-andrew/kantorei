@@ -1,6 +1,8 @@
 import { importPKCS8, SignJWT } from 'jose';
 import {
+  formatSnackEntry,
   inferSectionGroup,
+  parseSnackEntry,
   type AbsenceRecord,
   type ConcertEvent,
   type DriveMusicFile,
@@ -110,7 +112,9 @@ const demoStore: DemoStore = {
   config: {
     Choir_Name: 'Kantorei',
     Conductor_Email: 'adam.reinwald@kantorei.net',
+    Associate_Director_Email: '',
     Manager_Email: 'maggieakhavan@gmail.com',
+    Attendance_Admin_Emails: 'maggieakhavan@gmail.com',
     Repertoire_Drive_Folder_ID: 'DEMO',
     Handbook_Google_Doc_ID: 'DEMO',
     Strategic_Plan_Google_Doc_ID: 'DEMO',
@@ -292,8 +296,10 @@ const demoStore: DemoStore = {
       type: 'Rehearsal',
       title: 'Sunday Evening Rehearsal',
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
-      snack1Name: 'CarlaJoy Strand',
-      snack2Name: 'Michael Claver',
+      snack1Name: 'CarlaJoy Strand (Clementines & grapes)',
+      snack2Name: 'Michael Claver (Homemade brownies - nut free)',
+      snack3Name: 'Elena Rostova (Sparkling water & cups)',
+      snack4Name: '',
       notes: 'Lauridsen O Magnum Mysterium (mm. 1-48), Shaw "and the swallow", Howells I & II. Fragrance-free policy.',
     },
     {
@@ -303,8 +309,10 @@ const demoStore: DemoStore = {
       type: 'Sectional',
       title: 'Sunday Split Sectionals + Tutti Rehearsal',
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
-      snack1Name: 'Maryanne Poliseno',
+      snack1Name: 'Maryanne Poliseno (Cheese board & gluten-free crackers)',
       snack2Name: '',
+      snack3Name: '',
+      snack4Name: '',
       notes: '6:30-7:20 PM Sectionals on Bach BWV 230 fugue; 7:30 PM tutti after snack break.',
     },
     {
@@ -316,6 +324,8 @@ const demoStore: DemoStore = {
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
       snack1Name: '',
       snack2Name: '',
+      snack3Name: '',
+      snack4Name: '',
       notes: 'Tuning & dynamic shaping on Lauridsen; acoustic spacing work on Advent carols.',
     },
     {
@@ -327,6 +337,8 @@ const demoStore: DemoStore = {
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
       snack1Name: '',
       snack2Name: '',
+      snack3Name: '',
+      snack4Name: '',
       notes: 'Bring tablet (ForScore) or printed scores; check breath markings with section leaders.',
     },
     {
@@ -336,8 +348,10 @@ const demoStore: DemoStore = {
       type: 'Dress',
       title: 'Advent with Kantorei — Acoustic Dress Rehearsal',
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
-      snack1Name: 'John Kelly',
+      snack1Name: 'John Kelly (Apples & caramel dip)',
       snack2Name: '',
+      snack3Name: '',
+      snack4Name: '',
       notes: 'Full concert program run-through at the venue to lock in risers and logistics (casual attire OK).',
     },
     {
@@ -349,6 +363,8 @@ const demoStore: DemoStore = {
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
       snack1Name: '',
       snack2Name: '',
+      snack3Name: '',
+      snack4Name: '',
       notes: '3920 Victoria St N, Shoreview, MN. Concert black attire (fragrance-free); doors open at 2:30 PM.',
     },
     {
@@ -360,6 +376,8 @@ const demoStore: DemoStore = {
       location: 'Lutheran Church of the Good Shepherd, Edina',
       snack1Name: '',
       snack2Name: '',
+      snack3Name: '',
+      snack4Name: '',
       notes: '4801 France Ave S, Edina, MN. Post-concert greeting with audience & patrons.',
     },
   ],
@@ -781,13 +799,13 @@ export async function getScheduleWithWarnings(
   }
 
   return cachedFetchJson('schedule', 60, async () => {
-    const rows = await readSheetValues('Schedule!A2:I', locals);
+    const rows = await readSheetValues('Schedule!A2:K', locals);
     const schedule: ScheduleEvent[] = [];
     const warnings: SheetWarning[] = [];
 
     rows.forEach((rawRow, idx) => {
       if (isBlankRow(rawRow)) return;
-      const parsed = ScheduleRowSchema.safeParse(padRow(rawRow, 9));
+      const parsed = ScheduleRowSchema.safeParse(rawRow);
       if (parsed.success) {
         schedule.push(parsed.data);
       } else {
@@ -975,63 +993,121 @@ export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWar
 // Safe Primary-Key Mutations (Live Row Resolution Before Cell Write)
 // ---------------------------------------------------------------------------
 
+export type SnackSlotNumber = 1 | 2 | 3 | 4;
+
+function getEventSlotValue(ev: ScheduleEvent, slot: SnackSlotNumber): string {
+  if (slot === 1) return ev.snack1Name;
+  if (slot === 2) return ev.snack2Name;
+  if (slot === 3) return ev.snack3Name;
+  return ev.snack4Name;
+}
+
+function setEventSlotValue(ev: ScheduleEvent, slot: SnackSlotNumber, value: string) {
+  if (slot === 1) ev.snack1Name = value;
+  else if (slot === 2) ev.snack2Name = value;
+  else if (slot === 3) ev.snack3Name = value;
+  else ev.snack4Name = value;
+}
+
 export async function mutateSnackSlot(params: {
   eventId: string;
-  slot: 1 | 2;
-  action: 'claim' | 'release';
+  slot: SnackSlotNumber;
+  action: 'claim' | 'release' | 'update_item';
+  item?: string;
   caller: Singer;
   locals?: App.Locals;
 }): Promise<ScheduleEvent> {
-  const { eventId, slot, action, caller, locals } = params;
+  const { eventId, slot, action, item, caller, locals } = params;
 
   if (isSandboxSheetMode(locals)) {
     const ev = demoStore.schedule.find((e) => e.eventId === eventId);
     if (!ev) throw new NotFoundError(`Rehearsal event "${eventId}" not found.`);
 
-    const currentHolder = slot === 1 ? ev.snack1Name : ev.snack2Name;
+    const currentRaw = getEventSlotValue(ev, slot);
+    const parsed = parseSnackEntry(currentRaw);
+
     if (action === 'claim') {
-      if (currentHolder && currentHolder.trim() !== '') {
-        throw new ConflictError(`Snack Slot ${slot} was just claimed by ${currentHolder}.`);
+      if (parsed.name.trim() !== '') {
+        throw new ConflictError(`Hospitality Slot ${slot} was just claimed by ${parsed.name}.`);
       }
-      if (slot === 1) ev.snack1Name = caller.name;
-      else ev.snack2Name = caller.name;
+      setEventSlotValue(ev, slot, formatSnackEntry(caller.name, item));
+    } else if (action === 'update_item') {
+      const canUpdate =
+        caller.role === 'Admin' ||
+        parsed.name.trim().toLowerCase() === caller.name.trim().toLowerCase();
+      if (!canUpdate) {
+        throw new ConflictError(
+          `Only ${parsed.name || 'the slot owner'} or an Admin can edit what they are bringing.`
+        );
+      }
+      setEventSlotValue(ev, slot, formatSnackEntry(parsed.name || caller.name, item));
     } else {
       const canRelease =
         caller.role === 'Admin' ||
-        currentHolder.trim().toLowerCase() === caller.name.trim().toLowerCase();
+        parsed.name.trim().toLowerCase() === caller.name.trim().toLowerCase();
       if (!canRelease) {
-        throw new ConflictError(`Only ${currentHolder} or an Admin can release this slot.`);
+        throw new ConflictError(`Only ${parsed.name || 'the slot owner'} or an Admin can release this slot.`);
       }
-      if (slot === 1) ev.snack1Name = '';
-      else ev.snack2Name = '';
+      setEventSlotValue(ev, slot, '');
     }
     return { ...ev };
   }
 
-  // Uncached live lookup of Schedule!A2:I to find exact current row by Event_ID
-  const rows = await readSheetValues('Schedule!A2:I', locals);
+  // Uncached live lookup of Schedule!A1:K to find exact current row by Event_ID
+  const allRows = await readSheetValues('Schedule!A1:K', locals);
+  const headerRow = allRows[0] || [];
+  const rows = allRows.slice(1);
   const matchIdx = rows.findIndex((r) => (r[0] ?? '').trim() === eventId);
   if (matchIdx === -1) {
     throw new NotFoundError(`Rehearsal event "${eventId}" not found in Schedule sheet.`);
   }
 
+  // Check if legacy 9-column sheet has Notes in Column I (index 8)
+  const isLegacyNineCol = (headerRow[8] || '').trim().toLowerCase().includes('note');
+  if (isLegacyNineCol) {
+    // Automatically modernize headers: Column I -> Snack_3, Column J -> Snack_4, Column K -> Notes
+    await writeSheetValues('Schedule!I1:K1', [['Snack_3', 'Snack_4', 'Notes']], locals);
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i][8] && !rows[i][10]) {
+        await writeSheetValues(`Schedule!I${i + 2}:K${i + 2}`, [['', '', rows[i][8]]], locals);
+        rows[i][10] = rows[i][8];
+        rows[i][8] = '';
+      }
+    }
+  }
+
   const freshRowIndex = matchIdx + 2;
-  const row = padRow(rows[matchIdx], 9);
-  const colIndex = slot === 1 ? 6 : 7; // G = index 6, H = index 7
-  const colLetter = slot === 1 ? 'G' : 'H';
-  const currentHolder = row[colIndex].trim();
+  const row = padRow(rows[matchIdx], 11);
+  const colIndex = 5 + slot; // Slot 1 = 6 (G), Slot 2 = 7 (H), Slot 3 = 8 (I), Slot 4 = 9 (J)
+  const colLetter = ['G', 'H', 'I', 'J'][slot - 1];
+  const currentRaw = row[colIndex]?.trim() || '';
+  const parsed = parseSnackEntry(currentRaw);
 
   if (action === 'claim') {
-    if (currentHolder !== '') {
-      throw new ConflictError(`Snack Slot ${slot} was just claimed by ${currentHolder}.`);
+    if (parsed.name.trim() !== '') {
+      throw new ConflictError(`Hospitality Slot ${slot} was just claimed by ${parsed.name}.`);
     }
-    await writeSheetValues(`Schedule!${colLetter}${freshRowIndex}`, [[caller.name]], locals);
-    row[colIndex] = caller.name;
+    const formatted = formatSnackEntry(caller.name, item);
+    await writeSheetValues(`Schedule!${colLetter}${freshRowIndex}`, [[formatted]], locals);
+    row[colIndex] = formatted;
+  } else if (action === 'update_item') {
+    const canUpdate =
+      caller.role === 'Admin' ||
+      parsed.name.trim().toLowerCase() === caller.name.trim().toLowerCase();
+    if (!canUpdate) {
+      throw new ConflictError(
+        `Only ${parsed.name || 'the slot owner'} or an Admin can edit what they are bringing.`
+      );
+    }
+    const formatted = formatSnackEntry(parsed.name || caller.name, item);
+    await writeSheetValues(`Schedule!${colLetter}${freshRowIndex}`, [[formatted]], locals);
+    row[colIndex] = formatted;
   } else {
     const canRelease =
-      caller.role === 'Admin' || currentHolder.toLowerCase() === caller.name.trim().toLowerCase();
+      caller.role === 'Admin' ||
+      parsed.name.trim().toLowerCase() === caller.name.trim().toLowerCase();
     if (!canRelease) {
-      throw new ConflictError(`Only ${currentHolder} or an Admin can release this slot.`);
+      throw new ConflictError(`Only ${parsed.name || 'the slot owner'} or an Admin can release this slot.`);
     }
     await writeSheetValues(`Schedule!${colLetter}${freshRowIndex}`, [['']], locals);
     row[colIndex] = '';

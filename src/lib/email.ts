@@ -17,34 +17,81 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function extractEmails(...sources: (string | undefined | null)[]): string[] {
+  const result: string[] = [];
+  for (const src of sources) {
+    if (!src) continue;
+    const items = src.split(/[,;\s\n]+/);
+    for (const item of items) {
+      const trimmed = item.trim().toLowerCase();
+      if (trimmed.includes('@') && !result.includes(trimmed)) {
+        result.push(trimmed);
+      }
+    }
+  }
+  return result;
+}
+
 export async function sendAbsenceAlertEmail(params: {
   absence: AbsenceRecord;
   event?: ScheduleEvent;
   sectionGroup: string;
   sectionLeaders: Singer[];
+  admins?: Singer[];
   config: PortalConfig;
   sectionAbsenceCount: number;
   locals?: App.Locals;
 }): Promise<EmailSendResult> {
-  const { absence, event, sectionGroup, sectionLeaders, config, sectionAbsenceCount, locals } =
-    params;
+  const {
+    absence,
+    event,
+    sectionGroup,
+    sectionLeaders,
+    admins = [],
+    config,
+    sectionAbsenceCount,
+    locals,
+  } = params;
 
   const apiKey = getEnv('RESEND_API_KEY', locals);
   const fromEmail =
     getEnv('PORTAL_FROM_EMAIL', locals) || 'Kantorei Portal <onboarding@resend.dev>';
   const sandboxOverride = getEnv('SANDBOX_OVERRIDE_EMAIL', locals);
+  const envAdminEmails = getEnv('ABSENCE_NOTIFICATION_EMAILS', locals);
+
+  // Collect configured admin emails across config tab and env
+  const configAdminSources = [
+    config.Conductor_Email,
+    config.Associate_Director_Email,
+    config.Associate_Conductor_Email,
+    config.Manager_Email,
+    config.Attendance_Admin_Emails,
+    config.Absence_Notification_Emails,
+    config.Additional_Admin_Emails,
+    envAdminEmails,
+  ];
+
+  // Also collect any custom email keys added to the Google Sheet Config tab
+  for (const [key, val] of Object.entries(config)) {
+    if (
+      typeof val === 'string' &&
+      /(admin|director|conductor|attendance|absence).*email/i.test(key)
+    ) {
+      configAdminSources.push(val);
+    }
+  }
+
+  // If configured to notify all active Roster Admins
+  const notifyAllAdmins = /^(true|1|yes)$/i.test(config.Notify_All_Admins_On_Absence || '');
+  const rosterAdminEmails = notifyAllAdmins ? admins.map((a) => a.email) : [];
 
   const intendedRecipients = Array.from(
-    new Set(
-      [
-        ...sectionLeaders.map((s) => s.email),
-        config.Conductor_Email,
-        config.Manager_Email,
-      ]
-        .map((e) => e?.trim().toLowerCase())
-        .filter(Boolean)
-    )
-  );
+    new Set([
+      ...sectionLeaders.map((s) => s.email.trim().toLowerCase()),
+      ...extractEmails(...configAdminSources),
+      ...extractEmails(...rosterAdminEmails),
+    ])
+  ).filter(Boolean);
 
   const isOnboardingFrom = fromEmail.toLowerCase().includes('onboarding@resend.dev');
   const useSandboxRouting = Boolean(sandboxOverride) || isOnboardingFrom;

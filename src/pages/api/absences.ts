@@ -109,11 +109,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
         s.sectionGroup === targetSinger.sectionGroup
     );
 
+    const admins = roster.filter((s) => s.active && s.role === 'Admin');
+
     const emailResult = await sendAbsenceAlertEmail({
       absence,
       event,
       sectionGroup: targetSinger.sectionGroup,
       sectionLeaders,
+      admins,
       config,
       sectionAbsenceCount,
       locals,

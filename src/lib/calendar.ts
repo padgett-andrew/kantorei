@@ -125,8 +125,8 @@ export function buildIcsCalendar(params: {
     const details = [
       `Time: ${ev.time}`,
       ev.notes ? `Notes: ${ev.notes}` : '',
-      ev.snack1Name || ev.snack2Name
-        ? `Snacks: ${[ev.snack1Name, ev.snack2Name].filter(Boolean).join(' & ')}`
+      ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name
+        ? `Hospitality / Snacks: ${[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name].filter(Boolean).join(', ')}`
         : '',
     ]
       .filter(Boolean)

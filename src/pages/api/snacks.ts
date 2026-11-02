@@ -4,8 +4,9 @@ import { ConflictError, mutateSnackSlot, NotFoundError } from '../../lib/google'
 
 const SnackSchema = z.object({
   eventId: z.string().trim().min(1),
-  slot: z.union([z.literal(1), z.literal(2)]),
-  action: z.enum(['claim', 'release']),
+  slot: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+  action: z.enum(['claim', 'release', 'update_item']),
+  item: z.string().trim().max(100).optional(),
 });
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -31,6 +32,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       eventId: parsed.data.eventId,
       slot: parsed.data.slot,
       action: parsed.data.action,
+      item: parsed.data.item,
       caller,
       locals,
     });
