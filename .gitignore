@@ -11,6 +11,8 @@ node_modules/
 .env.*
 !.env.example
 .dev.vars
+*service-account*.json
+*credentials*.json
 
 # OS & editor files
 .DS_Store

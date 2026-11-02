@@ -2,7 +2,7 @@
 import '../styles/global.css';
 import PortalNav from '../components/portal/PortalNav.astro';
 import DevPersonaSwitcher from '../components/portal/DevPersonaSwitcher';
-import { getPortalConfig } from '../lib/google';
+import { getPortalConfig, getRoster } from '../lib/google';
 
 interface Props {
   title: string;
@@ -18,6 +18,30 @@ if (!singer) {
 const config = await getPortalConfig(Astro.locals);
 const choirName = config.Choir_Name || 'Kantorei';
 const isDevPreview = Boolean(Astro.locals.isDevPreview);
+
+let devPersonas: { email: string; label: string }[] = [];
+if (isDevPreview) {
+  const activeRoster = (await getRoster(Astro.locals)).filter((s) => s.active);
+  const picked = [
+    activeRoster.find((s) => s.role === 'Admin'),
+    activeRoster.find((s) => s.role === 'Section_Leader'),
+    activeRoster.find((s) => s.role === 'Singer'),
+  ].filter((s): s is NonNullable<typeof s> => Boolean(s));
+
+  const seen = new Set(picked.map((p) => p.email));
+  for (const s of activeRoster) {
+    if (picked.length >= 3) break;
+    if (!seen.has(s.email)) {
+      picked.push(s);
+      seen.add(s.email);
+    }
+  }
+
+  devPersonas = picked.map((s) => ({
+    email: s.email,
+    label: `${s.name} (${s.voicePart} · ${s.role.replace('_', ' ')})`,
+  }));
+}
 ---
 
 <!doctype html>
@@ -36,7 +60,9 @@ const isDevPreview = Boolean(Astro.locals.isDevPreview);
     />
   </head>
   <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
-    {isDevPreview && <DevPersonaSwitcher client:load currentSinger={singer} />}
+    {isDevPreview && (
+      <DevPersonaSwitcher client:load currentSinger={singer} personas={devPersonas} />
+    )}
     <PortalNav singer={singer} choirName={choirName} currentPath={Astro.url.pathname} />
     <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <slot />

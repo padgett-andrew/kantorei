@@ -12,7 +12,7 @@ import {
   type Singer,
 } from '../types/choir';
 import { cachedFetchJson, invalidateCacheTag } from './cache';
-import { getEnv, isSandboxSheetMode } from './env';
+import { extractGoogleId, getEnv, hasGoogleServiceAccount, isSandboxSheetMode } from './env';
 import { DEFAULT_HANDBOOK_HTML, DEFAULT_STRATEGIC_PLAN_HTML } from './handbook-content';
 import { sanitizeHandbookHtml } from './sanitize';
 import {
@@ -583,7 +583,7 @@ const demoStore: DemoStore = {
 // ---------------------------------------------------------------------------
 
 async function readSheetValues(range: string, locals?: App.Locals): Promise<string[][]> {
-  const sheetId = getEnv('GOOGLE_MASTER_SHEET_ID', locals);
+  const sheetId = extractGoogleId(getEnv('GOOGLE_MASTER_SHEET_ID', locals));
   const token = await getGoogleAccessToken(locals);
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}`;
@@ -606,7 +606,7 @@ async function writeSheetValues(
   values: string[][],
   locals?: App.Locals
 ): Promise<void> {
-  const sheetId = getEnv('GOOGLE_MASTER_SHEET_ID', locals);
+  const sheetId = extractGoogleId(getEnv('GOOGLE_MASTER_SHEET_ID', locals));
   const token = await getGoogleAccessToken(locals);
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}?valueInputOption=USER_ENTERED`;
@@ -631,7 +631,7 @@ async function appendSheetValues(
   values: string[][],
   locals?: App.Locals
 ): Promise<void> {
-  const sheetId = getEnv('GOOGLE_MASTER_SHEET_ID', locals);
+  const sheetId = extractGoogleId(getEnv('GOOGLE_MASTER_SHEET_ID', locals));
   const token = await getGoogleAccessToken(locals);
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
@@ -853,8 +853,13 @@ export async function getMedia(locals?: App.Locals): Promise<MediaItem[]> {
 }
 
 export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig> {
+  const envRepertoireFolder = extractGoogleId(getEnv('REPERTOIRE_DRIVE_FOLDER_ID', locals));
+
   if (isSandboxSheetMode(locals)) {
-    return { ...demoStore.config };
+    return {
+      ...demoStore.config,
+      ...(envRepertoireFolder ? { Repertoire_Drive_Folder_ID: envRepertoireFolder } : {}),
+    };
   }
 
   return cachedFetchJson('config', 60, async () => {
@@ -863,7 +868,7 @@ export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig
       Choir_Name: 'Kantorei',
       Conductor_Email: 'adam.reinwald@kantorei.net',
       Manager_Email: '',
-      Repertoire_Drive_Folder_ID: 'DEMO',
+      Repertoire_Drive_Folder_ID: envRepertoireFolder || '1tIPYJBkibVLjQOaGSzZ2y7L9UOTNOyJc',
       Handbook_Google_Doc_ID: 'DEMO',
       Strategic_Plan_Google_Doc_ID: 'DEMO',
       Season_Pass_TT_Widget_URL: 'DEMO',
@@ -877,7 +882,7 @@ export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig
     for (const row of rows) {
       const key = (row[0] ?? '').trim();
       const val = (row[1] ?? '').trim();
-      if (key) {
+      if (key && val) {
         map[key] = val;
       }
     }
@@ -1141,13 +1146,58 @@ interface DriveFileItem {
   name: string;
   mimeType: string;
   size?: string;
+  shortcutDetails?: {
+    targetId?: string;
+    targetMimeType?: string;
+  };
+}
+
+function resolveDriveItem(item: DriveFileItem): {
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: string;
+} {
+  if (
+    item.mimeType === 'application/vnd.google-apps.shortcut' &&
+    item.shortcutDetails?.targetId &&
+    item.shortcutDetails?.targetMimeType
+  ) {
+    return {
+      id: item.shortcutDetails.targetId,
+      name: item.name,
+      mimeType: item.shortcutDetails.targetMimeType,
+      size: item.size,
+    };
+  }
+  return item;
+}
+
+function toDriveMusicFile(
+  rawItem: DriveFileItem,
+  prefixLabel?: string
+): DriveMusicFile | null {
+  const f = resolveDriveItem(rawItem);
+  const isPdf = f.mimeType === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+  const isAudio =
+    f.mimeType.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg|flac)$/i.test(f.name);
+  if (!isPdf && !isAudio) return null;
+
+  return {
+    id: f.id,
+    name: prefixLabel ? `${prefixLabel} — ${f.name}` : f.name,
+    mimeType: f.mimeType,
+    sizeBytes: f.size ? Number(f.size) : undefined,
+    isPdf,
+    isAudio,
+  };
 }
 
 async function driveListQuery(query: string, locals?: App.Locals): Promise<DriveFileItem[]> {
   const token = await getGoogleAccessToken(locals);
   const params = new URLSearchParams({
     q: query,
-    fields: 'files(id,name,mimeType,size)',
+    fields: 'files(id,name,mimeType,size,shortcutDetails(targetId,targetMimeType))',
     orderBy: 'name',
     pageSize: '200',
     supportsAllDrives: 'true',
@@ -1169,10 +1219,10 @@ async function driveListQuery(query: string, locals?: App.Locals): Promise<Drive
 
 export async function getRepertoire(locals?: App.Locals): Promise<RepertoirePiece[]> {
   const config = await getPortalConfig(locals);
-  const rootFolderId = config.Repertoire_Drive_Folder_ID;
+  const rootFolderId = extractGoogleId(config.Repertoire_Drive_Folder_ID || '');
 
   if (
-    isSandboxSheetMode(locals) ||
+    !hasGoogleServiceAccount(locals) ||
     !rootFolderId ||
     rootFolderId === 'DEMO' ||
     rootFolderId.startsWith('PASTE_')
@@ -1185,42 +1235,103 @@ export async function getRepertoire(locals?: App.Locals): Promise<RepertoirePiec
 
   return cachedFetchJson('music', 300, async () => {
     const escapedRoot = rootFolderId.replace(/'/g, "\\'");
-    const subfolders = await driveListQuery(
-      `'${escapedRoot}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    const rootChildren = await driveListQuery(
+      `'${escapedRoot}' in parents and trashed = false`,
       locals
     );
 
-    const pieces = await Promise.all(
-      subfolders.map(async (folder): Promise<RepertoirePiece> => {
+    const rootMusicFiles: DriveMusicFile[] = [];
+    const subfolders: { id: string; name: string }[] = [];
+
+    for (const raw of rootChildren) {
+      const resolved = resolveDriveItem(raw);
+      if (resolved.mimeType === 'application/vnd.google-apps.folder') {
+        subfolders.push({ id: resolved.id, name: resolved.name });
+      } else {
+        const musicFile = toDriveMusicFile(raw);
+        if (musicFile) rootMusicFiles.push(musicFile);
+      }
+    }
+
+    const subfolderPieces = await Promise.all(
+      subfolders.map(async (folder): Promise<RepertoirePiece[]> => {
         const escapedFolder = folder.id.replace(/'/g, "\\'");
-        const rawFiles = await driveListQuery(
+        const children = await driveListQuery(
           `'${escapedFolder}' in parents and trashed = false`,
           locals
         );
 
-        const files: DriveMusicFile[] = rawFiles
-          .map((f) => {
-            const isPdf = f.mimeType === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
-            const isAudio =
-              f.mimeType.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg)$/i.test(f.name);
-            return {
-              id: f.id,
-              name: f.name,
-              mimeType: f.mimeType,
-              sizeBytes: f.size ? Number(f.size) : undefined,
-              isPdf,
-              isAudio,
-            };
-          })
-          .filter((f) => f.isPdf || f.isAudio);
+        const directFiles: DriveMusicFile[] = [];
+        const nestedFolders: { id: string; name: string }[] = [];
 
-        return {
-          folderId: folder.id,
-          title: folder.name,
-          files,
-        };
+        for (const child of children) {
+          const resolvedChild = resolveDriveItem(child);
+          if (resolvedChild.mimeType === 'application/vnd.google-apps.folder') {
+            nestedFolders.push({ id: resolvedChild.id, name: resolvedChild.name });
+          } else {
+            const mf = toDriveMusicFile(child);
+            if (mf) directFiles.push(mf);
+          }
+        }
+
+        // Also scan 1 nested folder level (e.g., Piece -> Practice Tracks, or Concert -> Piece)
+        if (nestedFolders.length > 0) {
+          const nestedResults = await Promise.all(
+            nestedFolders.map(async (nf) => {
+              const escapedNested = nf.id.replace(/'/g, "\\'");
+              const nestedRaw = await driveListQuery(
+                `'${escapedNested}' in parents and trashed = false`,
+                locals
+              );
+              return {
+                folder: nf,
+                files: nestedRaw
+                  .map((item) => toDriveMusicFile(item))
+                  .filter((f): f is DriveMusicFile => f !== null),
+              };
+            })
+          );
+
+          // If the parent folder has no direct files of its own (e.g., a Concert cycle folder containing Piece folders),
+          // promote each nested folder to its own RepertoirePiece card.
+          if (directFiles.length === 0) {
+            return nestedResults
+              .filter((nr) => nr.files.length > 0)
+              .map((nr) => ({
+                folderId: nr.folder.id,
+                title: `${folder.name} — ${nr.folder.name}`,
+                files: nr.files,
+              }));
+          }
+
+          // Otherwise merge nested files (e.g., a "Practice Tracks" folder inside a Piece folder) into the Piece card.
+          for (const nr of nestedResults) {
+            for (const f of nr.files) {
+              directFiles.push({
+                ...f,
+                name: `${nr.folder.name} — ${f.name}`,
+              });
+            }
+          }
+        }
+
+        return directFiles.length > 0
+          ? [{ folderId: folder.id, title: folder.name, files: directFiles }]
+          : [];
       })
     );
+
+    const pieces: RepertoirePiece[] = [];
+    if (rootMusicFiles.length > 0) {
+      pieces.push({
+        folderId: rootFolderId,
+        title: subfolders.length > 0 ? 'General Scores & Rehearsal Files' : 'Concert Repertoire',
+        files: rootMusicFiles,
+      });
+    }
+    for (const group of subfolderPieces) {
+      pieces.push(...group);
+    }
 
     return pieces;
   });
@@ -1278,9 +1389,9 @@ export async function getHandbookHtml(
   locals?: App.Locals
 ): Promise<{ html: string; isDemo: boolean }> {
   const config = await getPortalConfig(locals);
-  const docId = config.Handbook_Google_Doc_ID;
+  const docId = extractGoogleId(config.Handbook_Google_Doc_ID || '');
 
-  if (isSandboxSheetMode(locals) || !docId || docId === 'DEMO' || docId.startsWith('PASTE_')) {
+  if (!hasGoogleServiceAccount(locals) || !docId || docId === 'DEMO' || docId.startsWith('PASTE_')) {
     return { html: DEFAULT_HANDBOOK_HTML, isDemo: true };
   }
 
@@ -1306,9 +1417,9 @@ export async function getStrategicPlanHtml(
   locals?: App.Locals
 ): Promise<{ html: string; isDemo: boolean }> {
   const config = await getPortalConfig(locals);
-  const docId = config.Strategic_Plan_Google_Doc_ID;
+  const docId = extractGoogleId(config.Strategic_Plan_Google_Doc_ID || '');
 
-  if (isSandboxSheetMode(locals) || !docId || docId === 'DEMO' || docId.startsWith('PASTE_')) {
+  if (!hasGoogleServiceAccount(locals) || !docId || docId === 'DEMO' || docId.startsWith('PASTE_')) {
     return { html: DEFAULT_STRATEGIC_PLAN_HTML, isDemo: true };
   }
 

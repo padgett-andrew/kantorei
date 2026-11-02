@@ -8,6 +8,8 @@
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
     "preview": "wrangler dev",
     "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
+    "setup:key": "node scripts/import-service-account.mjs",
+    "verify:google": "node scripts/verify-google.mjs",
     "deploy": "ASTRO_TELEMETRY_DISABLED=1 astro build && wrangler deploy"
   },
   "dependencies": {

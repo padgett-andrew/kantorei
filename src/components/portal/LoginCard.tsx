@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { ArrowRight, CheckCircle2, KeyRound, Mail, Sparkles } from 'lucide-react';
 
+interface DevPersonaOption {
+  email: string;
+  shortLabel: string;
+}
+
 interface Props {
   oauthError?: string;
   nextPath?: string;
   isDevPreviewAvailable?: boolean;
+  devPersonas?: DevPersonaOption[];
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -21,7 +27,16 @@ export default function LoginCard({
   oauthError,
   nextPath = '/portal',
   isDevPreviewAvailable = false,
+  devPersonas,
 }: Props) {
+  const quickEntryPersonas: DevPersonaOption[] =
+    devPersonas && devPersonas.length > 0
+      ? devPersonas
+      : [
+          { email: 'andrew@kantorei.net', shortLabel: 'Admin (B2)' },
+          { email: 'claire.lindqvist@icloud.com', shortLabel: 'Sec. Leader (S1)' },
+          { email: 'rachel.kim@outlook.com', shortLabel: 'Singer (A2)' },
+        ];
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -256,28 +271,17 @@ export default function LoginCard({
           <p className="mt-1 text-xs text-amber-800">
             Jump straight into the portal as any sample Kantorei roster role:
           </p>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => enterDevPreview('andrew@kantorei.net')}
-              className="cursor-pointer rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-amber-100"
-            >
-              Admin (B2)
-            </button>
-            <button
-              type="button"
-              onClick={() => enterDevPreview('claire.lindqvist@icloud.com')}
-              className="cursor-pointer rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-amber-100"
-            >
-              Sec. Leader (S1)
-            </button>
-            <button
-              type="button"
-              onClick={() => enterDevPreview('rachel.kim@outlook.com')}
-              className="cursor-pointer rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-amber-100"
-            >
-              Singer (A2)
-            </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {quickEntryPersonas.map((p) => (
+              <button
+                key={p.email}
+                type="button"
+                onClick={() => enterDevPreview(p.email)}
+                className="flex-1 cursor-pointer rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-amber-100"
+              >
+                {p.shortLabel}
+              </button>
+            ))}
           </div>
         </div>
       )}

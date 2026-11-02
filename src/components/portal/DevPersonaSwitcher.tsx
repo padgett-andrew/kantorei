@@ -2,18 +2,25 @@ import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import type { Singer } from '../../types/choir';
 
-interface Props {
-  currentSinger: Singer;
+interface PersonaOption {
+  email: string;
+  label: string;
 }
 
-const DEMO_PERSONAS = [
+interface Props {
+  currentSinger: Singer;
+  personas?: PersonaOption[];
+}
+
+const FALLBACK_PERSONAS: PersonaOption[] = [
   { email: 'andrew@kantorei.net', label: 'Andrew Padgett (B2 · Admin)' },
   { email: 'claire.lindqvist@icloud.com', label: 'Claire Lindqvist (S1 · Section Leader)' },
   { email: 'rachel.kim@outlook.com', label: 'Rachel Kim (A2 · Singer)' },
 ];
 
-export default function DevPersonaSwitcher({ currentSinger }: Props) {
+export default function DevPersonaSwitcher({ currentSinger, personas }: Props) {
   const [switching, setSwitching] = useState(false);
+  const options = personas && personas.length > 0 ? personas : FALLBACK_PERSONAS;
 
   async function switchRole(email: string) {
     if (email === currentSinger.email) return;
@@ -40,7 +47,7 @@ export default function DevPersonaSwitcher({ currentSinger }: Props) {
           <span>Dev Preview Mode Active — Test portal permissions as:</span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          {DEMO_PERSONAS.map((p) => {
+          {options.map((p) => {
             const active = p.email === currentSinger.email;
             return (
               <button

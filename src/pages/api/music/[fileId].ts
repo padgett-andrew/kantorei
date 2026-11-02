@@ -103,7 +103,7 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
     const meta = await getDriveFileMetadata(fileId, locals);
     const isPdf = meta.mimeType === 'application/pdf' || meta.name.toLowerCase().endsWith('.pdf');
     const isAudio =
-      meta.mimeType.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg)$/i.test(meta.name);
+      meta.mimeType.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg|flac)$/i.test(meta.name);
 
     if (!isPdf && !isAudio) {
       return new Response('Unsupported file type.', { status: 415 });
@@ -117,8 +117,14 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
     }
 
     const cleanName = sanitizeFilename(url.searchParams.get('name') || meta.name);
+    const normalizedContentType = isPdf
+      ? 'application/pdf'
+      : /\.m4a$/i.test(meta.name) && (!meta.mimeType || meta.mimeType === 'video/mp4')
+        ? 'audio/mp4'
+        : meta.mimeType || 'audio/mpeg';
+
     const headers = new Headers();
-    headers.set('Content-Type', meta.mimeType || (isPdf ? 'application/pdf' : 'audio/mpeg'));
+    headers.set('Content-Type', normalizedContentType);
     headers.set(
       'Content-Disposition',
       `${forceDownload ? 'attachment' : 'inline'}; filename="${cleanName}"`

@@ -2,6 +2,7 @@
 import PublicLayout from '../layouts/PublicLayout.astro';
 import LoginCard from '../components/portal/LoginCard';
 import { isDevPreviewEnabled } from '../lib/env';
+import { getRoster } from '../lib/google';
 
 const errorParam = Astro.url.searchParams.get('error') ?? undefined;
 const nextPath = Astro.url.searchParams.get('next') ?? '/portal';
@@ -12,6 +13,29 @@ if (Astro.locals.singer && !Astro.locals.isDevPreview && !errorParam) {
 }
 
 const devAvailable = isDevPreviewEnabled(Astro.locals);
+let devPersonas: { email: string; shortLabel: string }[] = [];
+if (devAvailable) {
+  const activeRoster = (await getRoster(Astro.locals)).filter((s) => s.active);
+  const picked = [
+    activeRoster.find((s) => s.role === 'Admin'),
+    activeRoster.find((s) => s.role === 'Section_Leader'),
+    activeRoster.find((s) => s.role === 'Singer'),
+  ].filter((s): s is NonNullable<typeof s> => Boolean(s));
+
+  const seen = new Set(picked.map((p) => p.email));
+  for (const s of activeRoster) {
+    if (picked.length >= 3) break;
+    if (!seen.has(s.email)) {
+      picked.push(s);
+      seen.add(s.email);
+    }
+  }
+
+  devPersonas = picked.map((s) => ({
+    email: s.email,
+    shortLabel: `${s.name.split(' ')[0]} (${s.role.replace('_', ' ')} · ${s.voicePart})`,
+  }));
+}
 ---
 
 <PublicLayout title="Singer Portal Sign-In">
@@ -34,6 +58,7 @@ const devAvailable = isDevPreviewEnabled(Astro.locals);
         oauthError={errorParam}
         nextPath={nextPath}
         isDevPreviewAvailable={devAvailable}
+        devPersonas={devPersonas}
       />
     </div>
   </section>
