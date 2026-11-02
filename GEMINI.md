@@ -1,0 +1,380 @@
+# GEMINI.md — Choir Website & Singer Portal Architecture Blueprint
+
+## 1. Project Overview & Core Philosophy
+You are an expert full-stack Astro, React, and Cloudflare Edge engineer building a unified, zero-maintenance **Public Website + Authenticated Singer Portal** for a 501(c)(3) choral ensemble (**Kantorei**), hosted on **Cloudflare Workers** (`Astro 5 + React Islands`) at our `.net` domain.
+
+### The Golden Rule: "Bus-Factor Maintainability"
+Non-technical choir board members, music librarians, and section leaders MUST be able to operate the entire site day-to-day without touching code, GitHub, or database dashboards.
+1. **Zero Database Maintenance:** A single **Master Google Sheet** and a **Google Drive / Shared Drive folder** (accessed via a Google Cloud Service Account over lightweight REST + `jose` Web Crypto JWTs) serve as our entire CMS and database. There is no SQL/NoSQL database to pay for, migrate, or unpause after summer hiatus.
+2. **Zero Hosting Seat Tax & Zero Bandwidth Fees:** Hosted on **Cloudflare Workers** (`$0/month` free tier, `$0` per-seat multi-admin access for board members, `0ms` cold starts, and `$0` egress fees for streaming rehearsal MP3s and score PDFs).
+3. **Zero Custom Payment Math:** All concert ticketing and Flex Season Passes use embedded **Ticket Tailor** widgets (`0%` fee on `$0` pass redemptions, `50%` charity discount on paid tickets, plus in-cart add-on donations). Standalone fundraising uses an embedded **Givebutter** widget.
+4. **Universal Singer Login (Gmail & Non-Gmail):** Supports **both** 1-click **"Continue with Google"** OAuth *and* a **stateless 6-digit Email Login Code (OTP)** via Resend + HMAC-signed `httpOnly` cookies (`jose`), so singers using `@icloud.com`, `@yahoo.com`, `@outlook.com`, or work/university emails can sign in seamlessly with zero database.
+5. **Sandbox / Prototype Resilience:** The codebase MUST gracefully handle missing or placeholder credentials during local/sandbox development (rendering realistic mock repertoire/schedule/roster data, interactive preview cards when `DEMO` / `DEMO_SERIES_ID` is configured, and supporting Resend's `onboarding@resend.dev` sandbox rules).
+
+---
+
+## 2. Tech Stack & Dependencies
+- **Framework:** **Astro 5** (`output: 'server'` with `@astrojs/cloudflare` adapter, static/cached public HTML shells, and `@astrojs/react` interactive islands)
+- **Interactive UI & Styling:** **React 19** + **Tailwind CSS v4** (`@tailwindcss/vite`) + `lucide-react` icons + `clsx` + `tailwind-merge`
+- **Authentication:** Native Web Crypto **Google OAuth 2.0 PKCE** + **`jose`** (JWKS ID-token verification, Web Crypto JWT sessions & stateless HMAC-signed 6-digit Email OTP verification — zero database required). Access to `/portal/*` and protected `/api/*` routes is gated by `src/middleware.ts` + live `requireSinger()` / `requireAdmin()` checks against the cached `Roster` sheet.
+- **Backend / Google Workspace Integration:** Direct **Google Sheets API v4 & Google Drive API v3 REST calls** via `fetch()` authenticated with a **`jose`** Service Account RS256 JWT (replaces the 180 MB Node-only `googleapis` package for `0ms` Cloudflare Worker cold starts; supports Google Shared Drives via `supportsAllDrives=true&includeItemsFromAllDrives=true`).
+- **Schema Resilience:** **`zod`** row-level `.safeParse()` validation on all Google Sheet tabs so blank spacer rows or board typos never crash the site (and surface clear data-health warnings on `/portal/admin`).
+- **Edge Caching:** Cloudflare Cache API (`caches.default`) with automatic in-memory TTL fallback during local `astro dev`, plus instant cache-key invalidation on mutations.
+- **HTML Sanitization:** Edge-safe HTML sanitizer (`sanitize-html` / pure-JS whitelist sanitizer) for rendering the exported Choir Handbook Google Doc cleanly.
+- **Transactional Email:** Direct **Resend REST API** via `fetch()` (zero Node SDK overhead; routes absence alerts dynamically to the Artistic Director + Section Leaders, and delivers 6-digit login codes).
+- **Hosting:** **Cloudflare Workers** (`wrangler.jsonc`)
+
+### Installation Command
+```bash
+npm create astro@latest . -- --template minimal --no-install --no-git --typescript strict
+npm install @astrojs/cloudflare @astrojs/react react react-dom @tailwindcss/vite tailwindcss jose arctic zod lucide-react clsx tailwind-merge
+npm install -D @types/react @types/react-dom wrangler
+```
+
+---
+
+## 3. Environment Variables (`.dev.vars` / `.env` & Cloudflare Secrets)
+In local development, Astro/Wrangler reads from `.env` / `.dev.vars`. In production, store secrets via `wrangler secret put` or the Cloudflare Workers dashboard.
+
+```env
+# 1. Site & Stateless Auth (Generate AUTH_SECRET with: openssl rand -base64 32)
+PUBLIC_SITE_URL="http://localhost:4321"
+AUTH_SECRET="your-32-byte-base64-secret"
+GOOGLE_OAUTH_CLIENT_ID="your-google-oauth-client-id.apps.googleusercontent.com"
+GOOGLE_OAUTH_CLIENT_SECRET="your-google-oauth-client-secret"
+# Strictly honored ONLY when import.meta.env.DEV === true
+DEV_PREVIEW_BYPASS="true"
+
+# 2. Google Cloud Service Account (for Sheets v4 & Drive v3 REST APIs)
+GOOGLE_SERVICE_ACCOUNT_EMAIL="choir-bot@your-project.iam.gserviceaccount.com"
+# Note: Code must always normalize escaped newlines via .replace(/\\n/g, '\n')
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_MASTER_SHEET_ID="DEMO"
+
+# 3. Email Notifications & Login OTP (Resend REST API)
+# For sandbox testing without DNS access, use "onboarding@resend.dev"
+RESEND_API_KEY=""
+PORTAL_FROM_EMAIL="Kantorei Portal <onboarding@resend.dev>"
+# Optional override during sandbox testing so all emails go to developer's verified Resend address
+SANDBOX_OVERRIDE_EMAIL=""
+
+# 4. Box Office & Fundraising Embeds (Use "DEMO" in sandbox mode)
+# Base Ticket Tailor box office URL; combined with Concerts.TT_Event_Series_ID as `${BOX_OFFICE_URL}/${ttEventSeriesId}`
+PUBLIC_TICKET_TAILOR_BOX_OFFICE_URL="https://www.tickettailor.com/events/demo"
+PUBLIC_GIVEBUTTER_ACCOUNT_ID="DEMO"
+PUBLIC_GIVEBUTTER_CAMPAIGN_ID="DEMO"
+```
+
+---
+
+## 4. Master Google Sheet Schema (`GOOGLE_MASTER_SHEET_ID`)
+Recommend placing the Master Google Sheet, Repertoire folder, and Choir Handbook inside a **Google Workspace for Nonprofits Shared Drive**. Share `GOOGLE_SERVICE_ACCOUNT_EMAIL` as **Content Manager / Editor** on the Master Google Sheet and **Viewer** on the Repertoire folder and Choir Handbook Doc.
+
+### Tab 1: `Roster` (Range: `Roster!A2:G`)
+Controls portal login access (both Google OAuth and Email OTP), section filtering, and absence routing.
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Email` | `singer@example.com` | Primary key (normalize with `.trim().toLowerCase()`) |
+| `B` | `Name` | `Andrew Padgett` | Full display name |
+| `C` | `Voice_Part` | `B2` | `S1`, `S2`, `A1`, `A2`, `T1`, `T2`, `B1`, `B2` |
+| `D` | `Section_Group` | `Bass` | `Soprano`, `Alto`, `Tenor`, `Bass` (Used for routing to Section Leaders) |
+| `E` | `Role` | `Admin` | `Singer`, `Section_Leader`, `Admin` |
+| `F` | `Phone` | `612-555-0100` | Display string for member directory |
+| `G` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` (case-insensitive; only active members can access `/portal`) |
+
+### Tab 2: `Schedule` (Range: `Schedule!A2:I`)
+Powers the Singer Portal rehearsal calendar, subscribable `/api/calendar.ics` feed, Absence form date selector, and 1-tap Snack Signup.
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Event_ID` | `reh-2026-11-10` | Unique primary key (resolved dynamically before any cell write) |
+| `B` | `Date` | `2026-11-10` | `YYYY-MM-DD` (Sort ascending; filter `>= today` for upcoming views) |
+| `C` | `Time` | `7:00 PM - 9:30 PM` | Display time string (parsed for `.ics` start/end times with sensible fallback) |
+| `D` | `Type` | `Rehearsal` | `Rehearsal`, `Sectional`, `Retreat`, `Dress`, `Concert` |
+| `E` | `Title` | `Tuesday Rehearsal` | Event title |
+| `F` | `Location` | `Main Sanctuary` | Venue / room |
+| `G` | `Snack_1_Name` | `Elena Rostova` | Claimed via `/portal/snacks` (writes to cell `G{freshRowIndex}` after `Event_ID` lookup) |
+| `H` | `Snack_2_Name` | `` | Claimed via `/portal/snacks` (writes to cell `H{freshRowIndex}` after `Event_ID` lookup) |
+| `I` | `Notes` | `Focus on movements 1-3` | Rehearsal call notes or repertoire focus |
+
+### Tab 3: `Absences` (Range: `Absences!A2:I`)
+Upserted/updated via `POST` and `DELETE /api/absences` (deduplicated by `Event_ID` + `Singer_Email`).
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Timestamp` | `2026-11-01T19:30:00Z` | ISO timestamp of latest submission/update |
+| `B` | `Event_ID` | `reh-2026-11-10` | Foreign key to `Schedule.Event_ID` |
+| `C` | `Date` | `2026-11-10` | Event date (`YYYY-MM-DD`) |
+| `D` | `Singer_Name` | `Andrew Padgett` | Singer's full name |
+| `E` | `Singer_Email` | `singer@example.com` | Normalized email |
+| `F` | `Voice_Part` | `B2` | Voice part at time of submission |
+| `G` | `Reason` | `Out of town for work` | User-submitted note |
+| `H` | `Submitted_By` | `Self` | `"Self"` or Section Leader/Admin name if marked during roll call |
+| `I` | `Status` | `Absent` | `"Absent"` or `"Cleared"` (allows singers/admins to withdraw an absence cleanly) |
+
+### Tab 4: `Concerts` (Range: `Concerts!A2:I`)
+Powers the public `/` home spotlight and `/concerts` box-office page.
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Concert_Slug` | `winter-2026` | URL-safe slug |
+| `B` | `Title` | `Light in the Winter Dark` | Public concert title |
+| `C` | `Dates_Display` | `Sat Dec 12 (7:30 PM) & Sun Dec 13 (3:00 PM)` | Human-readable dates |
+| `D` | `Venue_Name` | `Cathedral Sanctuary` | Venue name |
+| `E` | `Venue_Address` | `Minneapolis, MN` | Address for Google Maps link |
+| `F` | `Description` | `Join us for an evening of...` | Concert program blurb |
+| `G` | `TT_Event_Series_ID` | `DEMO_SERIES_ID` | Ticket Tailor series ID or full checkout URL (renders mock UI if `DEMO_SERIES_ID`) |
+| `H` | `Status` | `On_Sale` | `Upcoming`, `On_Sale`, `Past` |
+| `I` | `Hero_Image_URL` | `https://...` | Optional banner image URL |
+
+### Tab 5: `Config` (Range: `Config!A2:B`)
+Key-value settings editable by the board without redeploying code.
+- `Choir_Name`: `Kantorei`
+- `Conductor_Email`: `director@kantorei.net`
+- `Manager_Email`: `manager@kantorei.net`
+- `Repertoire_Drive_Folder_ID`: Google Drive Folder ID containing piece subfolders
+- `Handbook_Google_Doc_ID`: Google Doc ID for the live Choir Handbook
+- `Season_Pass_TT_Widget_URL`: Full Ticket Tailor Membership/Season Pass widget URL (or `"DEMO"`)
+- `Portal_Announcement`: Banner text shown at the top of `/portal` (empty string hides banner)
+- `Calendar_Timezone`: `America/Chicago` (IANA timezone used for `/api/calendar.ics`)
+- `YouTube_URL`: `https://www.youtube.com/@kantoreiMN`
+- `Instagram_URL`: `https://www.instagram.com/kantorei_mn`
+- `Facebook_URL`: `https://www.facebook.com/kantoreimn`
+
+### Tab 6: `Media` (Range: `Media!A2:F`)
+Powers the public `/media` YouTube & recordings showcase (plus featured recordings on `/`).
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Media_ID` | `yt-dickinson` | Unique slug/ID |
+| `B` | `Title` | `Two Dickinson Poems ("Look Back on Time")` | Recording / video title |
+| `C` | `Subtitle` | `Jonathan Posthuma · Look Back on Time Album` | Composer, album, or concert credit |
+| `D` | `YouTube_URL` | `https://www.youtube.com/watch?v=...` | Any `youtube.com/watch`, `youtu.be`, playlist, or channel URL |
+| `E` | `Category` | `Album & Lyric Video` | Badge label (`Concert Video`, `Featured Recording`, etc.) |
+| `F` | `Description` | `Performed by Kantorei...` | Optional program note |
+
+---
+
+## 5. TypeScript Interfaces & Zod Schemas (`src/types/choir.ts`)
+Always use these strict types and row-level Zod validators across the application:
+
+```typescript
+export type VoicePart = 'S1' | 'S2' | 'A1' | 'A2' | 'T1' | 'T2' | 'B1' | 'B2';
+export type SectionGroup = 'Soprano' | 'Alto' | 'Tenor' | 'Bass';
+export type MemberRole = 'Singer' | 'Section_Leader' | 'Admin';
+export type AbsenceStatus = 'Absent' | 'Cleared';
+
+export interface Singer {
+  email: string; // Primary key (normalized lowercase)
+  name: string;
+  voicePart: VoicePart;
+  sectionGroup: SectionGroup;
+  role: MemberRole;
+  phone: string;
+  active: boolean;
+}
+
+export interface ScheduleEvent {
+  eventId: string; // Primary key
+  date: string;    // YYYY-MM-DD
+  time: string;
+  type: 'Rehearsal' | 'Sectional' | 'Retreat' | 'Dress' | 'Concert';
+  title: string;
+  location: string;
+  snack1Name: string;
+  snack2Name: string;
+  notes: string;
+}
+
+export interface AbsenceRecord {
+  timestamp: string;
+  eventId: string;
+  date: string;
+  singerName: string;
+  singerEmail: string;
+  voicePart: VoicePart;
+  reason: string;
+  submittedBy: string;
+  status: AbsenceStatus;
+}
+
+export interface ConcertEvent {
+  slug: string;
+  title: string;
+  datesDisplay: string;
+  venueName: string;
+  venueAddress: string;
+  description: string;
+  ttEventSeriesId: string;
+  status: 'Upcoming' | 'On_Sale' | 'Past';
+  heroImageUrl?: string;
+}
+
+export interface PortalConfig {
+  Choir_Name: string;
+  Conductor_Email: string;
+  Manager_Email: string;
+  Repertoire_Drive_Folder_ID: string;
+  Handbook_Google_Doc_ID: string;
+  Season_Pass_TT_Widget_URL: string;
+  Portal_Announcement: string;
+  Calendar_Timezone: string;
+  [key: string]: string;
+}
+
+export interface SheetWarning {
+  tab: 'Roster' | 'Schedule' | 'Absences' | 'Concerts';
+  rowNumber: number;
+  message: string;
+}
+
+export interface DriveMusicFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  sizeBytes?: number;
+  isPdf: boolean;
+  isAudio: boolean;
+  matchesUserSection?: boolean;
+}
+
+export interface RepertoirePiece {
+  folderId: string;
+  title: string;
+  files: DriveMusicFile[];
+}
+```
+
+---
+
+## 6. Directory & Route Structure
+```text
+wrangler.jsonc                      # Cloudflare Workers configuration
+astro.config.mjs                    # Astro 5 server output + Cloudflare & React integrations + Tailwind v4 Vite plugin
+src/
+├── middleware.ts                   # Protects /portal/* & /api/*, attaches fresh Astro.locals.singer
+├── styles/
+│   └── global.css                  # Tailwind v4 @import "tailwindcss" + custom choir design tokens
+├── types/
+│   └── choir.ts                    # Shared TypeScript interfaces + Zod row parsers
+├── lib/
+│   ├── env.ts                      # Unified env reader (Cloudflare runtime.env + import.meta.env)
+│   ├── cache.ts                    # Cloudflare Cache API (caches.default) + dev memory fallback + tag invalidation
+│   ├── google.ts                   # jose Service Account JWT + Sheets v4 & Drive v3 REST + Shared Drive & mock fallbacks
+│   ├── auth.ts                     # arctic Google OAuth + jose session JWT + stateless HMAC 6-digit Email OTP
+│   ├── email.ts                    # Resend REST client for OTP codes & dynamic Section Leader absence alerts
+│   ├── sanitize.ts                 # Edge-safe HTML sanitizer for Google Doc Choir Handbook export
+│   ├── calendar.ts                 # RFC 5545 .ics feed builder + HMAC feed token helper
+│   └── utils.ts                    # cn() helper and date formatting utilities
+├── layouts/
+│   ├── PublicLayout.astro          # Zero-JS public marketing layout (Navbar + Footer + SEO metadata)
+│   └── PortalLayout.astro          # Authenticated Singer Portal shell (PortalNav + active singer badge)
+├── components/
+│   ├── public/
+│   │   ├── Navbar.astro            # Public nav with "Concerts & Tickets", "Support", and "Singer Login" CTA
+│   │   ├── Footer.astro            # 501(c)(3) info, social links, mailing list
+│   │   ├── TicketTailorEmbed.tsx   # React island for Flex Season Pass & Concert checkout + Demo Sandbox UI
+│   │   └── GivebutterEmbed.tsx     # React island for tax-deductible donations + Demo Sandbox UI
+│   └── portal/
+│       ├── LoginCard.tsx           # React island: Google OAuth button + 2-step 6-digit Email OTP form + Dev role switcher
+│       ├── PortalNav.astro         # Responsive header/bottom-tab nav showing Voice_Part badge & conditional Admin tab
+│       ├── AbsenceManager.tsx      # React island for submitting/updating/withdrawing absences
+│       ├── SnackBoard.tsx          # Optimistic UI 1-tap claim/release snack slots with 409 Conflict handling
+│       ├── MusicLibrary.tsx        # Tablet/ForScore repertoire browser with voice-part filter & inline PDF/Audio player
+│       ├── DirectoryList.tsx       # Searchable active singer directory grouped by section
+│       └── AdminRollCall.tsx       # Section Leader attendance matrix + Add/Edit Roster modal + Sheet Health alerts
+└── pages/
+    ├── index.astro                 # Public Home: Hero, Next Concert spotlight, ensemble mission, audio samples
+    ├── concerts.astro              # Season Pass 2-step Flex explainer + Individual Concert embeds
+    ├── about.astro                 # Artistic Director bio, ensemble history, audition info
+    ├── support.astro               # Tax-deductible giving tiers + Givebutter embed
+    ├── login.astro                 # Singer Portal sign-in (Google OAuth + Email 6-digit OTP)
+    ├── portal/
+    │   ├── index.astro             # Singer Dashboard: Announcement banner, next rehearsal, .ics subscribe, quick stats
+    │   ├── music.astro             # Repertoire browser optimized for iPad / ForScore
+    │   ├── absences.astro          # Personal absence form & history
+    │   ├── snacks.astro            # Upcoming rehearsal snack signups
+    │   ├── directory.astro         # Active member contact directory
+    │   ├── handbook.astro          # Sanitized HTML render of Handbook Google Doc
+    │   └── admin.astro             # Protected for Role === 'Section_Leader' | 'Admin'
+    └── api/
+        ├── auth/
+        │   ├── google.ts           # Initiates Google OAuth PKCE redirect via arctic
+        │   ├── google/callback.ts  # Validates Google OAuth callback, checks Roster, issues session cookie
+        │   ├── otp/send.ts         # POST: Checks Roster, sends 6-digit code via Resend + sets signed OTP challenge cookie
+        │   ├── otp/verify.ts       # POST: Constant-time verifies HMAC OTP challenge, issues session cookie
+        │   ├── dev-bypass.ts       # POST (DEV only): Switches preview role (Admin / Section_Leader / Singer)
+        │   └── logout.ts           # POST/GET: Clears session cookie
+        ├── music/[fileId].ts       # Streams PDF/MP3 from Drive with HTTP Range (206) + Edge Cache support
+        ├── absences.ts             # POST: upserts absence + sends Resend alert; DELETE: marks Cleared
+        ├── snacks.ts               # POST: looks up Event_ID live and updates Schedule cell G{row} or H{row}
+        ├── roster.ts               # POST/PUT: Admin-only endpoint to add or update a singer row by Email
+        └── calendar.ics.ts         # GET: HMAC-authenticated subscribable iCalendar feed for Apple/Google/Outlook
+```
+
+---
+
+## 7. Detailed Implementation Specifications
+
+### A. Zero-Dependency Google Workspace REST Layer & `zod` Resilience (`src/lib/google.ts`)
+1. **Web Crypto Service Account Auth (`jose`):**
+   - Import the PEM `GOOGLE_PRIVATE_KEY` (with `.replace(/\\n/g, '\n')`) using `importPKCS8` and sign a short-lived RS256 JWT assertion with `SignJWT` (`scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly'`).
+   - Exchange at `https://oauth2.googleapis.com/token` and cache the resulting access token in memory/Edge cache for 50 minutes.
+   - Always pass `supportsAllDrives=true&includeItemsFromAllDrives=true` on all Google Drive v3 requests so Shared Drives work out of the box.
+2. **Row-Level `zod` Parsing & Sheet Health Warnings:**
+   - Parse every non-empty row with `zod` `.safeParse()` (trimming whitespace and normalizing booleans/emails).
+   - Skip blank rows silently; record malformed rows into `SheetWarning[]` so the public site and portal never crash, while Admins see exact row-number diagnostics on `/portal/admin`.
+3. **Safe Primary-Key Lookup Before Every Write (No Stale `rowIndex` Writes):**
+   - Board members may sort, filter, or insert rows in the Master Google Sheet at any time. **Never accept `rowIndex` from a client payload or rely on a cached `rowIndex` when writing.**
+   - **Snacks (`POST /api/snacks`):** Perform an uncached read of `Schedule!A2:H`, find `eventId` (`freshRowIndex = matchIndex + 2`), verify concurrency preconditions (when claiming, target slot `G` or `H` must be empty; when releasing, target slot must match `singer.name` unless caller is `Admin`), and write to `Schedule!G${freshRowIndex}` or `Schedule!H${freshRowIndex}`. Return `409 Conflict` if another singer just claimed the slot.
+   - **Roster (`POST / PUT /api/roster`):** Perform an uncached read of `Roster!A2:A` to locate the normalized `email` before updating `Roster!A${freshRowIndex}:G${freshRowIndex}` (or append if adding a new singer after confirming no duplicate email exists).
+   - **Absences (`POST / DELETE /api/absences`):** Perform an uncached read of `Absences!A2:I` to find any existing row matching `(eventId, singerEmail)`. Update `Absences!A${freshRowIndex}:I${freshRowIndex}` if found, or append to `Absences!A:I` if new.
+4. **Edge Caching & Instant Invalidation (`src/lib/cache.ts`):**
+   - Cache Sheet reads (`60s` TTL) and Handbook/Drive metadata (`300s` TTL) via Cloudflare's `caches.default` (falling back to an in-memory `Map` in local dev).
+   - Immediately delete the relevant cache key inside `/api/snacks` (`schedule`), `/api/absences` (`absences`), and `/api/roster` (`roster`).
+   - When operating in Sandbox/Demo mode (`GOOGLE_MASTER_SHEET_ID` unset or `"DEMO"`), keep an in-memory mutable store seeded with realistic Kantorei sample data so claiming snacks, submitting absences, and editing the roster work interactively right out of the box!
+
+### B. Dual Stateless Authentication & Live Roster Re-Hydration (`src/lib/auth.ts`, `src/middleware.ts`)
+1. **Method 1 — Google OAuth (`arctic`):**
+   - `/api/auth/google` generates state + PKCE code verifier in `httpOnly` cookies and redirects to Google.
+   - `/api/auth/google/callback` exchanges the code, extracts the verified Google email, verifies the singer is `active` in `getRoster()`, and sets an `httpOnly`, `Secure`, `SameSite=Lax` JWT session cookie (`kantorei_session`, 14-day expiry).
+2. **Method 2 — Stateless 6-Digit Email Login Code (`jose` + Resend):**
+   - Solves login for `@icloud.com`, `@yahoo.com`, `@outlook.com`, and non-Google roster emails with **zero database**:
+   - `POST /api/auth/otp/send`: Normalizes email and checks `getRoster()`. If active, generates a cryptographically random 6-digit code, emails it via Resend (or logs/displays a sandbox hint in dev when `RESEND_API_KEY` is unset), and sets a 10-minute signed `kantorei_otp` `httpOnly` JWT cookie containing `SHA-256(email + ":" + code + ":" + AUTH_SECRET)`. (Always returns a generic success message if an unknown email is entered to prevent roster enumeration.)
+   - `POST /api/auth/otp/verify`: Recomputes the hash from the submitted email + 6-digit code, verifies against the unexpired `kantorei_otp` cookie, clears the challenge cookie, re-verifies `getRoster()`, and issues the `kantorei_session` JWT cookie.
+3. **Middleware & 60-Second Roster Re-Hydration (`src/middleware.ts`):**
+   - On every `/portal/*` and protected `/api/*` request, `src/middleware.ts` verifies `kantorei_session` (or the strictly `import.meta.env.DEV && DEV_PREVIEW_BYPASS === 'true'` preview singer) **and** looks up the email in cached `getRoster()` (`60s` TTL).
+   - Attaches the fresh `Singer` object to `context.locals.singer`. If a board member sets `Active = FALSE` or updates `Role` in Google Sheets, access/permissions update within 60 seconds without waiting for cookie expiration.
+
+### C. Tablet & ForScore-Friendly Music Streaming (`src/pages/api/music/[fileId].ts`)
+- Choir members read scores on iPads (ForScore) and rehearse with MP3 part tracks.
+- `GET /api/music/[fileId]?name=O_Magnum_Mysterium.pdf`:
+  1. Verify `context.locals.singer`.
+  2. In Demo mode (`fileId.startsWith('demo-')`), generate and stream a clean valid sample PDF score or synthesized rehearsal audio tone with full `Range` support so tablet/browser players work immediately in local testing.
+  3. In Production mode, fetch Drive metadata (`supportsAllDrives=true`) to verify MIME type (`application/pdf` or `audio/*`) and size, then forward any incoming `Range` header to `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`.
+  4. Stream the `ReadableStream` response body directly through the Cloudflare Worker with `206 Partial Content` (or `200 OK`), `Accept-Ranges: bytes`, `Content-Range`, `Content-Length`, and `Content-Disposition: inline; filename="${sanitizedName}"`.
+
+### D. Subscribable Rehearsal Calendar Feed (`src/pages/api/calendar.ics.ts`)
+- Generates a live RFC 5545 `text/calendar` `.ics` feed of all `Schedule` events (`VEVENT` items with `DTSTART`, `DTEND`, `SUMMARY`, `LOCATION`, `DESCRIPTION`).
+- Authenticated via a stateless HMAC query token (`?token=HMAC(AUTH_SECRET, "calendar-feed")`) rather than cookies so Apple Calendar, Google Calendar, and Outlook can poll `webcal://.../api/calendar.ics?token=...` in the background.
+
+### E. Absence Upsert/Withdrawal & Dynamic Section Leader Routing (`src/pages/api/absences.ts`)
+1. Validate caller via `context.locals.singer` (only `Section_Leader` or `Admin` may submit on behalf of another singer during roll call).
+2. Upsert into `Absences!A:I` keyed by `(eventId, normalizedSingerEmail)` with `Status = 'Absent'`.
+3. `DELETE /api/absences` marks an existing row's `Status = 'Cleared'` and invalidates the `absences` cache.
+4. On `POST`, look up active `Section_Leader`s matching `targetSinger.sectionGroup`, plus `Conductor_Email` and `Manager_Email` from `Config`, and count total active absences (`status === 'Absent'`) for that `eventId` in that section.
+5. **Sandbox Email Safeguard:** If `SANDBOX_OVERRIDE_EMAIL` is set or `PORTAL_FROM_EMAIL` includes `onboarding@resend.dev`, route `to:` to the sandbox address while listing intended recipients (`[Section Leaders, Conductor, Manager]`) at the top of the email body.
+
+### F. Ticket Tailor "Flex Season Pass" + Givebutter Fundraising (`src/pages/concerts.astro`, `src/pages/support.astro`)
+1. **Top Section of `/concerts` — "Flex Season Pass (Buy Now, Pick Your Dates Later)":**
+   - Clear 2-step visual guide:
+     - **Step 1: Purchase Your Season Pass:** Receive your personal **Pass Code** (valid for 1 VIP admission per concert cycle + pass-holder perks).
+     - **Step 2: Reserve Your Performance Night Anytime:** Select Saturday or Sunday below and enter your Pass Code to unlock your **`$0.00` Season Pass VIP Ticket** from that night's seating capacity.
+   - Mounts `<TicketTailorEmbed client:visible widgetUrl={config.Season_Pass_TT_Widget_URL} mode="season-pass" />`.
+2. **Individual Concert Cards:**
+   - Renders `On_Sale` and `Upcoming` concerts from `Concerts`. In Demo mode (`DEMO_SERIES_ID`), renders an interactive **Demo Checkout Preview Card** (performance night selector, Pass Code unlock toggle, `$0.00` Pass Holder VIP tier, General Admission tier, and add-on donation buttons).
+
+---
+
+## 8. Step-by-Step Build Execution Plan
+1. **Phase 1 (Scaffold, Cloudflare Config, Types & Google Workspace Engine):** Initialize Astro 5 + React 19 + Tailwind CSS v4 + `@astrojs/cloudflare`, create `src/types/choir.ts` (`zod` schemas), `src/lib/cache.ts`, and `src/lib/google.ts` (Web Crypto Service Account JWT, Sheets/Drive REST API, primary-key safe mutations, and interactive in-memory Demo store).
+2. **Phase 2 (Dual Stateless Auth, Middleware & Layouts):** Build `src/lib/auth.ts` (`arctic` Google OAuth + `jose` session & 6-digit Email OTP + Dev role switcher), `src/middleware.ts`, auth API endpoints, `/login`, `PublicLayout.astro`, and `PortalLayout.astro`.
+3. **Phase 3 (Singer Portal Core Features):** Build `/portal` (Dashboard + `.ics` calendar subscription modal), `/portal/absences` + `/api/absences` + `src/lib/email.ts`, `/portal/snacks` + `/api/snacks`, `/portal/music` + `/api/music/[fileId]`, `/portal/directory`, `/portal/handbook`, and `/api/calendar.ics`.
+4. **Phase 4 (Section Leader & Admin Dashboard):** Build `/portal/admin` + `/api/roster` with the rehearsal attendance matrix by voice part, 1-click "Mark Absent / Clear at Roll Call", "Add / Edit Singer" modal, and Google Sheet `zod` data-health alerts.
+5. **Phase 5 (Public Website, Box Office & Verification):** Build `/`, `/concerts`, `/about`, `/support`, `TicketTailorEmbed.tsx`, and `GivebutterEmbed.tsx`, then run full TypeScript & Cloudflare Worker production build verification (`astro check && npm run build`).

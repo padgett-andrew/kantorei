@@ -1,0 +1,265 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { getConcerts, getMedia, getPortalConfig } from '../lib/google';
+
+const [config, concerts, media] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getConcerts(Astro.locals),
+  getMedia(Astro.locals),
+]);
+
+const choirName = config.Choir_Name || 'Kantorei';
+const activeConcerts = concerts.filter((c) => c.status === 'On_Sale' || c.status === 'Upcoming');
+const featuredConcert = activeConcerts[0] ?? concerts[0];
+const featuredMedia = media.slice(0, 3);
+---
+
+<PublicLayout title="Minnesota's Premier Choral Ensemble">
+  <!-- Editorial Hero -->
+  <section class="relative overflow-hidden bg-navy-950 text-ivory-50">
+    <div
+      class="pointer-events-none absolute inset-0 opacity-35"
+      style="background: radial-gradient(circle at 22% 20%, #af673c 0%, transparent 46%), radial-gradient(circle at 80% 75%, #233d5c 0%, transparent 52%);"
+    ></div>
+
+    <div class="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+      <div class="max-w-3xl">
+        <span class="inline-flex items-center gap-2 rounded-full border border-gold-400/40 bg-gold-500/15 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-gold-300">
+          Founded 1988 · Minnesota · Artistic Director Adam Reinwald
+        </span>
+        <h1 class="mt-6 font-editorial text-5xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl">
+          Rich, effortless choral sound—singing for a lifetime.
+        </h1>
+        <p class="mt-6 max-w-2xl text-base leading-relaxed text-zinc-200 sm:text-lg">
+          Founded in 1988 by Axel Theimer, and now led by Adam Reinwald, {choirName} is one of the premier choral ensembles in Minnesota—performing mostly a cappella music from around the world and sharing recordings worldwide.
+        </p>
+
+        <div class="mt-9 flex flex-wrap items-center gap-4">
+          <a
+            href="/concerts"
+            class="rounded-full bg-gold-500 px-7 py-3.5 text-xs font-bold uppercase tracking-[0.16em] text-white shadow-lg transition hover:bg-copper-600"
+          >
+            Advent Concert Tickets & Passes
+          </a>
+          <a
+            href="/media"
+            class="rounded-full border border-white/25 px-7 py-3.5 text-xs font-semibold uppercase tracking-[0.16em] text-ivory-50 transition hover:border-gold-400 hover:text-gold-300"
+          >
+            Watch & Listen
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Next Concert Spotlight (Advent with Kantorei Banner + Shoreview & Edina Dates) -->
+  {featuredConcert && (
+    <section class="mx-auto -mt-10 relative z-10 max-w-6xl px-4 sm:px-6">
+      <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-xl">
+        <div class="grid lg:grid-cols-12">
+          {featuredConcert.heroImageUrl && (
+            <div class="lg:col-span-6 bg-navy-950">
+              <img
+                src={featuredConcert.heroImageUrl}
+                alt={featuredConcert.title}
+                class="h-full w-full object-cover"
+              />
+            </div>
+          )}
+
+          <div
+            class:list={[
+              'flex flex-col justify-between p-7 sm:p-10',
+              featuredConcert.heroImageUrl ? 'lg:col-span-6' : 'lg:col-span-12',
+            ]}
+          >
+            <div>
+              <div class="flex flex-wrap items-center gap-2.5">
+                <span class="rounded-full bg-navy-900 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gold-300">
+                  Next Concert
+                </span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+                  {featuredConcert.status === 'On_Sale' ? 'Tickets & Passes Available' : 'Upcoming'}
+                </span>
+              </div>
+
+              <h2 class="mt-3 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+                {featuredConcert.title}
+              </h2>
+
+              {featuredConcert.slug === 'advent-with-kantorei' ? (
+                <div class="mt-4 space-y-2.5 rounded-2xl bg-ivory-100 p-4 text-sm">
+                  <div>
+                    <p class="font-bold text-navy-950">Saturday, December 19 · 3:00 PM</p>
+                    <p class="text-xs text-zinc-700">
+                      Shepherd of the Hills Lutheran Church, Shoreview
+                    </p>
+                  </div>
+                  <div class="border-t border-zinc-200/80 pt-2.5">
+                    <p class="font-bold text-navy-950">Sunday, December 20 · 3:00 PM</p>
+                    <p class="text-xs text-zinc-700">
+                      Lutheran Church of the Good Shepherd, Edina
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p class="mt-2 text-sm font-semibold text-zinc-800">
+                  {featuredConcert.datesDisplay} · {featuredConcert.venueName}
+                </p>
+              )}
+
+              <p class="mt-4 text-sm leading-relaxed text-zinc-600">
+                {featuredConcert.description}
+              </p>
+            </div>
+
+            <div class="mt-6 flex flex-wrap items-center gap-3">
+              <a
+                href={`/concerts#${featuredConcert.slug}`}
+                class="rounded-full bg-gold-500 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-copper-600"
+              >
+                Reserve Tickets →
+              </a>
+              <a
+                href="/concerts"
+                class="rounded-full border border-zinc-300 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-navy-900 transition hover:border-navy-900"
+              >
+                Flex Season Pass
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Ensemble Identity & Mission -->
+  <section class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <div class="grid gap-12 lg:grid-cols-12 lg:items-center">
+      <div class="lg:col-span-7 space-y-4">
+        <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
+          Who We Are
+        </span>
+        <h2 class="font-editorial text-4xl font-bold text-navy-950 sm:text-5xl">
+          Setting a standard in Minnesota for rich and effortless choral sound.
+        </h2>
+        <p class="text-base leading-relaxed text-zinc-700">
+          Founded in 1988 by Axel Theimer, and now led by Adam Reinwald, {choirName} is one of the premier choral ensembles in Minnesota. With an integral focus on vocal health, {choirName}’s singers have set a standard in Minnesota for rich and effortless choral sound. {choirName} performs a wide range of mostly a cappella music from around the world. Most concerts include signature pieces complementing pieces from both well-known and emerging composers.
+        </p>
+        <p class="text-base leading-relaxed text-zinc-700">
+          {choirName} performs primarily in Minnesota and shares recordings worldwide. Through its outreach programming, {choirName} invites audiences of all ages to share its pursuit of singing for a lifetime.
+        </p>
+        <div class="pt-2">
+          <a
+            href="/about"
+            class="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-900 underline decoration-gold-500 decoration-2 underline-offset-4"
+          >
+            Learn more about Adam Reinwald, Axel Theimer & Auditions →
+          </a>
+        </div>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:col-span-5">
+        <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs">
+          <span class="font-editorial text-4xl font-bold text-gold-500">1988</span>
+          <p class="mt-1 text-xs font-semibold uppercase tracking-wider text-navy-950">
+            Founded in Minnesota
+          </p>
+          <p class="mt-2 text-xs leading-relaxed text-zinc-600">
+            Established by Axel Theimer and led today by Artistic Director Adam Reinwald.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs">
+          <span class="font-editorial text-4xl font-bold text-gold-500">A Cappella</span>
+          <p class="mt-1 text-xs font-semibold uppercase tracking-wider text-navy-950">
+            Global Repertoire
+          </p>
+          <p class="mt-2 text-xs leading-relaxed text-zinc-600">
+            Signature choral works paired with music from well-known and emerging composers.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-200 bg-ivory-100 p-6 sm:col-span-2">
+          <p class="text-xs font-bold uppercase tracking-wider text-gold-500">
+            Vocal Health & Outreach
+          </p>
+          <p class="mt-1.5 font-editorial text-2xl font-bold text-navy-950">
+            Inviting singers and audiences of all ages to share the pursuit of singing for a lifetime.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Recordings & YouTube Media Strip -->
+  <section class="border-t border-zinc-200 bg-white py-20">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
+            Recordings Shared Worldwide
+          </span>
+          <h2 class="mt-1 font-editorial text-4xl font-bold text-navy-950">
+            Watch & Listen on YouTube
+          </h2>
+        </div>
+        <a
+          href="/media"
+          class="text-sm font-semibold text-navy-900 underline decoration-gold-500 decoration-2 underline-offset-4"
+        >
+          Explore Full Media Library →
+        </a>
+      </div>
+
+      <div class="mt-10 grid gap-6 md:grid-cols-3">
+        {featuredMedia.map((item) => (
+          <a
+            href={item.youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group flex flex-col justify-between rounded-2xl border border-zinc-200 bg-ivory-50 p-6 transition hover:border-gold-500 hover:shadow-md"
+          >
+            <div>
+              <span class="inline-block rounded-full bg-copper-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-gold-500">
+                {item.category}
+              </span>
+              <h3 class="mt-3 font-editorial text-2xl font-bold text-navy-950 group-hover:text-gold-500 transition-colors">
+                {item.title}
+              </h3>
+              <p class="mt-1 text-xs font-semibold text-zinc-600">{item.subtitle}</p>
+              {item.description && (
+                <p class="mt-3 text-sm leading-relaxed text-zinc-600 line-clamp-3">
+                  {item.description}
+                </p>
+              )}
+            </div>
+            <span class="mt-5 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-navy-900">
+              Watch on YouTube ↗
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Tax-Deductible Patronage CTA -->
+  <section class="border-t border-zinc-200 bg-ivory-100/90 py-16">
+    <div class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 sm:px-6 md:flex-row md:items-center">
+      <div class="max-w-2xl">
+        <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
+          501(c)(3) Nonprofit Ensemble
+        </span>
+        <h2 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+          Help sustain {choirName}’s concerts, recordings, and community outreach.
+        </h2>
+      </div>
+      <a
+        href="/support"
+        class="shrink-0 rounded-full bg-navy-900 px-7 py-3.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-navy-800"
+      >
+        Make a Tax-Deductible Gift
+      </a>
+    </div>
+  </section>
+</PublicLayout>

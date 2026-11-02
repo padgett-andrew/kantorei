@@ -1,0 +1,49 @@
+---
+import '../styles/global.css';
+import Navbar from '../components/public/Navbar.astro';
+import Footer from '../components/public/Footer.astro';
+import { getPortalConfig } from '../lib/google';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'Founded in 1988 by Axel Theimer and led by Adam Reinwald, Kantorei is one of the premier a cappella choral ensembles in Minnesota.',
+} = Astro.props;
+
+const config = await getPortalConfig(Astro.locals);
+const choirName = config.Choir_Name || 'Kantorei';
+const isSignedIn = Boolean(Astro.locals.singer);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | {choirName}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="flex min-h-screen flex-col bg-ivory-50 text-zinc-900 antialiased">
+    <Navbar choirName={choirName} currentPath={Astro.url.pathname} isSignedIn={isSignedIn} />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer
+      choirName={choirName}
+      youtubeUrl={config.YouTube_URL}
+      instagramUrl={config.Instagram_URL}
+      facebookUrl={config.Facebook_URL}
+    />
+  </body>
+</html>

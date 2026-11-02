@@ -1,0 +1,103 @@
+---
+import type { Singer } from '../../types/choir';
+import { voicePartBadgeColor } from '../../lib/utils';
+
+interface Props {
+  singer: Singer;
+  choirName: string;
+  currentPath: string;
+}
+
+const { singer, choirName, currentPath } = Astro.props;
+const showAdminTab = singer.role === 'Admin' || singer.role === 'Section_Leader';
+
+const tabs = [
+  { href: '/portal', label: 'Dashboard', exact: true },
+  { href: '/portal/music', label: 'Sheet Music & Audio', exact: false },
+  { href: '/portal/absences', label: 'Absences', exact: false },
+  { href: '/portal/snacks', label: 'Snack Signup', exact: false },
+  { href: '/portal/directory', label: 'Directory', exact: false },
+  { href: '/portal/handbook', label: 'Handbook', exact: false },
+  ...(showAdminTab
+    ? [{ href: '/portal/admin', label: 'Roll Call & Roster', exact: false }]
+    : []),
+];
+
+const badgeClass = voicePartBadgeColor(singer.voicePart);
+---
+
+<header class="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur-md">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6">
+    <div class="flex items-center justify-between py-3">
+      <div class="flex items-center gap-3">
+        <a href="/portal" class="flex items-center gap-2.5">
+          <img
+            src="/images/kantorei-logo-transparent.webp"
+            alt={`${choirName} logo`}
+            width="105"
+            height="55"
+            class="h-9 w-auto object-contain"
+          />
+          <span class="rounded-md bg-copper-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-500">
+            Singer Portal
+          </span>
+        </a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden items-center gap-2 sm:flex">
+          <span class="text-sm font-medium text-zinc-800">{singer.name}</span>
+          <span class={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${badgeClass}`}>
+            {singer.voicePart}
+          </span>
+          {singer.role !== 'Singer' && (
+            <span class="rounded-full bg-navy-900 px-2.5 py-0.5 text-[11px] font-semibold text-gold-300">
+              {singer.role.replace('_', ' ')}
+            </span>
+          )}
+        </div>
+
+        <a
+          href="/"
+          class="rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-900"
+        >
+          Public Site
+        </a>
+
+        <form method="POST" action="/api/auth/logout">
+          <button
+            type="submit"
+            class="cursor-pointer rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+          >
+            Sign Out
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tablet / iPad Friendly Horizontal Scrollable Tab Bar -->
+    <nav
+      class="-mb-px flex gap-1 overflow-x-auto pt-0.5 scrollbar-none"
+      aria-label="Singer Portal Navigation"
+    >
+      {tabs.map((tab) => {
+        const isActive = tab.exact
+          ? currentPath === tab.href || currentPath === `${tab.href}/`
+          : currentPath.startsWith(tab.href);
+        return (
+          <a
+            href={tab.href}
+            class:list={[
+              'shrink-0 border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors',
+              isActive
+                ? 'border-gold-500 text-navy-950 font-semibold'
+                : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-800',
+            ]}
+          >
+            {tab.label}
+          </a>
+        );
+      })}
+    </nav>
+  </div>
+</header>

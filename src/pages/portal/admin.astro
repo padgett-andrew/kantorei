@@ -1,0 +1,53 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import AdminRollCall from '../../components/portal/AdminRollCall';
+import { hasRole } from '../../lib/auth';
+import {
+  getAbsences,
+  getAllSheetWarnings,
+  getPortalConfig,
+  getRoster,
+  getSchedule,
+} from '../../lib/google';
+import { getTodayIso } from '../../lib/utils';
+
+const singer = Astro.locals.singer!;
+if (!hasRole(singer, ['Section_Leader', 'Admin'])) {
+  return Astro.redirect('/portal');
+}
+
+const [config, roster, schedule, absences, sheetWarnings] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getRoster(Astro.locals),
+  getSchedule(Astro.locals),
+  getAbsences(Astro.locals),
+  getAllSheetWarnings(Astro.locals),
+]);
+
+const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
+const upcomingEvents = schedule.filter((ev) => ev.date >= today);
+---
+
+<PortalLayout title="Roll Call & Roster">
+  <div class="mb-6">
+    <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+      Section Leader & Admin Console
+    </span>
+    <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+      Roll Call & Master Roster
+    </h1>
+    <p class="mt-1 text-sm text-zinc-600">
+      Track rehearsal headcounts by section, mark or clear attendance during roll call, and manage active Roster access.
+    </p>
+  </div>
+
+  <AdminRollCall
+    client:load
+    caller={singer}
+    initialRoster={roster}
+    upcomingEvents={upcomingEvents}
+    initialAbsences={absences}
+    sheetWarnings={sheetWarnings}
+  />
+</PortalLayout>
+

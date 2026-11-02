@@ -1,0 +1,112 @@
+export const VOICE_PARTS = ['S1', 'S2', 'A1', 'A2', 'T1', 'T2', 'B1', 'B2'] as const;
+export const SECTION_GROUPS = ['Soprano', 'Alto', 'Tenor', 'Bass'] as const;
+export const MEMBER_ROLES = ['Singer', 'Section_Leader', 'Admin'] as const;
+export const EVENT_TYPES = ['Rehearsal', 'Sectional', 'Retreat', 'Dress', 'Concert'] as const;
+export const ABSENCE_STATUSES = ['Absent', 'Cleared'] as const;
+export const CONCERT_STATUSES = ['Upcoming', 'On_Sale', 'Past'] as const;
+
+export type VoicePart = (typeof VOICE_PARTS)[number];
+export type SectionGroup = (typeof SECTION_GROUPS)[number];
+export type MemberRole = (typeof MEMBER_ROLES)[number];
+export type EventType = (typeof EVENT_TYPES)[number];
+export type AbsenceStatus = (typeof ABSENCE_STATUSES)[number];
+export type ConcertStatus = (typeof CONCERT_STATUSES)[number];
+
+export interface Singer {
+  email: string; // Primary key (normalized lowercase)
+  name: string;
+  voicePart: VoicePart;
+  sectionGroup: SectionGroup;
+  role: MemberRole;
+  phone: string;
+  active: boolean;
+}
+
+export interface ScheduleEvent {
+  eventId: string; // Primary key
+  date: string;    // YYYY-MM-DD
+  time: string;
+  type: EventType;
+  title: string;
+  location: string;
+  snack1Name: string;
+  snack2Name: string;
+  notes: string;
+}
+
+export interface AbsenceRecord {
+  timestamp: string;
+  eventId: string;
+  date: string;
+  singerName: string;
+  singerEmail: string;
+  voicePart: VoicePart;
+  reason: string;
+  submittedBy: string;
+  status: AbsenceStatus;
+}
+
+export interface ConcertEvent {
+  slug: string;
+  title: string;
+  datesDisplay: string;
+  venueName: string;
+  venueAddress: string;
+  description: string;
+  ttEventSeriesId: string;
+  status: ConcertStatus;
+  heroImageUrl?: string;
+}
+
+export interface MediaItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  youtubeUrl: string;
+  category: string;
+  description?: string;
+}
+
+export interface PortalConfig {
+  Choir_Name: string;
+  Conductor_Email: string;
+  Manager_Email: string;
+  Repertoire_Drive_Folder_ID: string;
+  Handbook_Google_Doc_ID: string;
+  Season_Pass_TT_Widget_URL: string;
+  Portal_Announcement: string;
+  Calendar_Timezone: string;
+  YouTube_URL: string;
+  Instagram_URL: string;
+  Facebook_URL: string;
+  [key: string]: string;
+}
+
+export interface SheetWarning {
+  tab: 'Roster' | 'Schedule' | 'Absences' | 'Concerts' | 'Media';
+  rowNumber: number;
+  message: string;
+}
+
+export interface DriveMusicFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  sizeBytes?: number;
+  isPdf: boolean;
+  isAudio: boolean;
+  matchesUserSection?: boolean;
+}
+
+export interface RepertoirePiece {
+  folderId: string;
+  title: string;
+  files: DriveMusicFile[];
+}
+
+export function inferSectionGroup(voicePart: VoicePart): SectionGroup {
+  if (voicePart.startsWith('S')) return 'Soprano';
+  if (voicePart.startsWith('A')) return 'Alto';
+  if (voicePart.startsWith('T')) return 'Tenor';
+  return 'Bass';
+}

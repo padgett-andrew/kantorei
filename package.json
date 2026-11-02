@@ -1,0 +1,34 @@
+{
+  "name": "kantorei",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "preview": "wrangler dev",
+    "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
+    "deploy": "ASTRO_TELEMETRY_DISABLED=1 astro build && wrangler deploy"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.5.0",
+    "@astrojs/react": "^4.2.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "astro": "^5.7.0",
+    "clsx": "^2.1.1",
+    "jose": "^6.0.0",
+    "lucide-react": "^0.511.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tailwind-merge": "^3.2.0",
+    "tailwindcss": "^4.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.8.2",
+    "wrangler": "^4.14.0"
+  }
+}

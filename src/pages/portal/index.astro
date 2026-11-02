@@ -1,0 +1,242 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import CalendarSubscribeModal from '../../components/portal/CalendarSubscribeModal';
+import { getCalendarFeedToken } from '../../lib/calendar';
+import {
+  getAbsences,
+  getPortalConfig,
+  getRepertoire,
+  getSchedule,
+} from '../../lib/google';
+import {
+  eventTypeBadgeColor,
+  formatEventDate,
+  formatShortMonthDay,
+  getTodayIso,
+} from '../../lib/utils';
+
+const singer = Astro.locals.singer!;
+const [config, schedule, absences, repertoire, feedToken] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getSchedule(Astro.locals),
+  getAbsences(Astro.locals),
+  getRepertoire(Astro.locals),
+  getCalendarFeedToken(Astro.locals),
+]);
+
+const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
+const upcomingEvents = schedule.filter((ev) => ev.date >= today);
+const nextEvent = upcomingEvents[0];
+
+const myUpcomingAbsences = absences.filter(
+  (a) =>
+    a.singerEmail === singer.email &&
+    a.status === 'Absent' &&
+    a.date >= today
+);
+
+const mySnackDates = upcomingEvents.filter(
+  (ev) =>
+    ev.snack1Name.toLowerCase() === singer.name.toLowerCase() ||
+    ev.snack2Name.toLowerCase() === singer.name.toLowerCase()
+);
+
+const httpsFeedUrl = `${Astro.url.origin}/api/calendar.ics?token=${feedToken}`;
+const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
+---
+
+<PortalLayout title="Dashboard">
+  <div class="space-y-8">
+    <!-- Optional Board Announcement Banner from Config Sheet -->
+    {config.Portal_Announcement && (
+      <div class="rounded-2xl border border-gold-400/60 bg-amber-50/90 px-5 py-4 text-sm text-navy-950 shadow-2xs">
+        <span class="mr-2 rounded-md bg-navy-900 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-gold-300">
+          Announcement
+        </span>
+        <span class="font-medium">{config.Portal_Announcement}</span>
+      </div>
+    )}
+
+    <!-- Greeting & Calendar Sync Row -->
+    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+          {singer.sectionGroup} Section · Voice Part {singer.voicePart}
+        </p>
+        <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+          Welcome back, {singer.name.split(' ')[0]}
+        </h1>
+      </div>
+
+      <CalendarSubscribeModal
+        client:load
+        httpsFeedUrl={httpsFeedUrl}
+        webcalFeedUrl={webcalFeedUrl}
+      />
+    </div>
+
+    <!-- Next Rehearsal Hero Card + Quick Portal Stats -->
+    <div class="grid gap-5 lg:grid-cols-12">
+      <div class="rounded-2xl bg-navy-950 p-6 text-ivory-50 shadow-md sm:p-7 lg:col-span-7">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-400">
+            Next Call
+          </span>
+          {nextEvent && (
+            <span class="rounded-full bg-white/10 px-3 py-0.5 text-xs font-semibold text-ivory-100">
+              {nextEvent.type}
+            </span>
+          )}
+        </div>
+
+        {nextEvent ? (
+          <div class="mt-4">
+            <h2 class="font-editorial text-3xl font-bold text-white">
+              {nextEvent.title}
+            </h2>
+            <p class="mt-1.5 text-sm font-medium text-gold-300">
+              {formatEventDate(nextEvent.date)} · {nextEvent.time}
+            </p>
+            <p class="mt-1 text-sm text-zinc-300">📍 {nextEvent.location}</p>
+
+            {nextEvent.notes && (
+              <div class="mt-4 rounded-xl bg-white/5 border border-white/10 p-3.5 text-xs leading-relaxed text-zinc-200">
+                <strong class="text-gold-300">Rehearsal Plan:</strong> {nextEvent.notes}
+              </div>
+            )}
+
+            <div class="mt-5 flex flex-wrap gap-3">
+              <a
+                href="/portal/music"
+                class="rounded-xl bg-gold-500 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-copper-600"
+              >
+                Open Digital Scores ({repertoire.length})
+              </a>
+              <a
+                href="/portal/absences"
+                class="rounded-xl border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-ivory-100 transition hover:bg-white/10"
+              >
+                Report an Absence
+              </a>
+            </div>
+          </div>
+        ) : (
+          <p class="mt-4 text-sm text-zinc-300">
+            No upcoming rehearsals are posted on the Schedule tab right now.
+          </p>
+        )}
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">
+        <a
+          href="/portal/snacks"
+          class="flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xs transition hover:border-navy-900"
+        >
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Hospitality Signup
+            </span>
+            <h3 class="mt-1 font-editorial text-2xl font-bold text-navy-950">
+              {mySnackDates.length > 0
+                ? `${mySnackDates.length} Snack Date${mySnackDates.length > 1 ? 's' : ''} Claimed`
+                : 'Claim a Rehearsal Snack Slot'}
+            </h3>
+          </div>
+          <p class="mt-3 text-xs text-zinc-600">
+            {mySnackDates.length > 0
+              ? `Next up: ${formatEventDate(mySnackDates[0].date)}`
+              : 'Tap to volunteer for an open mid-rehearsal break slot →'}
+          </p>
+        </a>
+
+        <a
+          href="/portal/absences"
+          class="flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xs transition hover:border-navy-900"
+        >
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Your Attendance Status
+            </span>
+            <h3 class="mt-1 font-editorial text-2xl font-bold text-navy-950">
+              {myUpcomingAbsences.length === 0
+                ? '0 Upcoming Absences'
+                : `${myUpcomingAbsences.length} Logged Absence${
+                    myUpcomingAbsences.length > 1 ? 's' : ''
+                  }`}
+            </h3>
+          </div>
+          <p class="mt-3 text-xs text-zinc-600">
+            {myUpcomingAbsences.length === 0
+              ? 'Marked present for all upcoming calls.'
+              : `Next logged absence: ${formatEventDate(myUpcomingAbsences[0].date)}`}
+          </p>
+        </a>
+      </div>
+    </div>
+
+    <!-- Full Upcoming Rehearsal & Concert Schedule -->
+    <section class="rounded-2xl border border-zinc-200 bg-white shadow-2xs overflow-hidden">
+      <div class="border-b border-zinc-100 bg-ivory-50 px-6 py-4 flex items-center justify-between">
+        <h2 class="font-editorial text-2xl font-bold text-navy-950">
+          Upcoming Rehearsals & Calls
+        </h2>
+        <span class="text-xs font-medium text-zinc-500">
+          {upcomingEvents.length} scheduled
+        </span>
+      </div>
+
+      <ul class="divide-y divide-zinc-100">
+        {upcomingEvents.map((ev) => {
+          const { weekday, month, day } = formatShortMonthDay(ev.date);
+          const isAbsent = myUpcomingAbsences.some((a) => a.eventId === ev.eventId);
+
+          return (
+            <li class="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex items-start gap-4">
+                <div class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-zinc-200 bg-ivory-50 text-center">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    {month}
+                  </span>
+                  <span class="text-lg font-bold leading-none text-navy-950">{day}</span>
+                  <span class="text-[10px] text-zinc-400">{weekday}</span>
+                </div>
+
+                <div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="font-semibold text-zinc-900">{ev.title}</h3>
+                    <span
+                      class={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${eventTypeBadgeColor(
+                        ev.type
+                      )}`}
+                    >
+                      {ev.type}
+                    </span>
+                    {isAbsent && (
+                      <span class="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-800">
+                        You Marked Absent
+                      </span>
+                    )}
+                  </div>
+                  <p class="mt-0.5 text-xs font-medium text-zinc-600">
+                    {ev.time} · {ev.location}
+                  </p>
+                  {ev.notes && <p class="mt-1 text-xs text-zinc-500">{ev.notes}</p>}
+                </div>
+              </div>
+
+              {(ev.snack1Name || ev.snack2Name) && (
+                <div class="text-xs text-zinc-500 sm:text-right shrink-0">
+                  <span class="block font-medium text-zinc-400">Hospitality</span>
+                  <span>
+                    {[ev.snack1Name, ev.snack2Name].filter(Boolean).join(' & ')}
+                  </span>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  </div>
+</PortalLayout>
+

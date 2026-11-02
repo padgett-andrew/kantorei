@@ -1,0 +1,103 @@
+---
+interface Props {
+  choirName?: string;
+  currentPath?: string;
+  isSignedIn?: boolean;
+}
+
+const { choirName = 'Kantorei', currentPath = '/', isSignedIn = false } = Astro.props;
+
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/concerts', label: 'Concerts & Passes' },
+  { href: '/media', label: 'Media' },
+  { href: '/about', label: 'About & Auditions' },
+  { href: '/support', label: 'Support' },
+];
+---
+
+<header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-ivory-50/95 backdrop-blur-md">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+    <a href="/" class="group flex items-center gap-3" aria-label={`${choirName} Home`}>
+      <img
+        src="/images/kantorei-logo-transparent.webp"
+        alt={`${choirName} logo`}
+        width="128"
+        height="67"
+        class="h-11 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+      />
+    </a>
+
+    <nav class="hidden items-center gap-7 md:flex" aria-label="Primary">
+      {navLinks.map((link) => {
+        const active =
+          link.href === '/'
+            ? currentPath === '/'
+            : currentPath.startsWith(link.href);
+        return (
+          <a
+            href={link.href}
+            class:list={[
+              'text-sm font-medium transition-colors',
+              active
+                ? 'text-navy-900 underline decoration-gold-500 decoration-2 underline-offset-8'
+                : 'text-zinc-600 hover:text-navy-900',
+            ]}
+          >
+            {link.label}
+          </a>
+        );
+      })}
+    </nav>
+
+    <div class="hidden items-center gap-3 md:flex">
+      <a
+        href={isSignedIn ? '/portal' : '/login'}
+        class="rounded-full border border-zinc-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-700 transition hover:border-gold-500 hover:text-navy-900"
+      >
+        {isSignedIn ? 'Singer Portal →' : 'Singer Login'}
+      </a>
+      <a
+        href="/concerts"
+        class="rounded-full bg-gold-500 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-copper-600"
+      >
+        Buy Tickets
+      </a>
+    </div>
+
+    <!-- Zero-JS Mobile Dropdown -->
+    <details class="relative md:hidden">
+      <summary class="flex cursor-pointer list-none items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-navy-900">
+        Menu
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+        </svg>
+      </summary>
+      <div class="absolute right-0 mt-2 w-64 rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl">
+        <div class="flex flex-col gap-2.5">
+          {navLinks.map((link) => (
+            <a
+              href={link.href}
+              class="rounded-lg px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-ivory-100"
+            >
+              {link.label}
+            </a>
+          ))}
+          <hr class="my-1 border-zinc-200" />
+          <a
+            href="/concerts"
+            class="rounded-full bg-gold-500 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-white"
+          >
+            Buy Tickets & Passes
+          </a>
+          <a
+            href={isSignedIn ? '/portal' : '/login'}
+            class="rounded-full border border-zinc-300 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider text-zinc-700"
+          >
+            {isSignedIn ? 'Open Singer Portal' : 'Singer Login'}
+          </a>
+        </div>
+      </div>
+    </details>
+  </div>
+</header>

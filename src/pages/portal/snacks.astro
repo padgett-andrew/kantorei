@@ -1,0 +1,34 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import SnackBoard from '../../components/portal/SnackBoard';
+import { getPortalConfig, getSchedule } from '../../lib/google';
+import { getTodayIso } from '../../lib/utils';
+
+const singer = Astro.locals.singer!;
+const [config, schedule] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getSchedule(Astro.locals),
+]);
+
+const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
+const snackEvents = schedule.filter(
+  (ev) => ev.date >= today && ev.type !== 'Concert'
+);
+---
+
+<PortalLayout title="Snack Signup">
+  <div class="mb-6">
+    <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+      Tuesday Break Hospitality
+    </span>
+    <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+      1-Tap Rehearsal Snack Signup
+    </h1>
+    <p class="mt-1 text-sm text-zinc-600">
+      Two singers team up each rehearsal to bring light, nut-conscious snacks for our mid-rehearsal break (~45 singers). Claim or release a slot in one tap.
+    </p>
+  </div>
+
+  <SnackBoard client:load singer={singer} initialEvents={snackEvents} />
+</PortalLayout>
+

@@ -1,0 +1,166 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { getPortalConfig } from '../lib/google';
+
+const config = await getPortalConfig(Astro.locals);
+const choirName = config.Choir_Name || 'Kantorei';
+---
+
+<PublicLayout
+  title="About & Auditions"
+  description="Founded in 1988 by Axel Theimer and led by Adam Reinwald, Kantorei is one of the premier choral ensembles in Minnesota."
+>
+  <section class="bg-navy-950 py-16 text-ivory-50 sm:py-24">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <span class="text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">
+        Founded in 1988 · Minnesota
+      </span>
+      <h1 class="mt-3 max-w-3xl font-editorial text-4xl font-bold text-white sm:text-6xl">
+        Vocal health, effortless sound, and singing for a lifetime.
+      </h1>
+      <p class="mt-5 max-w-3xl text-base leading-relaxed text-zinc-200 sm:text-lg">
+        Founded in 1988 by Axel Theimer, and now led by Adam Reinwald, {choirName} is one of the premier choral ensembles in Minnesota.
+      </p>
+    </div>
+  </section>
+
+  <!-- Ensemble Story & Leadership -->
+  <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+    <div class="grid gap-12 lg:grid-cols-12">
+      <!-- Artistic Leadership Cards -->
+      <div class="space-y-6 lg:col-span-5">
+        <div class="rounded-3xl border border-zinc-200 bg-ivory-100 p-8">
+          <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
+            Artistic Direction
+          </span>
+          <h2 class="mt-2 font-editorial text-3xl font-bold text-navy-950">
+            Adam Reinwald
+          </h2>
+          <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Artistic & Managing Director
+          </p>
+          <p class="mt-4 text-sm leading-relaxed text-zinc-700">
+            Leading {choirName} with a deep commitment to healthy vocal pedagogy, expressive clarity, and adventurous programming, Adam Reinwald guides the ensemble’s Minnesota concert series, studio recordings, composer collaborations, and intergenerational outreach.
+          </p>
+          {config.Conductor_Email && (
+            <a
+              href={`mailto:${config.Conductor_Email}`}
+              class="mt-5 inline-block text-xs font-semibold text-navy-900 underline decoration-gold-500 underline-offset-4"
+            >
+              Contact Artistic Leadership →
+            </a>
+          )}
+        </div>
+
+        <div class="rounded-3xl border border-zinc-200 bg-white p-7 shadow-2xs">
+          <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
+            Founding Legacy (1988)
+          </span>
+          <h3 class="mt-1.5 font-editorial text-2xl font-bold text-navy-950">
+            Axel Theimer, Founder
+          </h3>
+          <p class="mt-3 text-sm leading-relaxed text-zinc-600">
+            Founded in 1988 by acclaimed conductor, pedagogue, and vocal clinician Axel Theimer, {choirName} grew out of an enduring philosophy that healthy, unforced vocal technique unlocks extraordinary ensemble warmth and longevity.
+          </p>
+        </div>
+      </div>
+
+      <!-- Core Ensemble Narrative -->
+      <div class="space-y-6 lg:col-span-7">
+        <h2 class="font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+          About {choirName}
+        </h2>
+        <p class="text-base leading-relaxed text-zinc-700">
+          Founded in 1988 by Axel Theimer, and now led by Adam Reinwald, {choirName} is one of the premier choral ensembles in Minnesota. With an integral focus on vocal health, {choirName}’s singers have set a standard in Minnesota for rich and effortless choral sound. {choirName} performs a wide range of mostly a cappella music from around the world. Most concerts include signature pieces complementing pieces from both well-known and emerging composers.
+        </p>
+        <p class="text-base leading-relaxed text-zinc-700">
+          {choirName} performs primarily in Minnesota and shares recordings worldwide. Through its outreach programming, {choirName} invites audiences of all ages to share its pursuit of singing for a lifetime.
+        </p>
+
+        <div class="grid gap-4 pt-4 sm:grid-cols-2">
+          <div class="rounded-2xl border border-zinc-200 bg-white p-5">
+            <h3 class="font-editorial text-xl font-bold text-navy-950">
+              Signature & Emerging Works
+            </h3>
+            <p class="mt-1.5 text-sm text-zinc-600">
+              Every program pairs treasured ensemble signature pieces with global a cappella traditions and fresh voices in choral composition.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-zinc-200 bg-white p-5">
+            <h3 class="font-editorial text-xl font-bold text-navy-950">
+              Worldwide Recordings
+            </h3>
+            <p class="mt-1.5 text-sm text-zinc-600">
+              Studio albums, concert captures, and lyric videos connect listeners around the world to Minnesota choral artistry.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Auditions Section -->
+  <section id="auditions" class="scroll-mt-20 border-t border-zinc-200 bg-white py-16 sm:py-20">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <div class="max-w-3xl">
+        <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
+          Sing With Us
+        </span>
+        <h2 class="mt-2 font-editorial text-4xl font-bold text-navy-950">
+          Audition for {choirName}
+        </h2>
+        <p class="mt-3 text-sm leading-relaxed text-zinc-600 sm:text-base">
+          We welcome inquiries from experienced Twin Cities choral singers across all voice parts (S1, S2, A1, A2, T1, T2, B1, B2) who share our passion for healthy vocalism, independent musicianship, and a cappella ensemble artistry.
+        </p>
+      </div>
+
+      <div class="mt-10 grid gap-6 md:grid-cols-3">
+        <div class="rounded-2xl border border-zinc-200 bg-ivory-50 p-6">
+          <h3 class="font-editorial text-2xl font-bold text-navy-950">
+            1. Vocal Ease & Color
+          </h3>
+          <p class="mt-2 text-sm text-zinc-600">
+            A brief prepared solo or art song demonstrating natural, unforced resonance, clear diction, and expressive phrasing.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-200 bg-ivory-50 p-6">
+          <h3 class="font-editorial text-2xl font-bold text-navy-950">
+            2. Ear & Range Check
+          </h3>
+          <p class="mt-2 text-sm text-zinc-600">
+            Supportive vocalises exploring range, dynamic flexibility, vowel matching, and unaccompanied intonation.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-200 bg-ivory-50 p-6">
+          <h3 class="font-editorial text-2xl font-bold text-navy-950">
+            3. Ensemble Reading
+          </h3>
+          <p class="mt-2 text-sm text-zinc-600">
+            Sight-reading unaccompanied choral excerpts to experience blend and musical responsiveness firsthand.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-8 rounded-2xl bg-navy-950 p-6 text-ivory-50 sm:flex sm:items-center sm:justify-between sm:p-8">
+        <div>
+          <h3 class="font-editorial text-2xl font-bold text-white">
+            Interested in auditioning for {choirName}?
+          </h3>
+          <p class="mt-1 text-sm text-zinc-300">
+            Send a brief note with your voice part and choral background to schedule an audition conversation with Adam Reinwald.
+          </p>
+        </div>
+        <a
+          href={`mailto:${config.Manager_Email || 'manager@kantorei.net'}?subject=${encodeURIComponent(
+            `${choirName} Audition Inquiry`
+          )}`}
+          class="mt-4 inline-block shrink-0 rounded-full bg-gold-500 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-copper-600 sm:mt-0"
+        >
+          Inquire About Auditions
+        </a>
+      </div>
+    </div>
+  </section>
+</PublicLayout>

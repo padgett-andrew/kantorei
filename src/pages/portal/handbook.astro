@@ -1,0 +1,30 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import { getHandbookHtml } from '../../lib/google';
+
+const { html, isDemo } = await getHandbookHtml(Astro.locals);
+---
+
+<PortalLayout title="Singer Handbook">
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+        Policies, Attire & Rehearsal Standards
+      </span>
+      <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+        Choir Handbook
+      </h1>
+    </div>
+    {!isDemo && (
+      <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+        Synced Live from Google Docs
+      </span>
+    )}
+  </div>
+
+  <article
+    class="handbook-prose rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs sm:p-10"
+    set:html={html}
+  />
+</PortalLayout>
+

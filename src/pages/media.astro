@@ -1,0 +1,250 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { getMedia, getPortalConfig } from '../lib/google';
+
+const [config, mediaItems] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getMedia(Astro.locals),
+]);
+
+const choirName = config.Choir_Name || 'Kantorei';
+const youtubeChannel = config.YouTube_URL || 'https://www.youtube.com/@kantoreiMN';
+const instagramUrl = config.Instagram_URL || 'https://www.instagram.com/kantorei_mn';
+const facebookUrl = config.Facebook_URL || 'https://www.facebook.com/kantoreimn';
+
+function extractYouTubeEmbedUrl(rawUrl: string): { embedUrl: string | null; videoId: string | null } {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.hostname.includes('youtu.be')) {
+      const id = parsed.pathname.slice(1).split('/')[0];
+      if (id && /^[\w-]{11}$/.test(id)) {
+        return {
+          videoId: id,
+          embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
+        };
+      }
+    }
+    if (parsed.hostname.includes('youtube.com')) {
+      const v = parsed.searchParams.get('v');
+      if (v && /^[\w-]{11}$/.test(v)) {
+        return {
+          videoId: v,
+          embedUrl: `https://www.youtube-nocookie.com/embed/${v}?rel=0`,
+        };
+      }
+      if (parsed.pathname.startsWith('/embed/')) {
+        const id = parsed.pathname.replace('/embed/', '').split('/')[0];
+        if (id) {
+          return {
+            videoId: id,
+            embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
+          };
+        }
+      }
+      const list = parsed.searchParams.get('list');
+      if (list) {
+        return {
+          videoId: null,
+          embedUrl: `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(list)}`,
+        };
+      }
+    }
+  } catch {
+    // Ignore invalid URL
+  }
+  return { embedUrl: null, videoId: null };
+}
+---
+
+<PublicLayout
+  title="Media & Recordings"
+  description="Watch and listen to Kantorei concert videos, lyric videos, and choral recordings shared worldwide from Minnesota."
+>
+  <!-- Hero -->
+  <section class="bg-navy-950 py-16 text-ivory-50 sm:py-22">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+        <div class="max-w-2xl">
+          <span class="text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">
+            Performances & Recordings Shared Worldwide
+          </span>
+          <h1 class="mt-3 font-editorial text-4xl font-bold text-white sm:text-6xl">
+            Watch & Listen to {choirName}
+          </h1>
+          <p class="mt-4 text-sm leading-relaxed text-zinc-300 sm:text-base">
+            {choirName} performs primarily in Minnesota and shares recordings with listeners around the globe—spanning signature a cappella works, world music, and collaborations with well-known and emerging composers.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <a
+            href={youtubeChannel}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 rounded-full bg-gold-500 px-5 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-copper-600"
+          >
+            <svg class="h-4 w-4 fill-current" viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+            </svg>
+            YouTube Channel
+          </a>
+          <a
+            href={instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-ivory-50 transition hover:border-gold-400 hover:text-gold-300"
+          >
+            Instagram
+          </a>
+          <a
+            href={facebookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-ivory-50 transition hover:border-gold-400 hover:text-gold-300"
+          >
+            Facebook
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- YouTube Video & Recording Grid (Managed via Master Google Sheet `Media` Tab) -->
+  <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+    <div class="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <div>
+        <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
+          Video & Audio Gallery
+        </span>
+        <h2 class="mt-1 font-editorial text-4xl font-bold text-navy-950">
+          Featured YouTube Performances & Albums
+        </h2>
+      </div>
+      <a
+        href={youtubeChannel}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-sm font-semibold text-navy-900 underline decoration-gold-500 decoration-2 underline-offset-4"
+      >
+        Browse all videos on YouTube →
+      </a>
+    </div>
+
+    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      {mediaItems.map((item) => {
+        const { embedUrl } = extractYouTubeEmbedUrl(item.youtubeUrl);
+
+        return (
+          <article class="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs transition hover:border-gold-400/60 hover:shadow-md">
+            {embedUrl ? (
+              <div class="aspect-video w-full bg-navy-950">
+                <iframe
+                  src={embedUrl}
+                  title={item.title}
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                  class="h-full w-full border-0"
+                />
+              </div>
+            ) : (
+              <a
+                href={item.youtubeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden bg-navy-950 p-6 text-center text-white"
+              >
+                <div
+                  class="pointer-events-none absolute inset-0 opacity-35 transition duration-300 group-hover:opacity-55"
+                  style="background: radial-gradient(circle at 30% 25%, #af673c 0%, transparent 55%), radial-gradient(circle at 80% 80%, #1f3652 0%, transparent 60%);"
+                />
+                <span class="relative flex h-14 w-14 items-center justify-center rounded-full bg-gold-500 text-white shadow-lg transition-transform duration-200 group-hover:scale-110">
+                  <svg class="ml-0.5 h-6 w-6 fill-current" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+                <span class="relative mt-3 text-xs font-semibold uppercase tracking-widest text-gold-300">
+                  Watch on YouTube ↗
+                </span>
+              </a>
+            )}
+
+            <div class="flex flex-1 flex-col justify-between p-6">
+              <div>
+                <span class="inline-block rounded-full bg-copper-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-gold-500">
+                  {item.category}
+                </span>
+                <h3 class="mt-2.5 font-editorial text-2xl font-bold text-navy-950 leading-snug">
+                  {item.title}
+                </h3>
+                {item.subtitle && (
+                  <p class="mt-1 text-xs font-semibold text-zinc-600">{item.subtitle}</p>
+                )}
+                {item.description && (
+                  <p class="mt-3 text-sm leading-relaxed text-zinc-600">
+                    {item.description}
+                  </p>
+                )}
+              </div>
+
+              <div class="mt-5 border-t border-zinc-100 pt-3.5">
+                <a
+                  href={item.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gold-500 hover:text-navy-950"
+                >
+                  Open on YouTube ↗
+                </a>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+
+    <!-- Social Community Strip -->
+    <div class="mt-16 rounded-3xl border border-zinc-200 bg-ivory-100 p-8 sm:p-10">
+      <div class="grid gap-8 lg:grid-cols-12 lg:items-center">
+        <div class="lg:col-span-7">
+          <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
+            Stay Connected
+          </span>
+          <h2 class="mt-2 font-editorial text-3xl font-bold text-navy-950">
+            Follow {choirName} Behind the Scenes
+          </h2>
+          <p class="mt-2 text-sm leading-relaxed text-zinc-700">
+            Join us on Instagram, Facebook, and YouTube for rehearsal glimpses, composer conversations, new recording releases, and Twin Cities outreach events.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap gap-3 lg:col-span-5 lg:justify-end">
+          <a
+            href={instagramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="rounded-full bg-navy-900 px-5 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-navy-800"
+          >
+            Instagram
+          </a>
+          <a
+            href={facebookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="rounded-full bg-navy-900 px-5 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-navy-800"
+          >
+            Facebook
+          </a>
+          <a
+            href={youtubeChannel}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="rounded-full bg-gold-500 px-5 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-copper-600"
+          >
+            YouTube
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</PublicLayout>

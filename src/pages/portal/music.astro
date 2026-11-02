@@ -1,0 +1,25 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import MusicLibrary from '../../components/portal/MusicLibrary';
+import { getRepertoire } from '../../lib/google';
+
+const singer = Astro.locals.singer!;
+const pieces = await getRepertoire(Astro.locals);
+---
+
+<PortalLayout title="Sheet Music & Rehearsal Audio">
+  <div class="mb-6">
+    <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+      Digital Music Folder · iPad & ForScore Ready
+    </span>
+    <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+      Repertoire Scores & Part Tracks
+    </h1>
+    <p class="mt-1 text-sm text-zinc-600">
+      Files matching your voice part (<strong>{singer.voicePart} / {singer.sectionGroup}</strong>) are highlighted automatically. Tap <strong>Open in ForScore</strong> on your iPad to import clean filenames without Google Drive account prompts.
+    </p>
+  </div>
+
+  <MusicLibrary client:load singer={singer} pieces={pieces} />
+</PortalLayout>
+

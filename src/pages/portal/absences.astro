@@ -1,0 +1,39 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import AbsenceManager from '../../components/portal/AbsenceManager';
+import { getAbsences, getPortalConfig, getSchedule } from '../../lib/google';
+import { getTodayIso } from '../../lib/utils';
+
+const singer = Astro.locals.singer!;
+const [config, schedule, allAbsences] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getSchedule(Astro.locals),
+  getAbsences(Astro.locals),
+]);
+
+const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
+const upcomingEvents = schedule.filter((ev) => ev.date >= today);
+const myAbsences = allAbsences.filter((a) => a.singerEmail === singer.email);
+---
+
+<PortalLayout title="Absences">
+  <div class="mb-6">
+    <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+      Attendance & Section Planning
+    </span>
+    <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+      Absence Notifications
+    </h1>
+    <p class="mt-1 text-sm text-zinc-600">
+      Let your {singer.sectionGroup} Section Leader and the Artistic Director know as early as possible if you must miss a rehearsal.
+    </p>
+  </div>
+
+  <AbsenceManager
+    client:load
+    singer={singer}
+    upcomingEvents={upcomingEvents}
+    initialAbsences={myAbsences}
+  />
+</PortalLayout>
+

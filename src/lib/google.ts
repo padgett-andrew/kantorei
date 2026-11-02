@@ -1,0 +1,1447 @@
+import { importPKCS8, SignJWT } from 'jose';
+import {
+  inferSectionGroup,
+  type AbsenceRecord,
+  type ConcertEvent,
+  type DriveMusicFile,
+  type MediaItem,
+  type PortalConfig,
+  type RepertoirePiece,
+  type ScheduleEvent,
+  type SheetWarning,
+  type Singer,
+} from '../types/choir';
+import { cachedFetchJson, invalidateCacheTag } from './cache';
+import { getEnv, isSandboxSheetMode } from './env';
+import { sanitizeHandbookHtml } from './sanitize';
+import {
+  AbsenceRowSchema,
+  ConcertRowSchema,
+  MediaRowSchema,
+  ScheduleRowSchema,
+  SingerRowSchema,
+} from './schemas';
+
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ConflictError';
+  }
+}
+
+export class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NotFoundError';
+  }
+}
+
+const GOOGLE_SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive.readonly',
+].join(' ');
+
+let cachedAccessToken: { token: string; expiresAt: number } | null = null;
+
+async function getGoogleAccessToken(locals?: App.Locals): Promise<string> {
+  if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now() + 60_000) {
+    return cachedAccessToken.token;
+  }
+
+  const clientEmail = getEnv('GOOGLE_SERVICE_ACCOUNT_EMAIL', locals);
+  const rawPrivateKey = getEnv('GOOGLE_PRIVATE_KEY', locals);
+  if (!clientEmail || !rawPrivateKey) {
+    throw new Error('Missing Google Service Account credentials.');
+  }
+
+  const normalizedPem = rawPrivateKey.replace(/\\n/g, '\n');
+  const privateKey = await importPKCS8(normalizedPem, 'RS256');
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  const assertion = await new SignJWT({ scope: GOOGLE_SCOPES })
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+    .setIssuer(clientEmail)
+    .setSubject(clientEmail)
+    .setAudience('https://oauth2.googleapis.com/token')
+    .setIssuedAt(nowSec)
+    .setExpirationTime(nowSec + 3600)
+    .sign(privateKey);
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion,
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Google OAuth token exchange failed (${res.status}): ${errText}`);
+  }
+
+  const payload = (await res.json()) as { access_token: string; expires_in: number };
+  cachedAccessToken = {
+    token: payload.access_token,
+    expiresAt: Date.now() + (payload.expires_in - 120) * 1000,
+  };
+  return payload.access_token;
+}
+
+// ---------------------------------------------------------------------------
+// Interactive In-Memory Demo Store (Active when GOOGLE_MASTER_SHEET_ID="DEMO")
+// ---------------------------------------------------------------------------
+
+interface DemoStore {
+  roster: Singer[];
+  schedule: ScheduleEvent[];
+  absences: AbsenceRecord[];
+  concerts: ConcertEvent[];
+  media: MediaItem[];
+  config: PortalConfig;
+  repertoire: RepertoirePiece[];
+  warnings: SheetWarning[];
+}
+
+const demoStore: DemoStore = {
+  config: {
+    Choir_Name: 'Kantorei',
+    Conductor_Email: 'director@kantorei.net',
+    Manager_Email: 'manager@kantorei.net',
+    Repertoire_Drive_Folder_ID: 'DEMO',
+    Handbook_Google_Doc_ID: 'DEMO',
+    Season_Pass_TT_Widget_URL: 'DEMO',
+    Portal_Announcement:
+      'Welcome to our Advent with Kantorei concert cycle! Please log any November or December rehearsal conflicts early so section voicings for Shoreview (Dec 19) and Edina (Dec 20) can be finalized.',
+    Calendar_Timezone: 'America/Chicago',
+    YouTube_URL: 'https://www.youtube.com/@kantoreiMN',
+    Instagram_URL: 'https://www.instagram.com/kantorei_mn',
+    Facebook_URL: 'https://www.facebook.com/kantoreimn',
+  },
+  roster: [
+    {
+      email: 'andrew@kantorei.net',
+      name: 'Andrew Padgett',
+      voicePart: 'B2',
+      sectionGroup: 'Bass',
+      role: 'Admin',
+      phone: '612-555-0100',
+      active: true,
+    },
+    {
+      email: 'claire.lindqvist@icloud.com',
+      name: 'Claire Lindqvist',
+      voicePart: 'S1',
+      sectionGroup: 'Soprano',
+      role: 'Section_Leader',
+      phone: '612-555-0112',
+      active: true,
+    },
+    {
+      email: 'maya.patel@gmail.com',
+      name: 'Maya Patel',
+      voicePart: 'S2',
+      sectionGroup: 'Soprano',
+      role: 'Singer',
+      phone: '651-555-0134',
+      active: true,
+    },
+    {
+      email: 'hannah.berg@yahoo.com',
+      name: 'Hannah Bergstrom',
+      voicePart: 'S1',
+      sectionGroup: 'Soprano',
+      role: 'Singer',
+      phone: '612-555-0177',
+      active: true,
+    },
+    {
+      email: 'elena.rostova@gmail.com',
+      name: 'Elena Rostova',
+      voicePart: 'A1',
+      sectionGroup: 'Alto',
+      role: 'Section_Leader',
+      phone: '612-555-0148',
+      active: true,
+    },
+    {
+      email: 'rachel.kim@outlook.com',
+      name: 'Rachel Kim',
+      voicePart: 'A2',
+      sectionGroup: 'Alto',
+      role: 'Singer',
+      phone: '651-555-0191',
+      active: true,
+    },
+    {
+      email: 'nadia.okafor@gmail.com',
+      name: 'Nadia Okafor',
+      voicePart: 'A1',
+      sectionGroup: 'Alto',
+      role: 'Singer',
+      phone: '612-555-0163',
+      active: true,
+    },
+    {
+      email: 'marcus.vance@gmail.com',
+      name: 'Marcus Vance',
+      voicePart: 'T1',
+      sectionGroup: 'Tenor',
+      role: 'Section_Leader',
+      phone: '612-555-0122',
+      active: true,
+    },
+    {
+      email: 'julian.cho@icloud.com',
+      name: 'Julian Cho',
+      voicePart: 'T2',
+      sectionGroup: 'Tenor',
+      role: 'Singer',
+      phone: '651-555-0185',
+      active: true,
+    },
+    {
+      email: 'lucas.meyer@gmail.com',
+      name: 'Lucas Meyer',
+      voicePart: 'T1',
+      sectionGroup: 'Tenor',
+      role: 'Singer',
+      phone: '612-555-0159',
+      active: true,
+    },
+    {
+      email: 'david.halvorsen@gmail.com',
+      name: 'David Halvorsen',
+      voicePart: 'B1',
+      sectionGroup: 'Bass',
+      role: 'Section_Leader',
+      phone: '612-555-0199',
+      active: true,
+    },
+    {
+      email: 'samuel.brooks@outlook.com',
+      name: 'Samuel Brooks',
+      voicePart: 'B1',
+      sectionGroup: 'Bass',
+      role: 'Singer',
+      phone: '651-555-0141',
+      active: true,
+    },
+    {
+      email: 'former.member@example.com',
+      name: 'Jordan Alverez (On Leave)',
+      voicePart: 'T2',
+      sectionGroup: 'Tenor',
+      role: 'Singer',
+      phone: '612-555-0109',
+      active: false,
+    },
+  ],
+  schedule: [
+    {
+      eventId: 'reh-2026-11-03',
+      date: '2026-11-03',
+      time: '7:00 PM - 9:30 PM',
+      type: 'Rehearsal',
+      title: 'Tuesday Tutti Rehearsal',
+      location: 'St. Mark’s Choir Room',
+      snack1Name: 'Elena Rostova',
+      snack2Name: 'Marcus Vance',
+      notes: 'Lauridsen O Magnum Mysterium (mm. 1-48), Shaw "and the swallow", Howells I & II.',
+    },
+    {
+      eventId: 'reh-2026-11-10',
+      date: '2026-11-10',
+      time: '7:00 PM - 9:30 PM',
+      type: 'Sectional',
+      title: 'Split SA / TB Sectionals + Tutti Run',
+      location: 'Main Sanctuary & Parish Hall',
+      snack1Name: 'Claire Lindqvist',
+      snack2Name: '',
+      notes: '7:00-8:00 PM Sectionals on Bach BWV 230 fugue; 8:10 PM tutti.',
+    },
+    {
+      eventId: 'reh-2026-11-14',
+      date: '2026-11-14',
+      time: '9:30 AM - 3:00 PM',
+      type: 'Retreat',
+      title: 'Autumn Choral Retreat',
+      location: 'Mount Olivet Retreat Center',
+      snack1Name: '',
+      snack2Name: '',
+      notes: 'Bring black 3-ring binder, pencil, and water bottle. Catered lunch provided at 12:15 PM.',
+    },
+    {
+      eventId: 'reh-2026-11-17',
+      date: '2026-11-17',
+      time: '7:00 PM - 9:30 PM',
+      type: 'Rehearsal',
+      title: 'Tuesday Rehearsal — Off-Book Check',
+      location: 'St. Mark’s Choir Room',
+      snack1Name: '',
+      snack2Name: '',
+      notes: 'Memorization check on Lauridsen; acoustic spacing work on Howells Requiem.',
+    },
+    {
+      eventId: 'reh-2026-12-17',
+      date: '2026-12-17',
+      time: '6:30 PM - 9:30 PM',
+      type: 'Dress',
+      title: 'Advent with Kantorei — Final Dress Rehearsal',
+      location: 'Shepherd of the Hills Lutheran Church, Shoreview',
+      snack1Name: 'David Halvorsen',
+      snack2Name: '',
+      notes: 'Mandatory acoustic dress call. Full Advent program order run.',
+    },
+    {
+      eventId: 'con-2026-12-19',
+      date: '2026-12-19',
+      time: '3:00 PM (1:30 PM Acoustic Call)',
+      type: 'Concert',
+      title: 'Advent with Kantorei — Shoreview',
+      location: 'Shepherd of the Hills Lutheran Church, Shoreview',
+      snack1Name: '',
+      snack2Name: '',
+      notes: '3920 Victoria St N, Shoreview, MN. Concert attire; doors open at 2:30 PM.',
+    },
+    {
+      eventId: 'con-2026-12-20',
+      date: '2026-12-20',
+      time: '3:00 PM (1:30 PM Acoustic Call)',
+      type: 'Concert',
+      title: 'Advent with Kantorei — Edina',
+      location: 'Lutheran Church of the Good Shepherd, Edina',
+      snack1Name: '',
+      snack2Name: '',
+      notes: '4801 France Ave S, Edina, MN. Post-concert greeting with audience & patrons.',
+    },
+  ],
+  absences: [
+    {
+      timestamp: '2026-10-29T18:15:00.000Z',
+      eventId: 'reh-2026-11-10',
+      date: '2026-11-10',
+      singerName: 'Samuel Brooks',
+      singerEmail: 'samuel.brooks@outlook.com',
+      voicePart: 'B1',
+      reason: 'Work travel to Chicago',
+      submittedBy: 'Self',
+      status: 'Absent',
+    },
+    {
+      timestamp: '2026-10-30T14:20:00.000Z',
+      eventId: 'reh-2026-11-03',
+      date: '2026-11-03',
+      singerName: 'Maya Patel',
+      singerEmail: 'maya.patel@gmail.com',
+      voicePart: 'S2',
+      reason: 'Parent-teacher conferences',
+      submittedBy: 'Self',
+      status: 'Absent',
+    },
+  ],
+  concerts: [
+    {
+      slug: 'advent-with-kantorei',
+      title: 'Advent with Kantorei',
+      datesDisplay:
+        'Sat, December 19, 3:00 PM (Shoreview) & Sun, December 20, 3:00 PM (Edina)',
+      venueName:
+        'Shepherd of the Hills Lutheran Church, Shoreview · Lutheran Church of the Good Shepherd, Edina',
+      venueAddress: 'Shoreview & Edina, MN',
+      description:
+        'Gather in candlelight and winter stillness for Kantorei’s beloved Advent tradition—weaving luminous a cappella carols from around the world, cherished signature works, and radiant music by contemporary and emerging composers.',
+      ttEventSeriesId: 'DEMO_SERIES_ID',
+      status: 'On_Sale',
+      heroImageUrl: '/images/advent-with-kantorei.webp',
+    },
+    {
+      slug: 'spring-2027',
+      title: 'Voices Across Borders',
+      datesDisplay: 'Sat, March 20, 7:30 PM & Sun, March 21, 3:00 PM',
+      venueName: 'Twin Cities Sanctuary Venues (TBA)',
+      venueAddress: 'Minneapolis & St. Paul, MN',
+      description:
+        'Unaccompanied choral masterworks from the Baltic states, Latin America, and the Upper Midwest—pairing beloved ensemble signature pieces with vibrant works by emerging voices.',
+      ttEventSeriesId: 'DEMO_SERIES_ID',
+      status: 'Upcoming',
+    },
+    {
+      slug: 'may-2027',
+      title: 'Singing for a Lifetime',
+      datesDisplay: 'Sat, May 15, 7:30 PM & Sun, May 16, 3:00 PM',
+      venueName: 'Twin Cities Sanctuary Venues (TBA)',
+      venueAddress: 'Minneapolis & St. Paul, MN',
+      description:
+        'Our season finale celebrating community outreach, intergenerational choral artistry, and the effortless, resonant sound that has defined Kantorei in Minnesota since 1988.',
+      ttEventSeriesId: 'DEMO_SERIES_ID',
+      status: 'Upcoming',
+    },
+  ],
+  media: [
+    {
+      id: 'yt-dickinson',
+      title: 'Two Dickinson Poems ("Look Back on Time")',
+      subtitle: 'Composed by Jonathan Posthuma · Look Back on Time Album',
+      youtubeUrl:
+        'https://www.youtube.com/@kantoreiMN/search?query=Two+Dickinson+Poems',
+      category: 'Album & Lyric Video',
+      description:
+        'From the album Look Back on Time: Choral Music of Jonathan Posthuma, performed by Kantorei under Artistic Director Adam Reinwald.',
+    },
+    {
+      id: 'yt-opening-window',
+      title: 'Opening the Window',
+      subtitle: 'Composed by Jonathan Posthuma · Kantorei MN',
+      youtubeUrl:
+        'https://www.youtube.com/@kantoreiMN/search?query=Opening+the+Window',
+      category: 'Album & Lyric Video',
+      description:
+        'Expansive contemporary a cappella writing highlighting Kantorei’s hallmark vocal warmth and effortless blend.',
+    },
+    {
+      id: 'yt-from-such-sparks',
+      title: 'From Such Sparks',
+      subtitle: 'Choral Music of Gerald Cohen · Kantorei MN',
+      youtubeUrl:
+        'https://www.youtube.com/@kantoreiMN/search?query=From+Such+Sparks+Gerald+Cohen',
+      category: 'Featured Recording',
+      description:
+        'Studio recording collaboration sharing Kantorei’s artistry with listeners worldwide across YouTube and streaming platforms.',
+    },
+    {
+      id: 'yt-missa-brevis',
+      title: 'Kyrie, from Missa Brevis',
+      subtitle: 'Composed by Hyun Kook · Kantorei MN',
+      youtubeUrl:
+        'https://www.youtube.com/@kantoreiMN/search?query=Kyrie+Missa+Brevis+Hyun+Kook',
+      category: 'Concert Video',
+      description:
+        'Soaring unaccompanied sacred lines from around the world.',
+    },
+    {
+      id: 'yt-brahms-liebeslieder',
+      title: 'Liebeslieder Waltzes',
+      subtitle: 'Johannes Brahms · Kantorei MN',
+      youtubeUrl:
+        'https://www.youtube.com/@kantoreiMN/search?query=Liebeslieder+Waltzes+Brahms',
+      category: 'Concert Video',
+      description:
+        'Romantic chamber repertoire balancing intimacy, buoyancy, and healthy vocal ease.',
+    },
+    {
+      id: 'yt-poem-is-a-home',
+      title: 'A Poem is a Home',
+      subtitle: 'Music & Lyrics by Jonathan Posthuma · Kantorei MN',
+      youtubeUrl:
+        'https://www.youtube.com/@kantoreiMN/search?query=A+Poem+is+a+Home',
+      category: 'Album & Lyric Video',
+      description:
+        'Contemporary Minnesota choral storytelling inviting deep meaning and belonging.',
+    },
+  ],
+  repertoire: [
+    {
+      folderId: 'piece-lauridsen',
+      title: '01 — Lauridsen: O Magnum Mysterium',
+      files: [
+        {
+          id: 'demo-pdf-lauridsen-score',
+          name: 'Lauridsen_O_Magnum_Mysterium_Full_Score_SATB.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 428_000,
+          isPdf: true,
+          isAudio: false,
+        },
+        {
+          id: 'demo-audio-lauridsen-soprano',
+          name: 'Lauridsen_Soprano_S1_S2_Part_Predominant.wav',
+          mimeType: 'audio/wav',
+          sizeBytes: 352_844,
+          isPdf: false,
+          isAudio: true,
+        },
+        {
+          id: 'demo-audio-lauridsen-alto',
+          name: 'Lauridsen_Alto_A1_A2_Part_Predominant.wav',
+          mimeType: 'audio/wav',
+          sizeBytes: 352_844,
+          isPdf: false,
+          isAudio: true,
+        },
+        {
+          id: 'demo-audio-lauridsen-tenor',
+          name: 'Lauridsen_Tenor_T1_T2_Part_Predominant.wav',
+          mimeType: 'audio/wav',
+          sizeBytes: 352_844,
+          isPdf: false,
+          isAudio: true,
+        },
+        {
+          id: 'demo-audio-lauridsen-bass',
+          name: 'Lauridsen_Bass_B1_B2_Part_Predominant.wav',
+          mimeType: 'audio/wav',
+          sizeBytes: 352_844,
+          isPdf: false,
+          isAudio: true,
+        },
+      ],
+    },
+    {
+      folderId: 'piece-shaw',
+      title: '02 — Caroline Shaw: and the swallow',
+      files: [
+        {
+          id: 'demo-pdf-shaw-score',
+          name: 'Shaw_And_The_Swallow_SATB_ForScore.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 312_000,
+          isPdf: true,
+          isAudio: false,
+        },
+        {
+          id: 'demo-audio-shaw-tutti',
+          name: 'Shaw_And_The_Swallow_All_Parts_Reference.wav',
+          mimeType: 'audio/wav',
+          sizeBytes: 352_844,
+          isPdf: false,
+          isAudio: true,
+        },
+      ],
+    },
+    {
+      folderId: 'piece-bach',
+      title: '03 — J.S. Bach: Lobet den Herrn, BWV 230',
+      files: [
+        {
+          id: 'demo-pdf-bach-score',
+          name: 'Bach_BWV230_Lobet_den_Herrn_SATB_Marked_Breath_Edition.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 690_000,
+          isPdf: true,
+          isAudio: false,
+        },
+        {
+          id: 'demo-audio-bach-bass',
+          name: 'Bach_BWV230_Bass_B1_B2_Fugue_Tempo_88bpm.wav',
+          mimeType: 'audio/wav',
+          sizeBytes: 352_844,
+          isPdf: false,
+          isAudio: true,
+        },
+        {
+          id: 'demo-audio-bach-soprano',
+          name: 'Bach_BWV230_Soprano_S1_S2_Fugue_Tempo_88bpm.wav',
+          mimeType: 'audio/wav',
+          sizeBytes: 352_844,
+          isPdf: false,
+          isAudio: true,
+        },
+      ],
+    },
+    {
+      folderId: 'piece-howells',
+      title: '04 — Herbert Howells: Requiem (Movements I–VI)',
+      files: [
+        {
+          id: 'demo-pdf-howells-score',
+          name: 'Howells_Requiem_Full_Score_With_Rehearsal_Letters.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 910_000,
+          isPdf: true,
+          isAudio: false,
+        },
+      ],
+    },
+  ],
+  warnings: [],
+};
+
+// ---------------------------------------------------------------------------
+// Low-level Google Sheets v4 REST Helpers
+// ---------------------------------------------------------------------------
+
+async function readSheetValues(range: string, locals?: App.Locals): Promise<string[][]> {
+  const sheetId = getEnv('GOOGLE_MASTER_SHEET_ID', locals);
+  const token = await getGoogleAccessToken(locals);
+  const encodedRange = encodeURIComponent(range);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Google Sheets read failed for ${range} (${res.status}): ${errText}`);
+  }
+
+  const data = (await res.json()) as { values?: string[][] };
+  return data.values ?? [];
+}
+
+async function writeSheetValues(
+  range: string,
+  values: string[][],
+  locals?: App.Locals
+): Promise<void> {
+  const sheetId = getEnv('GOOGLE_MASTER_SHEET_ID', locals);
+  const token = await getGoogleAccessToken(locals);
+  const encodedRange = encodeURIComponent(range);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}?valueInputOption=USER_ENTERED`;
+
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ range, majorDimension: 'ROWS', values }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Google Sheets write failed for ${range} (${res.status}): ${errText}`);
+  }
+}
+
+async function appendSheetValues(
+  range: string,
+  values: string[][],
+  locals?: App.Locals
+): Promise<void> {
+  const sheetId = getEnv('GOOGLE_MASTER_SHEET_ID', locals);
+  const token = await getGoogleAccessToken(locals);
+  const encodedRange = encodeURIComponent(range);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ majorDimension: 'ROWS', values }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Google Sheets append failed for ${range} (${res.status}): ${errText}`);
+  }
+}
+
+function padRow(row: string[], length: number): string[] {
+  const out = new Array<string>(length).fill('');
+  for (let i = 0; i < length; i++) {
+    out[i] = row[i] ?? '';
+  }
+  return out;
+}
+
+function isBlankRow(row: string[]): boolean {
+  return row.every((cell) => !cell || cell.trim() === '');
+}
+
+// ---------------------------------------------------------------------------
+// Cached Readers with Row-Level Zod Validation
+// ---------------------------------------------------------------------------
+
+export async function getRosterWithWarnings(
+  locals?: App.Locals
+): Promise<{ roster: Singer[]; warnings: SheetWarning[] }> {
+  if (isSandboxSheetMode(locals)) {
+    return { roster: [...demoStore.roster], warnings: [] };
+  }
+
+  return cachedFetchJson('roster', 60, async () => {
+    const rows = await readSheetValues('Roster!A2:G', locals);
+    const roster: Singer[] = [];
+    const warnings: SheetWarning[] = [];
+
+    rows.forEach((rawRow, idx) => {
+      if (isBlankRow(rawRow)) return;
+      const parsed = SingerRowSchema.safeParse(padRow(rawRow, 7));
+      if (parsed.success) {
+        roster.push(parsed.data);
+      } else {
+        warnings.push({
+          tab: 'Roster',
+          rowNumber: idx + 2,
+          message: parsed.error.issues.map((i) => i.message).join('; '),
+        });
+      }
+    });
+
+    return { roster, warnings };
+  });
+}
+
+export async function getRoster(locals?: App.Locals): Promise<Singer[]> {
+  const { roster } = await getRosterWithWarnings(locals);
+  return roster;
+}
+
+export async function getScheduleWithWarnings(
+  locals?: App.Locals
+): Promise<{ schedule: ScheduleEvent[]; warnings: SheetWarning[] }> {
+  if (isSandboxSheetMode(locals)) {
+    const sorted = [...demoStore.schedule].sort((a, b) => a.date.localeCompare(b.date));
+    return { schedule: sorted, warnings: [] };
+  }
+
+  return cachedFetchJson('schedule', 60, async () => {
+    const rows = await readSheetValues('Schedule!A2:I', locals);
+    const schedule: ScheduleEvent[] = [];
+    const warnings: SheetWarning[] = [];
+
+    rows.forEach((rawRow, idx) => {
+      if (isBlankRow(rawRow)) return;
+      const parsed = ScheduleRowSchema.safeParse(padRow(rawRow, 9));
+      if (parsed.success) {
+        schedule.push(parsed.data);
+      } else {
+        warnings.push({
+          tab: 'Schedule',
+          rowNumber: idx + 2,
+          message: parsed.error.issues.map((i) => i.message).join('; '),
+        });
+      }
+    });
+
+    schedule.sort((a, b) => a.date.localeCompare(b.date));
+    return { schedule, warnings };
+  });
+}
+
+export async function getSchedule(locals?: App.Locals): Promise<ScheduleEvent[]> {
+  const { schedule } = await getScheduleWithWarnings(locals);
+  return schedule;
+}
+
+export async function getAbsencesWithWarnings(
+  locals?: App.Locals
+): Promise<{ absences: AbsenceRecord[]; warnings: SheetWarning[] }> {
+  if (isSandboxSheetMode(locals)) {
+    return { absences: [...demoStore.absences], warnings: [] };
+  }
+
+  return cachedFetchJson('absences', 60, async () => {
+    const rows = await readSheetValues('Absences!A2:I', locals);
+    const absences: AbsenceRecord[] = [];
+    const warnings: SheetWarning[] = [];
+
+    rows.forEach((rawRow, idx) => {
+      if (isBlankRow(rawRow)) return;
+      const parsed = AbsenceRowSchema.safeParse(padRow(rawRow, 9));
+      if (parsed.success) {
+        absences.push(parsed.data);
+      } else {
+        warnings.push({
+          tab: 'Absences',
+          rowNumber: idx + 2,
+          message: parsed.error.issues.map((i) => i.message).join('; '),
+        });
+      }
+    });
+
+    return { absences, warnings };
+  });
+}
+
+export async function getAbsences(locals?: App.Locals): Promise<AbsenceRecord[]> {
+  const { absences } = await getAbsencesWithWarnings(locals);
+  return absences;
+}
+
+export async function getConcertsWithWarnings(
+  locals?: App.Locals
+): Promise<{ concerts: ConcertEvent[]; warnings: SheetWarning[] }> {
+  if (isSandboxSheetMode(locals)) {
+    return { concerts: [...demoStore.concerts], warnings: [] };
+  }
+
+  return cachedFetchJson('concerts', 60, async () => {
+    const rows = await readSheetValues('Concerts!A2:I', locals);
+    const concerts: ConcertEvent[] = [];
+    const warnings: SheetWarning[] = [];
+
+    rows.forEach((rawRow, idx) => {
+      if (isBlankRow(rawRow)) return;
+      const parsed = ConcertRowSchema.safeParse(padRow(rawRow, 9));
+      if (parsed.success) {
+        concerts.push(parsed.data);
+      } else {
+        warnings.push({
+          tab: 'Concerts',
+          rowNumber: idx + 2,
+          message: parsed.error.issues.map((i) => i.message).join('; '),
+        });
+      }
+    });
+
+    return { concerts, warnings };
+  });
+}
+
+export async function getConcerts(locals?: App.Locals): Promise<ConcertEvent[]> {
+  const { concerts } = await getConcertsWithWarnings(locals);
+  return concerts;
+}
+
+export async function getMediaWithWarnings(
+  locals?: App.Locals
+): Promise<{ media: MediaItem[]; warnings: SheetWarning[] }> {
+  if (isSandboxSheetMode(locals)) {
+    return { media: [...demoStore.media], warnings: [] };
+  }
+
+  return cachedFetchJson('media', 120, async () => {
+    try {
+      const rows = await readSheetValues('Media!A2:F', locals);
+      const media: MediaItem[] = [];
+      const warnings: SheetWarning[] = [];
+
+      rows.forEach((rawRow, idx) => {
+        if (isBlankRow(rawRow)) return;
+        const parsed = MediaRowSchema.safeParse(padRow(rawRow, 6));
+        if (parsed.success) {
+          media.push(parsed.data);
+        } else {
+          warnings.push({
+            tab: 'Media',
+            rowNumber: idx + 2,
+            message: parsed.error.issues.map((i) => i.message).join('; '),
+          });
+        }
+      });
+
+      return {
+        media: media.length > 0 ? media : [...demoStore.media],
+        warnings,
+      };
+    } catch {
+      // Gracefully fall back if the board hasn't added the optional Media tab yet
+      return { media: [...demoStore.media], warnings: [] };
+    }
+  });
+}
+
+export async function getMedia(locals?: App.Locals): Promise<MediaItem[]> {
+  const { media } = await getMediaWithWarnings(locals);
+  return media;
+}
+
+export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig> {
+  if (isSandboxSheetMode(locals)) {
+    return { ...demoStore.config };
+  }
+
+  return cachedFetchJson('config', 60, async () => {
+    const rows = await readSheetValues('Config!A2:B', locals);
+    const map: PortalConfig = {
+      Choir_Name: 'Kantorei',
+      Conductor_Email: '',
+      Manager_Email: '',
+      Repertoire_Drive_Folder_ID: 'DEMO',
+      Handbook_Google_Doc_ID: 'DEMO',
+      Season_Pass_TT_Widget_URL: 'DEMO',
+      Portal_Announcement: '',
+      Calendar_Timezone: 'America/Chicago',
+      YouTube_URL: 'https://www.youtube.com/@kantoreiMN',
+      Instagram_URL: 'https://www.instagram.com/kantorei_mn',
+      Facebook_URL: 'https://www.facebook.com/kantoreimn',
+    };
+
+    for (const row of rows) {
+      const key = (row[0] ?? '').trim();
+      const val = (row[1] ?? '').trim();
+      if (key) {
+        map[key] = val;
+      }
+    }
+    return map;
+  });
+}
+
+export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWarning[]> {
+  const [r, s, a, c, m] = await Promise.all([
+    getRosterWithWarnings(locals),
+    getScheduleWithWarnings(locals),
+    getAbsencesWithWarnings(locals),
+    getConcertsWithWarnings(locals),
+    getMediaWithWarnings(locals),
+  ]);
+  return [...r.warnings, ...s.warnings, ...a.warnings, ...c.warnings, ...m.warnings];
+}
+
+// ---------------------------------------------------------------------------
+// Safe Primary-Key Mutations (Live Row Resolution Before Cell Write)
+// ---------------------------------------------------------------------------
+
+export async function mutateSnackSlot(params: {
+  eventId: string;
+  slot: 1 | 2;
+  action: 'claim' | 'release';
+  caller: Singer;
+  locals?: App.Locals;
+}): Promise<ScheduleEvent> {
+  const { eventId, slot, action, caller, locals } = params;
+
+  if (isSandboxSheetMode(locals)) {
+    const ev = demoStore.schedule.find((e) => e.eventId === eventId);
+    if (!ev) throw new NotFoundError(`Rehearsal event "${eventId}" not found.`);
+
+    const currentHolder = slot === 1 ? ev.snack1Name : ev.snack2Name;
+    if (action === 'claim') {
+      if (currentHolder && currentHolder.trim() !== '') {
+        throw new ConflictError(`Snack Slot ${slot} was just claimed by ${currentHolder}.`);
+      }
+      if (slot === 1) ev.snack1Name = caller.name;
+      else ev.snack2Name = caller.name;
+    } else {
+      const canRelease =
+        caller.role === 'Admin' ||
+        currentHolder.trim().toLowerCase() === caller.name.trim().toLowerCase();
+      if (!canRelease) {
+        throw new ConflictError(`Only ${currentHolder} or an Admin can release this slot.`);
+      }
+      if (slot === 1) ev.snack1Name = '';
+      else ev.snack2Name = '';
+    }
+    return { ...ev };
+  }
+
+  // Uncached live lookup of Schedule!A2:I to find exact current row by Event_ID
+  const rows = await readSheetValues('Schedule!A2:I', locals);
+  const matchIdx = rows.findIndex((r) => (r[0] ?? '').trim() === eventId);
+  if (matchIdx === -1) {
+    throw new NotFoundError(`Rehearsal event "${eventId}" not found in Schedule sheet.`);
+  }
+
+  const freshRowIndex = matchIdx + 2;
+  const row = padRow(rows[matchIdx], 9);
+  const colIndex = slot === 1 ? 6 : 7; // G = index 6, H = index 7
+  const colLetter = slot === 1 ? 'G' : 'H';
+  const currentHolder = row[colIndex].trim();
+
+  if (action === 'claim') {
+    if (currentHolder !== '') {
+      throw new ConflictError(`Snack Slot ${slot} was just claimed by ${currentHolder}.`);
+    }
+    await writeSheetValues(`Schedule!${colLetter}${freshRowIndex}`, [[caller.name]], locals);
+    row[colIndex] = caller.name;
+  } else {
+    const canRelease =
+      caller.role === 'Admin' || currentHolder.toLowerCase() === caller.name.trim().toLowerCase();
+    if (!canRelease) {
+      throw new ConflictError(`Only ${currentHolder} or an Admin can release this slot.`);
+    }
+    await writeSheetValues(`Schedule!${colLetter}${freshRowIndex}`, [['']], locals);
+    row[colIndex] = '';
+  }
+
+  await invalidateCacheTag('schedule');
+  return ScheduleRowSchema.parse(row);
+}
+
+export async function upsertAbsenceRecord(params: {
+  eventId: string;
+  date: string;
+  targetSinger: Singer;
+  reason: string;
+  submittedBy: string;
+  locals?: App.Locals;
+}): Promise<AbsenceRecord> {
+  const { eventId, date, targetSinger, reason, submittedBy, locals } = params;
+  const normalizedEmail = targetSinger.email.trim().toLowerCase();
+  const timestamp = new Date().toISOString();
+
+  const record: AbsenceRecord = {
+    timestamp,
+    eventId,
+    date,
+    singerName: targetSinger.name,
+    singerEmail: normalizedEmail,
+    voicePart: targetSinger.voicePart,
+    reason: reason.trim(),
+    submittedBy,
+    status: 'Absent',
+  };
+
+  if (isSandboxSheetMode(locals)) {
+    const existingIdx = demoStore.absences.findIndex(
+      (a) => a.eventId === eventId && a.singerEmail === normalizedEmail
+    );
+    if (existingIdx >= 0) {
+      demoStore.absences[existingIdx] = record;
+    } else {
+      demoStore.absences.unshift(record);
+    }
+    return record;
+  }
+
+  const rows = await readSheetValues('Absences!A2:I', locals);
+  const existingIdx = rows.findIndex(
+    (r) =>
+      (r[1] ?? '').trim() === eventId &&
+      (r[4] ?? '').trim().toLowerCase() === normalizedEmail
+  );
+
+  const rowValues = [
+    record.timestamp,
+    record.eventId,
+    record.date,
+    record.singerName,
+    record.singerEmail,
+    record.voicePart,
+    record.reason,
+    record.submittedBy,
+    record.status,
+  ];
+
+  if (existingIdx >= 0) {
+    const freshRowIndex = existingIdx + 2;
+    await writeSheetValues(`Absences!A${freshRowIndex}:I${freshRowIndex}`, [rowValues], locals);
+  } else {
+    await appendSheetValues('Absences!A:I', [rowValues], locals);
+  }
+
+  await invalidateCacheTag('absences');
+  return record;
+}
+
+export async function clearAbsenceRecord(params: {
+  eventId: string;
+  singerEmail: string;
+  clearedBy: string;
+  locals?: App.Locals;
+}): Promise<void> {
+  const { eventId, singerEmail, clearedBy, locals } = params;
+  const normalizedEmail = singerEmail.trim().toLowerCase();
+
+  if (isSandboxSheetMode(locals)) {
+    const existing = demoStore.absences.find(
+      (a) => a.eventId === eventId && a.singerEmail === normalizedEmail
+    );
+    if (!existing) {
+      throw new NotFoundError('No matching absence record found.');
+    }
+    existing.status = 'Cleared';
+    existing.timestamp = new Date().toISOString();
+    existing.submittedBy = clearedBy;
+    return;
+  }
+
+  const rows = await readSheetValues('Absences!A2:I', locals);
+  const existingIdx = rows.findIndex(
+    (r) =>
+      (r[1] ?? '').trim() === eventId &&
+      (r[4] ?? '').trim().toLowerCase() === normalizedEmail
+  );
+
+  if (existingIdx === -1) {
+    throw new NotFoundError('No matching absence record found.');
+  }
+
+  const freshRowIndex = existingIdx + 2;
+  const row = padRow(rows[existingIdx], 9);
+  row[0] = new Date().toISOString();
+  row[7] = clearedBy;
+  row[8] = 'Cleared';
+
+  await writeSheetValues(`Absences!A${freshRowIndex}:I${freshRowIndex}`, [row], locals);
+  await invalidateCacheTag('absences');
+}
+
+export async function upsertRosterSinger(params: {
+  singer: Singer;
+  mode: 'create' | 'update';
+  locals?: App.Locals;
+}): Promise<Singer> {
+  const { singer, mode, locals } = params;
+  const normalized: Singer = {
+    ...singer,
+    email: singer.email.trim().toLowerCase(),
+    name: singer.name.trim(),
+    sectionGroup: singer.sectionGroup || inferSectionGroup(singer.voicePart),
+    phone: singer.phone.trim(),
+  };
+
+  if (isSandboxSheetMode(locals)) {
+    const idx = demoStore.roster.findIndex((s) => s.email === normalized.email);
+    if (mode === 'create' && idx >= 0) {
+      throw new ConflictError(`A singer with email ${normalized.email} already exists.`);
+    }
+    if (idx >= 0) {
+      demoStore.roster[idx] = normalized;
+    } else {
+      demoStore.roster.push(normalized);
+    }
+    return normalized;
+  }
+
+  const rows = await readSheetValues('Roster!A2:G', locals);
+  const matchIdx = rows.findIndex(
+    (r) => (r[0] ?? '').trim().toLowerCase() === normalized.email
+  );
+
+  if (mode === 'create' && matchIdx >= 0) {
+    throw new ConflictError(`A singer with email ${normalized.email} already exists on the Roster.`);
+  }
+
+  const rowValues = [
+    normalized.email,
+    normalized.name,
+    normalized.voicePart,
+    normalized.sectionGroup,
+    normalized.role,
+    normalized.phone,
+    normalized.active ? 'TRUE' : 'FALSE',
+  ];
+
+  if (matchIdx >= 0) {
+    const freshRowIndex = matchIdx + 2;
+    await writeSheetValues(`Roster!A${freshRowIndex}:G${freshRowIndex}`, [rowValues], locals);
+  } else {
+    await appendSheetValues('Roster!A:G', [rowValues], locals);
+  }
+
+  await invalidateCacheTag('roster');
+  return normalized;
+}
+
+// ---------------------------------------------------------------------------
+// Google Drive v3 Repertoire, Streaming & Handbook Export (Shared Drive Ready)
+// ---------------------------------------------------------------------------
+
+interface DriveFileItem {
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: string;
+}
+
+async function driveListQuery(query: string, locals?: App.Locals): Promise<DriveFileItem[]> {
+  const token = await getGoogleAccessToken(locals);
+  const params = new URLSearchParams({
+    q: query,
+    fields: 'files(id,name,mimeType,size)',
+    orderBy: 'name',
+    pageSize: '200',
+    supportsAllDrives: 'true',
+    includeItemsFromAllDrives: 'true',
+  });
+
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Google Drive list failed (${res.status}): ${errText}`);
+  }
+
+  const data = (await res.json()) as { files?: DriveFileItem[] };
+  return data.files ?? [];
+}
+
+export async function getRepertoire(locals?: App.Locals): Promise<RepertoirePiece[]> {
+  const config = await getPortalConfig(locals);
+  const rootFolderId = config.Repertoire_Drive_Folder_ID;
+
+  if (
+    isSandboxSheetMode(locals) ||
+    !rootFolderId ||
+    rootFolderId === 'DEMO' ||
+    rootFolderId.startsWith('PASTE_')
+  ) {
+    return demoStore.repertoire.map((piece) => ({
+      ...piece,
+      files: piece.files.map((f) => ({ ...f })),
+    }));
+  }
+
+  return cachedFetchJson('music', 300, async () => {
+    const escapedRoot = rootFolderId.replace(/'/g, "\\'");
+    const subfolders = await driveListQuery(
+      `'${escapedRoot}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      locals
+    );
+
+    const pieces = await Promise.all(
+      subfolders.map(async (folder): Promise<RepertoirePiece> => {
+        const escapedFolder = folder.id.replace(/'/g, "\\'");
+        const rawFiles = await driveListQuery(
+          `'${escapedFolder}' in parents and trashed = false`,
+          locals
+        );
+
+        const files: DriveMusicFile[] = rawFiles
+          .map((f) => {
+            const isPdf = f.mimeType === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+            const isAudio =
+              f.mimeType.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg)$/i.test(f.name);
+            return {
+              id: f.id,
+              name: f.name,
+              mimeType: f.mimeType,
+              sizeBytes: f.size ? Number(f.size) : undefined,
+              isPdf,
+              isAudio,
+            };
+          })
+          .filter((f) => f.isPdf || f.isAudio);
+
+        return {
+          folderId: folder.id,
+          title: folder.name,
+          files,
+        };
+      })
+    );
+
+    return pieces;
+  });
+}
+
+export async function getDriveFileMetadata(
+  fileId: string,
+  locals?: App.Locals
+): Promise<{ id: string; name: string; mimeType: string; size?: number }> {
+  const token = await getGoogleAccessToken(locals);
+  const params = new URLSearchParams({
+    fields: 'id,name,mimeType,size',
+    supportsAllDrives: 'true',
+  });
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?${params.toString()}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  if (!res.ok) {
+    throw new NotFoundError(`Drive file ${fileId} not found (${res.status}).`);
+  }
+
+  const meta = (await res.json()) as { id: string; name: string; mimeType: string; size?: string };
+  return {
+    id: meta.id,
+    name: meta.name,
+    mimeType: meta.mimeType,
+    size: meta.size ? Number(meta.size) : undefined,
+  };
+}
+
+export async function fetchDriveMediaResponse(
+  fileId: string,
+  rangeHeader: string | null,
+  locals?: App.Locals
+): Promise<Response> {
+  const token = await getGoogleAccessToken(locals);
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
+  if (rangeHeader) {
+    headers.Range = rangeHeader;
+  }
+
+  return fetch(
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
+      fileId
+    )}?alt=media&supportsAllDrives=true`,
+    { headers }
+  );
+}
+
+const SAMPLE_HANDBOOK_HTML = `
+  <h1>Kantorei Singer Handbook — 2026–2027 Season</h1>
+  <blockquote>
+    <strong>Sandbox Preview Mode:</strong> Connect a live Google Doc ID in <code>Config → Handbook_Google_Doc_ID</code> so board officers can edit policies in Google Docs and publish updates here automatically within 5 minutes.
+  </blockquote>
+
+  <h2>1. Artistic Mission & Rehearsal Ethos</h2>
+  <p>Kantorei is a 501(c)(3) chamber choral ensemble committed to luminous, text-driven performances ranging from Renaissance polyphony to living composers. Every singer is expected to arrive with notes and rhythms prepared prior to tutti rehearsals so ensemble time can focus on blend, intonation, phrasing, and expressive storytelling.</p>
+
+  <h2>2. Attendance & Dress Week Policy</h2>
+  <ul>
+    <li><strong>Regular Rehearsals:</strong> Singers may miss up to two regular Tuesday rehearsals per concert cycle with advance notice submitted through the <a href="/portal/absences">Portal Absence Form</a>.</li>
+    <li><strong>Acoustic Dress Rehearsals:</strong> Attendance at the final acoustic dress rehearsal in the concert venue is required to sing the weekend performances unless cleared personally by the Artistic Director.</li>
+    <li><strong>Illness & Vocal Health:</strong> If you wake up with contagious symptoms or acute vocal strain, submit an absence immediately—your Section Leader and the Artistic Director are notified automatically.</li>
+  </ul>
+
+  <h2>3. Tablet (ForScore) & Binder Standards</h2>
+  <ul>
+    <li><strong>iPad / E-Ink Readers:</strong> Singers reading from tablets should use a matte anti-glare screen protector, disable auto-lock, set brightness below 45% in darkened sanctuaries, and enable Airplane Mode / Do Not Disturb onstage.</li>
+    <li><strong>Paper Scores:</strong> Place scores in a flat matte-black 3-ring binder with elastic hand strap. Mark breath cues and dynamics solely in #2 pencil.</li>
+  </ul>
+
+  <h2>4. Concert Attire</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Specification</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Option A (Formal Black)</strong></td>
+        <td>Floor-length or ankle-length black dress/trousers, 3/4- or full-length black sleeves, matte black dress shoes, minimal non-reflective jewelry.</td>
+      </tr>
+      <tr>
+        <td><strong>Option B (Tailored Suiting)</strong></td>
+        <td>Black suit jacket, black dress shirt (no tie unless specified for gala), black dress socks, polished black dress shoes.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5. Hospitality & Rehearsal Break</h2>
+  <p>Each Tuesday rehearsal includes a 12-minute mid-rehearsal break at 8:15 PM. Two singers volunteer each week on the <a href="/portal/snacks">Snack Signup Board</a> to bring light, nut-conscious refreshments for ~45 singers.</p>
+`;
+
+export async function getHandbookHtml(
+  locals?: App.Locals
+): Promise<{ html: string; isDemo: boolean }> {
+  const config = await getPortalConfig(locals);
+  const docId = config.Handbook_Google_Doc_ID;
+
+  if (isSandboxSheetMode(locals) || !docId || docId === 'DEMO' || docId.startsWith('PASTE_')) {
+    return { html: SAMPLE_HANDBOOK_HTML.trim(), isDemo: true };
+  }
+
+  const sanitized = await cachedFetchJson('handbook', 300, async () => {
+    const token = await getGoogleAccessToken(locals);
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
+        docId
+      )}/export?mimeType=text/html`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) {
+      throw new Error(`Handbook Google Doc export failed (${res.status})`);
+    }
+    const rawHtml = await res.text();
+    return sanitizeHandbookHtml(rawHtml);
+  });
+
+  return { html: sanitized, isDemo: false };
+}
+
+// ---------------------------------------------------------------------------
+// On-the-Fly Valid Sample PDF & Choral Pitch WAV Generators for Demo Streaming
+// ---------------------------------------------------------------------------
+
+export function generateDemoPdfBytes(title: string): Uint8Array {
+  const safeTitle = title.replace(/[()\\]/g, '');
+  const streamContent = [
+    'BT',
+    '/F1 20 Tf',
+    '54 730 Td',
+    `(Kantorei Rehearsal Score Edition) Tj`,
+    '/F1 13 Tf',
+    '0 -28 Td',
+    `(${safeTitle}) Tj`,
+    '/F1 10 Tf',
+    '0 -24 Td',
+    '(ForScore / Tablet Ready Stream - Sandbox Demo Preview) Tj',
+    '0 -32 Td',
+    '(Connect Repertoire_Drive_Folder_ID in Config to stream live PDFs from Google Drive.) Tj',
+    'ET',
+    '0.6 w',
+    // Staff 1 (5 lines)
+    '54 610 m 558 610 l S',
+    '54 602 m 558 602 l S',
+    '54 594 m 558 594 l S',
+    '54 586 m 558 586 l S',
+    '54 578 m 558 578 l S',
+    // Staff 2 (5 lines)
+    '54 530 m 558 530 l S',
+    '54 522 m 558 522 l S',
+    '54 514 m 558 514 l S',
+    '54 506 m 558 506 l S',
+    '54 498 m 558 498 l S',
+    // Barlines
+    '54 578 m 54 610 l S',
+    '306 578 m 306 610 l S',
+    '558 578 m 558 610 l S',
+    '54 498 m 54 530 l S',
+    '306 498 m 306 530 l S',
+    '558 498 m 558 530 l S',
+  ].join('\n');
+
+  const objects = [
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',
+    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n',
+    '4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>\nendobj\n',
+    `5 0 obj\n<< /Length ${streamContent.length} >>\nstream\n${streamContent}\nendstream\nendobj\n`,
+  ];
+
+  let pdf = '%PDF-1.4\n';
+  const offsets: number[] = [0];
+  for (const obj of objects) {
+    offsets.push(pdf.length);
+    pdf += obj;
+  }
+  const xrefStart = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (let i = 1; i <= objects.length; i++) {
+    pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  }
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`;
+
+  return new TextEncoder().encode(pdf);
+}
+
+export function generateDemoWavBytes(fileId: string): Uint8Array {
+  const sampleRate = 22050;
+  const durationSeconds = 4;
+  const numSamples = sampleRate * durationSeconds;
+  const dataSize = numSamples * 2; // 16-bit mono
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  const writeStr = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  };
+
+  // Pick part-predominant pitch (D major triad / octave for O Magnum Mysterium feel)
+  const lower = fileId.toLowerCase();
+  const leadFreq = lower.includes('soprano')
+    ? 587.33 // D5
+    : lower.includes('alto')
+      ? 440.0 // A4
+      : lower.includes('tenor')
+        ? 369.99 // F#4
+        : 146.83; // D3 (Bass)
+
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // Mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    const envelope =
+      Math.min(1, t / 0.15) * Math.min(1, (durationSeconds - t) / 0.35);
+    // Warm organ-like harmonic blend with emphasized voice part
+    const lead = 0.55 * Math.sin(2 * Math.PI * leadFreq * t) + 0.15 * Math.sin(4 * Math.PI * leadFreq * t);
+    const chord =
+      0.12 * Math.sin(2 * Math.PI * 293.66 * t) +
+      0.1 * Math.sin(2 * Math.PI * 369.99 * t) +
+      0.1 * Math.sin(2 * Math.PI * 440.0 * t);
+    const sample = Math.max(-1, Math.min(1, (lead + chord) * envelope * 0.75));
+    view.setInt16(44 + i * 2, Math.round(sample * 32767), true);
+  }
+
+  return new Uint8Array(buffer);
+}
