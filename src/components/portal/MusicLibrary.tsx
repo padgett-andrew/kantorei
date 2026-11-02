@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { FolderOpen, Music2, Search, Sparkles } from 'lucide-react';
 import type { DriveMusicFile, RepertoirePiece, Singer } from '../../types/choir';
-import { doesFilenameMatchSection } from '../../lib/utils';
+import { doesFileApplyToSinger, isSpecificVoicePartMatch } from '../../lib/utils';
 import { parseYouTubeUrl, type ReferenceRecordingLink } from '../../lib/youtube';
 import {
   buildConcertPrograms,
@@ -31,8 +31,27 @@ interface LoadedDocPayload {
 
 export default function MusicLibrary({ singer, pieces }: Props) {
   const [search, setSearch] = useState('');
-  const [filterMode, setFilterMode] = useState<'all' | 'my-part'>('all');
+  const [filterMode, setFilterMode] = useState<'all' | 'my-part'>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('kantorei_music_filter');
+        if (saved === 'all' || saved === 'my-part') return saved;
+      } catch {
+        // ignore
+      }
+    }
+    return 'my-part';
+  });
   const [selectedConcertId, setSelectedConcertId] = useState<string>('all');
+
+  function handleFilterModeChange(mode: 'all' | 'my-part') {
+    setFilterMode(mode);
+    try {
+      localStorage.setItem('kantorei_music_filter', mode);
+    } catch {
+      // ignore
+    }
+  }
 
   const [docCache, setDocCache] = useState<Record<string, LoadedDocPayload>>({});
   const [docLoading, setDocLoading] = useState<Record<string, boolean>>({});
@@ -127,9 +146,21 @@ export default function MusicLibrary({ singer, pieces }: Props) {
       .map((prog) => {
         const matchingPieces: ProgramPiece[] = [];
         for (const piece of prog.pieces) {
+          // If in "my-part" mode, check if the piece itself is applicable (excludes e.g. SSAA pieces for Basses)
+          const pieceApplies = doesFileApplyToSinger(
+            piece.title,
+            singer.voicePart,
+            singer.sectionGroup,
+            `${prog.title} ${piece.subtitle} ${piece.notesHtml}`
+          );
+
+          if (filterMode === 'my-part' && !pieceApplies) {
+            continue;
+          }
+
           const annotatedFiles: DriveMusicFile[] = piece.files.map((f) => ({
             ...f,
-            matchesUserSection: doesFilenameMatchSection(
+            matchesUserSection: isSpecificVoicePartMatch(
               f.name,
               singer.voicePart,
               singer.sectionGroup
@@ -137,7 +168,17 @@ export default function MusicLibrary({ singer, pieces }: Props) {
           }));
 
           const visibleFiles = annotatedFiles.filter((f) => {
-            if (filterMode === 'my-part' && !f.matchesUserSection) return false;
+            if (
+              filterMode === 'my-part' &&
+              !doesFileApplyToSinger(
+                f.name,
+                singer.voicePart,
+                singer.sectionGroup,
+                `${prog.title} ${piece.title} ${piece.subtitle}`
+              )
+            ) {
+              return false;
+            }
             if (!normalizedQuery) return true;
             return (
               prog.title.toLowerCase().includes(normalizedQuery) ||
@@ -322,18 +363,18 @@ export default function MusicLibrary({ singer, pieces }: Props) {
         <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-zinc-100/80 p-1">
           <button
             type="button"
-            onClick={() => setFilterMode('all')}
+            onClick={() => handleFilterModeChange('all')}
             className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
               filterMode === 'all'
                 ? 'bg-white text-navy-950 shadow-2xs'
                 : 'text-zinc-600 hover:text-zinc-900'
             }`}
           >
-            All Scores & Tracks
+            All Music &amp; Tracks
           </button>
           <button
             type="button"
-            onClick={() => setFilterMode('my-part')}
+            onClick={() => handleFilterModeChange('my-part')}
             className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
               filterMode === 'my-part'
                 ? 'bg-white text-navy-950 shadow-2xs'
@@ -341,7 +382,7 @@ export default function MusicLibrary({ singer, pieces }: Props) {
             }`}
           >
             <Sparkles className="h-3.5 w-3.5 text-gold-500" />
-            My Section ({singer.voicePart})
+            My Voice ({singer.voicePart})
           </button>
         </div>
       </div>

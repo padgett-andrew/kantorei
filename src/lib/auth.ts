@@ -132,7 +132,7 @@ export async function createSessionToken(email: string, locals?: App.Locals): Pr
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(normalized)
     .setIssuedAt(now)
-    .setExpirationTime(now + 60 * 60 * 24 * 14) // 14 days
+    .setExpirationTime(now + 60 * 60 * 24 * 180) // 180 days (full choral season)
     .sign(getSecretKey(locals));
 }
 
@@ -214,7 +214,7 @@ export function setSessionCookie(cookies: AstroCookies, token: string, requestUr
     httpOnly: true,
     secure: isSecure,
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 14,
+    maxAge: 60 * 60 * 24 * 180, // 180 days (full choral season so singers never get logged out mid-cycle)
   });
   cookies.delete(DEV_SIGNOUT_COOKIE, { path: '/' });
 }

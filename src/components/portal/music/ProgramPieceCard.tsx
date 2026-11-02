@@ -227,7 +227,10 @@ export default function ProgramPieceCard({
                         title="Open PDF score in a new browser tab (iPad: tap Share → Copy to forScore)"
                       >
                         <ExternalLink className="h-3.5 w-3.5 text-gold-400" />
-                        Open PDF
+                        <span>Open PDF</span>
+                        <span className="hidden sm:inline-block rounded-md bg-white/15 px-1.5 py-0.5 text-[10px] font-medium text-gold-300">
+                          forScore
+                        </span>
                       </a>
                     </>
                   )}

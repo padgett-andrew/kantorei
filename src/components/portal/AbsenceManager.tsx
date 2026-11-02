@@ -175,18 +175,43 @@ export default function AbsenceManager({
             )}
 
             <div>
-              <label
-                htmlFor="absence-reason"
-                className="block text-xs font-semibold uppercase tracking-wider text-zinc-600"
-              >
-                Note / Reason <span className="font-normal lowercase text-zinc-400">(optional)</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="absence-reason"
+                  className="block text-xs font-semibold uppercase tracking-wider text-zinc-600"
+                >
+                  Note / Reason <span className="font-normal lowercase text-zinc-400">(optional)</span>
+                </label>
+                <span className="text-[10px] text-zinc-400">1-Tap Quick Select</span>
+              </div>
+
+              {/* 1-Tap Quick Reason Chips */}
+              <div className="mt-1.5 mb-2 flex flex-wrap gap-1.5">
+                {[
+                  { label: '🚗 Running 10–15m late', text: 'Running 10–15 minutes late (traffic / work)' },
+                  { label: '🚗 Running 30m late', text: 'Running ~30 minutes late, arriving during rehearsal' },
+                  { label: '🤒 Sick / Vocal rest', text: 'Feeling sick / resting voice' },
+                  { label: '✈️ Travel / Out of town', text: 'Out of town / travel conflict' },
+                  { label: '💼 Work / Family conflict', text: 'Work or family emergency' },
+                ].map((chip) => (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    onClick={() => setReason(chip.text)}
+                    className="cursor-pointer rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:border-gold-400 hover:bg-gold-50/50 hover:text-navy-950"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+
               <textarea
                 id="absence-reason"
-                rows={3}
+                rows={2}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-zinc-300 px-3.5 py-2.5 text-sm text-zinc-900 focus:border-navy-900 focus:outline-none"
+                placeholder="Select a quick chip above or type details here…"
+                className="w-full rounded-xl border border-zinc-300 px-3.5 py-2.5 text-sm text-zinc-900 focus:border-navy-900 focus:outline-none"
               />
             </div>
 

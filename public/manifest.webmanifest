@@ -1,0 +1,27 @@
+{
+  "name": "Kantorei Singer Portal",
+  "short_name": "Kantorei",
+  "description": "Singer Portal, sheet music, practice tracks, and rehearsal schedule for Kantorei choir members.",
+  "start_url": "/portal",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c1524",
+  "theme_color": "#0c1524",
+  "categories": ["music", "lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "/images/kantorei-logo-transparent.webp",
+      "sizes": "192x192 512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

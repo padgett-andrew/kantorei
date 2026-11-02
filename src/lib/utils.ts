@@ -65,7 +65,11 @@ export function eventTypeBadgeColor(type: EventType): string {
   }
 }
 
-export function doesFilenameMatchSection(filename: string, voicePart: VoicePart, sectionGroup: string): boolean {
+export function isSpecificVoicePartMatch(
+  filename: string,
+  voicePart: VoicePart,
+  sectionGroup: string
+): boolean {
   const lower = filename.toLowerCase();
   const partLower = voicePart.toLowerCase(); // e.g., b2
   const sectionLower = sectionGroup.toLowerCase(); // e.g., bass
@@ -73,6 +77,88 @@ export function doesFilenameMatchSection(filename: string, voicePart: VoicePart,
   const partRegex = new RegExp(`(^|[^a-z0-9])${partLower}([^a-z0-9]|$)`, 'i');
   const sectionRegex = new RegExp(`(^|[^a-z])${sectionLower}(es|s)?([^a-z]|$)`, 'i');
 
-  return partRegex.test(lower) || sectionRegex.test(lower) || lower.includes('all parts') || lower.includes('full score') || lower.includes('satb');
+  return partRegex.test(lower) || sectionRegex.test(lower);
+}
+
+/**
+ * Checks whether a choral piece or score file applies to a singer.
+ *
+ * Choral Philosophy:
+ * - Most choral music is full mixed chorus (all parts / SATB / full octavo) and applies to everyone.
+ * - This filter EXCLUDES music that clearly does NOT apply:
+ *   1. Treble-only repertoire (SSAA, SSA, Treble Chorus) is excluded for Tenors and Basses.
+ *   2. Tenor/Bass-only repertoire (TTBB, TTB, Men's Chorus) is excluded for Sopranos and Altos.
+ *   3. Specific rehearsal part tracks for a DIFFERENT voice section (e.g. an Alto 1 track for a Bass) are excluded.
+ *   4. Everything else (full scores, SATB, all-parts, accompaniment, or un-restricted pieces) IS INCLUDED.
+ */
+export function doesFileApplyToSinger(
+  filename: string,
+  voicePart: VoicePart,
+  sectionGroup: string,
+  pieceContext?: string
+): boolean {
+  const lowerFile = filename.toLowerCase();
+  const lowerContext = (pieceContext || '').toLowerCase();
+  const combined = `${lowerContext} ${lowerFile}`;
+
+  const isTrebleSinger = sectionGroup === 'Soprano' || sectionGroup === 'Alto';
+  const isLowerVoiceSinger = sectionGroup === 'Tenor' || sectionGroup === 'Bass';
+
+  // 1. Exclude Treble-only pieces/files for Tenors & Basses
+  const isTrebleOnly =
+    /\b(ssaa|ssa|s\.s\.a\.a|treble\s*choir|treble\s*chorus|women'?s?\s*choir|women'?s?\s*chorus|upper\s*voices)\b/i.test(
+      combined
+    );
+  if (isTrebleOnly && isLowerVoiceSinger) {
+    return false;
+  }
+
+  // 2. Exclude TTBB-only pieces/files for Sopranos & Altos
+  const isTenorBassOnly =
+    /\b(ttbb|ttb|t\.t\.b\.b|men'?s?\s*choir|men'?s?\s*chorus|male\s*chorus|lower\s*voices|tenor[\s/-]bass)\b/i.test(
+      combined
+    );
+  if (isTenorBassOnly && isTrebleSinger) {
+    return false;
+  }
+
+  // 3. For individual practice audio tracks or part scores:
+  const isUserPartExplicit = isSpecificVoicePartMatch(filename, voicePart, sectionGroup);
+  if (!isUserPartExplicit) {
+    const otherSections = ['soprano', 'alto', 'tenor', 'bass'].filter(
+      (s) => s !== sectionGroup.toLowerCase()
+    );
+    const otherParts = ['s1', 's2', 'a1', 'a2', 't1', 't2', 'b1', 'b2'].filter(
+      (p) => p !== voicePart.toLowerCase()
+    );
+
+    const hasOtherSection = otherSections.some((s) => {
+      const reg = new RegExp(`(^|[^a-z])${s}(es|s)?([^a-z]|$)`, 'i');
+      return reg.test(lowerFile);
+    });
+    const hasOtherPart = otherParts.some((p) => {
+      const reg = new RegExp(`(^|[^a-z0-9])${p}([^a-z0-9]|$)`, 'i');
+      return reg.test(lowerFile);
+    });
+
+    if (hasOtherSection || hasOtherPart) {
+      const isAllPartsOrMixed =
+        lowerFile.includes('satb') ||
+        lowerFile.includes('all parts') ||
+        lowerFile.includes('full score') ||
+        lowerFile.includes('accompaniment') ||
+        lowerFile.includes('all choir');
+
+      if (!isAllPartsOrMixed) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+export function doesFilenameMatchSection(filename: string, voicePart: VoicePart, sectionGroup: string): boolean {
+  return isSpecificVoicePartMatch(filename, voicePart, sectionGroup);
 }
 
