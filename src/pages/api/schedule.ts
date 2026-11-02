@@ -1,13 +1,49 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { hasRole } from '../../lib/auth';
+import { invalidateCacheTag } from '../../lib/cache';
 import {
   ConflictError,
   NotFoundError,
+  getSchedule,
   upsertScheduleEvent,
   deleteScheduleEvent,
 } from '../../lib/google';
 import { EVENT_TYPES, type ScheduleEvent } from '../../types/choir';
+
+export const GET: APIRoute = async ({ locals, url }) => {
+  const caller = locals.singer;
+  if (!caller) {
+    return new Response(JSON.stringify({ error: 'Authentication required.' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (url.searchParams.get('action') === 'sync' || url.searchParams.get('sync') === '1') {
+    if (!hasRole(caller, ['Admin'])) {
+      return new Response(
+        JSON.stringify({ error: 'Only Admins may trigger a calendar sync.' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    await invalidateCacheTag('schedule');
+    const schedule = await getSchedule(locals);
+    return new Response(
+      JSON.stringify({ ok: true, syncedAt: new Date().toISOString(), schedule }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+
+  const schedule = await getSchedule(locals);
+  return new Response(JSON.stringify({ schedule }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
 
 const SchedulePayloadSchema = z.object({
   eventId: z.string().trim().optional(),

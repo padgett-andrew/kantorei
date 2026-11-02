@@ -1,6 +1,7 @@
 export type CacheTag =
   | 'roster'
   | 'schedule'
+  | `schedule:${string}`
   | 'absences'
   | 'concerts'
   | 'media'

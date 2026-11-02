@@ -82,8 +82,11 @@ Controls portal login access (both Google OAuth and Email OTP), section filterin
 | `F` | `Phone` | `612-555-0100` | Display string for member directory |
 | `G` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` (case-insensitive; only active members can access `/portal`) |
 
-### Tab 2: `Schedule` (Range: `Schedule!A2:I`)
+### Tab 2: `Schedule` (Google Calendar API v3 or Master Sheet `Schedule!A2:K`)
 Powers the Singer Portal rehearsal calendar, subscribable `/api/calendar.ics` feed, Absence form date selector, and 1-tap Snack Signup.
+- **Google Calendar Primary Source (Zero-Friction Admin)**: Set `GOOGLE_CALENDAR_ID` in `.env` / `Config`. The Artistic Director and choir admins manage recurring calls, concerts, dress rehearsals, call times, and locations directly in Google Calendar (web or mobile). The portal syncs calls via Google Calendar API v3 every 60s (with instant edge invalidation on demand).
+- **Hospitality & Snack Decoupling**: Snack claims are merged seamlessly by `Event_ID`, stored either in a dedicated `Snacks` sheet tab (`Event_ID`, `Slot`, `Singer_Name`, `Item`, `Updated_At`) or `Schedule!G:J`.
+- **Sheet Fallback Table (Legacy or Demo Mode)**:
 | Col | Header | Example Value | Specification |
 | :-- | :--- | :--- | :--- |
 | `A` | `Event_ID` | `reh-2026-11-10` | Unique primary key (resolved dynamically before any cell write) |
@@ -92,9 +95,11 @@ Powers the Singer Portal rehearsal calendar, subscribable `/api/calendar.ics` fe
 | `D` | `Type` | `Rehearsal` | `Rehearsal`, `Sectional`, `Retreat`, `Dress`, `Concert` |
 | `E` | `Title` | `Tuesday Rehearsal` | Event title |
 | `F` | `Location` | `Main Sanctuary` | Venue / room |
-| `G` | `Snack_1_Name` | `Elena Rostova` | Claimed via `/portal/snacks` (writes to cell `G{freshRowIndex}` after `Event_ID` lookup) |
-| `H` | `Snack_2_Name` | `` | Claimed via `/portal/snacks` (writes to cell `H{freshRowIndex}` after `Event_ID` lookup) |
-| `I` | `Notes` | `Focus on movements 1-3` | Rehearsal call notes or repertoire focus |
+| `G` | `Snack_1_Name` | `Elena Rostova` | Claimed via `/portal/snacks` |
+| `H` | `Snack_2_Name` | `Marcus Vance` | Claimed via `/portal/snacks` |
+| `I` | `Snack_3_Name` | `` | Claimed via `/portal/snacks` |
+| `J` | `Snack_4_Name` | `` | Claimed via `/portal/snacks` |
+| `K` | `Notes` | `Focus on movements 1-3` | Rehearsal call notes or repertoire focus |
 
 ### Tab 3: `Absences` (Range: `Absences!A2:I`)
 Upserted/updated via `POST` and `DELETE /api/absences` (deduplicated by `Event_ID` + `Singer_Email`).

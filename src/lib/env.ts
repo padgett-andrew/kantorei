@@ -67,3 +67,8 @@ export function isSandboxSheetMode(locals?: App.Locals): boolean {
 export function isDevPreviewEnabled(locals?: App.Locals): boolean {
   return import.meta.env.DEV === true && getEnv('DEV_PREVIEW_BYPASS', locals) === 'true';
 }
+
+export function getCalendarId(locals?: App.Locals): string {
+  const envVal = getEnv('GOOGLE_CALENDAR_ID', locals);
+  return envVal ? envVal.trim() : '';
+}

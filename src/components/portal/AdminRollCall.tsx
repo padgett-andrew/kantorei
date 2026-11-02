@@ -6,10 +6,12 @@ import {
   Clock,
   Coffee,
   Edit3,
+  ExternalLink,
   FileText,
   MapPin,
   Moon,
   Plus,
+  RefreshCw,
   Search,
   Sun,
   Trash2,
@@ -44,6 +46,7 @@ import {
 
 interface Props {
   caller: Singer;
+  calendarId?: string;
   initialRoster: Singer[];
   upcomingEvents: ScheduleEvent[];
   allScheduleEvents?: ScheduleEvent[];
@@ -53,6 +56,7 @@ interface Props {
 
 export default function AdminRollCall({
   caller,
+  calendarId,
   initialRoster,
   upcomingEvents,
   allScheduleEvents,
@@ -108,6 +112,31 @@ export default function AdminRollCall({
   // Delete Calendar Event Confirmation state
   const [eventToDelete, setEventToDelete] = useState<ScheduleEvent | null>(null);
   const [deletingEvent, setDeletingEvent] = useState(false);
+  const [syncingCalendar, setSyncingCalendar] = useState(false);
+
+  async function syncGoogleCalendar() {
+    setSyncingCalendar(true);
+    setBanner(null);
+    try {
+      const res = await fetch('/api/schedule?action=sync');
+      const data = (await res.json()) as { ok?: boolean; schedule?: ScheduleEvent[]; error?: string };
+      if (!res.ok || !data.schedule) {
+        throw new Error(data.error || 'Failed to sync calendar.');
+      }
+      setScheduleList(data.schedule);
+      setBanner({
+        type: 'ok',
+        text: `Refreshed ${data.schedule.length} calls from calendar!`,
+      });
+    } catch {
+      setBanner({
+        type: 'err',
+        text: 'Error syncing with calendar. Please retry in a moment.',
+      });
+    } finally {
+      setSyncingCalendar(false);
+    }
+  }
 
   // Add / Edit Roster Modal state
   const [modalMode, setModalMode] = useState<'create' | 'update' | null>(null);
@@ -769,6 +798,62 @@ export default function AdminRollCall({
       {/* Schedule / Calendar Tab */}
       {activeTab === 'schedule' && (
         <div className="space-y-5">
+          {/* Google Calendar Master Sync Card */}
+          <div className="rounded-3xl border border-zinc-200/90 bg-gradient-to-br from-white to-ivory-50/70 p-5 shadow-2xs sm:p-6">
+            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-navy-900 text-gold-400">
+                    <Calendar className="h-4 w-4" />
+                  </span>
+                  <h3 className="font-editorial text-xl font-bold text-navy-950 sm:text-2xl">
+                    Google Calendar Integration
+                  </h3>
+                  {calendarId && calendarId !== 'DEMO' ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      Live Sync ({calendarId})
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Demo Calendar Active
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-600 sm:text-sm">
+                  Manage calls, recurring rehearsals, concert times, and locations directly in your official ensemble Google Calendar.
+                  The portal automatically syncs changes and updates singer subscriptions on Apple Calendar, Outlook, and Google Calendar.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                <a
+                  href={
+                    calendarId && calendarId !== 'DEMO'
+                      ? `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarId)}`
+                      : 'https://calendar.google.com/calendar/u/0/r'
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-navy-900 px-4 py-2.5 text-xs font-semibold text-white shadow-2xs transition hover:bg-navy-800"
+                >
+                  <ExternalLink className="h-4 w-4 text-gold-400" />
+                  Open Google Calendar
+                </a>
+
+                <button
+                  type="button"
+                  disabled={syncingCalendar}
+                  onClick={syncGoogleCalendar}
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-semibold text-zinc-700 shadow-2xs transition hover:border-navy-900 hover:text-navy-950 disabled:opacity-60"
+                >
+                  <RefreshCw className={`h-4 w-4 text-zinc-500 ${syncingCalendar ? 'animate-spin' : ''}`} />
+                  {syncingCalendar ? 'Syncing…' : 'Sync Now'}
+                </button>
+              </div>
+            </div>
+          </div>
           {/* Top Filter and Search Bar */}
           <div className="rounded-3xl border border-zinc-200/90 bg-white p-5 shadow-2xs sm:p-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

@@ -10,11 +10,14 @@ import {
   getSchedule,
 } from '../../lib/google';
 import { getTodayIso } from '../../lib/utils';
+import { getCalendarId } from '../../lib/env';
 
 const singer = Astro.locals.singer!;
 if (!hasRole(singer, ['Section_Leader', 'Admin'])) {
   return Astro.redirect('/portal');
 }
+
+const calendarId = getCalendarId(Astro.locals);
 
 const [config, roster, schedule, absences, sheetWarnings] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -44,6 +47,7 @@ const upcomingEvents = schedule.filter((ev) => ev.date >= today);
   <AdminRollCall
     client:load
     caller={singer}
+    calendarId={calendarId}
     initialRoster={roster}
     upcomingEvents={upcomingEvents}
     allScheduleEvents={schedule}

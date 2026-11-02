@@ -6,6 +6,7 @@ import {
   type AbsenceRecord,
   type ConcertEvent,
   type DriveMusicFile,
+  type EventType,
   type MediaItem,
   type PortalConfig,
   type RepertoirePiece,
@@ -15,7 +16,13 @@ import {
 } from '../types/choir';
 import { cachedFetchJson, invalidateCacheTag } from './cache';
 import { convertDocxToHtml, convertPlainTextToHtml } from './docx';
-import { extractGoogleId, getEnv, hasGoogleServiceAccount, isSandboxSheetMode } from './env';
+import {
+  extractGoogleId,
+  getCalendarId,
+  getEnv,
+  hasGoogleServiceAccount,
+  isSandboxSheetMode,
+} from './env';
 import { DEFAULT_HANDBOOK_HTML, DEFAULT_STRATEGIC_PLAN_HTML } from './handbook-content';
 import { sanitizeHandbookHtml } from './sanitize';
 import {
@@ -43,6 +50,7 @@ export class NotFoundError extends Error {
 const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/drive.readonly',
+  'https://www.googleapis.com/auth/calendar.readonly',
 ].join(' ');
 
 let cachedAccessToken: { token: string; expiresAt: number } | null = null;
@@ -97,9 +105,18 @@ async function getGoogleAccessToken(locals?: App.Locals): Promise<string> {
 // Interactive In-Memory Demo Store (Active when GOOGLE_MASTER_SHEET_ID="DEMO")
 // ---------------------------------------------------------------------------
 
+export interface SnackClaim {
+  eventId: string;
+  slot: 1 | 2 | 3 | 4;
+  singerName: string;
+  item?: string;
+  updatedAt?: string;
+}
+
 interface DemoStore {
   roster: Singer[];
   schedule: ScheduleEvent[];
+  snacks: SnackClaim[];
   absences: AbsenceRecord[];
   concerts: ConcertEvent[];
   media: MediaItem[];
@@ -109,6 +126,20 @@ interface DemoStore {
 }
 
 const demoStore: DemoStore = {
+  snacks: [
+    {
+      eventId: 'reh-2026-11-10',
+      slot: 1,
+      singerName: 'Elena Rostova',
+      item: 'Cider & cinnamon cookies',
+    },
+    {
+      eventId: 'reh-2026-11-10',
+      slot: 2,
+      singerName: 'Marcus Vance',
+      item: 'Sparkling water & pretzels',
+    },
+  ],
   config: {
     Choir_Name: 'Kantorei',
     Conductor_Email: 'adam.reinwald@kantorei.net',
@@ -790,14 +821,226 @@ export async function getRoster(locals?: App.Locals): Promise<Singer[]> {
   return roster;
 }
 
+// ---------------------------------------------------------------------------
+// Google Calendar API v3 Direct Client & Snack Merging Engine
+// ---------------------------------------------------------------------------
+
+interface GCalEventItem {
+  id: string;
+  summary?: string;
+  description?: string;
+  location?: string;
+  start?: {
+    dateTime?: string;
+    date?: string;
+    timeZone?: string;
+  };
+  end?: {
+    dateTime?: string;
+    date?: string;
+    timeZone?: string;
+  };
+}
+
+function formatGCalTimeRange(
+  startDtStr?: string,
+  endDtStr?: string,
+  timeZone = 'America/Chicago'
+): string {
+  if (!startDtStr) return 'TBD';
+  if (startDtStr.length === 10) return 'All Day';
+
+  try {
+    const startDate = new Date(startDtStr);
+    const endDate = endDtStr ? new Date(endDtStr) : null;
+    const timeFormatter = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone,
+    });
+    const startFormatted = timeFormatter.format(startDate);
+    if (endDate) {
+      const endFormatted = timeFormatter.format(endDate);
+      return `${startFormatted} - ${endFormatted}`;
+    }
+    return startFormatted;
+  } catch {
+    return '7:00 PM - 9:30 PM';
+  }
+}
+
+function inferEventType(title: string, description: string): EventType {
+  const combined = `${title} ${description}`.toLowerCase();
+  if (combined.includes('concert') || combined.includes('performance')) return 'Concert';
+  if (combined.includes('dress')) return 'Dress';
+  if (combined.includes('sectional')) return 'Sectional';
+  if (combined.includes('retreat')) return 'Retreat';
+  return 'Rehearsal';
+}
+
+export async function fetchGoogleCalendarEvents(
+  calendarId: string,
+  locals?: App.Locals
+): Promise<ScheduleEvent[]> {
+  const token = await getGoogleAccessToken(locals);
+  const now = Date.now();
+  const timeMin = new Date(now - 60 * 24 * 60 * 60 * 1000).toISOString();
+  const timeMax = new Date(now + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+  const url = new URL(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`
+  );
+  url.searchParams.set('singleEvents', 'true');
+  url.searchParams.set('orderBy', 'startTime');
+  url.searchParams.set('timeMin', timeMin);
+  url.searchParams.set('timeMax', timeMax);
+  url.searchParams.set('maxResults', '250');
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Google Calendar API error (${res.status}): ${errText}`);
+  }
+
+  const data = (await res.json()) as { items?: GCalEventItem[] };
+  const items = data.items || [];
+
+  return items
+    .filter((item) => item.start?.dateTime || item.start?.date)
+    .map((item) => {
+      const startStr = item.start?.dateTime || item.start?.date || '';
+      const endStr = item.end?.dateTime || item.end?.date || '';
+      const date = startStr.slice(0, 10);
+      const time = formatGCalTimeRange(
+        startStr,
+        endStr,
+        item.start?.timeZone || 'America/Chicago'
+      );
+      const title = item.summary || 'Ensemble Call';
+      const location = item.location || 'Main Sanctuary';
+      const notes = item.description || '';
+      const type = inferEventType(title, notes);
+
+      return {
+        eventId: item.id,
+        date,
+        time,
+        type,
+        title,
+        location,
+        snack1Name: '',
+        snack2Name: '',
+        snack3Name: '',
+        snack4Name: '',
+        notes,
+        description: notes,
+      };
+    });
+}
+
+export async function getSnackClaims(locals?: App.Locals): Promise<SnackClaim[]> {
+  if (isSandboxSheetMode(locals)) {
+    return [...(demoStore.snacks || [])];
+  }
+
+  // 1. Try reading dedicated Snacks!A2:E tab if created
+  try {
+    const rows = await readSheetValues('Snacks!A2:E', locals);
+    if (rows && rows.length > 0) {
+      return rows
+        .filter((r) => r[0] && r[1] && r[2])
+        .map((r) => ({
+          eventId: (r[0] ?? '').trim(),
+          slot: (Number(r[1]) || 1) as 1 | 2 | 3 | 4,
+          singerName: (r[2] ?? '').trim(),
+          item: (r[3] ?? '').trim(),
+          updatedAt: (r[4] ?? '').trim(),
+        }));
+    }
+  } catch {
+    // Snacks tab might not exist yet; fall back to Schedule!A2:J
+  }
+
+  // 2. Fall back to reading columns G, H, I, J from Schedule!A2:J
+  try {
+    const schedRows = await readSheetValues('Schedule!A2:J', locals);
+    const claims: SnackClaim[] = [];
+    for (const r of schedRows) {
+      const evId = (r[0] ?? '').trim();
+      if (!evId) continue;
+      for (let s = 1; s <= 4; s++) {
+        const val = (r[5 + s] ?? '').trim();
+        if (val) {
+          const parsed = parseSnackEntry(val);
+          claims.push({
+            eventId: evId,
+            slot: s as 1 | 2 | 3 | 4,
+            singerName: parsed.name,
+            item: parsed.item,
+          });
+        }
+      }
+    }
+    return claims;
+  } catch {
+    return [];
+  }
+}
+
+function mergeSnackClaimsIntoSchedule(events: ScheduleEvent[], claims: SnackClaim[]) {
+  const claimMap = new Map<string, Record<number, string>>();
+  for (const c of claims) {
+    const formatted = formatSnackEntry(c.singerName, c.item);
+    if (!claimMap.has(c.eventId)) {
+      claimMap.set(c.eventId, {});
+    }
+    claimMap.get(c.eventId)![c.slot] = formatted;
+  }
+
+  for (const ev of events) {
+    const eventClaims = claimMap.get(ev.eventId);
+    if (eventClaims) {
+      if (eventClaims[1]) ev.snack1Name = eventClaims[1];
+      if (eventClaims[2]) ev.snack2Name = eventClaims[2];
+      if (eventClaims[3]) ev.snack3Name = eventClaims[3];
+      if (eventClaims[4]) ev.snack4Name = eventClaims[4];
+    }
+  }
+}
+
 export async function getScheduleWithWarnings(
   locals?: App.Locals
 ): Promise<{ schedule: ScheduleEvent[]; warnings: SheetWarning[] }> {
+  const calendarId = getCalendarId(locals);
+
+  // 1. Live Google Calendar if configured and service account credentials present
+  if (calendarId && calendarId !== 'DEMO' && hasGoogleServiceAccount(locals)) {
+    try {
+      const schedule = await cachedFetchJson('schedule', 60, async () => {
+        const events = await fetchGoogleCalendarEvents(calendarId, locals);
+        const snackClaims = await getSnackClaims(locals);
+        mergeSnackClaimsIntoSchedule(events, snackClaims);
+        events.sort((a, b) => a.date.localeCompare(b.date));
+        return events;
+      });
+      return { schedule, warnings: [] };
+    } catch (err) {
+      console.warn('[Google Calendar fetch failed, falling back to Sheet/Demo]', err);
+    }
+  }
+
+  // 2. Demo mode
   if (isSandboxSheetMode(locals)) {
     const sorted = [...demoStore.schedule].sort((a, b) => a.date.localeCompare(b.date));
+    mergeSnackClaimsIntoSchedule(sorted, demoStore.snacks || []);
     return { schedule: sorted, warnings: [] };
   }
 
+  // 3. Fallback to Master Google Sheet Schedule tab
   return cachedFetchJson('schedule', 60, async () => {
     const rows = await readSheetValues('Schedule!A2:K', locals);
     const schedule: ScheduleEvent[] = [];
@@ -817,6 +1060,8 @@ export async function getScheduleWithWarnings(
       }
     });
 
+    const snackClaims = await getSnackClaims(locals);
+    mergeSnackClaimsIntoSchedule(schedule, snackClaims);
     schedule.sort((a, b) => a.date.localeCompare(b.date));
     return { schedule, warnings };
   });
@@ -995,13 +1240,6 @@ export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWar
 
 export type SnackSlotNumber = 1 | 2 | 3 | 4;
 
-function getEventSlotValue(ev: ScheduleEvent, slot: SnackSlotNumber): string {
-  if (slot === 1) return ev.snack1Name;
-  if (slot === 2) return ev.snack2Name;
-  if (slot === 3) return ev.snack3Name;
-  return ev.snack4Name;
-}
-
 function setEventSlotValue(ev: ScheduleEvent, slot: SnackSlotNumber, value: string) {
   if (slot === 1) ev.snack1Name = value;
   else if (slot === 2) ev.snack2Name = value;
@@ -1020,37 +1258,60 @@ export async function mutateSnackSlot(params: {
   const { eventId, slot, action, item, caller, locals } = params;
 
   if (isSandboxSheetMode(locals)) {
-    const ev = demoStore.schedule.find((e) => e.eventId === eventId);
-    if (!ev) throw new NotFoundError(`Rehearsal event "${eventId}" not found.`);
-
-    const currentRaw = getEventSlotValue(ev, slot);
-    const parsed = parseSnackEntry(currentRaw);
+    const existingIdx = demoStore.snacks.findIndex(
+      (s) => s.eventId === eventId && s.slot === slot
+    );
+    const existing = existingIdx >= 0 ? demoStore.snacks[existingIdx] : null;
 
     if (action === 'claim') {
-      if (parsed.name.trim() !== '') {
-        throw new ConflictError(`Hospitality Slot ${slot} was just claimed by ${parsed.name}.`);
+      if (existing && existing.singerName.trim() !== '') {
+        throw new ConflictError(`Hospitality Slot ${slot} was just claimed by ${existing.singerName}.`);
       }
-      setEventSlotValue(ev, slot, formatSnackEntry(caller.name, item));
+      if (existing) {
+        existing.singerName = caller.name;
+        existing.item = item;
+        existing.updatedAt = new Date().toISOString();
+      } else {
+        demoStore.snacks.push({
+          eventId,
+          slot,
+          singerName: caller.name,
+          item,
+          updatedAt: new Date().toISOString(),
+        });
+      }
     } else if (action === 'update_item') {
       const canUpdate =
         caller.role === 'Admin' ||
-        parsed.name.trim().toLowerCase() === caller.name.trim().toLowerCase();
+        (existing && existing.singerName.toLowerCase() === caller.name.toLowerCase());
       if (!canUpdate) {
         throw new ConflictError(
-          `Only ${parsed.name || 'the slot owner'} or an Admin can edit what they are bringing.`
+          `Only ${existing?.singerName || 'the slot owner'} or an Admin can edit what they are bringing.`
         );
       }
-      setEventSlotValue(ev, slot, formatSnackEntry(parsed.name || caller.name, item));
+      if (existing) {
+        existing.item = item;
+        existing.updatedAt = new Date().toISOString();
+      }
     } else {
       const canRelease =
         caller.role === 'Admin' ||
-        parsed.name.trim().toLowerCase() === caller.name.trim().toLowerCase();
+        (existing && existing.singerName.toLowerCase() === caller.name.toLowerCase());
       if (!canRelease) {
-        throw new ConflictError(`Only ${parsed.name || 'the slot owner'} or an Admin can release this slot.`);
+        throw new ConflictError(`Only ${existing?.singerName || 'the slot owner'} or an Admin can release this slot.`);
       }
-      setEventSlotValue(ev, slot, '');
+      if (existingIdx >= 0) {
+        demoStore.snacks.splice(existingIdx, 1);
+      }
     }
-    return { ...ev };
+
+    const ev = demoStore.schedule.find((e) => e.eventId === eventId);
+    if (ev) {
+      setEventSlotValue(ev, slot, action === 'release' ? '' : formatSnackEntry(caller.name, item));
+    }
+    await invalidateCacheTag('schedule');
+    const { schedule } = await getScheduleWithWarnings(locals);
+    return schedule.find((e) => e.eventId === eventId) || ev!;
   }
 
   // Uncached live lookup of Schedule!A1:K to find exact current row by Event_ID
