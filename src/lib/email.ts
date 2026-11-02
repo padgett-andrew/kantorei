@@ -160,13 +160,21 @@ export async function sendLoginOtpEmail(params: {
     };
   }
 
-  const finalTo =
-    sandboxOverride || (isOnboardingFrom ? sandboxOverride || toEmail : toEmail);
+  const finalTo = sandboxOverride ? sandboxOverride.trim() : toEmail;
+  const isRedirected =
+    Boolean(sandboxOverride) && sandboxOverride.trim().toLowerCase() !== toEmail.toLowerCase();
+
+  const sandboxBanner = isRedirected
+    ? `<div style="background:#fef3c7;border:1px solid #f59e0b;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px;color:#92400e;">
+        <strong>Sandbox Routing Active:</strong> Login code requested for <code>${escapeHtml(toEmail)}</code>
+      </div>`
+    : '';
 
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;color:#18181b;">
+      ${sandboxBanner}
       <div style="background:#101b33;color:#fcfbf8;padding:20px 24px;border-radius:12px 12px 0 0;">
-        <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:#dbb46e;">${escapeHtml(choirName)} Singer Portal</p>
+        <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:#af673c;">${escapeHtml(choirName)} Singer Portal</p>
         <h2 style="margin:6px 0 0;font-size:20px;">Your 6-Digit Sign-In Code</h2>
       </div>
       <div style="border:1px solid #e4e4e7;border-top:none;padding:24px;border-radius:0 0 12px 12px;background:#ffffff;">
@@ -195,9 +203,27 @@ export async function sendLoginOtpEmail(params: {
       }),
     });
 
-    return { delivered: res.ok };
-  } catch {
-    return { delivered: false };
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('[Resend OTP Error]', res.status, errText);
+      if (isOnboardingFrom && !sandboxOverride) {
+        console.warn(
+          '[Resend Hint] With onboarding@resend.dev, set SANDBOX_OVERRIDE_EMAIL in .env to your Resend account email.'
+        );
+      }
+      return {
+        delivered: false,
+        devPreviewCode: import.meta.env.DEV ? code : undefined,
+      };
+    }
+
+    return { delivered: true };
+  } catch (err) {
+    console.error('[Resend OTP Fetch Error]', err);
+    return {
+      delivered: false,
+      devPreviewCode: import.meta.env.DEV ? code : undefined,
+    };
   }
 }
 

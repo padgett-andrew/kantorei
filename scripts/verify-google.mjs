@@ -30,7 +30,11 @@ function extractId(raw = '') {
   return t;
 }
 
-const env = { ...loadDotEnv(), ...process.env };
+const dotEnv = loadDotEnv();
+const env = { ...process.env };
+for (const [k, v] of Object.entries(dotEnv)) {
+  if (v !== '') env[k] = v;
+}
 const clientEmail = env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
 const privateKeyRaw = env.GOOGLE_PRIVATE_KEY || '';
 const sheetId = extractId(env.GOOGLE_MASTER_SHEET_ID || '');
