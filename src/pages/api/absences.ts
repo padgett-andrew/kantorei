@@ -16,6 +16,8 @@ const PostAbsenceSchema = z.object({
   eventId: z.string().trim().min(1, 'Please select a rehearsal or concert.'),
   reason: z.string().trim().max(500).default(''),
   targetEmail: z.string().trim().email().optional(),
+  targetSingerEmail: z.string().trim().email().optional(),
+  status: z.enum(['Absent', 'Late']).default('Absent'),
 });
 
 const DeleteAbsenceSchema = z.object({
@@ -42,7 +44,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const requestedEmail = parsed.data.targetEmail?.toLowerCase();
+    const requestedEmail = (parsed.data.targetEmail || parsed.data.targetSingerEmail)?.toLowerCase();
     const isSelf = !requestedEmail || requestedEmail === caller.email;
 
     if (!isSelf && !hasRole(caller, ['Section_Leader', 'Admin'])) {
@@ -77,30 +79,41 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
+    const requestedStatus = parsed.data.status ?? 'Absent';
     const submittedBy = isSelf ? 'Self' : `${caller.name} (Roll Call)`;
+    const fallbackReason = isSelf
+      ? requestedStatus === 'Late'
+        ? 'Running late'
+        : 'Personal conflict'
+      : requestedStatus === 'Late'
+      ? 'Marked late at roll call'
+      : 'Marked absent at roll call';
+
     const absence = await upsertAbsenceRecord({
       eventId: event.eventId,
       date: event.date,
       targetSinger,
-      reason: parsed.data.reason || (isSelf ? 'Personal conflict' : 'Marked absent at roll call'),
+      reason: parsed.data.reason || fallbackReason,
       submittedBy,
+      status: requestedStatus,
       locals,
     });
 
-    // Compute updated active absence count for this section & event
+    // Compute updated active absence and late counts for this section & event
     const allAbsences = await getAbsences(locals);
     const sectionEmails = new Set(
       roster
         .filter((s) => s.sectionGroup === targetSinger.sectionGroup)
         .map((s) => s.email)
     );
-    const sectionAbsenceCount = allAbsences.filter(
+    const sectionRecords = allAbsences.filter(
       (a) =>
         a.eventId === event.eventId &&
-        a.status === 'Absent' &&
         (sectionEmails.has(a.singerEmail) ||
           a.voicePart[0] === targetSinger.voicePart[0])
-    ).length;
+    );
+    const sectionAbsenceCount = sectionRecords.filter((a) => a.status === 'Absent').length;
+    const sectionLateCount = sectionRecords.filter((a) => a.status === 'Late').length;
 
     const sectionLeaders = roster.filter(
       (s) =>
@@ -119,6 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       admins,
       config,
       sectionAbsenceCount,
+      sectionLateCount,
       locals,
     });
 
@@ -126,7 +140,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       JSON.stringify({
         ok: true,
         absence,
+        record: absence,
         sectionAbsenceCount,
+        sectionLateCount,
         emailResult,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }

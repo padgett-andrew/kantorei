@@ -40,6 +40,7 @@ export async function sendAbsenceAlertEmail(params: {
   admins?: Singer[];
   config: PortalConfig;
   sectionAbsenceCount: number;
+  sectionLateCount?: number;
   locals?: App.Locals;
 }): Promise<EmailSendResult> {
   const {
@@ -50,6 +51,7 @@ export async function sendAbsenceAlertEmail(params: {
     admins = [],
     config,
     sectionAbsenceCount,
+    sectionLateCount = 0,
     locals,
   } = params;
 
@@ -99,11 +101,23 @@ export async function sendAbsenceAlertEmail(params: {
     ? [sandboxOverride || intendedRecipients[0] || 'delivered@resend.dev']
     : intendedRecipients;
 
+  const isLate = absence.status === 'Late';
   const pluralSection = sectionGroup === 'Bass' ? 'Basses' : `${sectionGroup}s`;
   const formattedDate = formatEventDate(absence.date);
   const eventTitle = event ? `${event.title} (${event.time})` : formattedDate;
 
-  const subject = `[${config.Choir_Name || 'Kantorei'} Absence] ${absence.singerName} (${absence.voicePart}) — ${formattedDate}`;
+  const subject = isLate
+    ? `[${config.Choir_Name || 'Kantorei'} Running Late] ${absence.singerName} (${absence.voicePart}) — ${formattedDate}`
+    : `[${config.Choir_Name || 'Kantorei'} Absence] ${absence.singerName} (${absence.voicePart}) — ${formattedDate}`;
+
+  const headerBannerLabel = isLate ? 'Running Late Notification' : 'Rehearsal Absence Notification';
+  const headerSubtitleColor = isLate ? '#fcd34d' : '#dbb46e';
+  const statusLabel = isLate ? 'Running Late' : 'Absent';
+  const reasonLabel = isLate ? 'ETA / Note' : 'Reason';
+
+  const headcountText = isLate
+    ? `${sectionAbsenceCount} absent, ${sectionLateCount} running late (${escapeHtml(pluralSection)}) for ${escapeHtml(absence.date)}.`
+    : `${sectionAbsenceCount} ${escapeHtml(pluralSection)} now marked absent${sectionLateCount > 0 ? ` (${sectionLateCount} running late)` : ''} for ${escapeHtml(absence.date)}.`;
 
   const sandboxBannerHtml = useSandboxRouting
     ? `<div style="background:#fef3c7;border:1px solid #f59e0b;padding:12px 16px;border-radius:8px;margin-bottom:18px;font-size:13px;color:#92400e;">
@@ -116,16 +130,17 @@ export async function sendAbsenceAlertEmail(params: {
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;color:#18181b;">
       ${sandboxBannerHtml}
       <div style="background:#101b33;color:#fcfbf8;padding:20px 24px;border-radius:12px 12px 0 0;">
-        <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:#dbb46e;">Rehearsal Absence Notification</p>
+        <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:${headerSubtitleColor};">${headerBannerLabel}</p>
         <h2 style="margin:6px 0 0;font-size:20px;">${escapeHtml(absence.singerName)} (${escapeHtml(absence.voicePart)})</h2>
       </div>
       <div style="border:1px solid #e4e4e7;border-top:none;padding:20px 24px;border-radius:0 0 12px 12px;background:#ffffff;">
         <p style="margin:0 0 12px;"><strong>Event:</strong> ${escapeHtml(eventTitle)}</p>
         <p style="margin:0 0 12px;"><strong>Date:</strong> ${escapeHtml(formattedDate)}</p>
-        <p style="margin:0 0 12px;"><strong>Reason:</strong> ${escapeHtml(absence.reason || 'No reason provided')}</p>
+        <p style="margin:0 0 12px;"><strong>Status:</strong> ${escapeHtml(statusLabel)}</p>
+        <p style="margin:0 0 12px;"><strong>${reasonLabel}:</strong> ${escapeHtml(absence.reason || (isLate ? 'Running late' : 'No reason provided'))}</p>
         <p style="margin:0 0 16px;"><strong>Submitted By:</strong> ${escapeHtml(absence.submittedBy)}</p>
         <div style="background:#f4f4f5;padding:12px 16px;border-radius:8px;font-size:14px;">
-          <strong>Section Headcount Alert:</strong> ${sectionAbsenceCount} ${escapeHtml(pluralSection)} now marked absent for ${escapeHtml(absence.date)}.
+          <strong>Section Headcount Alert:</strong> ${headcountText}
         </div>
       </div>
     </div>

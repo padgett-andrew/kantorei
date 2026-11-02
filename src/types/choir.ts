@@ -3,7 +3,7 @@ export const SECTION_GROUPS = ['Soprano', 'Alto', 'Tenor', 'Bass'] as const;
 export const MEMBER_ROLES = ['Singer', 'Section_Leader', 'Admin'] as const;
 export const SINGER_STATUSES = ['Active', 'On_Leave', 'Inactive'] as const;
 export const EVENT_TYPES = ['Rehearsal', 'Sectional', 'Retreat', 'Dress', 'Concert'] as const;
-export const ABSENCE_STATUSES = ['Absent', 'Cleared'] as const;
+export const ABSENCE_STATUSES = ['Absent', 'Late', 'Cleared'] as const;
 export const CONCERT_STATUSES = ['Upcoming', 'On_Sale', 'Past'] as const;
 
 export type VoicePart = (typeof VOICE_PARTS)[number];

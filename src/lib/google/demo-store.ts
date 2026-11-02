@@ -318,6 +318,17 @@ export const demoStore: DemoStore = {
   ],
   absences: [
     {
+      timestamp: '2026-11-01T17:45:00.000Z',
+      eventId: 'reh-2026-11-10',
+      date: '2026-11-10',
+      singerName: 'David O’Connell',
+      singerEmail: 'david.oconnell@gmail.com',
+      voicePart: 'T1',
+      reason: 'Running ~20m late (traffic on I-35W)',
+      submittedBy: 'Self',
+      status: 'Late',
+    },
+    {
       timestamp: '2026-10-29T18:15:00.000Z',
       eventId: 'reh-2026-11-15',
       date: '2026-11-15',

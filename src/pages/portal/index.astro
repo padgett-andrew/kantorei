@@ -33,12 +33,23 @@ const upcomingEvents = schedule.filter((ev) => ev.date >= today);
 const nextEvent = upcomingEvents[0];
 const isCallToday = Boolean(nextEvent && nextEvent.date === today);
 
-const myUpcomingAbsences = absences.filter(
+const myUpcomingConflicts = absences.filter(
   (a) =>
     a.singerEmail === singer.email &&
-    a.status === 'Absent' &&
+    (a.status === 'Absent' || a.status === 'Late') &&
     a.date >= today
 );
+const myUpcomingAbsences = myUpcomingConflicts.filter((a) => a.status === 'Absent');
+const myUpcomingLates = myUpcomingConflicts.filter((a) => a.status === 'Late');
+
+const nextEventConflict = nextEvent
+  ? absences.find(
+      (a) =>
+        a.singerEmail === singer.email &&
+        a.eventId === nextEvent.eventId &&
+        (a.status === 'Absent' || a.status === 'Late')
+    )
+  : undefined;
 
 const mySnackDates = upcomingEvents.filter((ev) =>
   [ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name].some(
@@ -181,6 +192,29 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                   </p>
                 </div>
               )}
+
+              {nextEventConflict && (
+                <div
+                  class:list={[
+                    'mt-4 flex items-start gap-2.5 rounded-2xl border p-3.5 text-xs',
+                    nextEventConflict.status === 'Late'
+                      ? 'border-amber-400/40 bg-amber-400/15 text-amber-200'
+                      : 'border-rose-400/40 bg-rose-500/15 text-rose-200',
+                  ]}
+                >
+                  <span class="text-sm mt-0.5">{nextEventConflict.status === 'Late' ? '⏰' : '🔴'}</span>
+                  <div>
+                    <span class="font-bold">
+                      {nextEventConflict.status === 'Late'
+                        ? 'Running Late Notice Active'
+                        : 'Absence Reported for this Call'}
+                    </span>
+                    <p class="mt-0.5 opacity-90 text-[11px]">
+                      {nextEventConflict.reason || (nextEventConflict.status === 'Late' ? 'Running late' : 'Absence recorded')}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <p class="mt-4 text-sm text-zinc-300">
@@ -203,7 +237,15 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               eventTitle={nextEvent.title}
               eventDate={nextEvent.date}
               sectionGroup={singer.sectionGroup}
-              buttonLabel={isCallToday ? 'Running Late? Send 1-Tap Notice' : 'Report Conflict / Late'}
+              buttonLabel={
+                nextEventConflict
+                  ? nextEventConflict.status === 'Late'
+                    ? 'Update Late ETA'
+                    : 'Update Absence'
+                  : isCallToday
+                  ? 'Running Late? Send 1-Tap Notice'
+                  : 'Report Conflict / Late'
+              }
             />
           )}
           {singer.role === 'Admin' && nextEvent && (
@@ -228,33 +270,39 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
             <span
               class:list={[
                 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold ring-1',
-                myUpcomingAbsences.length === 0
+                myUpcomingConflicts.length === 0
                   ? 'bg-emerald-50 text-emerald-700 ring-emerald-200/80'
+                  : myUpcomingAbsences.length > 0
+                  ? 'bg-rose-50 text-rose-700 ring-rose-200/80'
                   : 'bg-amber-50 text-amber-700 ring-amber-200/80',
               ]}
             >
-              {myUpcomingAbsences.length === 0 ? '✓' : myUpcomingAbsences.length}
+              {myUpcomingConflicts.length === 0 ? '✓' : myUpcomingConflicts.length}
             </span>
             <div>
               <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                 Attendance
               </span>
               <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
-                {myUpcomingAbsences.length === 0
+                {myUpcomingConflicts.length === 0
                   ? 'Attending All Upcoming Calls'
-                  : `${myUpcomingAbsences.length} Conflict${
-                      myUpcomingAbsences.length > 1 ? 's' : ''
-                    } Logged`}
+                  : myUpcomingAbsences.length > 0 && myUpcomingLates.length > 0
+                  ? `${myUpcomingAbsences.length} Absence, ${myUpcomingLates.length} Late Notice`
+                  : myUpcomingAbsences.length > 0
+                  ? `${myUpcomingAbsences.length} Absence${myUpcomingAbsences.length > 1 ? 's' : ''} Logged`
+                  : `${myUpcomingLates.length} Late Notice${myUpcomingLates.length > 1 ? 's' : ''} Logged`}
               </h3>
               <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-                {myUpcomingAbsences.length === 0
+                {myUpcomingConflicts.length === 0
                   ? `Marked present across all ${upcomingEvents.length} scheduled dates.`
-                  : `Next logged absence: ${formatEventDate(myUpcomingAbsences[0].date)}`}
+                  : `Next notice: ${formatEventDate(myUpcomingConflicts[0].date)} (${
+                      myUpcomingConflicts[0].status === 'Late' ? 'Running Late' : 'Absent'
+                    })`}
               </p>
             </div>
           </div>
           <span class="shrink-0 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 transition group-hover:bg-navy-900 group-hover:text-white">
-            {myUpcomingAbsences.length === 0 ? 'Log' : 'Edit'} →
+            {myUpcomingConflicts.length === 0 ? 'Log' : 'Edit'} →
           </span>
         </a>
 

@@ -3,6 +3,7 @@ import {
   inferSectionGroup,
   parseSnackEntry,
   type AbsenceRecord,
+  type AbsenceStatus,
   type ScheduleEvent,
   type Singer,
 } from '../../types/choir';
@@ -166,9 +167,10 @@ export async function upsertAbsenceRecord(params: {
   targetSinger: Singer;
   reason: string;
   submittedBy: string;
+  status?: AbsenceStatus;
   locals?: App.Locals;
 }): Promise<AbsenceRecord> {
-  const { eventId, date, targetSinger, reason, submittedBy, locals } = params;
+  const { eventId, date, targetSinger, reason, submittedBy, status = 'Absent', locals } = params;
   const normalizedEmail = targetSinger.email.trim().toLowerCase();
   const timestamp = new Date().toISOString();
 
@@ -181,7 +183,7 @@ export async function upsertAbsenceRecord(params: {
     voicePart: targetSinger.voicePart,
     reason: reason.trim(),
     submittedBy,
-    status: 'Absent',
+    status,
   };
 
   if (isSandboxSheetMode(locals)) {

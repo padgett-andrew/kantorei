@@ -152,7 +152,12 @@ export const AbsenceRowSchema = z
       voicePart,
       reason,
       submittedBy: submittedBy || 'Self',
-      status: rawStatus.toLowerCase() === 'cleared' ? 'Cleared' : 'Absent',
+      status: (() => {
+        const norm = (rawStatus || '').trim().toLowerCase();
+        if (norm === 'cleared') return 'Cleared';
+        if (norm === 'late' || norm === 'tardy') return 'Late';
+        return 'Absent';
+      })(),
     })
   );
 

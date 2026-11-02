@@ -1,4 +1,4 @@
-import { UserCheck, UserMinus } from 'lucide-react';
+import { Clock, UserCheck, UserMinus } from 'lucide-react';
 import {
   SECTION_GROUPS,
   type AbsenceRecord,
@@ -15,9 +15,9 @@ interface Props {
   sectionFilter: 'All' | SectionGroup;
   onSectionFilterChange: (section: 'All' | SectionGroup) => void;
   activeSingers: Singer[];
-  absentForSelectedEvent: Map<string, AbsenceRecord>;
+  attendanceForSelectedEvent: Map<string, AbsenceRecord>;
   busyEmail: string | null;
-  onToggleAttendance: (singer: Singer, wasAbsent: boolean) => void;
+  onSetAttendance: (singer: Singer, status: 'Present' | 'Late' | 'Absent') => void;
 }
 
 export default function RollCallTab({
@@ -27,9 +27,9 @@ export default function RollCallTab({
   sectionFilter,
   onSectionFilterChange,
   activeSingers,
-  absentForSelectedEvent,
+  attendanceForSelectedEvent,
   busyEmail,
-  onToggleAttendance,
+  onSetAttendance,
 }: Props) {
   const visibleRollCallSingers = activeSingers.filter(
     (s) => sectionFilter === 'All' || s.sectionGroup === sectionFilter
@@ -84,10 +84,13 @@ export default function RollCallTab({
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {SECTION_GROUPS.map((sec) => {
             const sectionSingers = activeSingers.filter((s) => s.sectionGroup === sec);
-            const absentCount = sectionSingers.filter((s) =>
-              absentForSelectedEvent.has(s.email)
+            const lateCount = sectionSingers.filter(
+              (s) => attendanceForSelectedEvent.get(s.email)?.status === 'Late'
             ).length;
-            const presentCount = sectionSingers.length - absentCount;
+            const absentCount = sectionSingers.filter(
+              (s) => attendanceForSelectedEvent.get(s.email)?.status === 'Absent'
+            ).length;
+            const presentCount = sectionSingers.length - (lateCount + absentCount);
             return (
               <div
                 key={sec}
@@ -102,11 +105,23 @@ export default function RollCallTab({
                     / {sectionSingers.length} present
                   </span>
                 </div>
-                {absentCount > 0 && (
-                  <span className="mt-1 block text-[11px] font-medium text-amber-700">
-                    {absentCount} reported absent
-                  </span>
-                )}
+                <div className="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] font-semibold">
+                  {lateCount > 0 && (
+                    <span className="text-amber-700">
+                      🟡 {lateCount} late
+                    </span>
+                  )}
+                  {absentCount > 0 && (
+                    <span className="text-rose-700">
+                      🔴 {absentCount} absent
+                    </span>
+                  )}
+                  {lateCount === 0 && absentCount === 0 && (
+                    <span className="text-emerald-700">
+                      ✓ Full section
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -123,15 +138,20 @@ export default function RollCallTab({
 
         <ul className="divide-y divide-zinc-100">
           {visibleRollCallSingers.map((s) => {
-            const isAbsent = absentForSelectedEvent.has(s.email);
-            const absenceInfo = absentForSelectedEvent.get(s.email);
+            const record = attendanceForSelectedEvent.get(s.email);
+            const currentStatus: 'Present' | 'Late' | 'Absent' =
+              record?.status === 'Late' ? 'Late' : record?.status === 'Absent' ? 'Absent' : 'Present';
             const isBusy = busyEmail === s.email;
 
             return (
               <li
                 key={s.email}
                 className={`flex flex-col gap-3 px-5 py-3.5 transition sm:flex-row sm:items-center sm:justify-between sm:px-6 ${
-                  isAbsent ? 'bg-amber-50/40' : 'hover:bg-ivory-50/50'
+                  currentStatus === 'Absent'
+                    ? 'bg-rose-50/30'
+                    : currentStatus === 'Late'
+                    ? 'bg-amber-50/40'
+                    : 'hover:bg-ivory-50/50'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -152,38 +172,83 @@ export default function RollCallTab({
                           {s.role.replace('_', ' ')}
                         </span>
                       )}
+                      {currentStatus === 'Late' && (
+                        <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
+                          🟡 Running Late
+                        </span>
+                      )}
+                      {currentStatus === 'Absent' && (
+                        <span className="rounded-full border border-rose-300 bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800">
+                          🔴 Absent
+                        </span>
+                      )}
                     </div>
                     <span className="text-xs text-zinc-500">{s.email}</span>
-                    {isAbsent && absenceInfo?.reason && (
-                      <p className="mt-0.5 text-xs font-medium text-amber-800">
-                        Note: {absenceInfo.reason}
+                    {record?.reason && (
+                      <p
+                        className={`mt-0.5 text-xs font-medium ${
+                          currentStatus === 'Late' ? 'text-amber-800' : 'text-rose-800'
+                        }`}
+                      >
+                        {currentStatus === 'Late' ? 'ETA / Note: ' : 'Reason: '}
+                        {record.reason}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  {isAbsent ? (
+                {/* 3-way Segmented Roll Call Control */}
+                <div className="flex items-center self-end sm:self-auto">
+                  <div className="inline-flex rounded-xl border border-zinc-200 bg-zinc-50/80 p-0.5 shadow-2xs">
                     <button
                       type="button"
                       disabled={isBusy}
-                      onClick={() => onToggleAttendance(s, true)}
-                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 disabled:opacity-60"
+                      onClick={() => onSetAttendance(s, 'Present')}
+                      className={`cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition disabled:opacity-60 ${
+                        currentStatus === 'Present'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'text-zinc-600 hover:text-zinc-900'
+                      }`}
+                      title="Mark Present"
                     >
-                      <UserCheck className="h-3.5 w-3.5" />
-                      {isBusy ? 'Updating…' : 'Mark Present'}
+                      <span className="flex items-center gap-1">
+                        <UserCheck className="h-3 w-3" />
+                        <span>Present</span>
+                      </span>
                     </button>
-                  ) : (
                     <button
                       type="button"
                       disabled={isBusy}
-                      onClick={() => onToggleAttendance(s, false)}
-                      className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 disabled:opacity-60"
+                      onClick={() => onSetAttendance(s, 'Late')}
+                      className={`cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition disabled:opacity-60 ${
+                        currentStatus === 'Late'
+                          ? 'bg-amber-400 text-amber-950 shadow-xs'
+                          : 'text-zinc-600 hover:text-zinc-900'
+                      }`}
+                      title="Mark Running Late"
                     >
-                      <UserMinus className="h-3.5 w-3.5" />
-                      {isBusy ? 'Saving…' : 'Mark Absent'}
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>Late</span>
+                      </span>
                     </button>
-                  )}
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => onSetAttendance(s, 'Absent')}
+                      className={`cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition disabled:opacity-60 ${
+                        currentStatus === 'Absent'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'text-zinc-600 hover:text-zinc-900'
+                      }`}
+                      title="Mark Absent"
+                    >
+                      <span className="flex items-center gap-1">
+                        <UserMinus className="h-3 w-3" />
+                        <span>Absent</span>
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </li>
             );

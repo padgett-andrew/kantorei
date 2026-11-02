@@ -96,9 +96,9 @@ export default function AdminRollCall({
   const onLeaveSingers = roster.filter((s) => s.status === 'On_Leave');
   const inactiveSingers = roster.filter((s) => s.status === 'Inactive');
 
-  const absentForSelectedEvent = new Map(
+  const attendanceForSelectedEvent = new Map(
     absences
-      .filter((a) => a.eventId === selectedEventId && a.status === 'Absent')
+      .filter((a) => a.eventId === selectedEventId && a.status !== 'Cleared')
       .map((a) => [a.singerEmail, a])
   );
 
@@ -144,22 +144,31 @@ export default function AdminRollCall({
     }
   }
 
-  async function toggleAttendance(target: Singer, currentlyAbsent: boolean) {
+  async function setAttendanceStatus(target: Singer, newStatus: 'Present' | 'Late' | 'Absent') {
     if (!selectedEventId) return;
+    const existing = attendanceForSelectedEvent.get(target.email);
+    const currentStatus =
+      existing?.status === 'Late'
+        ? 'Late'
+        : existing?.status === 'Absent'
+        ? 'Absent'
+        : 'Present';
+    if (currentStatus === newStatus) return;
+
     setBusyEmail(target.email);
     setBanner(null);
 
     try {
-      if (currentlyAbsent) {
+      if (newStatus === 'Present') {
         const res = await fetch('/api/absences', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             eventId: selectedEventId,
-            singerEmail: target.email,
+            targetEmail: target.email,
           }),
         });
-        if (!res.ok) throw new Error('Failed to clear absence.');
+        if (!res.ok) throw new Error('Failed to mark present.');
         setAbsences((prev) =>
           prev.map((a) =>
             a.eventId === selectedEventId && a.singerEmail === target.email
@@ -172,30 +181,31 @@ export default function AdminRollCall({
           text: `Marked ${target.name} present for this rehearsal.`,
         });
       } else {
-        const targetEv = scheduleList.find((e) => e.eventId === selectedEventId);
+        const actionLabel = newStatus === 'Late' ? 'running late' : 'absent';
         const res = await fetch('/api/absences', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             eventId: selectedEventId,
-            date: targetEv?.date ?? new Date().toISOString().slice(0, 10),
-            reason: `Marked absent during roll call by ${caller.name}`,
-            voicePart: target.voicePart,
-            targetSingerEmail: target.email,
-            targetSingerName: target.name,
+            targetEmail: target.email,
+            status: newStatus,
+            reason: `Marked ${actionLabel} during roll call by ${caller.name}`,
           }),
         });
-        if (!res.ok) throw new Error('Failed to mark absence.');
-        const data = (await res.json()) as { record: AbsenceRecord };
-        setAbsences((prev) => {
-          const filtered = prev.filter(
-            (a) => !(a.eventId === selectedEventId && a.singerEmail === target.email)
-          );
-          return [...filtered, data.record];
-        });
+        if (!res.ok) throw new Error(`Failed to mark ${actionLabel}.`);
+        const data = (await res.json()) as { absence?: AbsenceRecord; record?: AbsenceRecord };
+        const savedRecord = data.absence || data.record;
+        if (savedRecord) {
+          setAbsences((prev) => {
+            const filtered = prev.filter(
+              (a) => !(a.eventId === selectedEventId && a.singerEmail === target.email)
+            );
+            return [...filtered, savedRecord];
+          });
+        }
         setBanner({
           type: 'ok',
-          text: `Marked ${target.name} absent for this rehearsal.`,
+          text: `Marked ${target.name} ${actionLabel} for this rehearsal.`,
         });
       }
     } catch {
@@ -517,9 +527,9 @@ export default function AdminRollCall({
           sectionFilter={sectionFilter}
           onSectionFilterChange={setSectionFilter}
           activeSingers={activeSingers}
-          absentForSelectedEvent={absentForSelectedEvent}
+          attendanceForSelectedEvent={attendanceForSelectedEvent}
           busyEmail={busyEmail}
-          onToggleAttendance={toggleAttendance}
+          onSetAttendance={setAttendanceStatus}
         />
       )}
 
