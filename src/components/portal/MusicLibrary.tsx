@@ -19,9 +19,10 @@ import { prettifyScoreName } from './music/utils';
 interface Props {
   singer: Singer;
   pieces: RepertoirePiece[];
+  initialDocs?: Record<string, LoadedDocPayload>;
 }
 
-interface LoadedDocPayload {
+export interface LoadedDocPayload {
   title: string;
   html: string;
   sourceType: 'gdoc' | 'docx' | 'text' | 'legacy-doc';
@@ -29,19 +30,9 @@ interface LoadedDocPayload {
   referenceLinks: ReferenceRecordingLink[];
 }
 
-export default function MusicLibrary({ singer, pieces }: Props) {
+export default function MusicLibrary({ singer, pieces, initialDocs }: Props) {
   const [search, setSearch] = useState('');
-  const [filterMode, setFilterMode] = useState<'all' | 'my-part'>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('kantorei_music_filter');
-        if (saved === 'all' || saved === 'my-part') return saved;
-      } catch {
-        // ignore
-      }
-    }
-    return 'my-part';
-  });
+  const [filterMode, setFilterMode] = useState<'all' | 'my-part'>('all');
   const [selectedConcertId, setSelectedConcertId] = useState<string>('all');
 
   function handleFilterModeChange(mode: 'all' | 'my-part') {
@@ -53,7 +44,7 @@ export default function MusicLibrary({ singer, pieces }: Props) {
     }
   }
 
-  const [docCache, setDocCache] = useState<Record<string, LoadedDocPayload>>({});
+  const [docCache, setDocCache] = useState<Record<string, LoadedDocPayload>>(() => initialDocs || {});
   const [docLoading, setDocLoading] = useState<Record<string, boolean>>({});
   const [docError, setDocError] = useState<Record<string, string>>({});
   const [expandedDocIds, setExpandedDocIds] = useState<Record<string, boolean>>({});
@@ -106,9 +97,11 @@ export default function MusicLibrary({ singer, pieces }: Props) {
   // Preload Director's Markings documents so YouTube recordings & concert order are ready immediately
   useEffect(() => {
     for (const docFile of allDocFiles) {
-      void ensureDocLoaded(docFile);
+      if (!docCache[docFile.id]) {
+        void ensureDocLoaded(docFile);
+      }
     }
-  }, [allDocFiles]);
+  }, [allDocFiles, docCache]);
 
   // Smooth-scroll to active video when singer clicks a reference recording
   useEffect(() => {
@@ -233,6 +226,15 @@ export default function MusicLibrary({ singer, pieces }: Props) {
     singer.voicePart,
     singer.sectionGroup,
   ]);
+
+  const excludedPiecesCount = useMemo(() => {
+    if (filterMode !== 'my-part') return 0;
+    const totalRawPieces = rawPrograms
+      .filter((prog) => selectedConcertId === 'all' || prog.id === selectedConcertId)
+      .reduce((sum, p) => sum + p.pieces.length, 0);
+    const totalFilteredPieces = filteredPrograms.reduce((sum, p) => sum + p.pieces.length, 0);
+    return Math.max(0, totalRawPieces - totalFilteredPieces);
+  }, [filterMode, rawPrograms, filteredPrograms, selectedConcertId]);
 
   function toggleDocExpanded(file: DriveMusicFile) {
     void ensureDocLoaded(file);
@@ -386,6 +388,24 @@ export default function MusicLibrary({ singer, pieces }: Props) {
           </button>
         </div>
       </div>
+
+      {excludedPiecesCount > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-2.5 text-xs text-amber-900 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+            <span>
+              Filtered for <strong>{singer.sectionGroup} ({singer.voicePart})</strong> · {excludedPiecesCount} piece{excludedPiecesCount > 1 ? 's' : ''} not in your section {excludedPiecesCount > 1 ? 'are' : 'is'} hidden (e.g. Treble SSAA).
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleFilterModeChange('all')}
+            className="cursor-pointer font-bold text-navy-950 underline hover:text-gold-600 shrink-0"
+          >
+            Show All Concert Pieces
+          </button>
+        </div>
+      )}
 
       {/* Inline Reference YouTube Video Player */}
       <VideoPlayer

@@ -378,42 +378,41 @@ export async function getRepertoire(locals?: App.Locals): Promise<RepertoirePiec
 
 const DEMO_DIRECTOR_MARKINGS_HTML: Record<string, string> = {
   'demo-doc-advent-markings': sanitizeHandbookHtml(`
-    <h2>Concert Order &amp; Transitions — Advent with Kantorei</h2>
-    <p><strong>Artistic Director Callouts (Adam Reinwald):</strong> Please transfer all measure numbers, breaths, and repeat instructions into ForScore or your octavos prior to our first November sectional.</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Order &amp; Piece</th>
-          <th>Divisi &amp; Part Assignments</th>
-          <th>Repeats, Cuts &amp; Style</th>
-          <th>Reference Recording</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>1. Gaudete</strong> — Steven Sametz</td>
-          <td><strong>SATB + Solo Quartet:</strong> S1/A1/T1/B1 take upper divisi at m. 34; B2 anchor low drone pedal smoothly.</td>
-          <td>Take 1st &amp; 2nd endings at m. 24; <em>subito piano</em> on repeat. Crisp liturgical Latin consonants.</td>
-          <td><a href="https://www.youtube.com/watch?v=9yM6S6qU4uY">Listen on YouTube</a></td>
-        </tr>
-        <tr>
-          <td><strong>2. O Magnum Mysterium</strong> — Morten Lauridsen</td>
-          <td><strong>Full SATB (8-part divisi mm. 28–39):</strong> S2 split evenly on m. 36 cluster; A2/T1 match warm vowel color; B1/B2 stagger breathing through mm. 44–52.</td>
-          <td>&#9833; = 54. No breath before "et admirabile" in m. 5 (carry phrase across barline). Release final chord on beat 4.</td>
-          <td><a href="https://www.youtube.com/watch?v=nn5ken3RJBo">Lauridsen Reference (YouTube)</a></td>
-        </tr>
-        <tr>
-          <td><strong>3. and the swallow</strong> — Caroline Shaw</td>
-          <td><strong>SATB:</strong> S1/S2 straight tone opening ("How lovely is your dwelling place"); T2/B1 bring out moving inner 16ths at m. 41.</td>
-          <td>Observe written glissandi gently (not theatrical); observe 2-bar silence before Coda.</td>
-          <td><a href="https://www.youtube.com/watch?v=X3N2h6uP5F4">Shaw Reference (YouTube)</a></td>
-        </tr>
-      </tbody>
-    </table>
-    <h3>General Advent Style &amp; Standing Formation</h3>
+    <p><strong>FINAL - </strong></p>
+    <p>1.</p>
+    <p>Aer Enim - Linda Kachelmeier. 3.5’ - SSAA - TR - marimba DFE orff, tam, clicker</p>
+    <p>Veni (arr. Steele) - 2.5’ - TTBB - ATR conducts - hand drum</p>
+    <p>Lo, How a Rose (Sandström) - 3.5’ - ATR conducts</p>
+    <p><strong>Carol: People Look East!</strong></p>
+    <p>——</p>
+    <p>2.</p>
+    <p>In the Stillness (Beamish) - 2.5’ -- small group A - ATR conducts</p>
+    <p>His Voice as the Sound (Parker) - 2 - TR</p>
+    <p>O Magnum Mysterium (Lauridsen) - 6 - TR</p>
+    <p><strong>Carol: Stil, Still, Stil?</strong></p>
+    <p>——</p>
+    <p>3.</p>
+    <p>Gloria from Masque of Angels (Argento) - 4’ — TR conducts, organ</p>
+    <p>Refugee (Deignan) - 7’ - ATR conducts - piano</p>
+    <p>——</p>
+    <p>4.</p>
+    <p>Love Came Down at Christmas (Grundahl) - 3.5 - TR - organ + oboe</p>
+    <p>A Spotless Rose (Howells) - 3’ - ATR conducts</p>
+    <p>Rise Up, Shepherd (PJC) - 3.5 TR</p>
+    <p><strong>Carol: Away In The Manger</strong></p>
+    <p>——</p>
+    <p>5.</p>
+    <p>Regem Natum (Gallus) - 2.5’ — small group - Group B - TR</p>
+    <p>Gaudete (Sametz) - 4.5 - ATR conducts</p>
+    <p>The Times they are A-Changing (Podd) - 4 - TR - piano</p>
+    <p><strong>Carol: Silent Night</strong></p>
+    <p><strong>Total time: 52’ + carols + speaking + interludes = 65’</strong></p>
+    <h3>Concert Notes &amp; Reference Recordings</h3>
     <ul>
-      <li><strong>Mixed Quartet Formation</strong> for Set I; switch to <strong>Sectional Arc (S–A–B–T)</strong> during organ interlude before Lauridsen.</li>
-      <li>All final <em>m</em> and <em>n</em> consonants place cleanly on the release beat unless marked <em>morendo</em>.</li>
+      <li><strong>Veni (arr. Steele):</strong> <a href="https://www.youtube.com/watch?v=QEX8AEPwVQI">Steele Reference Recording</a></li>
+      <li><strong>Lo, How a Rose (Sandström):</strong> <a href="https://www.youtube.com/watch?v=sb-TvOUZ4o0">Sandström Reference Recording</a></li>
+      <li><strong>O Magnum Mysterium (Lauridsen):</strong> <a href="https://www.youtube.com/watch?v=nn5ken3RJBo">Lauridsen Reference Recording</a></li>
+      <li><strong>Gaudete (Sametz):</strong> <a href="https://www.youtube.com/watch?v=9yM6S6qU4uY">Sametz Reference Recording</a></li>
     </ul>
   `),
   'demo-doc-muertos-markings': sanitizeHandbookHtml(`

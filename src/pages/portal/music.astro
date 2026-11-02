@@ -1,11 +1,28 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
-import MusicLibrary from '../../components/portal/MusicLibrary';
-import { getRepertoire } from '../../lib/google';
+import MusicLibrary, { type LoadedDocPayload } from '../../components/portal/MusicLibrary';
+import { getRepertoire, getRepertoireDocHtml } from '../../lib/google';
+import { extractReferenceRecordingsFromHtml } from '../../lib/youtube';
 
 const singer = Astro.locals.singer!;
 const pieces = await getRepertoire(Astro.locals);
 const isAdmin = singer.role === 'Admin';
+
+const docFiles = pieces.flatMap((p) => p.files.filter((f) => f.isDoc));
+const initialDocsEntries = await Promise.all(
+  docFiles.map(async (f) => {
+    try {
+      const doc = await getRepertoireDocHtml(f.id, f.name, Astro.locals);
+      const referenceLinks = extractReferenceRecordingsFromHtml(doc.html);
+      return [f.id, { ...doc, referenceLinks }] as const;
+    } catch {
+      return null;
+    }
+  })
+);
+const initialDocs: Record<string, LoadedDocPayload> = Object.fromEntries(
+  initialDocsEntries.filter((e): e is NonNullable<typeof e> => Boolean(e))
+);
 ---
 
 <PortalLayout title="Scores & Audio">
@@ -39,5 +56,5 @@ const isAdmin = singer.role === 'Admin';
     )}
   </div>
 
-  <MusicLibrary client:load singer={singer} pieces={pieces} />
+  <MusicLibrary client:load singer={singer} pieces={pieces} initialDocs={initialDocs} />
 </PortalLayout>

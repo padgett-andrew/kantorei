@@ -59,7 +59,7 @@ export interface ConcertProgram {
 // ---------------------------------------------------------------------------
 
 const EXT_RE = /\.(pdf|mp3|m4a|wav|aac|ogg|flac|docx?|txt|rtf)$/i;
-const NUM_PREFIX_RE = /^\s*(\d{1,3})\s*[.)]/;
+const NUM_PREFIX_RE = /^\s*(\d{1,3})\s*[.)\-—–_:]+\s*/;
 const STOP = new Set([
   'the', 'a', 'an', 'of', 'de', 'la', 'el', 'los', 'las', 'del', 'in', 'on', 'at',
   'and', 'y', 'en', 'from', 'to', 'for', 'with', 'o',
@@ -112,7 +112,7 @@ function tokEq(a: string, b: string): boolean {
   if (a === b) return true;
   if (a.length < 4 || b.length < 4) return false;
   if (withinOneEdit(a, b)) return true;
-  return Math.min(a.length, b.length) >= 5 && (a.startsWith(b) || b.startsWith(a));
+  return Math.min(a.length, b.length) >= 6 && (a.startsWith(b) || b.startsWith(a));
 }
 
 function findPhrase(hay: string[], phrase: string[]): number {
@@ -132,34 +132,63 @@ interface KeyMatch {
 
 function findKey(hay: string[], key: string[]): KeyMatch | null {
   if (key.length === 0 || hay.length === 0) return null;
-  const significant = (t: string) => t.length >= 3 && !STOP.has(t);
 
   // 1. Leading phrase of the title (longest first)
   for (let n = Math.min(4, key.length); n >= 2; n--) {
     const phrase = key.slice(0, n);
     if (!phrase.some((t) => t.length >= 4 && !STOP.has(t))) continue;
     const i = findPhrase(hay, phrase);
-    if (i >= 0) return { pos: i, score: n };
+    if (i >= 0) return { pos: i, score: n + 2 };
   }
 
-  // 2. Any distinctive word pair inside the title (handles "Howells — A Spotless Rose" vs "A Spotless Rose (Howells)")
-  for (let s = 1; s + 1 < key.length && s <= 4; s++) {
+  // 2. Any distinctive word pair inside the title
+  for (let s = 0; s + 1 < key.length && s <= 4; s++) {
     const pair = key.slice(s, s + 2);
-    if (pair.every(significant) && pair.some((t) => t.length >= 4)) {
+    if (pair.some((t) => t.length >= 4 && !STOP.has(t) && !NOISE.has(t))) {
       const i = findPhrase(hay, pair);
       if (i >= 0) return { pos: i, score: 2 };
     }
   }
 
-  // 3. Short one-word titles ("Gaudete", "Refugee", "Veni")
-  if (key.length <= 2) {
-    const first = key.find((t) => !STOP.has(t));
-    if (first && first.length >= 4) {
-      const i = findPhrase(hay, [first]);
-      if (i >= 0) return { pos: i, score: 1 };
+  // 3. Any single distinctive word (>= 5 letters or rare 4 letters, not in STOP or NOISE)
+  const distinctive = key.filter((t) => t.length >= 4 && !STOP.has(t) && !NOISE.has(t));
+  for (const word of distinctive) {
+    const i = findPhrase(hay, [word]);
+    if (i >= 0) return { pos: i, score: 1 };
+  }
+
+  return null;
+}
+
+export function extractNameVariants(name: string): string[] {
+  let s = name
+    .replace(EXT_RE, '')
+    .replace(/^\s*\d{1,3}\s*[.)\-—–_:]+\s*/, '')
+    .replace(/_+/g, ' ')
+    .replace(/\([^)]*\)/g, ' ')
+    .trim();
+
+  const variants = [s];
+
+  // If "Composer: Title" or "Title: Subtitle"
+  if (s.includes(':')) {
+    const parts = s.split(':');
+    for (const p of parts) {
+      const trimmed = p.trim();
+      if (trimmed.length >= 2) variants.push(trimmed);
     }
   }
-  return null;
+
+  // If "Composer — Title" or "Title — Composer"
+  if (/\s+[-–—]\s+/.test(s)) {
+    const parts = s.split(/\s+[-–—]\s+/);
+    for (const p of parts) {
+      const trimmed = p.trim();
+      if (trimmed.length >= 2) variants.push(trimmed);
+    }
+  }
+
+  return Array.from(new Set(variants));
 }
 
 function cleanNameForKey(name: string): string {
@@ -198,7 +227,7 @@ function cleanDisplayName(name: string): string {
 
 const URL_RE = /https?:\/\/[^\s<>"]+/gi;
 const ANCHOR_RE = /<a\b[^>]*?\bhref="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-const UNIT_RE = /<(li|p|h[1-6]|tr)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+const UNIT_RE = /<(li|p|h[1-6]|td|th|tr)\b[^>]*>([\s\S]*?)<\/\1>/gi;
 const BLOCK_RE = /<(p|ul|ol|h[1-6]|table|blockquote)\b[^>]*>([\s\S]*?)<\/\1>|<hr\s*\/?>/gi;
 const BOLD_START_RE = /^\s*(?:<span>\s*)*(?:<strong\b|<b\b|<span class="[^"]*font-semibold)/i;
 const STOP_RE =
@@ -229,6 +258,7 @@ function ownText(html: string): string {
 }
 
 interface DocUnit {
+  tag: string;
   html: string;
   text: string;
   tokStart: number;
@@ -247,7 +277,7 @@ function indexDoc(html: string): DocIndex {
   for (const m of html.matchAll(UNIT_RE)) {
     const text = plainWithoutUrls(m[2]);
     const unitIdx = units.length;
-    units.push({ html: m[2], text, tokStart: hay.length });
+    units.push({ tag: m[1].toLowerCase(), html: m[2], text, tokStart: hay.length });
     for (const t of toks(text)) {
       hay.push(t);
       unitOf.push(unitIdx);
@@ -273,6 +303,133 @@ function splitProgramLine(text: string): { title: string; rest: string } {
     .replace(/^[\s.,\-–—:+]+/, '')
     .trim();
   return { title, rest };
+}
+
+const SET_HEADER_RE = /^\s*(\d{1,2})\s*[.)]?\s*$/;
+const DIVIDER_RE = /^[—–\-\s_*]+$/;
+const TOTAL_TIME_RE = /\b(total\s+time|total\s+duration)\b/i;
+const PROSE_START_RE =
+  /^(part\s+[ivx\d]+|[ivx\d]+\s*[:.]\s|narrator|the verse theme|verse\s+\d|reader|scene\s+\d)/i;
+
+interface ProgramEntry {
+  order: number;
+  setNum: number | null;
+  title: string;
+  subtitle: string;
+  rawText: string;
+  unitIdx: number;
+  tokStart: number;
+}
+
+function extractProgramEntriesFromUnits(units: DocUnit[]): ProgramEntry[] | null {
+  // 1. Check for table-based program rows
+  const tableCells = units.filter((u) => u.tag === 'td' || u.tag === 'th');
+  if (tableCells.length >= 2) {
+    const tableEntries: ProgramEntry[] = [];
+    for (let i = 0; i < tableCells.length; i++) {
+      const u = tableCells[i];
+      const numMatch = /^\s*(\d{1,3})\s*[.)]\s*(.+)/.exec(u.text);
+      if (numMatch && u.text.length <= 150) {
+        const orderNum = Number(numMatch[1]);
+        const parsed = splitProgramLine(numMatch[2]);
+        if (parsed.title.length >= 3) {
+          tableEntries.push({
+            order: orderNum,
+            setNum: null,
+            title: parsed.title,
+            subtitle: parsed.rest,
+            rawText: u.text,
+            unitIdx: units.indexOf(u),
+            tokStart: u.tokStart,
+          });
+        }
+      }
+    }
+    if (tableEntries.length >= 2) {
+      return tableEntries;
+    }
+  }
+
+  // 2. Check for running program block (e.g. starting with "FINAL", "Order", "Program", or set number "1.")
+  let startIdx = -1;
+  for (let i = 0; i < Math.min(10, units.length); i++) {
+    const t = units[i].text;
+    if (/\b(final|running order|concert order|program|set ?list)\b/i.test(t)) {
+      startIdx = i + 1;
+      break;
+    }
+    if (SET_HEADER_RE.test(t)) {
+      startIdx = i;
+      break;
+    }
+  }
+
+  if (startIdx < 0) return null;
+
+  const entries: ProgramEntry[] = [];
+  let currentSet: number | null = null;
+
+  for (let i = startIdx; i < units.length; i++) {
+    const u = units[i];
+    const t = u.text;
+
+    if (TOTAL_TIME_RE.test(t) || PROSE_START_RE.test(t) || t.length > 250) {
+      break;
+    }
+
+    if (DIVIDER_RE.test(t)) continue;
+
+    const setMatch = SET_HEADER_RE.exec(t);
+    if (setMatch) {
+      currentSet = Number(setMatch[1]);
+      continue;
+    }
+
+    if (t.length >= 3 && t.length <= 220) {
+      const parsed = splitProgramLine(t);
+      if (parsed.title.length >= 3) {
+        entries.push({
+          order: entries.length + 1,
+          setNum: currentSet,
+          title: parsed.title,
+          subtitle: parsed.rest,
+          rawText: t,
+          unitIdx: i,
+          tokStart: u.tokStart,
+        });
+      }
+    }
+  }
+
+  return entries.length >= 2 ? entries : null;
+}
+
+function matchScore(entryTokens: string[], groupKeys: string[][]): number {
+  let best = 0;
+  for (const key of groupKeys) {
+    if (key.length === 0) continue;
+    const pIdx = findPhrase(entryTokens, key);
+    if (pIdx >= 0) {
+      const score = key.length * 10;
+      if (score > best) best = score;
+      continue;
+    }
+    for (let s = 0; s + 1 < key.length; s++) {
+      const pair = key.slice(s, s + 2);
+      if (findPhrase(entryTokens, pair) >= 0) {
+        if (20 > best) best = 20;
+      }
+    }
+    for (const word of key) {
+      if (word.length >= 4 && !STOP.has(word) && !NOISE.has(word)) {
+        if (findPhrase(entryTokens, [word]) >= 0) {
+          const s = word.length >= 6 ? 10 : 5;
+          if (s > best) best = s;
+        }
+      }
+    }
+  }
+  return best;
 }
 
 // ---------------------------------------------------------------------------
@@ -392,10 +549,14 @@ function buildSingleProgram(
 
     if (!isRootCollection(piece, concertId, concertTitle)) {
       const g = groupsById.get(piece.folderId) ?? newGroup(piece.folderId, piece.title);
-      addKey(g, keyTokens(piece.title));
+      for (const variant of extractNameVariants(piece.title)) {
+        addKey(g, keyTokens(variant));
+      }
       for (const f of media) {
         g.files.push(f);
-        addKey(g, keyTokens(f.name));
+        for (const variant of extractNameVariants(f.name)) {
+          addKey(g, keyTokens(variant));
+        }
       }
       groupsById.set(g.id, g);
       continue;
@@ -409,7 +570,9 @@ function buildSingleProgram(
         : `k:${concertId}:${key.slice(0, 3).join(' ') || f.id}`;
       const g = groupsById.get(gid) ?? newGroup(gid, undefined, prefix ? Number(prefix[1]) : null);
       g.files.push(f);
-      addKey(g, key);
+      for (const variant of extractNameVariants(f.name)) {
+        addKey(g, keyTokens(variant));
+      }
       groupsById.set(gid, g);
     }
   }
@@ -426,55 +589,112 @@ function buildSingleProgram(
   let orderDocScore = 0;
   for (const d of docs) {
     const matched = groups.filter((g) => g.keys.some((k) => findKey(d.index.hay, k))).length;
-    if (matched < 2) continue;
     const head = `${d.loaded.title} ${stripTagsToText(d.loaded.html).slice(0, 400)}`;
-    const orderish = /\b(order|program|set ?list|running order|final)\b/i.test(head);
+    const orderish = /\b(order|program|set ?list|running order|final|transitions)\b/i.test(head);
     const score = matched + (orderish ? 1000 : 0);
-    if (score > orderDocScore) {
+    if ((matched >= 1 || orderish) && score > orderDocScore) {
       orderDoc = d;
       orderDocScore = score;
     }
   }
 
-  // 3. Position each piece by its first appearance in the concert order doc
+  // 3. Position each piece by its appearance in the concert order doc
   const titleOverrides = new Map<string, { title: string; rest: string }>();
   if (orderDoc) {
-    const { hay, unitOf, units } = orderDoc.index;
-    for (const g of groups) {
-      let best: KeyMatch | null = null;
-      for (const key of g.keys) {
-        const m = findKey(hay, key);
-        if (m && (!best || m.score > best.score || (m.score === best.score && m.pos < best.pos))) {
-          best = m;
+    const programEntries = extractProgramEntriesFromUnits(orderDoc.index.units);
+    if (programEntries && programEntries.length >= 2) {
+      const claimedGroupIds = new Set<string>();
+      const orderedGroups: PieceGroup[] = [];
+
+      for (const e of programEntries) {
+        const entryTokens = toks(`${e.title} ${e.subtitle}`);
+        let bestGroup: PieceGroup | null = null;
+        let bestScore = 0;
+
+        for (const g of groups) {
+          if (claimedGroupIds.has(g.id)) continue;
+          const score = matchScore(entryTokens, g.keys);
+          if (score > bestScore) {
+            bestScore = score;
+            bestGroup = g;
+          }
+        }
+
+        if (bestGroup && bestScore >= 5) {
+          claimedGroupIds.add(bestGroup.id);
+          bestGroup.matchPos = e.order;
+          bestGroup.prefixNum = e.order;
+          titleOverrides.set(bestGroup.id, { title: e.title, rest: e.subtitle });
+
+          // Merge any secondary files/parts in the folder matching the same piece (e.g. percussion part)
+          for (const other of groups) {
+            if (claimedGroupIds.has(other.id)) continue;
+            const otherScore = matchScore(entryTokens, other.keys);
+            if (otherScore >= 20) {
+              claimedGroupIds.add(other.id);
+              bestGroup.files.push(...other.files);
+              for (const k of other.keys) addKey(bestGroup, k);
+            }
+          }
+
+          orderedGroups.push(bestGroup);
+        } else {
+          // Congregational carol or unuploaded score: clean placeholder in the exact program slot
+          const synthGroup = newGroup(`doc-entry:${concertId}:${e.order}`, e.title, e.order);
+          synthGroup.matchPos = e.order;
+          titleOverrides.set(synthGroup.id, { title: e.title, rest: e.subtitle });
+          orderedGroups.push(synthGroup);
         }
       }
-      if (!best) continue;
-      g.matchPos = best.pos;
-      const unit = units[unitOf[best.pos]];
-      if (unit && best.pos - unit.tokStart <= 3 && unit.text.length <= 220) {
-        const line = splitProgramLine(unit.text);
-        if (line.title.length >= 3 && line.title.length <= 70) titleOverrides.set(g.id, line);
-      }
-    }
 
-    // Merge groups that resolve to the same concert-order line (e.g. "Aer Enim w/ markings" + "Aer Enim percussion")
-    const byPos = new Map<number, PieceGroup>();
-    const merged: PieceGroup[] = [];
-    for (const g of groups) {
-      if (g.matchPos === null) {
-        merged.push(g);
-        continue;
+      // Any remaining media files that were not part of the concert order document
+      const unassigned = groups.filter((g) => !claimedGroupIds.has(g.id));
+      groups = [...orderedGroups, ...unassigned];
+    } else {
+      const { hay, unitOf, units } = orderDoc.index;
+      for (const g of groups) {
+        let best: KeyMatch | null = null;
+        for (const key of g.keys) {
+          const m = findKey(hay, key);
+          if (m && (!best || m.score > best.score || (m.score === best.score && m.pos < best.pos))) {
+            best = m;
+          }
+        }
+        if (!best) continue;
+        g.matchPos = best.pos;
+        const unit = units[unitOf[best.pos]];
+        if (unit) {
+          const numMatch = /^\s*(\d{1,3})\s*[.)]/.exec(unit.text);
+          if (numMatch) {
+            g.prefixNum = Number(numMatch[1]);
+          }
+          if (best.pos - unit.tokStart <= 6 && unit.text.length <= 220) {
+            const line = splitProgramLine(unit.text);
+            if (line.title.length >= 3 && line.title.length <= 70) titleOverrides.set(g.id, line);
+          }
+        }
       }
-      const existing = byPos.get(g.matchPos);
-      if (existing) {
-        existing.files.push(...g.files);
-        for (const k of g.keys) addKey(existing, k);
-      } else {
-        byPos.set(g.matchPos, g);
-        merged.push(g);
+
+      // Merge groups that resolve to the same concert-order line (e.g. "Aer Enim w/ markings" + "Aer Enim percussion")
+      const byPos = new Map<number, PieceGroup>();
+      const merged: PieceGroup[] = [];
+      for (const g of groups) {
+        if (g.matchPos === null) {
+          merged.push(g);
+          continue;
+        }
+        const existing = byPos.get(g.matchPos);
+        if (existing) {
+          existing.files.push(...g.files);
+          for (const k of g.keys) addKey(existing, k);
+        } else {
+          byPos.set(g.matchPos, g);
+          merged.push(g);
+        }
       }
+
+      groups = merged;
     }
-    groups = merged;
   }
 
   // 4. Attach reference recordings to the piece they belong to
@@ -638,11 +858,11 @@ function buildSingleProgram(
       return a.name.localeCompare(b.name, undefined, { numeric: true });
     });
 
-  const toPiece = (g: PieceGroup, order: number | null): ProgramPiece => ({
+  const toPiece = (g: PieceGroup, defaultOrder: number | null): ProgramPiece => ({
     id: g.id,
     title: titleFor(g),
     subtitle: titleOverrides.get(g.id)?.rest ?? '',
-    order,
+    order: g.prefixNum ?? defaultOrder,
     files: sortFiles(g.files),
     recordings: g.recordings,
     notesHtml: g.notes.join('\n'),
@@ -660,7 +880,7 @@ function buildSingleProgram(
       isOrderDoc: d === orderDoc,
     })),
     pieces: [
-      ...ordered.map((g, i) => toPiece(g, i + 1)),
+      ...ordered.map((g, i) => toPiece(g, g.prefixNum ?? i + 1)),
       ...unordered.map((g) => toPiece(g, null)),
     ],
     unassignedRecordings,
