@@ -116,6 +116,7 @@ export const ScheduleRowSchema = z
       snack3Name,
       snack4Name,
       notes,
+      description: notes,
     };
   });
 

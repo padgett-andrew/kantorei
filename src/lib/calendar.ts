@@ -122,15 +122,16 @@ export function buildIcsCalendar(params: {
     lines.push(`SUMMARY:${escapeIcsText(`[${choirName}] ${ev.title} (${ev.type})`)}`);
     lines.push(`LOCATION:${escapeIcsText(ev.location)}`);
 
+    const eventDescription = ev.description || ev.notes || '';
     const details = [
       `Time: ${ev.time}`,
-      ev.notes ? `Notes: ${ev.notes}` : '',
+      eventDescription ? `Details & Focus:\n${eventDescription}` : '',
       ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name
         ? `Hospitality / Snacks: ${[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name].filter(Boolean).join(', ')}`
         : '',
     ]
       .filter(Boolean)
-      .join('\n');
+      .join('\n\n');
 
     lines.push(`DESCRIPTION:${escapeIcsText(details)}`);
     lines.push('END:VEVENT');

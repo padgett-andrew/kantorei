@@ -44,6 +44,7 @@ export interface ScheduleEvent {
   snack3Name: string;
   snack4Name: string;
   notes: string;
+  description?: string;
 }
 
 export interface ParsedSnackSlot {

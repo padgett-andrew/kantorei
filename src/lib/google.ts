@@ -1293,6 +1293,137 @@ export async function upsertRosterSinger(params: {
   return normalized;
 }
 
+export async function upsertScheduleEvent(params: {
+  event: ScheduleEvent;
+  mode: 'create' | 'update';
+  locals?: App.Locals;
+}): Promise<ScheduleEvent> {
+  const { event, mode, locals } = params;
+
+  const resolvedEventId =
+    event.eventId?.trim() ||
+    `${(event.type || 'reh').toLowerCase().slice(0, 3)}-${event.date}-${Date.now().toString(36).slice(-4)}`;
+
+  const notesText = (event.notes || event.description || '').trim();
+
+  const normalized: ScheduleEvent = {
+    ...event,
+    eventId: resolvedEventId,
+    title: event.title.trim(),
+    date: event.date.trim(),
+    time: event.time.trim() || '7:00 PM - 9:30 PM',
+    type: event.type || 'Rehearsal',
+    location: event.location.trim() || 'TBD',
+    snack1Name: event.snack1Name || '',
+    snack2Name: event.snack2Name || '',
+    snack3Name: event.snack3Name || '',
+    snack4Name: event.snack4Name || '',
+    notes: notesText,
+    description: notesText,
+  };
+
+  if (isSandboxSheetMode(locals)) {
+    const matchIdx = demoStore.schedule.findIndex((e) => e.eventId === normalized.eventId);
+    if (mode === 'create' && matchIdx >= 0) {
+      throw new ConflictError(`An event with ID "${normalized.eventId}" already exists.`);
+    }
+    if (mode === 'update' && matchIdx === -1) {
+      throw new NotFoundError(`Event with ID "${normalized.eventId}" not found.`);
+    }
+
+    if (matchIdx >= 0) {
+      demoStore.schedule[matchIdx] = {
+        ...demoStore.schedule[matchIdx],
+        ...normalized,
+      };
+    } else {
+      demoStore.schedule.push(normalized);
+    }
+    demoStore.schedule.sort((a, b) => a.date.localeCompare(b.date));
+    return { ...normalized };
+  }
+
+  // Uncached live lookup of Schedule!A1:K
+  const allRows = await readSheetValues('Schedule!A1:K', locals);
+  const rows = allRows.slice(1);
+  const matchIdx = rows.findIndex((r) => (r[0] ?? '').trim() === normalized.eventId);
+
+  if (mode === 'create' && matchIdx >= 0) {
+    throw new ConflictError(`An event with ID "${normalized.eventId}" already exists in the Schedule.`);
+  }
+  if (mode === 'update' && matchIdx === -1) {
+    throw new NotFoundError(`Event with ID "${normalized.eventId}" not found in Schedule.`);
+  }
+
+  // Preserve existing snack signups when editing an event
+  let s1 = normalized.snack1Name;
+  let s2 = normalized.snack2Name;
+  let s3 = normalized.snack3Name;
+  let s4 = normalized.snack4Name;
+  if (matchIdx >= 0) {
+    const existingRow = rows[matchIdx];
+    if (!s1 && existingRow[6]) s1 = existingRow[6];
+    if (!s2 && existingRow[7]) s2 = existingRow[7];
+    if (!s3 && existingRow[8]) s3 = existingRow[8];
+    if (!s4 && existingRow[9]) s4 = existingRow[9];
+  }
+
+  const rowValues = [
+    normalized.eventId,
+    normalized.date,
+    normalized.time,
+    normalized.type,
+    normalized.title,
+    normalized.location,
+    s1,
+    s2,
+    s3,
+    s4,
+    notesText,
+  ];
+
+  if (matchIdx >= 0) {
+    const freshRowIndex = matchIdx + 2;
+    await writeSheetValues(`Schedule!A${freshRowIndex}:K${freshRowIndex}`, [rowValues], locals);
+  } else {
+    await appendSheetValues('Schedule!A:K', [rowValues], locals);
+  }
+
+  await invalidateCacheTag('schedule');
+  return normalized;
+}
+
+export async function deleteScheduleEvent(params: {
+  eventId: string;
+  locals?: App.Locals;
+}): Promise<{ ok: boolean; eventId: string }> {
+  const { eventId, locals } = params;
+
+  if (isSandboxSheetMode(locals)) {
+    const idx = demoStore.schedule.findIndex((e) => e.eventId === eventId);
+    if (idx === -1) throw new NotFoundError(`Event with ID "${eventId}" not found.`);
+    demoStore.schedule.splice(idx, 1);
+    return { ok: true, eventId };
+  }
+
+  const allRows = await readSheetValues('Schedule!A1:K', locals);
+  const rows = allRows.slice(1);
+  const matchIdx = rows.findIndex((r) => (r[0] ?? '').trim() === eventId);
+  if (matchIdx === -1) {
+    throw new NotFoundError(`Event with ID "${eventId}" not found in Schedule.`);
+  }
+
+  const freshRowIndex = matchIdx + 2;
+  await writeSheetValues(
+    `Schedule!A${freshRowIndex}:K${freshRowIndex}`,
+    [['', '', '', '', '', '', '', '', '', '', '']],
+    locals
+  );
+
+  await invalidateCacheTag('schedule');
+  return { ok: true, eventId };
+}
+
 // ---------------------------------------------------------------------------
 // Google Drive v3 Repertoire, Streaming & Handbook Export (Shared Drive Ready)
 // ---------------------------------------------------------------------------
