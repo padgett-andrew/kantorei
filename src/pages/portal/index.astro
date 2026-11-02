@@ -45,7 +45,14 @@ const openSnackSlotsCount = upcomingEvents
   .filter((ev) => ev.type !== 'Concert')
   .reduce((acc, ev) => acc + (ev.snack1Name ? 0 : 1) + (ev.snack2Name ? 0 : 1), 0);
 
-const totalScoreFiles = repertoire.reduce((sum, p) => sum + p.files.length, 0);
+const totalScoreFiles = repertoire.reduce(
+  (sum, p) => sum + p.files.filter((f) => !f.isDoc).length,
+  0
+);
+const totalMarkingsDocs = repertoire.reduce(
+  (sum, p) => sum + p.files.filter((f) => f.isDoc).length,
+  0
+);
 const uniqueConcertPrograms = new Set(
   repertoire.map((p) => p.concertTitle || p.title)
 ).size;
@@ -256,7 +263,8 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                 {totalScoreFiles} Scores & Part Tracks
               </h3>
               <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-                {uniqueConcertPrograms} active concert folder{uniqueConcertPrograms === 1 ? '' : 's'} · iPad & ForScore ready.
+                {uniqueConcertPrograms} active concert folder{uniqueConcertPrograms === 1 ? '' : 's'}
+                {totalMarkingsDocs > 0 ? ' · Director markings' : ''} · ForScore ready.
               </p>
             </div>
           </div>

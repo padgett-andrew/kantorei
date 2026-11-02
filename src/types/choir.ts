@@ -106,6 +106,8 @@ export interface DriveMusicFile {
   sizeBytes?: number;
   isPdf: boolean;
   isAudio: boolean;
+  isDoc?: boolean;
+  canExportPdf?: boolean;
   matchesUserSection?: boolean;
 }
 

@@ -12,6 +12,7 @@ import {
   type Singer,
 } from '../types/choir';
 import { cachedFetchJson, invalidateCacheTag } from './cache';
+import { convertDocxToHtml, convertPlainTextToHtml } from './docx';
 import { extractGoogleId, getEnv, hasGoogleServiceAccount, isSandboxSheetMode } from './env';
 import { DEFAULT_HANDBOOK_HTML, DEFAULT_STRATEGIC_PLAN_HTML } from './handbook-content';
 import { sanitizeHandbookHtml } from './sanitize';
@@ -488,6 +489,25 @@ const demoStore: DemoStore = {
   ],
   repertoire: [
     {
+      folderId: 'notes-advent-2026',
+      title: 'Advent with Kantorei (Dec) — Director Notes',
+      concertId: 'advent-2026',
+      concertTitle: 'Advent with Kantorei (Dec)',
+      files: [
+        {
+          id: 'demo-doc-advent-markings',
+          name: "Director's Markings, Concert Order & Reference Recordings (Advent).docx",
+          mimeType:
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          sizeBytes: 38_400,
+          isPdf: false,
+          isAudio: false,
+          isDoc: true,
+          canExportPdf: true,
+        },
+      ],
+    },
+    {
       folderId: 'piece-lauridsen',
       title: '01 — Lauridsen: O Magnum Mysterium',
       concertId: 'advent-2026',
@@ -556,6 +576,23 @@ const demoStore: DemoStore = {
           sizeBytes: 352_844,
           isPdf: false,
           isAudio: true,
+        },
+      ],
+    },
+    {
+      folderId: 'notes-muertos-2026',
+      title: 'Día de los Muertos (Oct) — Director Notes',
+      concertId: 'dia-de-los-muertos-2026',
+      concertTitle: 'Día de los Muertos (Oct)',
+      files: [
+        {
+          id: 'demo-doc-muertos-markings',
+          name: "Director's Markings & Concert Order — Día de los Muertos",
+          mimeType: 'application/vnd.google-apps.document',
+          isPdf: false,
+          isAudio: false,
+          isDoc: true,
+          canExportPdf: true,
         },
       ],
     },
@@ -1216,6 +1253,26 @@ function resolveDriveItem(item: DriveFileItem): {
   return item;
 }
 
+function isSupportedDocItem(mimeType: string, name: string): {
+  isDoc: boolean;
+  canExportPdf: boolean;
+} {
+  if (mimeType === 'application/vnd.google-apps.document') {
+    return { isDoc: true, canExportPdf: true };
+  }
+  const lower = name.toLowerCase();
+  if (
+    mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mimeType === 'application/msword' ||
+    mimeType === 'text/plain' ||
+    mimeType === 'application/rtf' ||
+    /\.(docx|doc|txt|rtf)$/i.test(lower)
+  ) {
+    return { isDoc: true, canExportPdf: false };
+  }
+  return { isDoc: false, canExportPdf: false };
+}
+
 function toDriveMusicFile(
   rawItem: DriveFileItem,
   prefixLabel?: string
@@ -1224,7 +1281,8 @@ function toDriveMusicFile(
   const isPdf = f.mimeType === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
   const isAudio =
     f.mimeType.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg|flac)$/i.test(f.name);
-  if (!isPdf && !isAudio) return null;
+  const docInfo = isSupportedDocItem(f.mimeType, f.name);
+  if (!isPdf && !isAudio && !docInfo.isDoc) return null;
 
   return {
     id: f.id,
@@ -1233,6 +1291,8 @@ function toDriveMusicFile(
     sizeBytes: f.size ? Number(f.size) : undefined,
     isPdf,
     isAudio,
+    isDoc: docInfo.isDoc || undefined,
+    canExportPdf: docInfo.canExportPdf || undefined,
   };
 }
 
@@ -1330,7 +1390,9 @@ async function resolveFolderConcertName(
   if (target.explicitLabel) return target.explicitLabel;
   try {
     const meta = await getDriveFileMetadata(target.folderId, locals);
-    const cleaned = meta.name.trim();
+    const cleaned = meta.name
+      .replace(/\s+(?:music\s+files|sheet\s+music|music\s+folder|repertoire\s+files)$/i, '')
+      .trim();
     if (cleaned && !/^(music|scores|repertoire|folder|shared)$/i.test(cleaned)) {
       return cleaned;
     }
@@ -1494,8 +1556,192 @@ export async function getRepertoire(locals?: App.Locals): Promise<RepertoirePiec
         )
       )
     );
-    return groups.flat();
+    const flat = groups.flat();
+
+    // Optional standalone Director_Notes_Doc_ID in Config tab if not already inside the Drive folder
+    const extraDocId = extractGoogleId(
+      config.Director_Notes_Doc_ID || config.Repertoire_Notes_Doc_ID || ''
+    );
+    if (extraDocId && extraDocId !== 'DEMO' && !extraDocId.startsWith('PASTE_')) {
+      const alreadyPresent = flat.some((p) => p.files.some((f) => f.id === extraDocId));
+      if (!alreadyPresent) {
+        try {
+          const meta = await getDriveFileMetadata(extraDocId, locals);
+          const docInfo = isSupportedDocItem(meta.mimeType, meta.name);
+          if (docInfo.isDoc && flat[0]) {
+            flat[0].files.unshift({
+              id: meta.id,
+              name: meta.name,
+              mimeType: meta.mimeType,
+              sizeBytes: meta.size,
+              isPdf: false,
+              isAudio: false,
+              isDoc: true,
+              canExportPdf: docInfo.canExportPdf || undefined,
+            });
+          }
+        } catch {
+          // Ignore invalid or unshared optional doc ID
+        }
+      }
+    }
+
+    return flat;
   });
+}
+
+const DEMO_DIRECTOR_MARKINGS_HTML: Record<string, string> = {
+  'demo-doc-advent-markings': sanitizeHandbookHtml(`
+    <h2>Concert Order &amp; Transitions — Advent with Kantorei</h2>
+    <p><strong>Artistic Director Callouts (Adam Reinwald):</strong> Please transfer all measure numbers, breaths, and repeat instructions into ForScore or your octavos prior to our first November sectional.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Order &amp; Piece</th>
+          <th>Divisi &amp; Part Assignments</th>
+          <th>Repeats, Cuts &amp; Style</th>
+          <th>Reference Recording</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Gaudete</strong> — Steven Sametz</td>
+          <td><strong>SATB + Solo Quartet:</strong> S1/A1/T1/B1 take upper divisi at m. 34; B2 anchor low drone pedal smoothly.</td>
+          <td>Take 1st &amp; 2nd endings at m. 24; <em>subito piano</em> on repeat. Crisp liturgical Latin consonants.</td>
+          <td><a href="https://www.youtube.com/watch?v=9yM6S6qU4uY">Listen on YouTube</a></td>
+        </tr>
+        <tr>
+          <td><strong>2. O Magnum Mysterium</strong> — Morten Lauridsen</td>
+          <td><strong>Full SATB (8-part divisi mm. 28–39):</strong> S2 split evenly on m. 36 cluster; A2/T1 match warm vowel color; B1/B2 stagger breathing through mm. 44–52.</td>
+          <td>&#9833; = 54. No breath before "et admirabile" in m. 5 (carry phrase across barline). Release final chord on beat 4.</td>
+          <td><a href="https://www.youtube.com/watch?v=nn5ken3RJBo">Lauridsen Reference (YouTube)</a></td>
+        </tr>
+        <tr>
+          <td><strong>3. and the swallow</strong> — Caroline Shaw</td>
+          <td><strong>SATB:</strong> S1/S2 straight tone opening ("How lovely is your dwelling place"); T2/B1 bring out moving inner 16ths at m. 41.</td>
+          <td>Observe written glissandi gently (not theatrical); observe 2-bar silence before Coda.</td>
+          <td><a href="https://www.youtube.com/watch?v=X3N2h6uP5F4">Shaw Reference (YouTube)</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <h3>General Advent Style &amp; Standing Formation</h3>
+    <ul>
+      <li><strong>Mixed Quartet Formation</strong> for Set I; switch to <strong>Sectional Arc (S–A–B–T)</strong> during organ interlude before Lauridsen.</li>
+      <li>All final <em>m</em> and <em>n</em> consonants place cleanly on the release beat unless marked <em>morendo</em>.</li>
+    </ul>
+  `),
+  'demo-doc-muertos-markings': sanitizeHandbookHtml(`
+    <h2>Concert Order &amp; Markings — Día de los Muertos</h2>
+    <p><strong>Rehearsal &amp; Performance Notes:</strong> Attacca transitions between Movements I &amp; II of the Howells Requiem.</p>
+    <ul>
+      <li><strong>1. J.S. Bach — Lobet den Herrn, BWV 230:</strong> Observe breath marks in marked score; B1/B2 detached 8ths in continuo-style passages, legato on melismas. Reference: https://www.youtube.com/watch?v=c6b6B8T3a7E</li>
+      <li><strong>2. Herbert Howells — Requiem:</strong> S1/A1 float upper cathedral resonance without heavy vibrato; T1/T2 lean into suspensions at rehearsal [C]. Reference: <a href="https://www.youtube.com/watch?v=1bZ0vF3y4fA">Howells Requiem Reference</a></li>
+    </ul>
+  `),
+};
+
+export async function getRepertoireDocHtml(
+  fileId: string,
+  requestedName: string,
+  locals?: App.Locals
+): Promise<{
+  title: string;
+  html: string;
+  sourceType: 'gdoc' | 'docx' | 'text' | 'legacy-doc';
+  canExportPdf: boolean;
+}> {
+  if (fileId.startsWith('demo-doc-')) {
+    return {
+      title: requestedName,
+      html:
+        DEMO_DIRECTOR_MARKINGS_HTML[fileId] ||
+        DEMO_DIRECTOR_MARKINGS_HTML['demo-doc-advent-markings'],
+      sourceType: 'docx',
+      canExportPdf: true,
+    };
+  }
+
+  return cachedFetchJson(`repertoire-doc:${fileId}`, 300, async () => {
+    const meta = await getDriveFileMetadata(fileId, locals);
+    const title = meta.name || requestedName;
+
+    if (meta.mimeType === 'application/vnd.google-apps.document') {
+      const token = await getGoogleAccessToken(locals);
+      const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
+          fileId
+        )}/export?mimeType=text/html`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.ok) {
+        throw new Error(`Google Doc markings export failed (${res.status}).`);
+      }
+      const rawHtml = await res.text();
+      return {
+        title,
+        html: sanitizeHandbookHtml(rawHtml),
+        sourceType: 'gdoc' as const,
+        canExportPdf: true,
+      };
+    }
+
+    const lower = title.toLowerCase();
+    const isDocx =
+      meta.mimeType ===
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      lower.endsWith('.docx');
+
+    if (isDocx) {
+      const mediaRes = await fetchDriveMediaResponse(fileId, null, locals);
+      if (!mediaRes.ok) {
+        throw new Error(`Failed to fetch .docx markings from Google Drive (${mediaRes.status}).`);
+      }
+      const bytes = new Uint8Array(await mediaRes.arrayBuffer());
+      const html = await convertDocxToHtml(bytes);
+      return {
+        title,
+        html,
+        sourceType: 'docx' as const,
+        canExportPdf: false,
+      };
+    }
+
+    if (meta.mimeType === 'text/plain' || lower.endsWith('.txt')) {
+      const mediaRes = await fetchDriveMediaResponse(fileId, null, locals);
+      if (!mediaRes.ok) {
+        throw new Error(`Failed to fetch text notes from Google Drive (${mediaRes.status}).`);
+      }
+      const rawText = await mediaRes.text();
+      return {
+        title,
+        html: convertPlainTextToHtml(rawText),
+        sourceType: 'text' as const,
+        canExportPdf: false,
+      };
+    }
+
+    return {
+      title,
+      html: sanitizeHandbookHtml(
+        `<p>This markings file (<strong>${title}</strong>) uses a legacy Word format (<code>.doc</code> / <code>.rtf</code>). Click <strong>Download Original</strong> above to view it, or open it in Google Docs / save as <code>.docx</code> in Drive for instant inline viewing.</p>`
+      ),
+      sourceType: 'legacy-doc' as const,
+      canExportPdf: false,
+    };
+  });
+}
+
+export async function exportGoogleDocPdfResponse(
+  fileId: string,
+  locals?: App.Locals
+): Promise<Response> {
+  const token = await getGoogleAccessToken(locals);
+  return fetch(
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
+      fileId
+    )}/export?mimeType=application/pdf`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
 }
 
 export async function getDriveFileMetadata(

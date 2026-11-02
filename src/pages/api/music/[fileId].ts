@@ -1,11 +1,14 @@
 import type { APIRoute } from 'astro';
 import {
+  exportGoogleDocPdfResponse,
   fetchDriveMediaResponse,
   generateDemoPdfBytes,
   generateDemoWavBytes,
   getDriveFileMetadata,
+  getRepertoireDocHtml,
   NotFoundError,
 } from '../../../lib/google';
+import { extractReferenceRecordingsFromHtml } from '../../../lib/youtube';
 
 function sanitizeFilename(raw: string): string {
   return raw.replace(/[^a-zA-Z0-9._ -]/g, '_').replace(/\s+/g, '_');
@@ -71,19 +74,57 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
   }
 
   const requestedName = url.searchParams.get('name') || `${fileId}`;
+  const format = url.searchParams.get('format');
   const forceDownload = url.searchParams.get('download') === '1';
   const rangeHeader = request.headers.get('range');
 
-  // Sandbox / Demo Score & Rehearsal Audio Generator (full HTTP 206 Range support for iPad Safari)
+  // 1. HTML JSON payload for Director's Markings & Program Notes (Google Docs, .docx, .txt)
+  if (format === 'html') {
+    try {
+      const doc = await getRepertoireDocHtml(fileId, requestedName, locals);
+      const referenceLinks = extractReferenceRecordingsFromHtml(doc.html);
+      return new Response(
+        JSON.stringify({
+          ...doc,
+          referenceLinks,
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'private, max-age=300',
+          },
+        }
+      );
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        return new Response(JSON.stringify({ error: 'Markings document not found.' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      console.error('[Markings HTML Error]', err);
+      return new Response(
+        JSON.stringify({ error: 'Unable to render markings document.' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+  }
+
+  // 2. Sandbox / Demo Score, Audio & Markings PDF Generator
   if (fileId.startsWith('demo-')) {
     const cleanName = sanitizeFilename(requestedName);
-    if (fileId.startsWith('demo-pdf-')) {
+    if (fileId.startsWith('demo-pdf-') || fileId.startsWith('demo-doc-')) {
+      const basePdfName = cleanName.replace(/\.(docx|doc|txt)$/i, '');
       const pdfBytes = generateDemoPdfBytes(requestedName);
       return sliceBytesForRange(
         pdfBytes,
         rangeHeader,
         'application/pdf',
-        cleanName.endsWith('.pdf') ? cleanName : `${cleanName}.pdf`,
+        basePdfName.endsWith('.pdf') ? basePdfName : `${basePdfName}.pdf`,
         forceDownload
       );
     }
@@ -98,14 +139,44 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
     );
   }
 
-  // Live Google Drive v3 Streaming with HTTP Range Passthrough
+  // 3. Live Google Drive v3 Streaming (PDF, Audio, Google Doc PDF export, and .docx download)
   try {
     const meta = await getDriveFileMetadata(fileId, locals);
+    const isGoogleDoc = meta.mimeType === 'application/vnd.google-apps.document';
+
+    if (isGoogleDoc) {
+      const pdfRes = await exportGoogleDocPdfResponse(fileId, locals);
+      if (!pdfRes.ok) {
+        return new Response('Failed to export Google Doc as PDF.', { status: pdfRes.status });
+      }
+      const baseName = sanitizeFilename(url.searchParams.get('name') || meta.name).replace(
+        /\.pdf$/i,
+        ''
+      );
+      return new Response(pdfRes.body, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `${
+            forceDownload ? 'attachment' : 'inline'
+          }; filename="${baseName}.pdf"`,
+          'Cache-Control': 'private, max-age=600',
+        },
+      });
+    }
+
     const isPdf = meta.mimeType === 'application/pdf' || meta.name.toLowerCase().endsWith('.pdf');
     const isAudio =
       meta.mimeType.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg|flac)$/i.test(meta.name);
+    const isWordOrTextDoc =
+      meta.mimeType ===
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      meta.mimeType === 'application/msword' ||
+      meta.mimeType === 'text/plain' ||
+      meta.mimeType === 'application/rtf' ||
+      /\.(docx|doc|txt|rtf)$/i.test(meta.name);
 
-    if (!isPdf && !isAudio) {
+    if (!isPdf && !isAudio && !isWordOrTextDoc) {
       return new Response('Unsupported file type.', { status: 415 });
     }
 
@@ -119,15 +190,17 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
     const cleanName = sanitizeFilename(url.searchParams.get('name') || meta.name);
     const normalizedContentType = isPdf
       ? 'application/pdf'
-      : /\.m4a$/i.test(meta.name) && (!meta.mimeType || meta.mimeType === 'video/mp4')
-        ? 'audio/mp4'
-        : meta.mimeType || 'audio/mpeg';
+      : isAudio
+        ? /\.m4a$/i.test(meta.name) && (!meta.mimeType || meta.mimeType === 'video/mp4')
+          ? 'audio/mp4'
+          : meta.mimeType || 'audio/mpeg'
+        : meta.mimeType || 'application/octet-stream';
 
     const headers = new Headers();
     headers.set('Content-Type', normalizedContentType);
     headers.set(
       'Content-Disposition',
-      `${forceDownload ? 'attachment' : 'inline'}; filename="${cleanName}"`
+      `${forceDownload || isWordOrTextDoc ? 'attachment' : 'inline'}; filename="${cleanName}"`
     );
     headers.set('Accept-Ranges', 'bytes');
     headers.set('Cache-Control', 'private, max-age=3600');
@@ -144,7 +217,7 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
     });
   } catch (err) {
     if (err instanceof NotFoundError) {
-      return new Response('Score or audio track not found.', { status: 404 });
+      return new Response('Score, track, or markings document not found.', { status: 404 });
     }
     console.error('[Music Stream Error]', err);
     return new Response('Error streaming repertoire file.', { status: 500 });

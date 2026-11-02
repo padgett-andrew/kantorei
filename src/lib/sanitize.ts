@@ -117,11 +117,29 @@ export function sanitizeHandbookHtml(rawHtml: string): string {
   // Clean up empty paragraphs produced by Google Docs spacer lines
   html = html.replace(/<p>\s*(<span>\s*<\/span>\s*)*<\/p>/gi, '');
 
+  // Auto-linkify bare https:// URLs in text nodes outside existing <a>...</a> anchors
+  const anchorSplit = html.split(/(<a\b[^>]*>[\s\S]*?<\/a>)/gi);
+  html = anchorSplit
+    .map((segment, idx) => {
+      if (idx % 2 === 1) return segment; // Already inside <a>...</a>
+      return segment.replace(/(<[^>]+>)|(\bhttps?:\/\/[^\s<")\]']+)/gi, (_m, tag, rawUrl) => {
+        if (tag) return tag;
+        // Strip trailing punctuation like periods or commas from sentence-ending URLs
+        const trailingMatch = /([.,;:!?]+)$/.exec(rawUrl);
+        const cleanUrl = trailingMatch ? rawUrl.slice(0, -trailingMatch[1].length) : rawUrl;
+        const suffix = trailingMatch ? trailingMatch[1] : '';
+        const safe = escapeAttr(cleanUrl);
+        return `<a href="${safe}" target="_blank" rel="noopener noreferrer">${safe}</a>${suffix}`;
+      });
+    })
+    .join('');
+
   return html.trim();
 }
 
 function escapeAttr(value: string): string {
   return value
+    .replace(/&amp;/g, '&')
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')

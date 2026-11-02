@@ -6,6 +6,7 @@ export type CacheTag =
   | 'media'
   | 'config'
   | 'music'
+  | `repertoire-doc:${string}`
   | 'handbook'
   | 'strategic-plan';
 
@@ -17,7 +18,7 @@ interface MemoryCacheEntry {
 const memoryCache = new Map<string, MemoryCacheEntry>();
 
 function buildCacheUrl(tag: CacheTag): string {
-  return `https://kantorei-internal.cache/v1/${tag}`;
+  return `https://kantorei-internal.cache/v4/${encodeURIComponent(tag)}`;
 }
 
 function getEdgeCache(): Cache | null {
