@@ -22,28 +22,28 @@ const featuredMedia = media.slice(0, 3);
       style="background: radial-gradient(circle at 22% 20%, #af673c 0%, transparent 46%), radial-gradient(circle at 80% 75%, #233d5c 0%, transparent 52%);"
     ></div>
 
-    <div class="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+    <div class="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-26">
       <div class="max-w-3xl">
-        <span class="inline-flex items-center gap-2 rounded-full border border-gold-400/40 bg-gold-500/15 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-gold-300">
+        <span class="inline-flex max-w-full flex-wrap items-center gap-2 rounded-2xl border border-gold-400/40 bg-gold-500/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.13em] text-gold-300 sm:rounded-full sm:text-xs sm:tracking-[0.2em]">
           Founded 1988 · Minnesota · Artistic Director Adam Reinwald
         </span>
-        <h1 class="mt-6 font-editorial text-5xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl">
+        <h1 class="mt-6 font-editorial text-4xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl">
           Rich, effortless choral sound—singing for a lifetime.
         </h1>
-        <p class="mt-6 max-w-2xl text-base leading-relaxed text-zinc-200 sm:text-lg">
+        <p class="mt-5 max-w-2xl text-base leading-relaxed text-zinc-200 sm:mt-6 sm:text-lg">
           Founded in 1988 by Axel Theimer, and now led by Adam Reinwald, {choirName} is one of the premier choral ensembles in Minnesota—performing mostly a cappella music from around the world and sharing recordings worldwide.
         </p>
 
-        <div class="mt-9 flex flex-wrap items-center gap-4">
+        <div class="mt-8 flex flex-wrap items-center gap-3 sm:mt-9 sm:gap-4">
           <a
             href="/concerts"
-            class="rounded-full bg-gold-500 px-7 py-3.5 text-xs font-bold uppercase tracking-[0.16em] text-white shadow-lg transition hover:bg-copper-600"
+            class="rounded-full bg-gold-500 px-6 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-white shadow-lg transition hover:bg-copper-600 sm:px-7 sm:tracking-[0.16em]"
           >
             Advent Concert Tickets & Passes
           </a>
           <a
             href="/media"
-            class="rounded-full border border-white/25 px-7 py-3.5 text-xs font-semibold uppercase tracking-[0.16em] text-ivory-50 transition hover:border-gold-400 hover:text-gold-300"
+            class="rounded-full border border-white/25 px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-ivory-50 transition hover:border-gold-400 hover:text-gold-300 sm:px-7 sm:tracking-[0.16em]"
           >
             Watch & Listen
           </a>
@@ -54,15 +54,15 @@ const featuredMedia = media.slice(0, 3);
 
   <!-- Next Concert Spotlight (Advent with Kantorei Banner + Shoreview & Edina Dates) -->
   {featuredConcert && (
-    <section class="mx-auto -mt-10 relative z-10 max-w-6xl px-4 sm:px-6">
-      <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-xl">
-        <div class="grid lg:grid-cols-12">
+    <section class="mx-auto -mt-8 sm:-mt-10 relative z-10 max-w-6xl px-4 sm:px-6">
+      <div class="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-xl">
+        <div class="grid lg:grid-cols-12 lg:items-stretch">
           {featuredConcert.heroImageUrl && (
-            <div class="lg:col-span-6 bg-navy-950">
+            <div class="flex items-center justify-center bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950 p-4 sm:p-6 lg:col-span-6">
               <img
                 src={featuredConcert.heroImageUrl}
                 alt={featuredConcert.title}
-                class="h-full w-full object-cover"
+                class="block h-auto w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/10"
               />
             </div>
           )}

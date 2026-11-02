@@ -124,20 +124,20 @@ const seasonPassEntries = showSeasonPass
         return (
           <article
             id={concert.slug}
-            class="scroll-mt-24 overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm"
+            class="scroll-mt-24 overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-sm"
           >
-            {concert.heroImageUrl && (
-              <div class="max-h-96 w-full overflow-hidden bg-navy-950">
-                <img
-                  src={concert.heroImageUrl}
-                  alt={concert.title}
-                  class="h-full max-h-96 w-full object-cover"
-                />
-              </div>
-            )}
-
-            <div class="grid gap-8 p-6 sm:p-9 lg:grid-cols-12">
+            <div class="grid gap-8 p-6 sm:p-9 lg:grid-cols-12 lg:items-start">
               <div class="lg:col-span-6">
+                {concert.heroImageUrl && (
+                  <div class="mb-6 overflow-hidden rounded-2xl bg-navy-950 shadow-md ring-1 ring-zinc-900/10">
+                    <img
+                      src={concert.heroImageUrl}
+                      alt={concert.title}
+                      class="block h-auto w-full object-contain"
+                    />
+                  </div>
+                )}
+
                 <div class="flex flex-wrap items-center gap-2">
                   <span
                     class:list={[

@@ -10,12 +10,13 @@ interface Props {
 
 const { singer, choirName, currentPath } = Astro.props;
 const showAdminTab = singer.role === 'Admin' || singer.role === 'Section_Leader';
+const isOnLeave = singer.status === 'On_Leave';
 
 const tabs = [
-  { href: '/portal', label: 'Dashboard', exact: true },
-  { href: '/portal/music', label: 'Sheet Music & Audio', exact: false },
+  { href: '/portal', label: 'Overview', exact: true },
+  { href: '/portal/music', label: 'Scores & Audio', exact: false },
   { href: '/portal/absences', label: 'Absences', exact: false },
-  { href: '/portal/snacks', label: 'Snack Signup', exact: false },
+  { href: '/portal/snacks', label: 'Hospitality', exact: false },
   { href: '/portal/directory', label: 'Directory', exact: false },
   { href: '/portal/handbook', label: 'Handbook & Vision', exact: false },
   ...(showAdminTab
@@ -26,32 +27,35 @@ const tabs = [
 const badgeClass = voicePartBadgeColor(singer.voicePart);
 ---
 
-<header class="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur-md">
+<header class="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md">
   <div class="mx-auto max-w-6xl px-4 sm:px-6">
-    <div class="flex items-center justify-between py-3">
-      <div class="flex items-center gap-3">
-        <a href="/portal" class="flex items-center gap-2.5">
-          <img
-            src="/images/kantorei-logo-transparent.webp"
-            alt={`${choirName} logo`}
-            width="105"
-            height="55"
-            class="h-9 w-auto object-contain"
-          />
-          <span class="rounded-md bg-copper-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-500">
-            Singer Portal
-          </span>
-        </a>
-      </div>
+    <div class="flex items-center justify-between gap-2 py-2.5 sm:py-3">
+      <a href="/portal" class="flex min-w-0 items-center gap-2 sm:gap-2.5">
+        <img
+          src="/images/kantorei-logo-transparent.webp"
+          alt={`${choirName} logo`}
+          width="96"
+          height="50"
+          class="h-8 w-auto shrink-0 object-contain sm:h-9"
+        />
+        <span class="hidden rounded-full bg-copper-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-500 xs:inline-block sm:inline-block">
+          Singer Portal
+        </span>
+      </a>
 
-      <div class="flex items-center gap-3">
-        <div class="hidden items-center gap-2 sm:flex">
-          <span class="text-sm font-medium text-zinc-800">{singer.name}</span>
-          <span class={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${badgeClass}`}>
+      <div class="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+        <div class="flex items-center gap-1.5">
+          <span class="hidden text-sm font-semibold text-zinc-800 md:inline">{singer.name}</span>
+          <span class={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${badgeClass}`}>
             {singer.voicePart}
           </span>
+          {isOnLeave && (
+            <span class="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+              🌙 Leave
+            </span>
+          )}
           {singer.role !== 'Singer' && (
-            <span class="rounded-full bg-navy-900 px-2.5 py-0.5 text-[11px] font-semibold text-gold-300">
+            <span class="hidden rounded-full bg-navy-900 px-2.5 py-0.5 text-[11px] font-semibold text-gold-300 sm:inline-block">
               {singer.role.replace('_', ' ')}
             </span>
           )}
@@ -59,7 +63,7 @@ const badgeClass = voicePartBadgeColor(singer.voicePart);
 
         <a
           href="/"
-          class="rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-900"
+          class="rounded-xl border border-zinc-200 bg-zinc-50/70 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-900"
         >
           Public Site
         </a>
@@ -67,7 +71,7 @@ const badgeClass = voicePartBadgeColor(singer.voicePart);
         <form method="POST" action="/api/auth/logout">
           <button
             type="submit"
-            class="cursor-pointer rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+            class="cursor-pointer rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
           >
             Sign Out
           </button>
@@ -75,9 +79,9 @@ const badgeClass = voicePartBadgeColor(singer.voicePart);
       </div>
     </div>
 
-    <!-- Tablet / iPad Friendly Horizontal Scrollable Tab Bar -->
+    <!-- Modern Pill Navigation Bar (Touch-Scrollable on Mobile & iPad) -->
     <nav
-      class="-mb-px flex gap-1 overflow-x-auto pt-0.5 scrollbar-none"
+      class="scrollbar-none -mx-1 flex items-center gap-1 overflow-x-auto pb-2.5 pt-0.5 px-1"
       aria-label="Singer Portal Navigation"
     >
       {tabs.map((tab) => {
@@ -88,10 +92,10 @@ const badgeClass = voicePartBadgeColor(singer.voicePart);
           <a
             href={tab.href}
             class:list={[
-              'shrink-0 border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors',
+              'shrink-0 rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all',
               isActive
-                ? 'border-gold-500 text-navy-950 font-semibold'
-                : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-800',
+                ? 'bg-navy-900 text-white font-semibold shadow-2xs'
+                : 'text-zinc-600 hover:bg-zinc-100/80 hover:text-navy-950',
             ]}
           >
             {tab.label}

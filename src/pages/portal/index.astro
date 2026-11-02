@@ -41,29 +41,57 @@ const mySnackDates = upcomingEvents.filter(
     ev.snack2Name.toLowerCase() === singer.name.toLowerCase()
 );
 
+const openSnackSlotsCount = upcomingEvents
+  .filter((ev) => ev.type !== 'Concert')
+  .reduce((acc, ev) => acc + (ev.snack1Name ? 0 : 1) + (ev.snack2Name ? 0 : 1), 0);
+
+const totalScoreFiles = repertoire.reduce((sum, p) => sum + p.files.length, 0);
+const uniqueConcertPrograms = new Set(
+  repertoire.map((p) => p.concertTitle || p.title)
+).size;
+
+const isOnLeave = singer.status === 'On_Leave';
+
 const httpsFeedUrl = `${Astro.url.origin}/api/calendar.ics?token=${feedToken}`;
 const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
 ---
 
-<PortalLayout title="Dashboard">
-  <div class="space-y-8">
+<PortalLayout title="Overview">
+  <div class="space-y-6 sm:space-y-7">
+    <!-- Season Leave (Asleep) Status Notice -->
+    {isOnLeave && (
+      <div class="flex items-start gap-3.5 rounded-2xl border border-indigo-200 bg-indigo-50/90 px-5 py-4 text-sm text-indigo-950 shadow-2xs">
+        <span class="mt-0.5 text-lg leading-none">🌙</span>
+        <div>
+          <p class="font-semibold text-indigo-950">Season Leave Active (Skipping Current Cycle)</p>
+          <p class="mt-0.5 text-xs leading-relaxed text-indigo-800">
+            You’re currently paused from rehearsal roll call and season absence alerts, while keeping full access to future scores, schedules, and the Singer Handbook.
+          </p>
+        </div>
+      </div>
+    )}
+
     <!-- Optional Board Announcement Banner from Config Sheet -->
     {config.Portal_Announcement && (
-      <div class="rounded-2xl border border-gold-400/60 bg-amber-50/90 px-5 py-4 text-sm text-navy-950 shadow-2xs">
-        <span class="mr-2 rounded-md bg-navy-900 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-gold-300">
-          Announcement
+      <div class="flex flex-col gap-2 rounded-2xl border border-gold-400/50 bg-gradient-to-r from-amber-50/95 to-ivory-100/90 px-5 py-3.5 text-sm text-navy-950 shadow-2xs sm:flex-row sm:items-center sm:gap-3">
+        <span class="w-fit shrink-0 rounded-full bg-navy-900 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-300">
+          Season Note
         </span>
-        <span class="font-medium">{config.Portal_Announcement}</span>
+        <span class="text-xs font-medium leading-relaxed text-zinc-800 sm:text-sm">
+          {config.Portal_Announcement}
+        </span>
       </div>
     )}
 
     <!-- Greeting & Calendar Sync Row -->
-    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
-          {singer.sectionGroup} Section · Voice Part {singer.voicePart}
-        </p>
-        <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold text-zinc-600 ring-1 ring-zinc-200/80">
+            {singer.sectionGroup} Section · {singer.voicePart}
+          </span>
+        </div>
+        <h1 class="mt-1.5 font-editorial text-3xl font-bold tracking-tight text-navy-950 sm:text-4xl">
           Welcome back, {singer.name.split(' ')[0]}
         </h1>
       </div>
@@ -75,113 +103,180 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
       />
     </div>
 
-    <!-- Next Rehearsal Hero Card + Quick Portal Stats -->
+    <!-- Next Rehearsal Hero Card + Modern Quick Action Tiles -->
     <div class="grid gap-5 lg:grid-cols-12">
-      <div class="rounded-2xl bg-navy-950 p-6 text-ivory-50 shadow-md sm:p-7 lg:col-span-7">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-400">
-            Next Call
-          </span>
-          {nextEvent && (
-            <span class="rounded-full bg-white/10 px-3 py-0.5 text-xs font-semibold text-ivory-100">
-              {nextEvent.type}
+      <!-- Left: Next Call Hero -->
+      <div class="relative overflow-hidden rounded-3xl bg-navy-950 p-6 text-ivory-50 shadow-lg sm:p-7 lg:col-span-7 flex flex-col justify-between">
+        <div
+          class="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full opacity-25"
+          style="background: radial-gradient(circle, #af673c 0%, transparent 70%);"
+        ></div>
+
+        <div class="relative">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-gold-400">
+              Next Ensemble Call
             </span>
+            {nextEvent && (
+              <span class="rounded-full border border-white/15 bg-white/10 px-3 py-0.5 text-xs font-semibold text-ivory-50">
+                {nextEvent.type}
+              </span>
+            )}
+          </div>
+
+          {nextEvent ? (
+            <div class="mt-4">
+              <h2 class="font-editorial text-3xl font-bold text-white sm:text-4xl">
+                {nextEvent.title}
+              </h2>
+              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm">
+                <span class="font-semibold text-gold-300">
+                  🗓 {formatEventDate(nextEvent.date)} · {nextEvent.time}
+                </span>
+                <span class="text-zinc-300">📍 {nextEvent.location}</span>
+              </div>
+
+              {nextEvent.notes && (
+                <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-xs leading-relaxed text-zinc-200">
+                  <span class="font-semibold uppercase tracking-wider text-gold-300 text-[11px] block mb-1">
+                    Rehearsal Focus & Notes
+                  </span>
+                  {nextEvent.notes}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p class="mt-4 text-sm text-zinc-300">
+              No upcoming rehearsals are posted on the Schedule tab right now.
+            </p>
           )}
         </div>
 
-        {nextEvent ? (
-          <div class="mt-4">
-            <h2 class="font-editorial text-3xl font-bold text-white">
-              {nextEvent.title}
-            </h2>
-            <p class="mt-1.5 text-sm font-medium text-gold-300">
-              {formatEventDate(nextEvent.date)} · {nextEvent.time}
-            </p>
-            <p class="mt-1 text-sm text-zinc-300">📍 {nextEvent.location}</p>
-
-            {nextEvent.notes && (
-              <div class="mt-4 rounded-xl bg-white/5 border border-white/10 p-3.5 text-xs leading-relaxed text-zinc-200">
-                <strong class="text-gold-300">Rehearsal Plan:</strong> {nextEvent.notes}
-              </div>
-            )}
-
-            <div class="mt-5 flex flex-wrap gap-3">
-              <a
-                href="/portal/music"
-                class="rounded-xl bg-gold-500 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-copper-600"
-              >
-                Open Digital Scores ({repertoire.length})
-              </a>
-              <a
-                href="/portal/absences"
-                class="rounded-xl border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-ivory-100 transition hover:bg-white/10"
-              >
-                Report an Absence
-              </a>
-            </div>
-          </div>
-        ) : (
-          <p class="mt-4 text-sm text-zinc-300">
-            No upcoming rehearsals are posted on the Schedule tab right now.
-          </p>
-        )}
+        <div class="relative mt-6 flex flex-wrap gap-2.5 pt-2">
+          <a
+            href="/portal/music"
+            class="inline-flex items-center gap-2 rounded-xl bg-gold-500 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition hover:bg-copper-600"
+          >
+            Open Digital Scores ({totalScoreFiles})
+          </a>
+          <a
+            href="/portal/absences"
+            class="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-ivory-50 transition hover:bg-white/15"
+          >
+            Report a Conflict
+          </a>
+        </div>
       </div>
 
-      <div class="grid gap-4 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-1">
-        <a
-          href="/portal/snacks"
-          class="flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xs transition hover:border-navy-900"
-        >
-          <div>
-            <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Hospitality Signup
-            </span>
-            <h3 class="mt-1 font-editorial text-2xl font-bold text-navy-950">
-              {mySnackDates.length > 0
-                ? `${mySnackDates.length} Snack Date${mySnackDates.length > 1 ? 's' : ''} Claimed`
-                : 'Claim a Rehearsal Snack Slot'}
-            </h3>
-          </div>
-          <p class="mt-3 text-xs text-zinc-600">
-            {mySnackDates.length > 0
-              ? `Next up: ${formatEventDate(mySnackDates[0].date)}`
-              : 'Tap to volunteer for an open mid-rehearsal break slot →'}
-          </p>
-        </a>
-
+      <!-- Right: Clean, Modern Status & Action Cards -->
+      <div class="flex flex-col gap-3.5 lg:col-span-5">
+        <!-- 1. Attendance Status Card (Positive, Clear UX — No Weird "0 Absences") -->
         <a
           href="/portal/absences"
-          class="flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xs transition hover:border-navy-900"
+          class="group flex items-start justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white p-4.5 shadow-2xs transition hover:border-navy-900 hover:shadow-sm sm:p-5"
         >
-          <div>
-            <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Your Attendance Status
+          <div class="flex items-start gap-3.5">
+            <span
+              class:list={[
+                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold ring-1',
+                myUpcomingAbsences.length === 0
+                  ? 'bg-emerald-50 text-emerald-700 ring-emerald-200/80'
+                  : 'bg-amber-50 text-amber-700 ring-amber-200/80',
+              ]}
+            >
+              {myUpcomingAbsences.length === 0 ? '✓' : myUpcomingAbsences.length}
             </span>
-            <h3 class="mt-1 font-editorial text-2xl font-bold text-navy-950">
-              {myUpcomingAbsences.length === 0
-                ? '0 Upcoming Absences'
-                : `${myUpcomingAbsences.length} Logged Absence${
-                    myUpcomingAbsences.length > 1 ? 's' : ''
-                  }`}
-            </h3>
+            <div>
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                Attendance
+              </span>
+              <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
+                {myUpcomingAbsences.length === 0
+                  ? 'Attending All Upcoming Calls'
+                  : `${myUpcomingAbsences.length} Conflict${
+                      myUpcomingAbsences.length > 1 ? 's' : ''
+                    } Logged`}
+              </h3>
+              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+                {myUpcomingAbsences.length === 0
+                  ? `Marked present across all ${upcomingEvents.length} scheduled dates.`
+                  : `Next logged absence: ${formatEventDate(myUpcomingAbsences[0].date)}`}
+              </p>
+            </div>
           </div>
-          <p class="mt-3 text-xs text-zinc-600">
-            {myUpcomingAbsences.length === 0
-              ? 'Marked present for all upcoming calls.'
-              : `Next logged absence: ${formatEventDate(myUpcomingAbsences[0].date)}`}
-          </p>
+          <span class="shrink-0 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 transition group-hover:bg-navy-900 group-hover:text-white">
+            {myUpcomingAbsences.length === 0 ? 'Log' : 'Edit'} →
+          </span>
+        </a>
+
+        <!-- 2. Hospitality & Snack Signup Card -->
+        <a
+          href="/portal/snacks"
+          class="group flex items-start justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white p-4.5 shadow-2xs transition hover:border-navy-900 hover:shadow-sm sm:p-5"
+        >
+          <div class="flex items-start gap-3.5">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-copper-100 text-base text-gold-500 ring-1 ring-gold-300/50">
+              ☕
+            </span>
+            <div>
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                Break Hospitality
+              </span>
+              <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
+                {mySnackDates.length > 0
+                  ? `${mySnackDates.length} Snack Date${mySnackDates.length > 1 ? 's' : ''} Claimed`
+                  : 'Rehearsal Snack Signup'}
+              </h3>
+              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+                {mySnackDates.length > 0
+                  ? `Your next date: ${formatEventDate(mySnackDates[0].date)}`
+                  : `${openSnackSlotsCount} open break slots available this cycle.`}
+              </p>
+            </div>
+          </div>
+          <span class="shrink-0 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 transition group-hover:bg-navy-900 group-hover:text-white">
+            Claim →
+          </span>
+        </a>
+
+        <!-- 3. Digital Music Folder Summary Card -->
+        <a
+          href="/portal/music"
+          class="group flex items-start justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white p-4.5 shadow-2xs transition hover:border-navy-900 hover:shadow-sm sm:p-5"
+        >
+          <div class="flex items-start gap-3.5">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-sm font-bold text-gold-300">
+              ♫
+            </span>
+            <div>
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                Music Library
+              </span>
+              <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
+                {totalScoreFiles} Scores & Part Tracks
+              </h3>
+              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+                {uniqueConcertPrograms} active concert folder{uniqueConcertPrograms === 1 ? '' : 's'} · iPad & ForScore ready.
+              </p>
+            </div>
+          </div>
+          <span class="shrink-0 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 transition group-hover:bg-navy-900 group-hover:text-white">
+            Open →
+          </span>
         </a>
       </div>
     </div>
 
     <!-- Full Upcoming Rehearsal & Concert Schedule -->
-    <section class="rounded-2xl border border-zinc-200 bg-white shadow-2xs overflow-hidden">
-      <div class="border-b border-zinc-100 bg-ivory-50 px-6 py-4 flex items-center justify-between">
-        <h2 class="font-editorial text-2xl font-bold text-navy-950">
-          Upcoming Rehearsals & Calls
-        </h2>
-        <span class="text-xs font-medium text-zinc-500">
-          {upcomingEvents.length} scheduled
+    <section class="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-2xs">
+      <div class="flex items-center justify-between border-b border-zinc-100 px-5 py-4 sm:px-6">
+        <div>
+          <h2 class="font-editorial text-2xl font-bold text-navy-950">
+            Upcoming Schedule
+          </h2>
+        </div>
+        <span class="rounded-full bg-ivory-100 px-3 py-1 text-xs font-semibold text-navy-900">
+          {upcomingEvents.length} calls
         </span>
       </div>
 
@@ -191,19 +286,21 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
           const isAbsent = myUpcomingAbsences.some((a) => a.eventId === ev.eventId);
 
           return (
-            <li class="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <li class="flex flex-col gap-3 px-5 py-4 transition hover:bg-ivory-50/60 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <div class="flex items-start gap-4">
-                <div class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-zinc-200 bg-ivory-50 text-center">
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                <div class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl border border-zinc-200/80 bg-ivory-50 text-center shadow-2xs">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-gold-500">
                     {month}
                   </span>
-                  <span class="text-lg font-bold leading-none text-navy-950">{day}</span>
-                  <span class="text-[10px] text-zinc-400">{weekday}</span>
+                  <span class="text-lg font-bold leading-tight text-navy-950">{day}</span>
+                  <span class="text-[10px] font-medium text-zinc-400">{weekday}</span>
                 </div>
 
-                <div>
+                <div class="min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="font-semibold text-zinc-900">{ev.title}</h3>
+                    <h3 class="font-sans text-sm font-bold text-zinc-900 sm:text-base">
+                      {ev.title}
+                    </h3>
                     <span
                       class={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${eventTypeBadgeColor(
                         ev.type
@@ -212,8 +309,8 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                       {ev.type}
                     </span>
                     {isAbsent && (
-                      <span class="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-800">
-                        You Marked Absent
+                      <span class="rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800">
+                        Marked Absent
                       </span>
                     )}
                   </div>
@@ -225,9 +322,11 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               </div>
 
               {(ev.snack1Name || ev.snack2Name) && (
-                <div class="text-xs text-zinc-500 sm:text-right shrink-0">
-                  <span class="block font-medium text-zinc-400">Hospitality</span>
-                  <span>
+                <div class="shrink-0 rounded-xl bg-zinc-50 px-3 py-1.5 text-xs text-zinc-600 sm:text-right">
+                  <span class="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                    Hospitality
+                  </span>
+                  <span class="font-medium text-zinc-700">
                     {[ev.snack1Name, ev.snack2Name].filter(Boolean).join(' & ')}
                   </span>
                 </div>
@@ -239,4 +338,3 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
     </section>
   </div>
 </PortalLayout>
-

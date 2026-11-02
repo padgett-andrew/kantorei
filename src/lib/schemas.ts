@@ -33,7 +33,20 @@ export const SingerRowSchema = z
       MEMBER_ROLES.find((r) => r.toLowerCase() === rawRole.replace(/\s+/g, '_').toLowerCase()) ??
       'Singer';
 
-    const active = ['true', 'yes', '1', 'y', 'active'].includes(rawActive.toLowerCase());
+    const normalizedStatusToken = rawActive.trim().toLowerCase().replace(/\s+/g, '_');
+    const isLeave = [
+      'on_leave',
+      'leave',
+      'asleep',
+      'sleep',
+      'sleeping',
+      'paused',
+      'hiatus',
+      'skipping',
+      'sabbatical',
+    ].includes(normalizedStatusToken);
+    const isActive = ['true', 'yes', '1', 'y', 'active'].includes(normalizedStatusToken);
+    const status = isLeave ? 'On_Leave' : isActive ? 'Active' : 'Inactive';
 
     return {
       email,
@@ -42,7 +55,8 @@ export const SingerRowSchema = z
       sectionGroup: normalizedSection,
       role: normalizedRole,
       phone,
-      active,
+      active: status === 'Active',
+      status,
     };
   });
 

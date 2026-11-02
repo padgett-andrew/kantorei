@@ -7,8 +7,15 @@ import { getPortalConfig } from '../lib/google';
 const config = await getPortalConfig(Astro.locals);
 const choirName = config.Choir_Name || 'Kantorei';
 const publicContactEmail = config.Conductor_Email || 'adam.reinwald@kantorei.net';
-const accountId = getEnv('PUBLIC_GIVEBUTTER_ACCOUNT_ID', Astro.locals) || 'DEMO';
-const campaignId = getEnv('PUBLIC_GIVEBUTTER_CAMPAIGN_ID', Astro.locals) || 'DEMO';
+const accountId =
+  config.Givebutter_Account_ID ||
+  getEnv('PUBLIC_GIVEBUTTER_ACCOUNT_ID', Astro.locals) ||
+  'DEMO';
+const campaignId =
+  config.Givebutter_Widget_ID ||
+  config.Givebutter_Campaign_ID ||
+  getEnv('PUBLIC_GIVEBUTTER_CAMPAIGN_ID', Astro.locals) ||
+  'DEMO';
 
 const givingTiers = [
   { name: 'Friends of Kantorei', range: '$25 – $99', desc: 'Supports music licensing and recognition in our concert programs.' },

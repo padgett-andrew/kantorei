@@ -22,6 +22,11 @@
 }
 
 @layer base {
+  html,
+  body {
+    overflow-x: clip;
+  }
+
   html {
     scroll-behavior: smooth;
     font-family: var(--font-sans);
@@ -29,9 +34,21 @@
     color: #18181b;
   }
 
-  h1, h2, h3, .font-editorial {
+  h1,
+  h2,
+  h3,
+  .font-editorial {
     font-family: var(--font-serif);
+    font-variant-numeric: lining-nums tabular-nums;
   }
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* Clean typography styling for Google Doc Handbook HTML export */

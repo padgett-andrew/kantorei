@@ -5,21 +5,34 @@ import { getRepertoire } from '../../lib/google';
 
 const singer = Astro.locals.singer!;
 const pieces = await getRepertoire(Astro.locals);
+const isAdmin = singer.role === 'Admin';
 ---
 
-<PortalLayout title="Sheet Music & Rehearsal Audio">
-  <div class="mb-6">
-    <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
-      Digital Music Folder · iPad & ForScore Ready
-    </span>
-    <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
-      Repertoire Scores & Part Tracks
-    </h1>
-    <p class="mt-1 text-sm text-zinc-600">
-      Files matching your voice part (<strong>{singer.voicePart} / {singer.sectionGroup}</strong>) are highlighted automatically. Tap <strong>Open in ForScore</strong> on your iPad to import clean filenames without Google Drive account prompts.
-    </p>
+<PortalLayout title="Scores & Audio">
+  <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <div>
+      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+        Digital Music Folder · iPad & ForScore Ready
+      </span>
+      <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+        Concert Scores & Rehearsal Tracks
+      </h1>
+      <p class="mt-1 max-w-2xl text-sm text-zinc-600">
+        Grouped by concert program so overlapping cycles stay organized side-by-side. Tap <strong>Open in ForScore</strong> on your iPad to import clean filenames directly.
+      </p>
+    </div>
+
+    {isAdmin && (
+      <details class="rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-xs text-zinc-600 shadow-2xs sm:max-w-xs">
+        <summary class="cursor-pointer font-semibold text-navy-950">
+          Librarian Tip: Overlapping Concerts
+        </summary>
+        <p class="mt-2 leading-relaxed">
+          To show two concert folders at once (e.g. October + Advent), paste multiple shared Drive folder links separated by commas in <code class="rounded bg-zinc-100 px-1 py-0.5">Config → Repertoire_Drive_Folder_ID</code>, e.g. <code class="rounded bg-zinc-100 px-1 py-0.5">Día de los Muertos: https://..., Advent: https://...</code>
+        </p>
+      </details>
+    )}
   </div>
 
   <MusicLibrary client:load singer={singer} pieces={pieces} />
 </PortalLayout>
-

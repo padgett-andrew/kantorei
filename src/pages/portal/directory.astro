@@ -1,11 +1,12 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import DirectoryList from '../../components/portal/DirectoryList';
+import { canAccessPortal } from '../../types/choir';
 import { getRoster } from '../../lib/google';
 
 const roster = await getRoster(Astro.locals);
-const activeMembers = roster
-  .filter((m) => m.active)
+const directoryMembers = roster
+  .filter((m) => canAccessPortal(m))
   .sort((a, b) => a.name.localeCompare(b.name));
 ---
 
@@ -18,10 +19,9 @@ const activeMembers = roster
       Ensemble Member Directory
     </h1>
     <p class="mt-1 text-sm text-zinc-600">
-      Contact fellow singers and section leaders for carpools, score markings, or sectional coordination.
+      Contact active singers and section leaders for carpools, score markings, or sectional coordination.
     </p>
   </div>
 
-  <DirectoryList client:load members={activeMembers} />
+  <DirectoryList client:load members={directoryMembers} />
 </PortalLayout>
-

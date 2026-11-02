@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, jwtVerify, SignJWT } from 'jose';
 import type { AstroCookies } from 'astro';
-import type { MemberRole, Singer } from '../types/choir';
+import { canAccessPortal, type MemberRole, type Singer } from '../types/choir';
 import { getEnv, isDevPreviewEnabled } from './env';
 import { getRoster } from './google';
 
@@ -53,7 +53,14 @@ export function getGoogleOAuthConfig(
   if (!clientId || !clientSecret || clientId.includes('your-google-oauth')) {
     return null;
   }
-  const siteBase = getEnv('PUBLIC_SITE_URL', locals) || requestUrl.origin;
+  const configuredSite = getEnv('PUBLIC_SITE_URL', locals).trim();
+  const isLocalConfigured = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(configuredSite);
+  const isLocalRequest =
+    requestUrl.hostname === 'localhost' || requestUrl.hostname === '127.0.0.1';
+  const siteBase =
+    configuredSite && (!isLocalConfigured || isLocalRequest)
+      ? configuredSite
+      : requestUrl.origin;
   const redirectUri = `${siteBase.replace(/\/$/, '')}/api/auth/google/callback`;
   return { clientId, clientSecret, redirectUri };
 }
@@ -222,7 +229,7 @@ export async function resolveAuthenticatedSinger(
   if (sessionToken) {
     const email = await verifySessionToken(sessionToken, locals);
     if (email) {
-      const match = roster.find((s) => s.email === email && s.active);
+      const match = roster.find((s) => s.email === email && canAccessPortal(s));
       if (match) {
         return { singer: match, isDevPreview: false };
       }
@@ -236,7 +243,7 @@ export async function resolveAuthenticatedSinger(
       const requestedDevEmail = cookies.get(DEV_ROLE_EMAIL_COOKIE)?.value?.trim().toLowerCase();
       const devSinger =
         (requestedDevEmail
-          ? roster.find((s) => s.email === requestedDevEmail && s.active)
+          ? roster.find((s) => s.email === requestedDevEmail && canAccessPortal(s))
           : undefined) ??
         roster.find((s) => s.role === 'Admin' && s.active) ??
         roster.find((s) => s.active) ??
@@ -252,6 +259,6 @@ export async function resolveAuthenticatedSinger(
 }
 
 export function hasRole(singer: Singer | undefined, allowedRoles: MemberRole[]): boolean {
-  if (!singer || !singer.active) return false;
+  if (!singer || !canAccessPortal(singer)) return false;
   return allowedRoles.includes(singer.role);
 }

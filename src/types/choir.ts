@@ -1,6 +1,7 @@
 export const VOICE_PARTS = ['S1', 'S2', 'A1', 'A2', 'T1', 'T2', 'B1', 'B2'] as const;
 export const SECTION_GROUPS = ['Soprano', 'Alto', 'Tenor', 'Bass'] as const;
 export const MEMBER_ROLES = ['Singer', 'Section_Leader', 'Admin'] as const;
+export const SINGER_STATUSES = ['Active', 'On_Leave', 'Inactive'] as const;
 export const EVENT_TYPES = ['Rehearsal', 'Sectional', 'Retreat', 'Dress', 'Concert'] as const;
 export const ABSENCE_STATUSES = ['Absent', 'Cleared'] as const;
 export const CONCERT_STATUSES = ['Upcoming', 'On_Sale', 'Past'] as const;
@@ -8,6 +9,7 @@ export const CONCERT_STATUSES = ['Upcoming', 'On_Sale', 'Past'] as const;
 export type VoicePart = (typeof VOICE_PARTS)[number];
 export type SectionGroup = (typeof SECTION_GROUPS)[number];
 export type MemberRole = (typeof MEMBER_ROLES)[number];
+export type SingerStatus = (typeof SINGER_STATUSES)[number];
 export type EventType = (typeof EVENT_TYPES)[number];
 export type AbsenceStatus = (typeof ABSENCE_STATUSES)[number];
 export type ConcertStatus = (typeof CONCERT_STATUSES)[number];
@@ -19,7 +21,15 @@ export interface Singer {
   sectionGroup: SectionGroup;
   role: MemberRole;
   phone: string;
+  /** True only when actively singing in the current concert cycle (included in roll call & alerts) */
   active: boolean;
+  /** 'Active' = singing this season; 'On_Leave' = skipping season (asleep: no roll call or season alerts); 'Inactive' = former member */
+  status: SingerStatus;
+}
+
+export function canAccessPortal(singer?: Pick<Singer, 'status' | 'active'> | null): boolean {
+  if (!singer) return false;
+  return singer.status === 'Active' || singer.status === 'On_Leave' || singer.active;
 }
 
 export interface ScheduleEvent {
@@ -102,6 +112,8 @@ export interface DriveMusicFile {
 export interface RepertoirePiece {
   folderId: string;
   title: string;
+  concertId?: string;
+  concertTitle?: string;
   files: DriveMusicFile[];
 }
 

@@ -2,7 +2,13 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { hasRole } from '../../lib/auth';
 import { ConflictError, upsertRosterSinger } from '../../lib/google';
-import { inferSectionGroup, MEMBER_ROLES, SECTION_GROUPS, VOICE_PARTS } from '../../types/choir';
+import {
+  inferSectionGroup,
+  MEMBER_ROLES,
+  SECTION_GROUPS,
+  SINGER_STATUSES,
+  VOICE_PARTS,
+} from '../../types/choir';
 
 const RosterPayloadSchema = z.object({
   email: z.string().trim().email('Valid email address is required.'),
@@ -11,7 +17,8 @@ const RosterPayloadSchema = z.object({
   sectionGroup: z.enum(SECTION_GROUPS).optional(),
   role: z.enum(MEMBER_ROLES).default('Singer'),
   phone: z.string().trim().default(''),
-  active: z.boolean().default(true),
+  status: z.enum(SINGER_STATUSES).optional(),
+  active: z.boolean().optional(),
 });
 
 async function handleRosterMutation(
@@ -38,6 +45,8 @@ async function handleRosterMutation(
     }
 
     const data = parsed.data;
+    const resolvedStatus =
+      data.status ?? (data.active === false ? 'Inactive' : 'Active');
     const saved = await upsertRosterSinger({
       singer: {
         email: data.email.toLowerCase(),
@@ -46,7 +55,8 @@ async function handleRosterMutation(
         sectionGroup: data.sectionGroup ?? inferSectionGroup(data.voicePart),
         role: data.role,
         phone: data.phone,
-        active: data.active,
+        status: resolvedStatus,
+        active: resolvedStatus === 'Active',
       },
       mode,
       locals,

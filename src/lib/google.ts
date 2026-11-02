@@ -130,6 +130,7 @@ const demoStore: DemoStore = {
       role: 'Admin',
       phone: '612-555-0100',
       active: true,
+      status: 'Active',
     },
     {
       email: 'maggieakhavan@gmail.com',
@@ -139,6 +140,7 @@ const demoStore: DemoStore = {
       role: 'Admin',
       phone: '612-718-5703',
       active: true,
+      status: 'Active',
     },
     {
       email: 'polim0501@gmail.com',
@@ -148,6 +150,7 @@ const demoStore: DemoStore = {
       role: 'Section_Leader',
       phone: '612-555-0118',
       active: true,
+      status: 'Active',
     },
     {
       email: 'claire.lindqvist@icloud.com',
@@ -157,6 +160,7 @@ const demoStore: DemoStore = {
       role: 'Section_Leader',
       phone: '612-555-0112',
       active: true,
+      status: 'Active',
     },
     {
       email: 'maya.patel@gmail.com',
@@ -166,6 +170,7 @@ const demoStore: DemoStore = {
       role: 'Singer',
       phone: '651-555-0134',
       active: true,
+      status: 'Active',
     },
     {
       email: 'hannah.berg@yahoo.com',
@@ -175,6 +180,7 @@ const demoStore: DemoStore = {
       role: 'Singer',
       phone: '612-555-0177',
       active: true,
+      status: 'Active',
     },
     {
       email: 'strand.carlajoy@gmail.com',
@@ -184,6 +190,7 @@ const demoStore: DemoStore = {
       role: 'Section_Leader',
       phone: '612-555-0148',
       active: true,
+      status: 'Active',
     },
     {
       email: 'rachel.kim@outlook.com',
@@ -193,6 +200,7 @@ const demoStore: DemoStore = {
       role: 'Singer',
       phone: '651-555-0191',
       active: true,
+      status: 'Active',
     },
     {
       email: 'nadia.okafor@gmail.com',
@@ -202,6 +210,7 @@ const demoStore: DemoStore = {
       role: 'Singer',
       phone: '612-555-0163',
       active: true,
+      status: 'Active',
     },
     {
       email: 'mclaver8@gmail.com',
@@ -211,6 +220,7 @@ const demoStore: DemoStore = {
       role: 'Section_Leader',
       phone: '612-555-0122',
       active: true,
+      status: 'Active',
     },
     {
       email: 'julian.cho@icloud.com',
@@ -220,6 +230,7 @@ const demoStore: DemoStore = {
       role: 'Singer',
       phone: '651-555-0185',
       active: true,
+      status: 'Active',
     },
     {
       email: 'lucas.meyer@gmail.com',
@@ -229,6 +240,7 @@ const demoStore: DemoStore = {
       role: 'Singer',
       phone: '612-555-0159',
       active: true,
+      status: 'Active',
     },
     {
       email: 'jfrankelly@gmail.com',
@@ -238,6 +250,7 @@ const demoStore: DemoStore = {
       role: 'Section_Leader',
       phone: '612-555-0199',
       active: true,
+      status: 'Active',
     },
     {
       email: 'samuel.brooks@outlook.com',
@@ -247,15 +260,27 @@ const demoStore: DemoStore = {
       role: 'Singer',
       phone: '651-555-0141',
       active: true,
+      status: 'Active',
     },
     {
-      email: 'former.member@example.com',
-      name: 'Jordan Alverez (On Leave)',
+      email: 'jordan.alverez@example.com',
+      name: 'Jordan Alverez',
       voicePart: 'T2',
       sectionGroup: 'Tenor',
       role: 'Singer',
       phone: '612-555-0109',
       active: false,
+      status: 'On_Leave',
+    },
+    {
+      email: 'former.member@example.com',
+      name: 'Elena Rostova',
+      voicePart: 'S2',
+      sectionGroup: 'Soprano',
+      role: 'Singer',
+      phone: '612-555-0104',
+      active: false,
+      status: 'Inactive',
     },
   ],
   schedule: [
@@ -465,6 +490,8 @@ const demoStore: DemoStore = {
     {
       folderId: 'piece-lauridsen',
       title: '01 — Lauridsen: O Magnum Mysterium',
+      concertId: 'advent-2026',
+      concertTitle: 'Advent with Kantorei (Dec)',
       files: [
         {
           id: 'demo-pdf-lauridsen-score',
@@ -511,6 +538,8 @@ const demoStore: DemoStore = {
     {
       folderId: 'piece-shaw',
       title: '02 — Caroline Shaw: and the swallow',
+      concertId: 'advent-2026',
+      concertTitle: 'Advent with Kantorei (Dec)',
       files: [
         {
           id: 'demo-pdf-shaw-score',
@@ -532,7 +561,9 @@ const demoStore: DemoStore = {
     },
     {
       folderId: 'piece-bach',
-      title: '03 — J.S. Bach: Lobet den Herrn, BWV 230',
+      title: '01 — J.S. Bach: Lobet den Herrn, BWV 230',
+      concertId: 'dia-de-los-muertos-2026',
+      concertTitle: 'Día de los Muertos (Oct)',
       files: [
         {
           id: 'demo-pdf-bach-score',
@@ -562,7 +593,9 @@ const demoStore: DemoStore = {
     },
     {
       folderId: 'piece-howells',
-      title: '04 — Herbert Howells: Requiem (Movements I–VI)',
+      title: '02 — Herbert Howells: Requiem (Movements I–VI)',
+      concertId: 'dia-de-los-muertos-2026',
+      concertTitle: 'Día de los Muertos (Oct)',
       files: [
         {
           id: 'demo-pdf-howells-score',
@@ -853,7 +886,7 @@ export async function getMedia(locals?: App.Locals): Promise<MediaItem[]> {
 }
 
 export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig> {
-  const envRepertoireFolder = extractGoogleId(getEnv('REPERTOIRE_DRIVE_FOLDER_ID', locals));
+  const envRepertoireFolder = getEnv('REPERTOIRE_DRIVE_FOLDER_ID', locals).trim();
 
   if (isSandboxSheetMode(locals)) {
     return {
@@ -1086,12 +1119,15 @@ export async function upsertRosterSinger(params: {
   locals?: App.Locals;
 }): Promise<Singer> {
   const { singer, mode, locals } = params;
+  const resolvedStatus = singer.status ?? (singer.active ? 'Active' : 'Inactive');
   const normalized: Singer = {
     ...singer,
     email: singer.email.trim().toLowerCase(),
     name: singer.name.trim(),
     sectionGroup: singer.sectionGroup || inferSectionGroup(singer.voicePart),
     phone: singer.phone.trim(),
+    status: resolvedStatus,
+    active: resolvedStatus === 'Active',
   };
 
   if (isSandboxSheetMode(locals)) {
@@ -1116,6 +1152,13 @@ export async function upsertRosterSinger(params: {
     throw new ConflictError(`A singer with email ${normalized.email} already exists on the Roster.`);
   }
 
+  const sheetStatusCell =
+    normalized.status === 'On_Leave'
+      ? 'ON_LEAVE'
+      : normalized.status === 'Active'
+        ? 'TRUE'
+        : 'FALSE';
+
   const rowValues = [
     normalized.email,
     normalized.name,
@@ -1123,7 +1166,7 @@ export async function upsertRosterSinger(params: {
     normalized.sectionGroup,
     normalized.role,
     normalized.phone,
-    normalized.active ? 'TRUE' : 'FALSE',
+    sheetStatusCell,
   ];
 
   if (matchIdx >= 0) {
@@ -1217,123 +1260,241 @@ async function driveListQuery(query: string, locals?: App.Locals): Promise<Drive
   return data.files ?? [];
 }
 
-export async function getRepertoire(locals?: App.Locals): Promise<RepertoirePiece[]> {
-  const config = await getPortalConfig(locals);
-  const rootFolderId = extractGoogleId(config.Repertoire_Drive_Folder_ID || '');
+interface ConfiguredFolderTarget {
+  folderId: string;
+  explicitLabel?: string;
+}
 
-  if (
-    !hasGoogleServiceAccount(locals) ||
-    !rootFolderId ||
-    rootFolderId === 'DEMO' ||
-    rootFolderId.startsWith('PASTE_')
-  ) {
+function parseRepertoireFolderTargets(config: PortalConfig): ConfiguredFolderTarget[] {
+  const seen = new Set<string>();
+  const targets: ConfiguredFolderTarget[] = [];
+
+  function addRawEntries(rawValue: string, fallbackLabel?: string) {
+    const entries = rawValue
+      .split(/\s*(?:\||;|\r?\n|,)\s*/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    for (const entry of entries) {
+      // Optional "Concert Label: https://drive.google.com/drive/folders/..." syntax
+      const colonIdx = entry.indexOf(':');
+      let label = fallbackLabel;
+      let targetPart = entry;
+
+      if (colonIdx > 0) {
+        const prefix = entry.slice(0, colonIdx).trim();
+        const rest = entry.slice(colonIdx + 1).trim();
+        if (!/^https?$/i.test(prefix) && rest.length >= 10) {
+          label = prefix;
+          targetPart = rest;
+        }
+      }
+
+      const folderId = extractGoogleId(targetPart);
+      if (
+        !folderId ||
+        folderId === 'DEMO' ||
+        folderId.startsWith('PASTE_') ||
+        seen.has(folderId)
+      ) {
+        continue;
+      }
+      seen.add(folderId);
+      targets.push({ folderId, explicitLabel: label });
+    }
+  }
+
+  if (config.Repertoire_Drive_Folder_ID) {
+    addRawEntries(config.Repertoire_Drive_Folder_ID);
+  }
+
+  // Also support one-row-per-concert keys in Config tab: e.g. Repertoire_Folder_Dia_De_Los_Muertos
+  for (const [key, val] of Object.entries(config)) {
+    if (/^Repertoire_Folder_/i.test(key) && val) {
+      const derivedLabel = key
+        .replace(/^Repertoire_Folder_/i, '')
+        .replace(/_/g, ' ')
+        .trim();
+      addRawEntries(val, derivedLabel || undefined);
+    }
+  }
+
+  return targets;
+}
+
+async function resolveFolderConcertName(
+  target: ConfiguredFolderTarget,
+  fallbackConcertTitle: string,
+  locals?: App.Locals
+): Promise<string> {
+  if (target.explicitLabel) return target.explicitLabel;
+  try {
+    const meta = await getDriveFileMetadata(target.folderId, locals);
+    const cleaned = meta.name.trim();
+    if (cleaned && !/^(music|scores|repertoire|folder|shared)$/i.test(cleaned)) {
+      return cleaned;
+    }
+  } catch {
+    // Ignore metadata read failure and fall back cleanly
+  }
+  return fallbackConcertTitle;
+}
+
+async function scanConcertRootFolder(
+  target: ConfiguredFolderTarget,
+  fallbackConcertTitle: string,
+  totalRoots: number,
+  locals?: App.Locals
+): Promise<RepertoirePiece[]> {
+  const concertTitle = await resolveFolderConcertName(target, fallbackConcertTitle, locals);
+  const rootFolderId = target.folderId;
+  const escapedRoot = rootFolderId.replace(/'/g, "\\'");
+  const rootChildren = await driveListQuery(
+    `'${escapedRoot}' in parents and trashed = false`,
+    locals
+  );
+
+  const rootMusicFiles: DriveMusicFile[] = [];
+  const subfolders: { id: string; name: string }[] = [];
+
+  for (const raw of rootChildren) {
+    const resolved = resolveDriveItem(raw);
+    if (resolved.mimeType === 'application/vnd.google-apps.folder') {
+      subfolders.push({ id: resolved.id, name: resolved.name });
+    } else {
+      const musicFile = toDriveMusicFile(raw);
+      if (musicFile) rootMusicFiles.push(musicFile);
+    }
+  }
+
+  const subfolderPieces = await Promise.all(
+    subfolders.map(async (folder): Promise<RepertoirePiece[]> => {
+      const escapedFolder = folder.id.replace(/'/g, "\\'");
+      const children = await driveListQuery(
+        `'${escapedFolder}' in parents and trashed = false`,
+        locals
+      );
+
+      const directFiles: DriveMusicFile[] = [];
+      const nestedFolders: { id: string; name: string }[] = [];
+
+      for (const child of children) {
+        const resolvedChild = resolveDriveItem(child);
+        if (resolvedChild.mimeType === 'application/vnd.google-apps.folder') {
+          nestedFolders.push({ id: resolvedChild.id, name: resolvedChild.name });
+        } else {
+          const mf = toDriveMusicFile(child);
+          if (mf) directFiles.push(mf);
+        }
+      }
+
+      if (nestedFolders.length > 0) {
+        const nestedResults = await Promise.all(
+          nestedFolders.map(async (nf) => {
+            const escapedNested = nf.id.replace(/'/g, "\\'");
+            const nestedRaw = await driveListQuery(
+              `'${escapedNested}' in parents and trashed = false`,
+              locals
+            );
+            return {
+              folder: nf,
+              files: nestedRaw
+                .map((item) => toDriveMusicFile(item))
+                .filter((f): f is DriveMusicFile => f !== null),
+            };
+          })
+        );
+
+        // If a single master root contains Concert folders -> Piece folders, treat `folder.name` as the Concert group!
+        if (directFiles.length === 0) {
+          const groupTitle = totalRoots === 1 && rootMusicFiles.length === 0 ? folder.name : concertTitle;
+          const groupId = totalRoots === 1 && rootMusicFiles.length === 0 ? folder.id : rootFolderId;
+          return nestedResults
+            .filter((nr) => nr.files.length > 0)
+            .map((nr) => ({
+              folderId: nr.folder.id,
+              title: nr.folder.name,
+              concertId: groupId,
+              concertTitle: groupTitle,
+              files: nr.files,
+            }));
+        }
+
+        for (const nr of nestedResults) {
+          for (const f of nr.files) {
+            directFiles.push({
+              ...f,
+              name: `${nr.folder.name} — ${f.name}`,
+            });
+          }
+        }
+      }
+
+      // If a single master root has no direct files and multiple Concert subfolders each holding flat PDFs
+      const treatSubfolderAsConcert =
+        totalRoots === 1 && rootMusicFiles.length === 0 && directFiles.length > 3;
+
+      return directFiles.length > 0
+        ? [
+            {
+              folderId: folder.id,
+              title: folder.name,
+              concertId: treatSubfolderAsConcert ? folder.id : rootFolderId,
+              concertTitle: treatSubfolderAsConcert ? folder.name : concertTitle,
+              files: directFiles,
+            },
+          ]
+        : [];
+    })
+  );
+
+  const pieces: RepertoirePiece[] = [];
+  if (rootMusicFiles.length > 0) {
+    pieces.push({
+      folderId: rootFolderId,
+      title: subfolders.length > 0 ? `${concertTitle} — Scores & Tracks` : concertTitle,
+      concertId: rootFolderId,
+      concertTitle,
+      files: rootMusicFiles,
+    });
+  }
+  for (const group of subfolderPieces) {
+    pieces.push(...group);
+  }
+
+  return pieces;
+}
+
+export async function getRepertoire(locals?: App.Locals): Promise<RepertoirePiece[]> {
+  const [config, concerts] = await Promise.all([
+    getPortalConfig(locals),
+    getConcerts(locals),
+  ]);
+  const targets = parseRepertoireFolderTargets(config);
+
+  if (!hasGoogleServiceAccount(locals) || targets.length === 0) {
     return demoStore.repertoire.map((piece) => ({
       ...piece,
       files: piece.files.map((f) => ({ ...f })),
     }));
   }
 
+  const activeConcertTitle =
+    concerts.find((c) => c.status === 'On_Sale' || c.status === 'Upcoming')?.title ||
+    'Concert Repertoire';
+
   return cachedFetchJson('music', 300, async () => {
-    const escapedRoot = rootFolderId.replace(/'/g, "\\'");
-    const rootChildren = await driveListQuery(
-      `'${escapedRoot}' in parents and trashed = false`,
-      locals
-    );
-
-    const rootMusicFiles: DriveMusicFile[] = [];
-    const subfolders: { id: string; name: string }[] = [];
-
-    for (const raw of rootChildren) {
-      const resolved = resolveDriveItem(raw);
-      if (resolved.mimeType === 'application/vnd.google-apps.folder') {
-        subfolders.push({ id: resolved.id, name: resolved.name });
-      } else {
-        const musicFile = toDriveMusicFile(raw);
-        if (musicFile) rootMusicFiles.push(musicFile);
-      }
-    }
-
-    const subfolderPieces = await Promise.all(
-      subfolders.map(async (folder): Promise<RepertoirePiece[]> => {
-        const escapedFolder = folder.id.replace(/'/g, "\\'");
-        const children = await driveListQuery(
-          `'${escapedFolder}' in parents and trashed = false`,
+    const groups = await Promise.all(
+      targets.map((target, idx) =>
+        scanConcertRootFolder(
+          target,
+          idx === 0 ? activeConcertTitle : `Concert Program ${idx + 1}`,
+          targets.length,
           locals
-        );
-
-        const directFiles: DriveMusicFile[] = [];
-        const nestedFolders: { id: string; name: string }[] = [];
-
-        for (const child of children) {
-          const resolvedChild = resolveDriveItem(child);
-          if (resolvedChild.mimeType === 'application/vnd.google-apps.folder') {
-            nestedFolders.push({ id: resolvedChild.id, name: resolvedChild.name });
-          } else {
-            const mf = toDriveMusicFile(child);
-            if (mf) directFiles.push(mf);
-          }
-        }
-
-        // Also scan 1 nested folder level (e.g., Piece -> Practice Tracks, or Concert -> Piece)
-        if (nestedFolders.length > 0) {
-          const nestedResults = await Promise.all(
-            nestedFolders.map(async (nf) => {
-              const escapedNested = nf.id.replace(/'/g, "\\'");
-              const nestedRaw = await driveListQuery(
-                `'${escapedNested}' in parents and trashed = false`,
-                locals
-              );
-              return {
-                folder: nf,
-                files: nestedRaw
-                  .map((item) => toDriveMusicFile(item))
-                  .filter((f): f is DriveMusicFile => f !== null),
-              };
-            })
-          );
-
-          // If the parent folder has no direct files of its own (e.g., a Concert cycle folder containing Piece folders),
-          // promote each nested folder to its own RepertoirePiece card.
-          if (directFiles.length === 0) {
-            return nestedResults
-              .filter((nr) => nr.files.length > 0)
-              .map((nr) => ({
-                folderId: nr.folder.id,
-                title: `${folder.name} — ${nr.folder.name}`,
-                files: nr.files,
-              }));
-          }
-
-          // Otherwise merge nested files (e.g., a "Practice Tracks" folder inside a Piece folder) into the Piece card.
-          for (const nr of nestedResults) {
-            for (const f of nr.files) {
-              directFiles.push({
-                ...f,
-                name: `${nr.folder.name} — ${f.name}`,
-              });
-            }
-          }
-        }
-
-        return directFiles.length > 0
-          ? [{ folderId: folder.id, title: folder.name, files: directFiles }]
-          : [];
-      })
+        )
+      )
     );
-
-    const pieces: RepertoirePiece[] = [];
-    if (rootMusicFiles.length > 0) {
-      pieces.push({
-        folderId: rootFolderId,
-        title: subfolders.length > 0 ? 'General Scores & Rehearsal Files' : 'Concert Repertoire',
-        files: rootMusicFiles,
-      });
-    }
-    for (const group of subfolderPieces) {
-      pieces.push(...group);
-    }
-
-    return pieces;
+    return groups.flat();
   });
 }
 

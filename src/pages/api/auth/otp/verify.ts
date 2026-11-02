@@ -6,6 +6,7 @@ import {
   setSessionCookie,
   verifyOtpChallengeToken,
 } from '../../../../lib/auth';
+import { canAccessPortal } from '../../../../types/choir';
 import { getRoster } from '../../../../lib/google';
 
 const VerifySchema = z.object({
@@ -50,7 +51,7 @@ export const POST: APIRoute = async ({ request, url, cookies, locals }) => {
     }
 
     const roster = await getRoster(locals);
-    const singer = roster.find((s) => s.email === normalizedEmail && s.active);
+    const singer = roster.find((s) => s.email === normalizedEmail && canAccessPortal(s));
     if (!singer) {
       return new Response(
         JSON.stringify({ error: 'Your email is not currently marked Active on the choir roster.' }),

@@ -3,7 +3,9 @@ import {
   AlertTriangle,
   Check,
   Edit3,
+  Moon,
   Plus,
+  Sun,
   UserCheck,
   UserMinus,
   Users,
@@ -20,6 +22,7 @@ import {
   type SectionGroup,
   type SheetWarning,
   type Singer,
+  type SingerStatus,
   type VoicePart,
 } from '../../types/choir';
 import { formatEventDate, voicePartBadgeColor } from '../../lib/utils';
@@ -47,6 +50,9 @@ export default function AdminRollCall({
   const [sectionFilter, setSectionFilter] = useState<'All' | SectionGroup>(
     caller.role === 'Section_Leader' ? caller.sectionGroup : 'All'
   );
+  const [rosterStatusFilter, setRosterStatusFilter] = useState<
+    'All' | SingerStatus
+  >('All');
   const [activeTab, setActiveTab] = useState<'rollcall' | 'roster'>('rollcall');
   const [busyEmail, setBusyEmail] = useState<string | null>(null);
   const [banner, setBanner] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
@@ -59,19 +65,21 @@ export default function AdminRollCall({
     voicePart: VoicePart;
     role: MemberRole;
     phone: string;
-    active: boolean;
+    status: SingerStatus;
   }>({
     email: '',
     name: '',
     voicePart: 'S1',
     role: 'Singer',
     phone: '',
-    active: true,
+    status: 'Active',
   });
   const [savingMember, setSavingMember] = useState(false);
 
   const isAdmin = caller.role === 'Admin';
-  const activeSingers = roster.filter((s) => s.active);
+  const activeSingers = roster.filter((s) => s.status === 'Active');
+  const onLeaveSingers = roster.filter((s) => s.status === 'On_Leave');
+  const inactiveSingers = roster.filter((s) => s.status === 'Inactive');
 
   const absentForSelectedEvent = new Map(
     absences
@@ -132,6 +140,47 @@ export default function AdminRollCall({
     }
   }
 
+  async function quickToggleSeasonLeave(member: Singer) {
+    const nextStatus: SingerStatus =
+      member.status === 'Active' ? 'On_Leave' : 'Active';
+    setBusyEmail(member.email);
+    setBanner(null);
+
+    try {
+      const res = await fetch('/api/roster', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: member.email,
+          name: member.name,
+          voicePart: member.voicePart,
+          sectionGroup: member.sectionGroup,
+          role: member.role,
+          phone: member.phone,
+          status: nextStatus,
+        }),
+      });
+      const data = (await res.json()) as { singer?: Singer; error?: string };
+      if (!res.ok || !data.singer) {
+        setBanner({ type: 'err', text: data.error ?? 'Failed to update status.' });
+        return;
+      }
+      const saved = data.singer;
+      setRoster((prev) => prev.map((s) => (s.email === saved.email ? saved : s)));
+      setBanner({
+        type: 'ok',
+        text:
+          saved.status === 'On_Leave'
+            ? `${saved.name} marked on Season Leave (paused from roll call & season alerts).`
+            : `${saved.name} restored to Active for the current season.`,
+      });
+    } catch {
+      setBanner({ type: 'err', text: 'Network error updating singer status.' });
+    } finally {
+      setBusyEmail(null);
+    }
+  }
+
   function openCreateModal() {
     setFormState({
       email: '',
@@ -139,7 +188,7 @@ export default function AdminRollCall({
       voicePart: 'S1',
       role: 'Singer',
       phone: '',
-      active: true,
+      status: 'Active',
     });
     setModalMode('create');
   }
@@ -151,7 +200,7 @@ export default function AdminRollCall({
       voicePart: member.voicePart,
       role: member.role,
       phone: member.phone,
-      active: member.active,
+      status: member.status,
     });
     setModalMode('update');
   }
@@ -186,7 +235,9 @@ export default function AdminRollCall({
       setModalMode(null);
       setBanner({
         type: 'ok',
-        text: `${saved.name} (${saved.voicePart}) saved to Master Roster.`,
+        text: `${saved.name} (${saved.voicePart}) saved as ${
+          saved.status === 'On_Leave' ? 'Season Leave' : saved.status
+        }.`,
       });
     } catch {
       setBanner({ type: 'err', text: 'Network error saving singer.' });
@@ -199,9 +250,37 @@ export default function AdminRollCall({
     (s) => sectionFilter === 'All' || s.sectionGroup === sectionFilter
   );
 
+  const visibleRoster = roster.filter(
+    (m) => rosterStatusFilter === 'All' || m.status === rosterStatusFilter
+  );
+
+  function renderStatusBadge(status: SingerStatus) {
+    if (status === 'Active') {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 ring-1 ring-emerald-200/80">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          Active
+        </span>
+      );
+    }
+    if (status === 'On_Leave') {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-800 ring-1 ring-indigo-200/80">
+          <Moon className="h-3 w-3 text-indigo-600" />
+          Season Leave
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-600 ring-1 ring-zinc-200">
+        Inactive
+      </span>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Sheet Data-Health Diagnostics (from Zod row-level validation) */}
+      {/* Sheet Data-Health Diagnostics */}
       {sheetWarnings.length > 0 && (
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-5">
           <div className="flex items-center gap-2 text-sm font-bold text-amber-950">
@@ -226,7 +305,7 @@ export default function AdminRollCall({
 
       {banner && (
         <div
-          className={`rounded-xl border px-4 py-3 text-sm ${
+          className={`rounded-2xl border px-4 py-3 text-sm ${
             banner.type === 'ok'
               ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
               : 'border-rose-200 bg-rose-50 text-rose-800'
@@ -238,24 +317,24 @@ export default function AdminRollCall({
 
       {/* Mode Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-xl border border-zinc-200 bg-white p-1">
+        <div className="inline-flex rounded-2xl border border-zinc-200 bg-white p-1 shadow-2xs">
           <button
             type="button"
             onClick={() => setActiveTab('rollcall')}
-            className={`cursor-pointer rounded-lg px-4 py-2 text-xs font-semibold transition ${
+            className={`cursor-pointer rounded-xl px-4 py-2 text-xs font-semibold transition ${
               activeTab === 'rollcall'
-                ? 'bg-navy-900 text-white'
+                ? 'bg-navy-900 text-white shadow-2xs'
                 : 'text-zinc-600 hover:text-zinc-900'
             }`}
           >
-            Rehearsal Roll Call Matrix
+            Roll Call ({activeSingers.length} Active)
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('roster')}
-            className={`cursor-pointer rounded-lg px-4 py-2 text-xs font-semibold transition ${
+            className={`cursor-pointer rounded-xl px-4 py-2 text-xs font-semibold transition ${
               activeTab === 'roster'
-                ? 'bg-navy-900 text-white'
+                ? 'bg-navy-900 text-white shadow-2xs'
                 : 'text-zinc-600 hover:text-zinc-900'
             }`}
           >
@@ -263,22 +342,38 @@ export default function AdminRollCall({
           </button>
         </div>
 
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-navy-800"
-          >
-            <Plus className="h-4 w-4 text-gold-400" />
-            Add Singer to Roster
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {onLeaveSingers.length > 0 && activeTab === 'rollcall' && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('roster');
+                setRosterStatusFilter('On_Leave');
+              }}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 px-3 py-2 text-xs font-semibold text-indigo-800 transition hover:bg-indigo-100"
+            >
+              <Moon className="h-3.5 w-3.5 text-indigo-600" />
+              {onLeaveSingers.length} on Season Leave (paused)
+            </button>
+          )}
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2.5 text-xs font-semibold text-white shadow-2xs transition hover:bg-navy-800"
+            >
+              <Plus className="h-4 w-4 text-gold-400" />
+              Add Singer
+            </button>
+          )}
+        </div>
       </div>
 
       {activeTab === 'rollcall' ? (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Event Selector + Section Headcount Cards */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xs">
+          <div className="rounded-3xl border border-zinc-200/90 bg-white p-5 shadow-2xs sm:p-6">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
               <div className="flex-1">
                 <label
@@ -291,7 +386,7 @@ export default function AdminRollCall({
                   id="rollcall-event"
                   value={selectedEventId}
                   onChange={(e) => setSelectedEventId(e.target.value)}
-                  className="mt-1.5 w-full max-w-lg rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm font-medium text-zinc-900 focus:border-navy-900 focus:outline-none"
+                  className="mt-1.5 w-full max-w-lg rounded-xl border border-zinc-200 bg-zinc-50/70 px-3.5 py-2.5 text-sm font-medium text-zinc-900 focus:border-navy-900 focus:bg-white focus:outline-none"
                 >
                   {upcomingEvents.map((ev) => (
                     <option key={ev.eventId} value={ev.eventId}>
@@ -301,16 +396,16 @@ export default function AdminRollCall({
                 </select>
               </div>
 
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 rounded-xl bg-zinc-100/80 p-1">
                 {(['All', ...SECTION_GROUPS] as const).map((group) => (
                   <button
                     key={group}
                     type="button"
                     onClick={() => setSectionFilter(group)}
-                    className={`cursor-pointer rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                    className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                       sectionFilter === group
-                        ? 'bg-navy-900 text-white'
-                        : 'border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100'
+                        ? 'bg-white text-navy-950 shadow-2xs'
+                        : 'text-zinc-600 hover:text-zinc-900'
                     }`}
                   >
                     {group}
@@ -331,12 +426,12 @@ export default function AdminRollCall({
                 return (
                   <div
                     key={sec}
-                    className="rounded-xl border border-zinc-200 bg-ivory-50 px-4 py-3"
+                    className="rounded-2xl border border-zinc-200/80 bg-ivory-50/80 px-4 py-3.5"
                   >
-                    <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                       {sec}
                     </p>
-                    <div className="mt-1 flex items-baseline justify-between">
+                    <div className="mt-1 flex items-baseline justify-between gap-2">
                       <span className="text-xl font-bold text-navy-950">
                         {presentInSec}/{totalInSec}
                       </span>
@@ -345,7 +440,7 @@ export default function AdminRollCall({
                           absentInSec > 0 ? 'text-rose-700' : 'text-emerald-700'
                         }`}
                       >
-                        {absentInSec > 0 ? `${absentInSec} absent` : 'Full section'}
+                        {absentInSec > 0 ? `${absentInSec} absent` : 'Full'}
                       </span>
                     </div>
                   </div>
@@ -355,7 +450,7 @@ export default function AdminRollCall({
           </div>
 
           {/* Roll Call Singer List */}
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs">
+          <div className="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-2xs">
             <ul className="divide-y divide-zinc-100">
               {visibleRollCallSingers.map((s) => {
                 const absence = absentForSelectedEvent.get(s.email);
@@ -365,8 +460,8 @@ export default function AdminRollCall({
                 return (
                   <li
                     key={s.email}
-                    className={`flex flex-col justify-between gap-3 px-5 py-3.5 sm:flex-row sm:items-center ${
-                      isAbsent ? 'bg-rose-50/50' : ''
+                    className={`flex flex-col justify-between gap-3 px-5 py-3.5 sm:flex-row sm:items-center sm:px-6 ${
+                      isAbsent ? 'bg-rose-50/50' : 'hover:bg-ivory-50/50'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -396,14 +491,14 @@ export default function AdminRollCall({
                           className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 disabled:opacity-60"
                         >
                           <UserCheck className="h-3.5 w-3.5" />
-                          {isBusy ? 'Updating…' : 'Mark Present (Clear)'}
+                          {isBusy ? 'Updating…' : 'Mark Present'}
                         </button>
                       ) : (
                         <button
                           type="button"
                           disabled={isBusy}
                           onClick={() => toggleAttendance(s, false)}
-                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 disabled:opacity-60"
+                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 disabled:opacity-60"
                         >
                           <UserMinus className="h-3.5 w-3.5" />
                           {isBusy ? 'Saving…' : 'Mark Absent'}
@@ -417,74 +512,133 @@ export default function AdminRollCall({
           </div>
         </div>
       ) : (
-        /* Master Roster Management Table */
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs">
-          <div className="flex items-center justify-between border-b border-zinc-100 bg-ivory-50 px-6 py-4">
+        /* Master Roster Management Table with 1-Click Season Leave ("Asleep") */
+        <div className="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-2xs">
+          <div className="flex flex-col justify-between gap-3 border-b border-zinc-100 bg-ivory-50/80 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-navy-900" />
-              <h2 className="font-semibold text-navy-950">Master Choir Roster</h2>
+              <div>
+                <h2 className="font-sans text-sm font-bold text-navy-950 sm:text-base">
+                  Master Choir Roster
+                </h2>
+                <p className="text-xs text-zinc-500">
+                  Pause singers on <strong>Season Leave</strong> when skipping a concert cycle so they stay off roll call & alerts.
+                </p>
+              </div>
             </div>
-            {!isAdmin && (
-              <span className="text-xs text-zinc-500">
-                Read-only for Section Leaders (Admins can add/edit members)
-              </span>
-            )}
+
+            <div className="flex flex-wrap gap-1 rounded-xl bg-zinc-200/60 p-1">
+              {(
+                [
+                  { id: 'All', label: `All (${roster.length})` },
+                  { id: 'Active', label: `Active (${activeSingers.length})` },
+                  { id: 'On_Leave', label: `Season Leave (${onLeaveSingers.length})` },
+                  { id: 'Inactive', label: `Inactive (${inactiveSingers.length})` },
+                ] as const
+              ).map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setRosterStatusFilter(f.id)}
+                  className={`cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                    rosterStatusFilter === f.id
+                      ? 'bg-white text-navy-950 shadow-2xs'
+                      : 'text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
+              <thead className="border-b border-zinc-200 bg-zinc-50/70 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
                 <tr>
                   <th className="px-5 py-3">Name</th>
                   <th className="px-5 py-3">Email</th>
                   <th className="px-5 py-3">Part</th>
                   <th className="px-5 py-3">Role</th>
-                  <th className="px-5 py-3">Status</th>
-                  {isAdmin && <th className="px-5 py-3 text-right">Edit</th>}
+                  <th className="px-5 py-3">Season Status</th>
+                  {isAdmin && <th className="px-5 py-3 text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {roster.map((m) => (
-                  <tr key={m.email} className={!m.active ? 'opacity-55 bg-zinc-50' : ''}>
-                    <td className="px-5 py-3.5 font-medium text-zinc-900">{m.name}</td>
-                    <td className="px-5 py-3.5 font-mono text-xs text-zinc-600">{m.email}</td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`rounded-full border px-2 py-0.5 text-xs font-bold ${voicePartBadgeColor(
-                          m.voicePart
-                        )}`}
-                      >
-                        {m.voicePart}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-xs font-medium text-zinc-700">
-                      {m.role.replace('_', ' ')}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                          m.active
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-zinc-200 text-zinc-600'
-                        }`}
-                      >
-                        {m.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    {isAdmin && (
-                      <td className="px-5 py-3.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(m)}
-                          className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+                {visibleRoster.map((m) => {
+                  const isBusy = busyEmail === m.email;
+                  return (
+                    <tr
+                      key={m.email}
+                      className={
+                        m.status === 'Inactive'
+                          ? 'bg-zinc-50/80 opacity-60'
+                          : m.status === 'On_Leave'
+                            ? 'bg-indigo-50/25'
+                            : 'hover:bg-ivory-50/40'
+                      }
+                    >
+                      <td className="px-5 py-3.5 font-semibold text-zinc-900">{m.name}</td>
+                      <td className="px-5 py-3.5 font-mono text-xs text-zinc-600">{m.email}</td>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-xs font-bold ${voicePartBadgeColor(
+                            m.voicePart
+                          )}`}
                         >
-                          <Edit3 className="h-3.5 w-3.5" />
-                          Edit
-                        </button>
+                          {m.voicePart}
+                        </span>
                       </td>
-                    )}
-                  </tr>
-                ))}
+                      <td className="px-5 py-3.5 text-xs font-medium text-zinc-700">
+                        {m.role.replace('_', ' ')}
+                      </td>
+                      <td className="px-5 py-3.5">{renderStatusBadge(m.status)}</td>
+                      {isAdmin && (
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            {m.status !== 'Inactive' && (
+                              <button
+                                type="button"
+                                disabled={isBusy}
+                                onClick={() => quickToggleSeasonLeave(m)}
+                                title={
+                                  m.status === 'Active'
+                                    ? 'Pause singer for this season (skipping cycle)'
+                                    : 'Wake singer back to Active for this season'
+                                }
+                                className={`inline-flex cursor-pointer items-center gap-1 rounded-xl border px-2.5 py-1 text-xs font-semibold transition disabled:opacity-50 ${
+                                  m.status === 'Active'
+                                    ? 'border-zinc-200 bg-white text-zinc-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800'
+                                    : 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                                }`}
+                              >
+                                {m.status === 'Active' ? (
+                                  <>
+                                    <Moon className="h-3.5 w-3.5" />
+                                    Pause Season
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sun className="h-3.5 w-3.5" />
+                                    Wake Up
+                                  </>
+                                )}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(m)}
+                              className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" />
+                              Edit
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -498,7 +652,7 @@ export default function AdminRollCall({
           onClick={() => setModalMode(null)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl"
+            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -508,7 +662,7 @@ export default function AdminRollCall({
               <button
                 type="button"
                 onClick={() => setModalMode(null)}
-                className="cursor-pointer rounded-lg p-1 text-zinc-400 hover:bg-zinc-100"
+                className="cursor-pointer rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-100"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -517,7 +671,7 @@ export default function AdminRollCall({
             <form onSubmit={saveRosterMember} className="mt-4 space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">
-                  Email Address (Primary Key)
+                  Email Address
                 </label>
                 <input
                   type="email"
@@ -595,15 +749,55 @@ export default function AdminRollCall({
                 />
               </div>
 
-              <label className="flex cursor-pointer items-center gap-2.5 pt-1 text-sm font-medium text-zinc-800">
-                <input
-                  type="checkbox"
-                  checked={formState.active}
-                  onChange={(e) => setFormState({ ...formState, active: e.target.checked })}
-                  className="h-4 w-4 rounded border-zinc-300"
-                />
-                Active Roster Member (can sign in to /portal)
-              </label>
+              <div>
+                <span className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">
+                  Season Participation Status
+                </span>
+                <div className="mt-1.5 space-y-2">
+                  {(
+                    [
+                      {
+                        value: 'Active',
+                        title: 'Active This Season',
+                        desc: 'Singing in current cycle · included in roll call & alerts',
+                      },
+                      {
+                        value: 'On_Leave',
+                        title: 'Season Leave / Asleep (Skipping Cycle)',
+                        desc: 'Paused from roll call & season alerts · keeps portal access',
+                      },
+                      {
+                        value: 'Inactive',
+                        title: 'Inactive / Former Member',
+                        desc: 'Portal sign-in disabled',
+                      },
+                    ] as const
+                  ).map((opt) => (
+                    <label
+                      key={opt.value}
+                      className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition ${
+                        formState.status === opt.value
+                          ? 'border-navy-900 bg-ivory-50'
+                          : 'border-zinc-200 hover:bg-zinc-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="singer-status"
+                        checked={formState.status === opt.value}
+                        onChange={() => setFormState({ ...formState, status: opt.value })}
+                        className="mt-0.5 h-4 w-4 accent-navy-900"
+                      />
+                      <div>
+                        <span className="block text-xs font-bold text-navy-950">
+                          {opt.title}
+                        </span>
+                        <span className="block text-[11px] text-zinc-500">{opt.desc}</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
 
               <div className="flex justify-end gap-2 pt-3">
                 <button

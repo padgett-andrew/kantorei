@@ -8,21 +8,39 @@ interface Props {
 }
 
 const PRESET_AMOUNTS = [
-  { amount: 35, impact: 'Covers digital & octavo sheet music for one singer for a concert cycle' },
-  { amount: 75, impact: 'Supports youth & student $10 accessible ticket underwriting' },
-  { amount: 150, impact: 'Funds acoustic sanctuary venue & organ preparation for dress week' },
-  { amount: 500, impact: 'Underwrites guest baroque strings & living composer commissions' },
+  { amount: 35, impact: 'Covers octavo & digital scores for one singer during a concert cycle' },
+  { amount: 100, impact: 'Helps keep Kantorei membership free of mandatory singer dues and folder fees' },
+  { amount: 250, impact: 'Supports professional recordings shared worldwide and Friends of Kantorei outreach' },
+  { amount: 500, impact: 'Underwrites commissions from emerging and established composers' },
 ];
+
+function extractAccountId(raw: string): string {
+  const trimmed = (raw || '').trim();
+  if (!trimmed || trimmed.toUpperCase() === 'DEMO') return '';
+  const acctParam = /[?&]acct=([a-zA-Z0-9_-]+)/i.exec(trimmed);
+  if (acctParam) return acctParam[1];
+  return trimmed.replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
+function extractWidgetId(raw: string): string {
+  const trimmed = (raw || '').trim();
+  if (!trimmed || trimmed.toUpperCase() === 'DEMO') return '';
+  const idAttr = /id=["']([a-zA-Z0-9_-]+)["']/i.exec(trimmed);
+  if (idAttr) return idAttr[1];
+  return trimmed.replace(/[^a-zA-Z0-9_-]/g, '');
+}
 
 export default function GivebutterEmbed({
   accountId = 'DEMO',
   campaignId = 'DEMO',
   choirName = 'Kantorei',
 }: Props) {
-  const isDemo = !accountId || accountId === 'DEMO' || !campaignId || campaignId === 'DEMO';
+  const cleanAccountId = extractAccountId(accountId);
+  const cleanWidgetId = extractWidgetId(campaignId);
+  const isDemo = !cleanAccountId || !cleanWidgetId;
 
   const [frequency, setFrequency] = useState<'one-time' | 'monthly'>('one-time');
-  const [selectedAmount, setSelectedAmount] = useState<number>(75);
+  const [selectedAmount, setSelectedAmount] = useState<number>(100);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [donorName, setDonorName] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -30,24 +48,27 @@ export default function GivebutterEmbed({
   useEffect(() => {
     if (isDemo) return;
     const scriptId = 'givebutter-widget-script';
-    if (!document.getElementById(scriptId)) {
+    const existing = document.getElementById(scriptId) as HTMLScriptElement | null;
+    const targetSrc = `https://widgets.givebutter.com/latest.umd.cjs?acct=${encodeURIComponent(
+      cleanAccountId
+    )}&p=other`;
+    if (!existing || existing.src !== targetSrc) {
+      if (existing) existing.remove();
       const script = document.createElement('script');
       script.id = scriptId;
-      script.src = `https://widgets.givebutter.com/latest.umd.cjs?acct=${encodeURIComponent(
-        accountId
-      )}`;
+      script.src = targetSrc;
       script.async = true;
       document.head.appendChild(script);
     }
-  }, [isDemo, accountId]);
+  }, [isDemo, cleanAccountId]);
 
   if (!isDemo) {
-    // Render Givebutter custom web component when live account + campaign IDs are configured
+    // Render Givebutter custom web component when live account + widget IDs are configured
     return (
       <div
         className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm"
         dangerouslySetInnerHTML={{
-          __html: `<givebutter-widget id="${campaignId.replace(/[^a-zA-Z0-9_-]/g, '')}"></givebutter-widget>`,
+          __html: `<givebutter-widget id="${cleanWidgetId}"></givebutter-widget>`,
         }}
       />
     );

@@ -6,6 +6,7 @@ import {
   OTP_CHALLENGE_COOKIE,
 } from '../../../../lib/auth';
 import { sendLoginOtpEmail } from '../../../../lib/email';
+import { canAccessPortal } from '../../../../types/choir';
 import { getPortalConfig, getRoster } from '../../../../lib/google';
 
 const RequestSchema = z.object({
@@ -29,7 +30,7 @@ export const POST: APIRoute = async ({ request, url, cookies, locals }) => {
       getPortalConfig(locals),
     ]);
 
-    const singer = roster.find((s) => s.email === normalizedEmail && s.active);
+    const singer = roster.find((s) => s.email === normalizedEmail && canAccessPortal(s));
 
     // Return identical generic message if email isn't on active roster to prevent enumeration
     if (!singer) {

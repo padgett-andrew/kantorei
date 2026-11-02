@@ -11,6 +11,7 @@
     "setup:key": "node scripts/import-service-account.mjs",
     "verify:google": "node scripts/verify-google.mjs",
     "verify:resend": "node scripts/verify-resend.mjs",
+    "deploy:secrets": "node scripts/sync-cloudflare-secrets.mjs",
     "deploy": "ASTRO_TELEMETRY_DISABLED=1 astro build && wrangler deploy"
   },
   "dependencies": {

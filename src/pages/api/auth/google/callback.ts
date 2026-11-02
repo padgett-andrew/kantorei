@@ -7,6 +7,7 @@ import {
   OAUTH_VERIFIER_COOKIE,
   setSessionCookie,
 } from '../../../../lib/auth';
+import { canAccessPortal } from '../../../../types/choir';
 import { getRoster } from '../../../../lib/google';
 
 export const GET: APIRoute = async ({ url, cookies, locals, redirect }) => {
@@ -41,7 +42,7 @@ export const GET: APIRoute = async ({ url, cookies, locals, redirect }) => {
     }
 
     const roster = await getRoster(locals);
-    const singer = roster.find((s) => s.email === email && s.active);
+    const singer = roster.find((s) => s.email === email && canAccessPortal(s));
     if (!singer) {
       return redirect('/login?error=not_on_roster');
     }
