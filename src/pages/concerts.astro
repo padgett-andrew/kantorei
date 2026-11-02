@@ -3,6 +3,7 @@ import PublicLayout from '../layouts/PublicLayout.astro';
 import TicketTailorEmbed from '../components/public/TicketTailorEmbed';
 import { getEnv } from '../lib/env';
 import { getConcerts, getPortalConfig } from '../lib/google';
+import { resolveTicketTailorEntries } from '../lib/tickettailor';
 
 const [config, allConcerts] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -13,14 +14,37 @@ const boxOfficeBaseUrl =
   getEnv('PUBLIC_TICKET_TAILOR_BOX_OFFICE_URL', Astro.locals) ||
   'https://www.tickettailor.com/events/demo';
 
-const activeConcerts = allConcerts.filter(
-  (c) => c.status === 'On_Sale' || c.status === 'Upcoming'
+const activeConcerts = await Promise.all(
+  allConcerts
+    .filter((c) => c.status === 'On_Sale' || c.status === 'Upcoming')
+    .map(async (c) => {
+      const defaultLabels = c.datesDisplay.includes('&')
+        ? c.datesDisplay.split('&').map((s) => s.trim())
+        : [c.datesDisplay];
+      const resolvedEntries = await resolveTicketTailorEntries(
+        c.ttEventSeriesId,
+        boxOfficeBaseUrl,
+        defaultLabels
+      );
+      return { ...c, resolvedEntries };
+    })
 );
 const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
+const showSeasonPass =
+  (config.Season_Pass_TT_Widget_URL || '').trim().toUpperCase() !== 'HIDE' &&
+  (config.Season_Pass_TT_Widget_URL || '').trim().toUpperCase() !== 'NONE';
+const seasonPassEntries = showSeasonPass
+  ? await resolveTicketTailorEntries(
+      config.Season_Pass_TT_Widget_URL,
+      boxOfficeBaseUrl,
+      ['Flex Season Pass']
+    )
+  : [];
 ---
 
 <PublicLayout title="Concerts & Flex Season Pass">
   <!-- Top Section: Season Pass (Buy Now, Pick Your Dates Later) -->
+  {showSeasonPass && (
   <section class="bg-navy-950 py-16 text-ivory-50 sm:py-20">
     <div class="mx-auto max-w-6xl px-4 sm:px-6">
       <div class="grid gap-10 lg:grid-cols-12 lg:items-center">
@@ -71,12 +95,13 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
           <TicketTailorEmbed
             client:load
             mode="season-pass"
-            widgetUrl={config.Season_Pass_TT_Widget_URL}
+            resolvedEntries={seasonPassEntries}
           />
         </div>
       </div>
     </div>
   </section>
+  )}
 
   <!-- Individual Concert Cards -->
   <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
@@ -183,8 +208,7 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
                 <TicketTailorEmbed
                   client:visible
                   mode="concert"
-                  boxOfficeBaseUrl={boxOfficeBaseUrl}
-                  ttEventSeriesId={concert.ttEventSeriesId}
+                  resolvedEntries={concert.resolvedEntries}
                   concertTitle={concert.title}
                   datesDisplay={concert.datesDisplay}
                 />

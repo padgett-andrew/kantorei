@@ -1,45 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Heart, KeyRound, Sparkles, Ticket } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Heart, KeyRound, Sparkles, Ticket } from 'lucide-react';
+import type { ResolvedTicketTailorEntry } from '../../lib/tickettailor';
 
 interface Props {
   mode: 'season-pass' | 'concert';
-  widgetUrl?: string;
-  boxOfficeBaseUrl?: string;
-  ttEventSeriesId?: string;
+  resolvedEntries?: ResolvedTicketTailorEntry[];
   concertTitle?: string;
   datesDisplay?: string;
 }
 
 export default function TicketTailorEmbed({
   mode,
-  widgetUrl = 'DEMO',
-  boxOfficeBaseUrl = 'https://www.tickettailor.com/events/demo',
-  ttEventSeriesId = 'DEMO_SERIES_ID',
+  resolvedEntries = [],
   concertTitle = 'Concert Program',
   datesDisplay = 'Sat (7:30 PM) & Sun (3:00 PM)',
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const resolvedUrl =
-    mode === 'season-pass'
-      ? widgetUrl
-      : ttEventSeriesId.startsWith('https://')
-        ? ttEventSeriesId
-        : `${boxOfficeBaseUrl.replace(/\/$/, '')}/${ttEventSeriesId}`;
-
-  const isDemo =
-    mode === 'season-pass'
-      ? !widgetUrl || widgetUrl === 'DEMO' || widgetUrl.includes('/demo')
-      : !ttEventSeriesId ||
-        ttEventSeriesId === 'DEMO_SERIES_ID' ||
-        boxOfficeBaseUrl.endsWith('/demo');
-
-  // Interactive Sandbox State
   const performanceOptions = datesDisplay.includes('&')
     ? datesDisplay.split('&').map((s) => s.trim())
-    : ['Saturday Evening — 7:30 PM', 'Sunday Matinee — 3:00 PM'];
+    : ['Saturday Performance', 'Sunday Performance'];
 
   const [selectedPerf, setSelectedPerf] = useState(0);
+
+  const isDemo = resolvedEntries.length === 0;
+  const activeLiveEntry =
+    resolvedEntries[Math.min(selectedPerf, Math.max(0, resolvedEntries.length - 1))];
+  const resolvedUrl = activeLiveEntry?.widgetUrl || '';
+
   const [showPassInput, setShowPassInput] = useState(false);
   const [passCode, setPassCode] = useState('');
   const [passUnlocked, setPassUnlocked] = useState(false);
@@ -59,10 +47,11 @@ export default function TicketTailorEmbed({
     const fallbackDiv = document.createElement('div');
     fallbackDiv.className = 'tt-widget-fallback';
     const link = document.createElement('a');
-    link.href = resolvedUrl;
+    link.href = activeLiveEntry?.publicUrl || resolvedUrl;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    link.textContent = 'Click here to buy tickets on Ticket Tailor';
+    link.className = 'text-xs font-medium text-zinc-500 underline';
+    link.textContent = 'Loading Ticket Tailor box office…';
     fallbackDiv.appendChild(link);
     widgetDiv.appendChild(fallbackDiv);
 
@@ -77,14 +66,47 @@ export default function TicketTailorEmbed({
 
     widgetDiv.appendChild(script);
     containerRef.current.appendChild(widgetDiv);
-  }, [isDemo, resolvedUrl]);
+  }, [isDemo, resolvedUrl, activeLiveEntry?.publicUrl]);
 
-  if (!isDemo) {
+  if (!isDemo && activeLiveEntry) {
     return (
-      <div
-        ref={containerRef}
-        className="min-h-[240px] rounded-2xl border border-zinc-200 bg-white p-4"
-      />
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xs sm:p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-navy-900">
+            {resolvedEntries.length > 1 ? '1. Choose Performance & Venue' : 'Select Tickets'}
+          </span>
+          <a
+            href={activeLiveEntry.publicUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-gold-500 hover:text-navy-950"
+          >
+            Open Box Office in New Tab
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+
+        {resolvedEntries.length > 1 && (
+          <div className="mb-4 grid gap-2 sm:grid-cols-2">
+            {resolvedEntries.map((entry, idx) => (
+              <button
+                key={entry.widgetUrl}
+                type="button"
+                onClick={() => setSelectedPerf(idx)}
+                className={`cursor-pointer rounded-xl border px-3.5 py-2.5 text-left text-xs font-semibold transition ${
+                  selectedPerf === idx
+                    ? 'border-navy-900 bg-navy-900 text-white shadow-2xs'
+                    : 'border-zinc-300 bg-ivory-50 text-zinc-700 hover:border-navy-900'
+                }`}
+              >
+                {entry.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div ref={containerRef} className="min-h-[260px]" />
+      </div>
     );
   }
 
