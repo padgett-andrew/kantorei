@@ -6,10 +6,12 @@ import {
   CheckCircle,
   Coffee,
   Sparkles,
+  Wrench,
 } from 'lucide-react';
 import type { ScheduleEvent, Singer } from '../../types/choir';
 import { formatSnackEntry, parseSnackEntry } from '../../types/choir';
 import { formatEventDate } from '../../lib/utils';
+import LocationDirectionsButton from '../common/LocationDirectionsButton';
 import SnackClaimModal, { type ClaimModalState, type SlotNumber } from './snacks/SnackClaimModal';
 import SnackSlotCard from './snacks/SnackSlotCard';
 
@@ -22,7 +24,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
   const [events, setEvents] = useState<ScheduleEvent[]>(initialEvents);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
-  const [filterMode, setFilterMode] = useState<'all' | 'mine' | 'open'>('all');
+  const [filterMode, setFilterMode] = useState<'all' | 'concerts' | 'rehearsals' | 'mine' | 'open'>('all');
 
   const [modalState, setModalState] = useState<ClaimModalState | null>(null);
   const [itemInput, setItemInput] = useState('');
@@ -73,6 +75,12 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
         })
       );
     }
+    if (filterMode === 'concerts') {
+      return events.filter((ev) => ev.type === 'Concert' || ev.type === 'Dress');
+    }
+    if (filterMode === 'rehearsals') {
+      return events.filter((ev) => ev.type !== 'Concert' && ev.type !== 'Dress');
+    }
     return events;
   }, [events, filterMode, myNormalizedName]);
 
@@ -119,7 +127,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
 
       if (!res.ok || !data.event) {
         setEvents(previous);
-        setErrorBanner(data.error ?? 'Unable to update snack slot. Please refresh.');
+        setErrorBanner(data.error ?? 'Unable to update duty slot. Please refresh.');
         return;
       }
 
@@ -146,6 +154,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
       action: isMine ? 'update_item' : 'claim',
       eventTitle: ev.title,
       eventDate: ev.date,
+      eventType: ev.type,
       initialItem: parsed.item || '',
     });
     setItemInput(parsed.item || '');
@@ -201,7 +210,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
             </span>
             <div>
               <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                Rehearsal Calls
+                Ensemble Calls
               </span>
               <p className="font-editorial text-2xl font-bold text-navy-950">{events.length}</p>
             </div>
@@ -221,7 +230,31 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
                 : 'text-zinc-600 hover:text-zinc-900'
             }`}
           >
-            All Rehearsals ({events.length})
+            All Calls ({events.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterMode('concerts')}
+            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              filterMode === 'concerts'
+                ? 'bg-white text-navy-950 shadow-2xs'
+                : 'text-zinc-600 hover:text-zinc-900'
+            }`}
+          >
+            <Wrench className="h-3.5 w-3.5 text-amber-600" />
+            Concert Setup & Duties
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterMode('rehearsals')}
+            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              filterMode === 'rehearsals'
+                ? 'bg-white text-navy-950 shadow-2xs'
+                : 'text-zinc-600 hover:text-zinc-900'
+            }`}
+          >
+            <Coffee className="h-3.5 w-3.5 text-gold-600" />
+            Rehearsal Hospitality
           </button>
           <button
             type="button"
@@ -249,7 +282,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
         </div>
 
         <p className="text-xs text-zinc-400">
-          4 hospitality slots per rehearsal (drinks, savory, sweet, fruit)
+          Sign up to bring break snacks or assist with concert risers, doors & strike!
         </p>
       </div>
 
@@ -267,9 +300,9 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
           {filterMode === 'mine' ? (
             <div className="space-y-2">
               <Coffee className="mx-auto h-8 w-8 text-zinc-300" />
-              <p className="font-semibold text-navy-950">You haven&apos;t claimed any hospitality slots yet.</p>
+              <p className="font-semibold text-navy-950">You haven&apos;t claimed any duties or hospitality slots yet.</p>
               <p className="text-xs text-zinc-400">
-                Click on any open slot below to sign up to bring a treat or drink to rehearsal!
+                Click on any open slot below to sign up to bring a treat or assist at an upcoming concert!
               </p>
               <button
                 type="button"
@@ -282,7 +315,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
           ) : (
             <div className="space-y-1">
               <Calendar className="mx-auto h-8 w-8 text-zinc-300" />
-              <p className="font-semibold text-navy-950">No rehearsal calls match this filter.</p>
+              <p className="font-semibold text-navy-950">No ensemble calls match this filter.</p>
             </div>
           )}
         </div>
@@ -294,6 +327,8 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
               return r && r.trim() !== '';
             }).length;
 
+            const isConcertCall = ev.type === 'Concert' || ev.type === 'Dress';
+
             return (
               <div
                 key={ev.eventId}
@@ -303,13 +338,18 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-gold-600">
-                        <Coffee className="h-3.5 w-3.5" />
+                        {isConcertCall ? (
+                          <Wrench className="h-3.5 w-3.5 text-amber-600" />
+                        ) : (
+                          <Coffee className="h-3.5 w-3.5 text-gold-600" />
+                        )}
                         {ev.type}
                       </span>
                       <span className="text-xs text-zinc-400">·</span>
                       <span className="text-xs font-medium text-zinc-500">{ev.time}</span>
                       <span className="text-xs text-zinc-400">·</span>
-                      <span className="text-xs text-zinc-500">{ev.location}</span>
+                      {/* Location with Google Maps & Apple Maps navigation */}
+                      <LocationDirectionsButton location={ev.location} />
                     </div>
                     <h3 className="mt-1 font-editorial text-xl font-bold text-navy-950 sm:text-2xl">
                       {formatEventDate(ev.date)} — {ev.title}
@@ -331,16 +371,16 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
                       {filledCount === 4 ? (
                         <>
                           <Check className="h-3.5 w-3.5 text-emerald-700" />
-                          All 4 slots filled!
+                          All 4 duties filled!
                         </>
                       ) : (
-                        `${filledCount} of 4 slots filled (${4 - filledCount} needed)`
+                        `${filledCount} of 4 duties filled (${4 - filledCount} needed)`
                       )}
                     </span>
                   </div>
                 </div>
 
-                {/* 4 Hospitality Slots Grid */}
+                {/* 4 Duties / Hospitality Slots Grid */}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {([1, 2, 3, 4] as const).map((slot) => (
                     <SnackSlotCard

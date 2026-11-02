@@ -5,12 +5,12 @@ import {
   Edit3,
   ExternalLink,
   FileText,
-  MapPin,
   Plus,
   RefreshCw,
   Search,
   Trash2,
 } from 'lucide-react';
+import LocationDirectionsButton from '../../common/LocationDirectionsButton';
 import { EVENT_TYPES, parseSnackEntry, type EventType, type ScheduleEvent } from '../../../types/choir';
 import { eventTypeBadgeColor, formatShortMonthDay } from '../../../lib/utils';
 
@@ -356,10 +356,7 @@ export default function ScheduleTab({
                             <Clock className="h-3.5 w-3.5 text-zinc-400" />
                             {ev.time}
                           </span>
-                          <span className="inline-flex items-center gap-1 font-medium text-zinc-600">
-                            <MapPin className="h-3.5 w-3.5 text-zinc-400" />
-                            {ev.location}
-                          </span>
+                          <LocationDirectionsButton location={ev.location} />
                         </div>
 
                         {/* Description / Rehearsal Notes */}

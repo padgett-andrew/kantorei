@@ -1,5 +1,6 @@
 ---
 import PublicLayout from '../layouts/PublicLayout.astro';
+import LocationDirectionsButton from '../components/common/LocationDirectionsButton';
 import { getConcerts, getMedia, getPortalConfig } from '../lib/google';
 
 const [config, concerts, media] = await Promise.all([
@@ -88,24 +89,50 @@ const featuredMedia = media.slice(0, 3);
               </h2>
 
               {featuredConcert.slug === 'advent-with-kantorei' ? (
-                <div class="mt-4 space-y-2.5 rounded-2xl bg-ivory-100 p-4 text-sm">
-                  <div>
-                    <p class="font-bold text-navy-950">Saturday, December 19 · 3:00 PM</p>
-                    <p class="text-xs text-zinc-700">
-                      Shepherd of the Hills Lutheran Church, Shoreview
-                    </p>
+                <div class="mt-4 space-y-3 rounded-2xl bg-ivory-100 p-4 text-sm">
+                  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p class="font-bold text-navy-950">Saturday, December 19 · 3:00 PM</p>
+                      <p class="text-xs text-zinc-700">
+                        Shepherd of the Hills Lutheran Church, Shoreview
+                      </p>
+                    </div>
+                    <LocationDirectionsButton
+                      client:load
+                      location="Shepherd of the Hills Lutheran Church, 3920 Victoria St N, Shoreview, MN 55126"
+                      label="Shoreview Directions"
+                      variant="pill"
+                    />
                   </div>
-                  <div class="border-t border-zinc-200/80 pt-2.5">
-                    <p class="font-bold text-navy-950">Sunday, December 20 · 3:00 PM</p>
-                    <p class="text-xs text-zinc-700">
-                      Lutheran Church of the Good Shepherd, Edina
-                    </p>
+                  <div class="border-t border-zinc-200/80 pt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p class="font-bold text-navy-950">Sunday, December 20 · 3:00 PM</p>
+                      <p class="text-xs text-zinc-700">
+                        Lutheran Church of the Good Shepherd, Edina
+                      </p>
+                    </div>
+                    <LocationDirectionsButton
+                      client:load
+                      location="Lutheran Church of the Good Shepherd, 4801 France Ave S, Minneapolis, MN 55410"
+                      label="Edina Directions"
+                      variant="pill"
+                    />
                   </div>
                 </div>
               ) : (
-                <p class="mt-2 text-sm font-semibold text-zinc-800">
-                  {featuredConcert.datesDisplay} · {featuredConcert.venueName}
-                </p>
+                <div class="mt-3 space-y-2">
+                  <p class="text-sm font-semibold text-zinc-800">
+                    🗓 {featuredConcert.datesDisplay}
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <LocationDirectionsButton
+                      client:load
+                      location={`${featuredConcert.venueName}, ${featuredConcert.venueAddress}`}
+                      venueName={featuredConcert.venueName}
+                      variant="pill"
+                    />
+                  </div>
+                </div>
               )}
 
               <p class="mt-4 text-sm leading-relaxed text-zinc-600">

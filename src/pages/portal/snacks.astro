@@ -11,21 +11,19 @@ const [config, schedule] = await Promise.all([
 ]);
 
 const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
-const snackEvents = schedule.filter(
-  (ev) => ev.date >= today && ev.type !== 'Concert'
-);
+const snackEvents = schedule.filter((ev) => ev.date >= today);
 ---
 
-<PortalLayout title="Snack Signup">
+<PortalLayout title="Hospitality & Volunteer Duties">
   <div class="mb-6">
     <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
-      Rehearsal Break Hospitality
+      Rehearsal Hospitality &amp; Concert Duties
     </span>
     <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
-      Rehearsal Hospitality &amp; Snack Signup
+      Hospitality &amp; Volunteer Duty Signups
     </h1>
     <p class="mt-1 text-sm text-zinc-600">
-      Four singers team up each rehearsal to bring light, nut-conscious snacks and refreshments for our mid-rehearsal break (~45 singers). Claim a slot and let your fellow singers know what you plan to bring!
+      Four singers team up for each rehearsal break to bring refreshments (~45 singers), and key volunteer roles (Setup &amp; Risers, Strike &amp; Cleanup, Box Office, Patron Reception) power each concert call. Claim a slot and let the ensemble know how you're pitching in!
     </p>
   </div>
 

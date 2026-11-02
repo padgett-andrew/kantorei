@@ -1,6 +1,7 @@
 ---
 import PublicLayout from '../layouts/PublicLayout.astro';
 import TicketTailorEmbed from '../components/public/TicketTailorEmbed';
+import LocationDirectionsButton from '../components/common/LocationDirectionsButton';
 import { getEnv } from '../lib/env';
 import { getConcerts, getPortalConfig } from '../lib/google';
 import { resolveTicketTailorEntries } from '../lib/tickettailor';
@@ -116,9 +117,6 @@ const seasonPassEntries = showSeasonPass
 
     <div class="space-y-10">
       {activeConcerts.map((concert) => {
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          `${concert.venueName} ${concert.venueAddress}`
-        )}`;
         const isAdvent = concert.slug === 'advent-with-kantorei';
 
         return (
@@ -157,46 +155,45 @@ const seasonPassEntries = showSeasonPass
 
                 {isAdvent ? (
                   <div class="mt-4 space-y-3 rounded-2xl border border-zinc-200 bg-ivory-50 p-4 text-sm">
-                    <div>
-                      <p class="font-bold text-navy-950">Saturday, December 19 · 3:00 PM</p>
-                      <a
-                        href="https://www.google.com/maps/search/?api=1&query=Shepherd+of+the+Hills+Lutheran+Church+Shoreview+MN"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-xs font-medium text-gold-500 underline underline-offset-3 hover:text-navy-950"
-                      >
-                        📍 Shepherd of the Hills Lutheran Church, Shoreview ↗
-                      </a>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p class="font-bold text-navy-950">Saturday, December 19 · 3:00 PM</p>
+                        <p class="text-xs text-zinc-600">Shoreview, MN</p>
+                      </div>
+                      <LocationDirectionsButton
+                        client:load
+                        location="Shepherd of the Hills Lutheran Church, 3920 Victoria St N, Shoreview, MN 55126"
+                        label="Shepherd of the Hills"
+                        variant="pill"
+                      />
                     </div>
-                    <div class="border-t border-zinc-200 pt-3">
-                      <p class="font-bold text-navy-950">Sunday, December 20 · 3:00 PM</p>
-                      <a
-                        href="https://www.google.com/maps/search/?api=1&query=Lutheran+Church+of+the+Good+Shepherd+Edina+MN"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-xs font-medium text-gold-500 underline underline-offset-3 hover:text-navy-950"
-                      >
-                        📍 Lutheran Church of the Good Shepherd, Edina ↗
-                      </a>
+                    <div class="border-t border-zinc-200 pt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p class="font-bold text-navy-950">Sunday, December 20 · 3:00 PM</p>
+                        <p class="text-xs text-zinc-600">Edina, MN</p>
+                      </div>
+                      <LocationDirectionsButton
+                        client:load
+                        location="Lutheran Church of the Good Shepherd, 4801 France Ave S, Minneapolis, MN 55410"
+                        label="Good Shepherd"
+                        variant="pill"
+                      />
                     </div>
                   </div>
                 ) : (
-                  <>
-                    <p class="mt-2 text-sm font-semibold text-zinc-800">
+                  <div class="mt-3 space-y-2">
+                    <p class="text-sm font-semibold text-zinc-800">
                       🗓 {concert.datesDisplay}
                     </p>
-                    <p class="mt-1 text-sm text-zinc-600">
-                      📍 {concert.venueName} —{' '}
-                      <a
-                        href={mapsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="font-medium text-gold-500 underline underline-offset-4"
-                      >
-                        {concert.venueAddress} ↗
-                      </a>
-                    </p>
-                  </>
+                    <div class="flex items-center gap-2">
+                      <LocationDirectionsButton
+                        client:load
+                        location={`${concert.venueName}, ${concert.venueAddress}`}
+                        venueName={concert.venueName}
+                        variant="pill"
+                      />
+                    </div>
+                  </div>
                 )}
 
                 <p class="mt-5 text-sm leading-relaxed text-zinc-600 sm:text-base">

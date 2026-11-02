@@ -1,6 +1,7 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import CalendarSubscribeModal from '../../components/portal/CalendarSubscribeModal';
+import LocationDirectionsButton from '../../components/common/LocationDirectionsButton';
 import { getCalendarFeedToken } from '../../lib/calendar';
 import {
   getAbsences,
@@ -42,17 +43,15 @@ const mySnackDates = upcomingEvents.filter((ev) =>
   )
 );
 
-const openSnackSlotsCount = upcomingEvents
-  .filter((ev) => ev.type !== 'Concert')
-  .reduce(
-    (acc, ev) =>
-      acc +
-      (ev.snack1Name ? 0 : 1) +
-      (ev.snack2Name ? 0 : 1) +
-      (ev.snack3Name ? 0 : 1) +
-      (ev.snack4Name ? 0 : 1),
-    0
-  );
+const openSnackSlotsCount = upcomingEvents.reduce(
+  (acc, ev) =>
+    acc +
+    (ev.snack1Name ? 0 : 1) +
+    (ev.snack2Name ? 0 : 1) +
+    (ev.snack3Name ? 0 : 1) +
+    (ev.snack4Name ? 0 : 1),
+  0
+);
 
 const totalScoreFiles = repertoire.reduce(
   (sum, p) => sum + p.files.filter((f) => !f.isDoc).length,
@@ -145,11 +144,15 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               <h2 class="font-editorial text-3xl font-bold text-white sm:text-4xl">
                 {nextEvent.title}
               </h2>
-              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm">
+              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm">
                 <span class="font-semibold text-gold-300">
                   🗓 {formatEventDate(nextEvent.date)} · {nextEvent.time}
                 </span>
-                <span class="text-zinc-300">📍 {nextEvent.location}</span>
+                <LocationDirectionsButton
+                  client:load
+                  location={nextEvent.location}
+                  variant="dark"
+                />
               </div>
 
               {nextEvent.notes && (
@@ -235,7 +238,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
           </span>
         </a>
 
-        <!-- 2. Hospitality & Snack Signup Card -->
+        <!-- 2. Duties & Hospitality Signup Card -->
         <a
           href="/portal/snacks"
           class="group flex items-start justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white p-4.5 shadow-2xs transition hover:border-navy-900 hover:shadow-sm sm:p-5"
@@ -246,17 +249,17 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
             </span>
             <div>
               <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                Break Hospitality
+                Duties &amp; Hospitality
               </span>
               <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
                 {mySnackDates.length > 0
-                  ? `${mySnackDates.length} Snack Date${mySnackDates.length > 1 ? 's' : ''} Claimed`
-                  : 'Rehearsal Snack Signup'}
+                  ? `${mySnackDates.length} Signup${mySnackDates.length > 1 ? 's' : ''} Claimed`
+                  : 'Duty & Snack Signups'}
               </h3>
               <p class="mt-1 text-xs leading-relaxed text-zinc-500">
                 {mySnackDates.length > 0
-                  ? `Your next date: ${formatEventDate(mySnackDates[0].date)}`
-                  : `${openSnackSlotsCount} open break slots available this cycle.`}
+                  ? `Your next call: ${formatEventDate(mySnackDates[0].date)}`
+                  : `${openSnackSlotsCount} open duty & hospitality slots available.`}
               </p>
             </div>
           </div>
@@ -354,9 +357,10 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                       </span>
                     )}
                   </div>
-                  <p class="mt-0.5 text-xs font-medium text-zinc-600">
-                    {ev.time} · {ev.location}
-                  </p>
+                  <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600">
+                    <span class="font-medium text-zinc-700">{ev.time}</span>
+                    <LocationDirectionsButton client:load location={ev.location} />
+                  </div>
                   {ev.notes && (
                     <div class="mt-2 whitespace-pre-line rounded-xl border border-zinc-200/70 bg-zinc-50/70 px-3 py-2 text-xs leading-relaxed text-zinc-600">
                       {ev.notes}
@@ -377,7 +381,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                 {(ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name) && (
                   <div class="shrink-0 rounded-xl bg-zinc-50 px-3 py-1.5 text-xs text-zinc-600 sm:text-right">
                     <span class="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                      Hospitality
+                      {ev.type === 'Concert' || ev.type === 'Dress' ? 'Volunteer Crew' : 'Hospitality'}
                     </span>
                     <span class="font-medium text-zinc-700">
                       {[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name]

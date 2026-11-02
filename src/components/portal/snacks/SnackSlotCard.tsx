@@ -1,4 +1,15 @@
-import { Edit2, Plus, UserCheck, Utensils, X } from 'lucide-react';
+import {
+  Coffee,
+  Edit2,
+  PackageCheck,
+  Plus,
+  Ticket,
+  Truck,
+  UserCheck,
+  Utensils,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { parseSnackEntry, type ScheduleEvent, type Singer } from '../../../types/choir';
 import type { SlotNumber } from './SnackClaimModal';
 
@@ -11,6 +22,28 @@ interface Props {
   isBusy: boolean;
   onOpenClaim: (ev: ScheduleEvent, slot: SlotNumber) => void;
   onRelease: (eventId: string, slot: SlotNumber) => void;
+}
+
+function getDefaultSlotLabel(ev: ScheduleEvent, slot: SlotNumber): string {
+  const isConcertCall = ev.type === 'Concert' || ev.type === 'Dress';
+  if (isConcertCall) {
+    if (slot === 1) return 'Concert Setup & Risers';
+    if (slot === 2) return 'Concert Strike & Teardown';
+    if (slot === 3) return 'Box Office & Will-Call';
+    return 'Patron Reception';
+  }
+  if (slot === 3) return 'Room Setup & Welcome';
+  return `Hospitality Slot ${slot}`;
+}
+
+function getDutyIcon(dutyText: string) {
+  const lower = dutyText.toLowerCase();
+  if (lower.includes('setup') || lower.includes('riser')) return <Wrench className="h-3 w-3 shrink-0 text-amber-600" />;
+  if (lower.includes('strike') || lower.includes('teardown') || lower.includes('clean')) return <PackageCheck className="h-3 w-3 shrink-0 text-indigo-600" />;
+  if (lower.includes('box office') || lower.includes('ticket') || lower.includes('door') || lower.includes('usher')) return <Ticket className="h-3 w-3 shrink-0 text-sky-600" />;
+  if (lower.includes('transport') || lower.includes('truck') || lower.includes('banner')) return <Truck className="h-3 w-3 shrink-0 text-emerald-600" />;
+  if (lower.includes('reception') || lower.includes('drink') || lower.includes('wine') || lower.includes('coffee')) return <Coffee className="h-3 w-3 shrink-0 text-gold-600" />;
+  return <Utensils className="h-3 w-3 shrink-0 text-gold-500" />;
 }
 
 export default function SnackSlotCard({
@@ -26,6 +59,7 @@ export default function SnackSlotCard({
   const { name: holderName, item } = parseSnackEntry(raw);
   const isMine = holderName.toLowerCase() === myNormalizedName;
   const canRelease = isMine || (Boolean(holderName) && singer.role === 'Admin');
+  const defaultLabel = getDefaultSlotLabel(ev, slot);
 
   // Vacant Slot -> Claim Button
   if (!holderName) {
@@ -46,10 +80,10 @@ export default function SnackSlotCard({
         </div>
 
         <div className="mt-2">
-          <span className="text-xs font-semibold text-navy-950 group-hover:text-navy-900">
-            + Claim Slot
+          <span className="text-xs font-semibold text-navy-950 group-hover:text-navy-900 block truncate">
+            + {defaultLabel}
           </span>
-          <p className="mt-0.5 text-[11px] text-zinc-400">Add name & optional snack item</p>
+          <p className="mt-0.5 text-[11px] text-zinc-400">Tap to claim this duty</p>
         </div>
       </button>
     );
@@ -88,7 +122,7 @@ export default function SnackSlotCard({
               type="button"
               disabled={isBusy}
               onClick={() => onOpenClaim(ev, slot)}
-              title="Edit what you are bringing"
+              title="Edit your duty or food item"
               className="cursor-pointer rounded-lg p-1 text-zinc-400 transition hover:bg-white hover:text-navy-900"
             >
               <Edit2 className="h-3 w-3" />
@@ -99,7 +133,7 @@ export default function SnackSlotCard({
               type="button"
               disabled={isBusy}
               onClick={() => onRelease(ev.eventId, slot)}
-              title="Release hospitality slot"
+              title="Release slot"
               className="cursor-pointer rounded-lg p-1 text-zinc-400 transition hover:bg-rose-50 hover:text-rose-700"
             >
               <X className="h-3 w-3" />
@@ -114,10 +148,10 @@ export default function SnackSlotCard({
           {holderName}
         </span>
 
-        {/* Optional item description */}
+        {/* Optional item / duty description */}
         {item ? (
-          <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-gold-700">
-            <Utensils className="h-3 w-3 shrink-0 text-gold-500" />
+          <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-navy-900">
+            {getDutyIcon(item)}
             <span className="truncate">{item}</span>
           </div>
         ) : isMine ? (
@@ -127,13 +161,12 @@ export default function SnackSlotCard({
             className="mt-1.5 inline-flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:underline"
           >
             <Plus className="h-3 w-3" />
-            Add what you&apos;re bringing
+            Specify your duty or item
           </button>
         ) : (
-          <p className="mt-1 text-[11px] text-zinc-400 italic">No specific item noted</p>
+          <p className="mt-1 text-[11px] text-zinc-400 italic">{defaultLabel}</p>
         )}
       </div>
     </div>
   );
 }
-
