@@ -4,11 +4,22 @@ import { getPortalConfig } from '../lib/google';
 
 const config = await getPortalConfig(Astro.locals);
 const choirName = config.Choir_Name || 'Kantorei';
+const publicContactEmail = config.Conductor_Email || 'adam.reinwald@kantorei.net';
+
+const boardMembers = [
+  { name: 'Michael Campana', role: 'President & Chair' },
+  { name: 'Joe Cook Morey', role: 'Vice-President & Vice Chair' },
+  { name: 'Kressen Anderson', role: 'Treasurer' },
+  { name: 'Molly Tengwall', role: 'Secretary' },
+  { name: 'Genna Palumbo', role: 'Singer Representative' },
+  { name: 'Dan Belknap', role: 'At-Large Member' },
+  { name: 'Naomi Karstad', role: 'At-Large Member' },
+];
 ---
 
 <PublicLayout
-  title="About & Auditions"
-  description="Founded in 1988 by Axel Theimer and led by Adam Reinwald, Kantorei is one of the premier choral ensembles in Minnesota."
+  title="About, Leadership & Auditions"
+  description="Founded in 1988 by Dr. Axel Theimer and led by Adam Reinwald, Kantorei is one of the premier choral ensembles in Minnesota."
 >
   <section class="bg-navy-950 py-16 text-ivory-50 sm:py-24">
     <div class="mx-auto max-w-6xl px-4 sm:px-6">
@@ -19,81 +30,184 @@ const choirName = config.Choir_Name || 'Kantorei';
         Vocal health, effortless sound, and singing for a lifetime.
       </h1>
       <p class="mt-5 max-w-3xl text-base leading-relaxed text-zinc-200 sm:text-lg">
-        Founded in 1988 by Axel Theimer, and now led by Adam Reinwald, {choirName} is one of the premier choral ensembles in Minnesota.
+        Founded in 1988 by Dr. Axel Theimer, and now led by Adam Reinwald, {choirName} is one of the premier choral ensembles in Minnesota.
       </p>
     </div>
   </section>
 
-  <!-- Ensemble Story & Leadership -->
+  <!-- Mission, Vision & Core Ensemble Story -->
   <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-    <div class="grid gap-12 lg:grid-cols-12">
-      <!-- Artistic Leadership Cards -->
-      <div class="space-y-6 lg:col-span-5">
-        <div class="rounded-3xl border border-zinc-200 bg-ivory-100 p-8">
-          <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
-            Artistic Direction
-          </span>
-          <h2 class="mt-2 font-editorial text-3xl font-bold text-navy-950">
-            Adam Reinwald
-          </h2>
-          <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Artistic & Managing Director
-          </p>
-          <p class="mt-4 text-sm leading-relaxed text-zinc-700">
-            Leading {choirName} with a deep commitment to healthy vocal pedagogy, expressive clarity, and adventurous programming, Adam Reinwald guides the ensemble’s Minnesota concert series, studio recordings, composer collaborations, and intergenerational outreach.
-          </p>
-          {config.Conductor_Email && (
-            <a
-              href={`mailto:${config.Conductor_Email}`}
-              class="mt-5 inline-block text-xs font-semibold text-navy-900 underline decoration-gold-500 underline-offset-4"
-            >
-              Contact Artistic Leadership →
-            </a>
-          )}
-        </div>
-
-        <div class="rounded-3xl border border-zinc-200 bg-white p-7 shadow-2xs">
-          <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
-            Founding Legacy (1988)
-          </span>
-          <h3 class="mt-1.5 font-editorial text-2xl font-bold text-navy-950">
-            Axel Theimer, Founder
-          </h3>
-          <p class="mt-3 text-sm leading-relaxed text-zinc-600">
-            Founded in 1988 by acclaimed conductor, pedagogue, and vocal clinician Axel Theimer, {choirName} grew out of an enduring philosophy that healthy, unforced vocal technique unlocks extraordinary ensemble warmth and longevity.
-          </p>
-        </div>
+    <div class="grid gap-6 md:grid-cols-2">
+      <div class="rounded-3xl border border-zinc-200 bg-ivory-100 p-8">
+        <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
+          Mission Statement
+        </span>
+        <p class="mt-3 font-editorial text-2xl font-bold leading-snug text-navy-950 sm:text-3xl">
+          “Expanding the worldview of artists and audiences through passionate and crafted artistic performances, partnerships, and projects.”
+        </p>
       </div>
 
-      <!-- Core Ensemble Narrative -->
-      <div class="space-y-6 lg:col-span-7">
+      <div class="rounded-3xl border border-zinc-200 bg-navy-950 p-8 text-ivory-50">
+        <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-400">
+          Vision Statement
+        </span>
+        <p class="mt-3 font-editorial text-2xl font-bold leading-snug text-white sm:text-3xl">
+          “Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.”
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-14 grid gap-10 lg:grid-cols-12 lg:items-start">
+      <div class="space-y-5 lg:col-span-7">
         <h2 class="font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
           About {choirName}
         </h2>
         <p class="text-base leading-relaxed text-zinc-700">
-          Founded in 1988 by Axel Theimer, and now led by Adam Reinwald, {choirName} is one of the premier choral ensembles in Minnesota. With an integral focus on vocal health, {choirName}’s singers have set a standard in Minnesota for rich and effortless choral sound. {choirName} performs a wide range of mostly a cappella music from around the world. Most concerts include signature pieces complementing pieces from both well-known and emerging composers.
+          Founded in 1988 by Dr. Axel Theimer, and now led by Adam Reinwald, {choirName} is one of the premier choral ensembles in Minnesota. With an integral focus on vocal health, {choirName}’s singers have set a standard in Minnesota for rich and effortless choral sound. {choirName} performs a wide range of mostly a cappella music from around the world. Most concerts include signature pieces complementing pieces from both well-known and emerging composers.
         </p>
         <p class="text-base leading-relaxed text-zinc-700">
           {choirName} performs primarily in Minnesota and shares recordings worldwide. Through its outreach programming, {choirName} invites audiences of all ages to share its pursuit of singing for a lifetime.
         </p>
+      </div>
 
-        <div class="grid gap-4 pt-4 sm:grid-cols-2">
-          <div class="rounded-2xl border border-zinc-200 bg-white p-5">
-            <h3 class="font-editorial text-xl font-bold text-navy-950">
-              Signature & Emerging Works
+      <div class="grid gap-4 sm:grid-cols-2 lg:col-span-5">
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xs">
+          <h3 class="font-editorial text-xl font-bold text-navy-950">
+            Signature & Emerging Works
+          </h3>
+          <p class="mt-1.5 text-sm text-zinc-600">
+            Every program pairs treasured ensemble signature pieces with global a cappella traditions and fresh voices in choral composition.
+          </p>
+        </div>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xs">
+          <h3 class="font-editorial text-xl font-bold text-navy-950">
+            Worldwide Recordings
+          </h3>
+          <p class="mt-1.5 text-sm text-zinc-600">
+            Studio albums, concert captures, and lyric videos connect listeners around the world to Minnesota choral artistry.
+          </p>
+        </div>
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xs sm:col-span-2">
+          <h3 class="font-editorial text-xl font-bold text-navy-950">
+            Lifelong Choral Community
+          </h3>
+          <p class="mt-1.5 text-sm text-zinc-600">
+            Singers from diverse professional and musical backgrounds rehearse Sunday evenings at Shepherd of the Hills Lutheran Church in Shoreview and collaborate through annual retreats, outreach, and <em>Friends of Kantorei</em> events.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Artistic Leadership & Governance -->
+  <section class="border-t border-zinc-200 bg-ivory-100/70 py-16 sm:py-20">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <div class="max-w-2xl">
+        <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
+          Artistic & Organizational Leadership
+        </span>
+        <h2 class="mt-2 font-editorial text-4xl font-bold text-navy-950">
+          Conductors, Founding Legacy & Board
+        </h2>
+      </div>
+
+      <div class="mt-10 grid gap-8 lg:grid-cols-3">
+        <!-- Adam Reinwald -->
+        <article class="flex flex-col justify-between rounded-3xl border border-zinc-200 bg-white p-7 shadow-2xs">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-[0.16em] text-gold-500">
+              Artistic & Executive Director
+            </span>
+            <h3 class="mt-1.5 font-editorial text-3xl font-bold text-navy-950">
+              Adam Reinwald
             </h3>
-            <p class="mt-1.5 text-sm text-zinc-600">
-              Every program pairs treasured ensemble signature pieces with global a cappella traditions and fresh voices in choral composition.
+            <p class="mt-4 text-sm leading-relaxed text-zinc-700">
+              Appointed in 2021, Adam Reinwald is a nationally recognized vocal chamber artist, conductor, and nonprofit arts strategist with over two decades of experience in the choral arts—including work with the National Lutheran Choir and nearly two decades with the acclaimed vocal ensemble Cantus.
+            </p>
+            <p class="mt-3 text-sm leading-relaxed text-zinc-700">
+              In demand as a coach for small- to mid-size arts organizations focusing on new media and digital branding, Adam has presented nationally at Chorus America, ACDA, and the Young Nonprofit Professionals Network.
             </p>
           </div>
-          <div class="rounded-2xl border border-zinc-200 bg-white p-5">
-            <h3 class="font-editorial text-xl font-bold text-navy-950">
-              Worldwide Recordings
+          <div class="mt-5 border-t border-zinc-100 pt-4">
+            <a
+              href={`mailto:${publicContactEmail}`}
+              class="text-xs font-semibold text-navy-900 underline decoration-gold-500 underline-offset-4"
+            >
+              {publicContactEmail}
+            </a>
+          </div>
+        </article>
+
+        <!-- Tony Rangel -->
+        <article class="flex flex-col justify-between rounded-3xl border border-zinc-200 bg-white p-7 shadow-2xs">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-[0.16em] text-gold-500">
+              Assistant Conductor
+            </span>
+            <h3 class="mt-1.5 font-editorial text-3xl font-bold text-navy-950">
+              Tony Rangel
             </h3>
-            <p class="mt-1.5 text-sm text-zinc-600">
-              Studio albums, concert captures, and lyric videos connect listeners around the world to Minnesota choral artistry.
+            <p class="mt-4 text-sm leading-relaxed text-zinc-700">
+              Tony Rangel serves as Assistant Conductor, collaborating closely on ensemble preparation and directing one or more pieces on every {choirName} concert program.
+            </p>
+            <p class="mt-3 text-sm leading-relaxed text-zinc-700">
+              An experienced choral educator and Twin Cities ensemble singer, Tony has directed the choral programs at Columbia Heights and Armstrong high schools, currently leads the choral program at Stillwater Middle School, and authors graduate-level music education courses through Forward Motion Online Learning.
             </p>
           </div>
+          <div class="mt-5 border-t border-zinc-100 pt-4">
+            <span class="text-xs font-medium text-zinc-500">
+              Artistic Staff · Twin Cities, MN
+            </span>
+          </div>
+        </article>
+
+        <!-- Dr. Axel Theimer -->
+        <article class="flex flex-col justify-between rounded-3xl border border-zinc-200 bg-white p-7 shadow-2xs">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-[0.16em] text-gold-500">
+              Founder & Artistic Director Emeritus
+            </span>
+            <h3 class="mt-1.5 font-editorial text-3xl font-bold text-navy-950">
+              Dr. Axel Theimer
+            </h3>
+            <p class="mt-4 text-sm leading-relaxed text-zinc-700">
+              Born in St. Johann in Tirol, Austria, and trained in the Vienna Choir Boys before earning his MFA and DMA at the University of Minnesota, Dr. Axel Theimer founded {choirName} in 1988.
+            </p>
+            <p class="mt-3 text-sm leading-relaxed text-zinc-700">
+              Director of Choral Activities at the College of Saint Benedict and Saint John’s University for 52 years, founder of the Amadeus Chamber Symphony, Music Director of the National Catholic Youth Choir, and Executive Director of The VoiceCare Network, Dr. Theimer is a recipient of the ACDA-MN Choir Director of the Year Award (2001), MMEA Hall of Fame induction (2004), and the F. Melius Christiansen Lifetime Achievement Award (2011).
+            </p>
+          </div>
+          <div class="mt-5 border-t border-zinc-100 pt-4">
+            <span class="text-xs font-medium text-zinc-500">
+              Founded {choirName} in 1988
+            </span>
+          </div>
+        </article>
+      </div>
+
+      <!-- Board of Directors -->
+      <div class="mt-10 rounded-3xl border border-zinc-200 bg-white p-7 sm:p-9">
+        <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-[0.16em] text-gold-500">
+              501(c)(3) Nonprofit Governance
+            </span>
+            <h3 class="mt-1 font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
+              Board of Directors
+            </h3>
+          </div>
+          <p class="max-w-md text-xs leading-relaxed text-zinc-500">
+            Volunteer governing board of singers and community members overseeing {choirName}’s mission, operations, and long-term sustainability.
+          </p>
+        </div>
+
+        <div class="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {boardMembers.map((member) => (
+            <div class="rounded-2xl border border-zinc-100 bg-ivory-50 px-4 py-3.5">
+              <p class="font-semibold text-navy-950 text-sm">{member.name}</p>
+              <p class="mt-0.5 text-xs text-zinc-600">{member.role}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -110,35 +224,35 @@ const choirName = config.Choir_Name || 'Kantorei';
           Audition for {choirName}
         </h2>
         <p class="mt-3 text-sm leading-relaxed text-zinc-600 sm:text-base">
-          We welcome inquiries from experienced Twin Cities choral singers across all voice parts (S1, S2, A1, A2, T1, T2, B1, B2) who share our passion for healthy vocalism, independent musicianship, and a cappella ensemble artistry.
+          We welcome inquiries from experienced Twin Cities choral singers across all voice parts (S1, S2, A1, A2, T1, T2, B1, B2) who share our commitment to vocal health, independent preparation, and expressive a cappella ensemble singing.
         </p>
       </div>
 
       <div class="mt-10 grid gap-6 md:grid-cols-3">
         <div class="rounded-2xl border border-zinc-200 bg-ivory-50 p-6">
           <h3 class="font-editorial text-2xl font-bold text-navy-950">
-            1. Vocal Ease & Color
+            1. Sunday Evening Cadence
           </h3>
           <p class="mt-2 text-sm text-zinc-600">
-            A brief prepared solo or art song demonstrating natural, unforced resonance, clear diction, and expressive phrasing.
+            {choirName} rehearses Sunday evenings at Shepherd of the Hills Lutheran Church in Shoreview (typically 6–8 rehearsals per concert cycle), beginning each season with a community retreat.
           </p>
         </div>
 
         <div class="rounded-2xl border border-zinc-200 bg-ivory-50 p-6">
           <h3 class="font-editorial text-2xl font-bold text-navy-950">
-            2. Ear & Range Check
+            2. Vocal Ease & Reading
           </h3>
           <p class="mt-2 text-sm text-zinc-600">
-            Supportive vocalises exploring range, dynamic flexibility, vowel matching, and unaccompanied intonation.
+            Auditions with Artistic Director Adam Reinwald explore natural, healthy resonance, range, vowel matching, and unaccompanied sight-reading in a supportive setting.
           </p>
         </div>
 
         <div class="rounded-2xl border border-zinc-200 bg-ivory-50 p-6">
           <h3 class="font-editorial text-2xl font-bold text-navy-950">
-            3. Ensemble Reading
+            3. Accessible Participation
           </h3>
           <p class="mt-2 text-sm text-zinc-600">
-            Sight-reading unaccompanied choral excerpts to experience blend and musical responsiveness firsthand.
+            {choirName} keeps participation financially accessible with no mandatory singer dues or folder fees, and provides digital scores and rehearsal tracks in our Singer Portal.
           </p>
         </div>
       </div>
@@ -149,11 +263,11 @@ const choirName = config.Choir_Name || 'Kantorei';
             Interested in auditioning for {choirName}?
           </h3>
           <p class="mt-1 text-sm text-zinc-300">
-            Send a brief note with your voice part and choral background to schedule an audition conversation with Adam Reinwald.
+            Send a brief note with your voice part and choral background to schedule an audition conversation with Artistic Director Adam Reinwald.
           </p>
         </div>
         <a
-          href={`mailto:${config.Manager_Email || 'manager@kantorei.net'}?subject=${encodeURIComponent(
+          href={`mailto:${publicContactEmail}?subject=${encodeURIComponent(
             `${choirName} Audition Inquiry`
           )}`}
           class="mt-4 inline-block shrink-0 rounded-full bg-gold-500 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-copper-600 sm:mt-0"

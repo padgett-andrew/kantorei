@@ -6,7 +6,8 @@ export type CacheTag =
   | 'media'
   | 'config'
   | 'music'
-  | 'handbook';
+  | 'handbook'
+  | 'strategic-plan';
 
 interface MemoryCacheEntry {
   expiresAt: number;

@@ -13,6 +13,7 @@ import {
 } from '../types/choir';
 import { cachedFetchJson, invalidateCacheTag } from './cache';
 import { getEnv, isSandboxSheetMode } from './env';
+import { DEFAULT_HANDBOOK_HTML, DEFAULT_STRATEGIC_PLAN_HTML } from './handbook-content';
 import { sanitizeHandbookHtml } from './sanitize';
 import {
   AbsenceRowSchema,
@@ -107,13 +108,14 @@ interface DemoStore {
 const demoStore: DemoStore = {
   config: {
     Choir_Name: 'Kantorei',
-    Conductor_Email: 'director@kantorei.net',
-    Manager_Email: 'manager@kantorei.net',
+    Conductor_Email: 'adam.reinwald@kantorei.net',
+    Manager_Email: 'maggieakhavan@gmail.com',
     Repertoire_Drive_Folder_ID: 'DEMO',
     Handbook_Google_Doc_ID: 'DEMO',
+    Strategic_Plan_Google_Doc_ID: 'DEMO',
     Season_Pass_TT_Widget_URL: 'DEMO',
     Portal_Announcement:
-      'Welcome to our Advent with Kantorei concert cycle! Please log any November or December rehearsal conflicts early so section voicings for Shoreview (Dec 19) and Edina (Dec 20) can be finalized.',
+      'Welcome to our Advent with Kantorei concert cycle! Rehearsals meet Sunday evenings at Shepherd of the Hills in Shoreview—please log any conflicts early so voicings for Dec 19 (Shoreview) and Dec 20 (Edina) can be finalized.',
     Calendar_Timezone: 'America/Chicago',
     YouTube_URL: 'https://www.youtube.com/@kantoreiMN',
     Instagram_URL: 'https://www.instagram.com/kantorei_mn',
@@ -127,6 +129,24 @@ const demoStore: DemoStore = {
       sectionGroup: 'Bass',
       role: 'Admin',
       phone: '612-555-0100',
+      active: true,
+    },
+    {
+      email: 'maggieakhavan@gmail.com',
+      name: 'Maggie Akhavan',
+      voicePart: 'A1',
+      sectionGroup: 'Alto',
+      role: 'Admin',
+      phone: '612-718-5703',
+      active: true,
+    },
+    {
+      email: 'polim0501@gmail.com',
+      name: 'Maryanne Poliseno',
+      voicePart: 'S1',
+      sectionGroup: 'Soprano',
+      role: 'Section_Leader',
+      phone: '612-555-0118',
       active: true,
     },
     {
@@ -157,8 +177,8 @@ const demoStore: DemoStore = {
       active: true,
     },
     {
-      email: 'elena.rostova@gmail.com',
-      name: 'Elena Rostova',
+      email: 'strand.carlajoy@gmail.com',
+      name: 'CarlaJoy Strand',
       voicePart: 'A1',
       sectionGroup: 'Alto',
       role: 'Section_Leader',
@@ -184,8 +204,8 @@ const demoStore: DemoStore = {
       active: true,
     },
     {
-      email: 'marcus.vance@gmail.com',
-      name: 'Marcus Vance',
+      email: 'mclaver8@gmail.com',
+      name: 'Michael Claver',
       voicePart: 'T1',
       sectionGroup: 'Tenor',
       role: 'Section_Leader',
@@ -211,8 +231,8 @@ const demoStore: DemoStore = {
       active: true,
     },
     {
-      email: 'david.halvorsen@gmail.com',
-      name: 'David Halvorsen',
+      email: 'jfrankelly@gmail.com',
+      name: 'John Kelly',
       voicePart: 'B1',
       sectionGroup: 'Bass',
       role: 'Section_Leader',
@@ -240,59 +260,59 @@ const demoStore: DemoStore = {
   ],
   schedule: [
     {
-      eventId: 'reh-2026-11-03',
-      date: '2026-11-03',
-      time: '7:00 PM - 9:30 PM',
+      eventId: 'reh-2026-11-08',
+      date: '2026-11-08',
+      time: '6:30 PM - 9:00 PM',
       type: 'Rehearsal',
-      title: 'Tuesday Tutti Rehearsal',
-      location: 'St. Mark’s Choir Room',
-      snack1Name: 'Elena Rostova',
-      snack2Name: 'Marcus Vance',
-      notes: 'Lauridsen O Magnum Mysterium (mm. 1-48), Shaw "and the swallow", Howells I & II.',
+      title: 'Sunday Evening Rehearsal',
+      location: 'Shepherd of the Hills Lutheran Church, Shoreview',
+      snack1Name: 'CarlaJoy Strand',
+      snack2Name: 'Michael Claver',
+      notes: 'Lauridsen O Magnum Mysterium (mm. 1-48), Shaw "and the swallow", Howells I & II. Fragrance-free policy.',
     },
     {
-      eventId: 'reh-2026-11-10',
-      date: '2026-11-10',
-      time: '7:00 PM - 9:30 PM',
+      eventId: 'reh-2026-11-15',
+      date: '2026-11-15',
+      time: '6:30 PM - 9:00 PM',
       type: 'Sectional',
-      title: 'Split SA / TB Sectionals + Tutti Run',
-      location: 'Main Sanctuary & Parish Hall',
-      snack1Name: 'Claire Lindqvist',
+      title: 'Sunday Split Sectionals + Tutti Rehearsal',
+      location: 'Shepherd of the Hills Lutheran Church, Shoreview',
+      snack1Name: 'Maryanne Poliseno',
       snack2Name: '',
-      notes: '7:00-8:00 PM Sectionals on Bach BWV 230 fugue; 8:10 PM tutti.',
+      notes: '6:30-7:20 PM Sectionals on Bach BWV 230 fugue; 7:30 PM tutti after snack break.',
     },
     {
-      eventId: 'reh-2026-11-14',
-      date: '2026-11-14',
-      time: '9:30 AM - 3:00 PM',
-      type: 'Retreat',
-      title: 'Autumn Choral Retreat',
-      location: 'Mount Olivet Retreat Center',
-      snack1Name: '',
-      snack2Name: '',
-      notes: 'Bring black 3-ring binder, pencil, and water bottle. Catered lunch provided at 12:15 PM.',
-    },
-    {
-      eventId: 'reh-2026-11-17',
-      date: '2026-11-17',
-      time: '7:00 PM - 9:30 PM',
+      eventId: 'reh-2026-11-22',
+      date: '2026-11-22',
+      time: '6:30 PM - 9:00 PM',
       type: 'Rehearsal',
-      title: 'Tuesday Rehearsal — Off-Book Check',
-      location: 'St. Mark’s Choir Room',
+      title: 'Sunday Evening Rehearsal',
+      location: 'Shepherd of the Hills Lutheran Church, Shoreview',
       snack1Name: '',
       snack2Name: '',
-      notes: 'Memorization check on Lauridsen; acoustic spacing work on Howells Requiem.',
+      notes: 'Tuning & dynamic shaping on Lauridsen; acoustic spacing work on Advent carols.',
+    },
+    {
+      eventId: 'reh-2026-12-06',
+      date: '2026-12-06',
+      time: '6:30 PM - 9:00 PM',
+      type: 'Rehearsal',
+      title: 'Sunday Evening Rehearsal — Full Cycle Polishing',
+      location: 'Shepherd of the Hills Lutheran Church, Shoreview',
+      snack1Name: '',
+      snack2Name: '',
+      notes: 'Bring tablet (ForScore) or printed scores; check breath markings with section leaders.',
     },
     {
       eventId: 'reh-2026-12-17',
       date: '2026-12-17',
       time: '6:30 PM - 9:30 PM',
       type: 'Dress',
-      title: 'Advent with Kantorei — Final Dress Rehearsal',
+      title: 'Advent with Kantorei — Acoustic Dress Rehearsal',
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
-      snack1Name: 'David Halvorsen',
+      snack1Name: 'John Kelly',
       snack2Name: '',
-      notes: 'Mandatory acoustic dress call. Full Advent program order run.',
+      notes: 'Full concert program run-through at the venue to lock in risers and logistics (casual attire OK).',
     },
     {
       eventId: 'con-2026-12-19',
@@ -303,7 +323,7 @@ const demoStore: DemoStore = {
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
       snack1Name: '',
       snack2Name: '',
-      notes: '3920 Victoria St N, Shoreview, MN. Concert attire; doors open at 2:30 PM.',
+      notes: '3920 Victoria St N, Shoreview, MN. Concert black attire (fragrance-free); doors open at 2:30 PM.',
     },
     {
       eventId: 'con-2026-12-20',
@@ -320,8 +340,8 @@ const demoStore: DemoStore = {
   absences: [
     {
       timestamp: '2026-10-29T18:15:00.000Z',
-      eventId: 'reh-2026-11-10',
-      date: '2026-11-10',
+      eventId: 'reh-2026-11-15',
+      date: '2026-11-15',
       singerName: 'Samuel Brooks',
       singerEmail: 'samuel.brooks@outlook.com',
       voicePart: 'B1',
@@ -331,12 +351,12 @@ const demoStore: DemoStore = {
     },
     {
       timestamp: '2026-10-30T14:20:00.000Z',
-      eventId: 'reh-2026-11-03',
-      date: '2026-11-03',
+      eventId: 'reh-2026-11-08',
+      date: '2026-11-08',
       singerName: 'Maya Patel',
       singerEmail: 'maya.patel@gmail.com',
       voicePart: 'S2',
-      reason: 'Parent-teacher conferences',
+      reason: 'Family event out of town',
       submittedBy: 'Self',
       status: 'Absent',
     },
@@ -841,10 +861,11 @@ export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig
     const rows = await readSheetValues('Config!A2:B', locals);
     const map: PortalConfig = {
       Choir_Name: 'Kantorei',
-      Conductor_Email: '',
+      Conductor_Email: 'adam.reinwald@kantorei.net',
       Manager_Email: '',
       Repertoire_Drive_Folder_ID: 'DEMO',
       Handbook_Google_Doc_ID: 'DEMO',
+      Strategic_Plan_Google_Doc_ID: 'DEMO',
       Season_Pass_TT_Widget_URL: 'DEMO',
       Portal_Announcement: '',
       Calendar_Timezone: 'America/Chicago',
@@ -1253,52 +1274,6 @@ export async function fetchDriveMediaResponse(
   );
 }
 
-const SAMPLE_HANDBOOK_HTML = `
-  <h1>Kantorei Singer Handbook — 2026–2027 Season</h1>
-  <blockquote>
-    <strong>Sandbox Preview Mode:</strong> Connect a live Google Doc ID in <code>Config → Handbook_Google_Doc_ID</code> so board officers can edit policies in Google Docs and publish updates here automatically within 5 minutes.
-  </blockquote>
-
-  <h2>1. Artistic Mission & Rehearsal Ethos</h2>
-  <p>Kantorei is a 501(c)(3) chamber choral ensemble committed to luminous, text-driven performances ranging from Renaissance polyphony to living composers. Every singer is expected to arrive with notes and rhythms prepared prior to tutti rehearsals so ensemble time can focus on blend, intonation, phrasing, and expressive storytelling.</p>
-
-  <h2>2. Attendance & Dress Week Policy</h2>
-  <ul>
-    <li><strong>Regular Rehearsals:</strong> Singers may miss up to two regular Tuesday rehearsals per concert cycle with advance notice submitted through the <a href="/portal/absences">Portal Absence Form</a>.</li>
-    <li><strong>Acoustic Dress Rehearsals:</strong> Attendance at the final acoustic dress rehearsal in the concert venue is required to sing the weekend performances unless cleared personally by the Artistic Director.</li>
-    <li><strong>Illness & Vocal Health:</strong> If you wake up with contagious symptoms or acute vocal strain, submit an absence immediately—your Section Leader and the Artistic Director are notified automatically.</li>
-  </ul>
-
-  <h2>3. Tablet (ForScore) & Binder Standards</h2>
-  <ul>
-    <li><strong>iPad / E-Ink Readers:</strong> Singers reading from tablets should use a matte anti-glare screen protector, disable auto-lock, set brightness below 45% in darkened sanctuaries, and enable Airplane Mode / Do Not Disturb onstage.</li>
-    <li><strong>Paper Scores:</strong> Place scores in a flat matte-black 3-ring binder with elastic hand strap. Mark breath cues and dynamics solely in #2 pencil.</li>
-  </ul>
-
-  <h2>4. Concert Attire</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Option</th>
-        <th>Specification</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Option A (Formal Black)</strong></td>
-        <td>Floor-length or ankle-length black dress/trousers, 3/4- or full-length black sleeves, matte black dress shoes, minimal non-reflective jewelry.</td>
-      </tr>
-      <tr>
-        <td><strong>Option B (Tailored Suiting)</strong></td>
-        <td>Black suit jacket, black dress shirt (no tie unless specified for gala), black dress socks, polished black dress shoes.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>5. Hospitality & Rehearsal Break</h2>
-  <p>Each Tuesday rehearsal includes a 12-minute mid-rehearsal break at 8:15 PM. Two singers volunteer each week on the <a href="/portal/snacks">Snack Signup Board</a> to bring light, nut-conscious refreshments for ~45 singers.</p>
-`;
-
 export async function getHandbookHtml(
   locals?: App.Locals
 ): Promise<{ html: string; isDemo: boolean }> {
@@ -1306,7 +1281,7 @@ export async function getHandbookHtml(
   const docId = config.Handbook_Google_Doc_ID;
 
   if (isSandboxSheetMode(locals) || !docId || docId === 'DEMO' || docId.startsWith('PASTE_')) {
-    return { html: SAMPLE_HANDBOOK_HTML.trim(), isDemo: true };
+    return { html: DEFAULT_HANDBOOK_HTML, isDemo: true };
   }
 
   const sanitized = await cachedFetchJson('handbook', 300, async () => {
@@ -1319,6 +1294,34 @@ export async function getHandbookHtml(
     );
     if (!res.ok) {
       throw new Error(`Handbook Google Doc export failed (${res.status})`);
+    }
+    const rawHtml = await res.text();
+    return sanitizeHandbookHtml(rawHtml);
+  });
+
+  return { html: sanitized, isDemo: false };
+}
+
+export async function getStrategicPlanHtml(
+  locals?: App.Locals
+): Promise<{ html: string; isDemo: boolean }> {
+  const config = await getPortalConfig(locals);
+  const docId = config.Strategic_Plan_Google_Doc_ID;
+
+  if (isSandboxSheetMode(locals) || !docId || docId === 'DEMO' || docId.startsWith('PASTE_')) {
+    return { html: DEFAULT_STRATEGIC_PLAN_HTML, isDemo: true };
+  }
+
+  const sanitized = await cachedFetchJson('strategic-plan', 300, async () => {
+    const token = await getGoogleAccessToken(locals);
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
+        docId
+      )}/export?mimeType=text/html`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) {
+      throw new Error(`Strategic Plan Google Doc export failed (${res.status})`);
     }
     const rawHtml = await res.text();
     return sanitizeHandbookHtml(rawHtml);

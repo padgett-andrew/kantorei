@@ -127,10 +127,11 @@ Powers the public `/` home spotlight and `/concerts` box-office page.
 ### Tab 5: `Config` (Range: `Config!A2:B`)
 Key-value settings editable by the board without redeploying code.
 - `Choir_Name`: `Kantorei`
-- `Conductor_Email`: `director@kantorei.net`
-- `Manager_Email`: `manager@kantorei.net`
+- `Conductor_Email`: `adam.reinwald@kantorei.net`
+- `Manager_Email`: `maggieakhavan@gmail.com`
 - `Repertoire_Drive_Folder_ID`: Google Drive Folder ID containing piece subfolders
 - `Handbook_Google_Doc_ID`: Google Doc ID for the live Choir Handbook
+- `Strategic_Plan_Google_Doc_ID`: Google Doc ID for the 2026–2036 Strategic Plan
 - `Season_Pass_TT_Widget_URL`: Full Ticket Tailor Membership/Season Pass widget URL (or `"DEMO"`)
 - `Portal_Announcement`: Banner text shown at the top of `/portal` (empty string hides banner)
 - `Calendar_Timezone`: `America/Chicago` (IANA timezone used for `/api/calendar.ics`)

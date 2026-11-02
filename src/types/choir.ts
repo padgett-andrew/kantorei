@@ -73,6 +73,7 @@ export interface PortalConfig {
   Manager_Email: string;
   Repertoire_Drive_Folder_ID: string;
   Handbook_Google_Doc_ID: string;
+  Strategic_Plan_Google_Doc_ID: string;
   Season_Pass_TT_Widget_URL: string;
   Portal_Announcement: string;
   Calendar_Timezone: string;
