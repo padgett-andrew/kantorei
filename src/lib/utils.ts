@@ -162,3 +162,26 @@ export function doesFilenameMatchSection(filename: string, voicePart: VoicePart,
   return isSpecificVoicePartMatch(filename, voicePart, sectionGroup);
 }
 
+/**
+ * Normalizes an event image URL, filtering out empty values, demo strings,
+ * and Ticket Tailor default/stock global placeholders (e.g. abstract-1.jpg).
+ */
+export function sanitizeHeroImageUrl(url?: string | null): string | undefined {
+  if (!url || typeof url !== 'string') return undefined;
+  const trimmed = url.trim();
+  if (
+    !trimmed ||
+    trimmed === 'DEMO' ||
+    trimmed.toLowerCase() === 'undefined' ||
+    trimmed.toLowerCase() === 'null'
+  ) {
+    return undefined;
+  }
+  // Filter out Ticket Tailor's default global stock images
+  if (trimmed.includes('/userfiles/global/')) return undefined;
+  if (/abstract-\d+\.(jpg|jpeg|png|webp)/i.test(trimmed)) return undefined;
+  if (/placeholder/i.test(trimmed)) return undefined;
+
+  return trimmed;
+}
+

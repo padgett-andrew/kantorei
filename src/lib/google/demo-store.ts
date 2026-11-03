@@ -713,61 +713,55 @@ export const demoStore: DemoStore = {
   ],
   media: [
     {
-      id: 'yt-dickinson',
-      title: 'Two Dickinson Poems ("Look Back on Time")',
-      subtitle: 'Composed by Jonathan Posthuma · Look Back on Time Album',
-      youtubeUrl:
-        'https://www.youtube.com/@kantoreiMN/search?query=Two+Dickinson+Poems',
-      category: 'Album & Lyric Video',
+      id: 'yt-yvarechcha',
+      title: "Y'varech'cha (May the Lord Bless You)",
+      subtitle: 'Composed by Gerald Cohen · Kantorei MN',
+      youtubeUrl: 'https://www.youtube.com/watch?v=ca0DYRHzUms',
+      category: 'Featured Recording',
       description:
-        'From the album Look Back on Time: Choral Music of Jonathan Posthuma, performed by Kantorei under Artistic Director Adam Reinwald.',
-    },
-    {
-      id: 'yt-opening-window',
-      title: 'Opening the Window',
-      subtitle: 'Composed by Jonathan Posthuma · Kantorei MN',
-      youtubeUrl:
-        'https://www.youtube.com/@kantoreiMN/search?query=Opening+the+Window',
-      category: 'Album & Lyric Video',
-      description:
-        'Expansive contemporary a cappella writing highlighting Kantorei’s hallmark vocal warmth and effortless blend.',
+        'Sacred blessing from the album From Such Sparks, performed by Kantorei under Artistic Director Adam Reinwald.',
     },
     {
       id: 'yt-from-such-sparks',
       title: 'From Such Sparks',
       subtitle: 'Choral Music of Gerald Cohen · Kantorei MN',
-      youtubeUrl:
-        'https://www.youtube.com/@kantoreiMN/search?query=From+Such+Sparks+Gerald+Cohen',
-      category: 'Featured Recording',
+      youtubeUrl: 'https://www.youtube.com/watch?v=krhArol4Ph0',
+      category: 'Album & Lyric Video',
       description:
         'Studio recording collaboration sharing Kantorei’s artistry with listeners worldwide across YouTube and streaming platforms.',
     },
     {
-      id: 'yt-missa-brevis',
-      title: 'Kyrie, from Missa Brevis',
-      subtitle: 'Composed by Hyun Kook · Kantorei MN',
-      youtubeUrl:
-        'https://www.youtube.com/@kantoreiMN/search?query=Kyrie+Missa+Brevis+Hyun+Kook',
-      category: 'Concert Video',
+      id: 'yt-dickinson',
+      title: 'Two Dickinson Poems ("Look Back on Time")',
+      subtitle: 'Composed by Jonathan Posthuma · Look Back on Time Album',
+      youtubeUrl: 'https://www.youtube.com/watch?v=gDHhtv4zFE4',
+      category: 'Album & Lyric Video',
       description:
-        'Soaring unaccompanied sacred lines from around the world.',
+        'From the album Look Back on Time: Choral Music of Jonathan Posthuma, performed by Kantorei under Artistic Director Adam Reinwald.',
     },
     {
-      id: 'yt-brahms-liebeslieder',
-      title: 'Liebeslieder Waltzes',
-      subtitle: 'Johannes Brahms · Kantorei MN',
-      youtubeUrl:
-        'https://www.youtube.com/@kantoreiMN/search?query=Liebeslieder+Waltzes+Brahms',
+      id: 'yt-o-nata-lux',
+      title: 'O nata lux, from Lux Aeterna',
+      subtitle: 'Morten Lauridsen · Kantorei MN',
+      youtubeUrl: 'https://www.youtube.com/watch?v=LRirpnojhRE',
       category: 'Concert Video',
       description:
-        'Romantic chamber repertoire balancing intimacy, buoyancy, and healthy vocal ease.',
+        'Unaccompanied sacred lines highlighting Kantorei’s signature vocal warmth and acoustic blend.',
+    },
+    {
+      id: 'yt-opening-window',
+      title: 'Opening the Window',
+      subtitle: 'Composed by Jonathan Posthuma · Kantorei MN',
+      youtubeUrl: 'https://www.youtube.com/watch?v=r9KFwejGdMM',
+      category: 'Album & Lyric Video',
+      description:
+        'Expansive contemporary a cappella writing highlighting Kantorei’s hallmark vocal warmth and effortless blend.',
     },
     {
       id: 'yt-poem-is-a-home',
       title: 'A Poem is a Home',
       subtitle: 'Music & Lyrics by Jonathan Posthuma · Kantorei MN',
-      youtubeUrl:
-        'https://www.youtube.com/@kantoreiMN/search?query=A+Poem+is+a+Home',
+      youtubeUrl: 'https://www.youtube.com/watch?v=eXlT64Q5pp0',
       category: 'Album & Lyric Video',
       description:
         'Contemporary Minnesota choral storytelling inviting deep meaning and belonging.',

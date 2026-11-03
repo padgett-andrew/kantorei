@@ -124,13 +124,101 @@ export async function fetchYouTubeChannelMedia(
   });
 }
 
+export function extractYouTubeEmbedUrl(rawUrl: string): {
+  embedUrl: string | null;
+  videoId: string | null;
+} {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.hostname.includes('youtu.be')) {
+      const id = parsed.pathname.slice(1).split('/')[0];
+      if (id && /^[\w-]{11}$/.test(id)) {
+        return {
+          videoId: id,
+          embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
+        };
+      }
+    }
+    if (parsed.hostname.includes('youtube.com')) {
+      const v = parsed.searchParams.get('v');
+      if (v && /^[\w-]{11}$/.test(v)) {
+        return {
+          videoId: v,
+          embedUrl: `https://www.youtube-nocookie.com/embed/${v}?rel=0`,
+        };
+      }
+      if (parsed.pathname.startsWith('/embed/')) {
+        const id = parsed.pathname.replace('/embed/', '').split('/')[0];
+        if (id && /^[\w-]{11}$/.test(id)) {
+          return {
+            videoId: id,
+            embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
+          };
+        }
+      }
+      if (parsed.pathname.startsWith('/shorts/')) {
+        const id = parsed.pathname.replace('/shorts/', '').split('/')[0];
+        if (id && /^[\w-]{11}$/.test(id)) {
+          return {
+            videoId: id,
+            embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
+          };
+        }
+      }
+      if (parsed.pathname.startsWith('/live/')) {
+        const id = parsed.pathname.replace('/live/', '').split('/')[0];
+        if (id && /^[\w-]{11}$/.test(id)) {
+          return {
+            videoId: id,
+            embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
+          };
+        }
+      }
+      const list = parsed.searchParams.get('list');
+      if (list) {
+        return {
+          videoId: null,
+          embedUrl: `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(list)}`,
+        };
+      }
+    }
+  } catch {
+    // Ignore invalid URL
+  }
+  return { embedUrl: null, videoId: null };
+}
+
+export function extractInstagramEmbedUrl(rawUrl: string): {
+  embedUrl: string | null;
+  shortcode: string | null;
+  type: 'post' | 'reel' | 'tv' | null;
+} {
+  try {
+    const parsed = new URL(rawUrl);
+    if (!parsed.hostname.includes('instagram.com')) {
+      return { embedUrl: null, shortcode: null, type: null };
+    }
+    const match = /\/(p|reel|tv)\/([A-Za-z0-9_-]+)/i.exec(parsed.pathname);
+    if (match) {
+      const type = match[1].toLowerCase() as 'post' | 'reel' | 'tv';
+      const shortcode = match[2];
+      return {
+        embedUrl: `https://www.instagram.com/${type}/${shortcode}/embed/captioned/`,
+        shortcode,
+        type,
+      };
+    }
+  } catch {
+    // Ignore invalid URL
+  }
+  return { embedUrl: null, shortcode: null, type: null };
+}
+
 export interface InstagramPostCard {
   id: string;
-  title: string;
-  category: string;
+  shortcode: string;
   url: string;
-  embedUrl?: string;
-  summary: string;
+  embedUrl: string;
 }
 
 export interface InstagramShowcase {
@@ -139,39 +227,109 @@ export interface InstagramShowcase {
   posts: InstagramPostCard[];
 }
 
-export function getInstagramShowcase(config?: { Instagram_URL?: string }): InstagramShowcase {
+const FALLBACK_KANTOREI_SHORTCODES = [
+  'DfIZU6ROzOI',
+  'DfFeKKHu2s0',
+  'De7IOeOO7nx',
+  'DeugmmXOggz',
+  'DeR-Lvap9F2',
+  'DeH689YJsrI',
+  'DdzJcCgJUUW',
+  'DdciNo4JXMP',
+  'DdW9Frsp9HF',
+  'DYVOtGFJIea',
+];
+
+/**
+ * Fetches recent Instagram post shortcodes for @kantorei_mn directly from Instagram.
+ * Cached for 1 hour with Cloudflare Cache API / in-memory fallback.
+ */
+export async function fetchRecentInstagramShortcodes(
+  profileUrl: string = 'https://www.instagram.com/kantorei_mn/'
+): Promise<string[]> {
+  return cachedFetchJson('instagram_shortcodes', 3600, async () => {
+    try {
+      const res = await fetch(profileUrl, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+        },
+      });
+      if (!res.ok) return FALLBACK_KANTOREI_SHORTCODES;
+
+      const html = await res.text();
+      const codeMatches = [...html.matchAll(/"code":"([A-Za-z0-9_-]+)"/g)].map((m) => m[1]);
+      const validCodes = [...new Set(codeMatches)].filter(
+        (code) => code.length >= 10 && code.length <= 15 && code !== 'en_US'
+      );
+
+      return validCodes.length > 0 ? validCodes : FALLBACK_KANTOREI_SHORTCODES;
+    } catch {
+      return FALLBACK_KANTOREI_SHORTCODES;
+    }
+  });
+}
+
+export async function getInstagramShowcase(
+  config?: {
+    Instagram_URL?: string;
+    Instagram_Posts?: string;
+    [key: string]: string | undefined;
+  }
+): Promise<InstagramShowcase> {
   const profileUrl = config?.Instagram_URL || 'https://www.instagram.com/kantorei_mn';
   const handleMatch = /instagram\.com\/([^/?#]+)/i.exec(profileUrl);
   const handle = handleMatch ? `@${handleMatch[1]}` : '@kantorei_mn';
 
+  // If board configured specific Instagram post/reel URLs in the Master Sheet Config tab
+  if (config?.Instagram_Posts) {
+    const customUrls = config.Instagram_Posts.split(/[\n,]+/)
+      .map((u) => u.trim())
+      .filter(Boolean);
+
+    if (customUrls.length > 0) {
+      const customPosts: InstagramPostCard[] = [];
+      for (const [idx, rawUrl] of customUrls.entries()) {
+        const { embedUrl, shortcode } = extractInstagramEmbedUrl(rawUrl);
+        if (shortcode && embedUrl) {
+          customPosts.push({
+            id: `ig-custom-${idx + 1}-${shortcode}`,
+            shortcode,
+            url: `https://www.instagram.com/p/${shortcode}/`,
+            embedUrl,
+          });
+        }
+      }
+
+      if (customPosts.length > 0) {
+        return {
+          profileUrl,
+          handle,
+          posts: customPosts,
+        };
+      }
+    }
+  }
+
+  // Fetch the latest published posts directly from @kantorei_mn
+  const shortcodes = await fetchRecentInstagramShortcodes(profileUrl);
+
+  const posts: InstagramPostCard[] = shortcodes.slice(0, 6).map((code) => ({
+    id: `ig-${code}`,
+    shortcode: code,
+    url: `https://www.instagram.com/p/${code}/`,
+    embedUrl: `https://www.instagram.com/p/${code}/embed/captioned/`,
+  }));
+
   return {
     profileUrl,
     handle,
-    posts: [
-      {
-        id: 'ig-advent-rehearsal',
-        title: 'Sunday Rehearsal Blend & Voicings',
-        category: 'Rehearsal Clip',
-        url: 'https://www.instagram.com/kantorei_mn/',
-        summary:
-          'Warmups and four-part acoustic blend under Adam Reinwald at Shepherd of the Hills Sanctuary.',
-      },
-      {
-        id: 'ig-singer-spotlight',
-        title: 'Singer Spotlight: Life with Kantorei',
-        category: 'Behind the Scenes',
-        url: 'https://www.instagram.com/kantorei_mn/',
-        summary:
-          'Meet the singers from our Soprano and Bass sections sharing what singing for a lifetime means to them.',
-      },
-      {
-        id: 'ig-concert-preview',
-        title: 'Advent with Kantorei: Shoreview & Edina',
-        category: 'Concert Preview',
-        url: 'https://www.instagram.com/kantorei_mn/',
-        summary:
-          'Previewing signature unaccompanied repertoire and venue acoustics for our upcoming weekend performances.',
-      },
-    ],
+    posts,
   };
 }

@@ -1,6 +1,7 @@
 import type { ConcertEvent, ConcertPerformance, ConcertStatus } from '../types/choir';
 import { cachedFetchJson } from './cache';
 import { getEnv } from './env';
+import { sanitizeHeroImageUrl } from './utils';
 
 export interface ResolvedTicketTailorEntry {
   label: string;
@@ -165,9 +166,9 @@ export async function resolveTicketTailorEntries(
   const parts = trimmed.includes('<script')
     ? [trimmed]
     : trimmed
-        .split(/\s*(?:\||;|\r?\n)\s*/)
-        .map((p) => p.trim())
-        .filter(Boolean);
+      .split(/\s*(?:\||;|\r?\n)\s*/)
+      .map((p) => p.trim())
+      .filter(Boolean);
 
   const resolved = await Promise.all(
     parts.map(async (part, idx): Promise<ResolvedTicketTailorEntry | null> => {
@@ -434,7 +435,7 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
               : 'Join Kantorei for this seasonal concert performance across Twin Cities venues.',
             ttEventSeriesId,
             status,
-            heroImageUrl: firstEv.images?.header || firstEv.images?.thumbnail,
+            heroImageUrl: sanitizeHeroImageUrl(firstEv.images?.header || firstEv.images?.thumbnail),
             performances,
           });
         } else {
@@ -458,24 +459,24 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
           const performances: ConcertPerformance[] =
             occurrences.length > 1
               ? occurrences.map((occ, idx) => ({
-                  dateDisplay: formatPerformanceDate(occ.start?.iso, occ.start?.formatted),
-                  venueName: occ.venue?.name?.trim() || venueName,
-                  venueAddress: occ.venue?.postal_address?.trim() || venueAddress,
-                  label: `Performance ${idx + 1}`,
-                }))
+                dateDisplay: formatPerformanceDate(occ.start?.iso, occ.start?.formatted),
+                venueName: occ.venue?.name?.trim() || venueName,
+                venueAddress: occ.venue?.postal_address?.trim() || venueAddress,
+                label: `Performance ${idx + 1}`,
+              }))
               : [
-                  {
-                    dateDisplay: formatPerformanceDate(ev.start?.iso, ev.start?.formatted),
-                    venueName,
-                    venueAddress,
-                  },
-                ];
+                {
+                  dateDisplay: formatPerformanceDate(ev.start?.iso, ev.start?.formatted),
+                  venueName,
+                  venueAddress,
+                },
+              ];
 
           let status: ConcertStatus = 'Upcoming';
           const latestIso =
             occurrences.length > 0
               ? occurrences[occurrences.length - 1]?.end?.iso ||
-                occurrences[occurrences.length - 1]?.start?.iso
+              occurrences[occurrences.length - 1]?.start?.iso
               : ev.end?.iso || ev.start?.iso;
 
           if (ev.status === 'published') {
@@ -510,7 +511,7 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
               : 'Join Kantorei for this seasonal concert performance.',
             ttEventSeriesId,
             status,
-            heroImageUrl: ev.images?.header || ev.images?.thumbnail,
+            heroImageUrl: sanitizeHeroImageUrl(ev.images?.header || ev.images?.thumbnail),
             performances,
           });
         }

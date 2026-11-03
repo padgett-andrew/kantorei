@@ -1,67 +1,32 @@
 ---
 import PublicLayout from '../layouts/PublicLayout.astro';
 import { getMedia, getPortalConfig } from '../lib/google';
-import { getInstagramShowcase } from '../lib/media';
+import {
+  extractYouTubeEmbedUrl,
+  getInstagramShowcase,
+} from '../lib/media';
 
 const [config, mediaItems] = await Promise.all([
   getPortalConfig(Astro.locals),
   getMedia(Astro.locals),
 ]);
 
-const instagramShowcase = getInstagramShowcase(config);
+const instagramShowcase = await getInstagramShowcase(config);
 
 const choirName = config.Choir_Name || 'Kantorei';
 const youtubeChannel = config.YouTube_URL || 'https://www.youtube.com/@kantoreiMN';
 const instagramUrl = config.Instagram_URL || 'https://www.instagram.com/kantorei_mn';
 const facebookUrl = config.Facebook_URL || 'https://www.facebook.com/kantoreimn';
 
-function extractYouTubeEmbedUrl(rawUrl: string): { embedUrl: string | null; videoId: string | null } {
-  try {
-    const parsed = new URL(rawUrl);
-    if (parsed.hostname.includes('youtu.be')) {
-      const id = parsed.pathname.slice(1).split('/')[0];
-      if (id && /^[\w-]{11}$/.test(id)) {
-        return {
-          videoId: id,
-          embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
-        };
-      }
-    }
-    if (parsed.hostname.includes('youtube.com')) {
-      const v = parsed.searchParams.get('v');
-      if (v && /^[\w-]{11}$/.test(v)) {
-        return {
-          videoId: v,
-          embedUrl: `https://www.youtube-nocookie.com/embed/${v}?rel=0`,
-        };
-      }
-      if (parsed.pathname.startsWith('/embed/')) {
-        const id = parsed.pathname.replace('/embed/', '').split('/')[0];
-        if (id) {
-          return {
-            videoId: id,
-            embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
-          };
-        }
-      }
-      const list = parsed.searchParams.get('list');
-      if (list) {
-        return {
-          videoId: null,
-          embedUrl: `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(list)}`,
-        };
-      }
-    }
-  } catch {
-    // Ignore invalid URL
-  }
-  return { embedUrl: null, videoId: null };
-}
+// Display a curated selection of 6 featured YouTube videos before transitioning to Instagram
+const FEATURED_LIMIT = 6;
+const featuredVideos = mediaItems.slice(0, FEATURED_LIMIT);
+const remainingVideos = mediaItems.slice(FEATURED_LIMIT);
 ---
 
 <PublicLayout
   title="Media & Recordings"
-  description="Watch and listen to Kantorei concert videos, lyric videos, and choral recordings shared worldwide from Minnesota."
+  description="Watch and listen to Kantorei concert videos, lyric videos, and embedded Instagram reels and stories shared worldwide from Minnesota."
 >
   <!-- Hero -->
   <section class="bg-navy-950 py-16 text-ivory-50 sm:py-22">
@@ -77,6 +42,29 @@ function extractYouTubeEmbedUrl(rawUrl: string): { embedUrl: string | null; vide
           <p class="mt-4 text-sm leading-relaxed text-zinc-300 sm:text-base">
             {choirName} performs primarily in Minnesota and shares recordings with listeners around the globe—spanning signature a cappella works, world music, and collaborations with well-known and emerging composers.
           </p>
+
+          <!-- Quick Jump Navigation -->
+          <div class="mt-6 flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-300">
+            <span class="text-zinc-400">Jump to:</span>
+            <a
+              href="#youtube"
+              class="rounded-full border border-white/20 bg-white/5 px-3 py-1 transition hover:border-gold-400 hover:text-gold-300"
+            >
+              Featured YouTube ({featuredVideos.length})
+            </a>
+            <a
+              href="#instagram"
+              class="rounded-full border border-pink-400/30 bg-pink-500/10 px-3 py-1 text-pink-300 transition hover:border-pink-300 hover:text-pink-200"
+            >
+              Instagram Feed & Reels
+            </a>
+            <a
+              href="#connect"
+              class="rounded-full border border-white/20 bg-white/5 px-3 py-1 transition hover:border-gold-400 hover:text-gold-300"
+            >
+              Connect
+            </a>
+          </div>
         </div>
 
         <div class="flex flex-wrap gap-3">
@@ -112,29 +100,34 @@ function extractYouTubeEmbedUrl(rawUrl: string): { embedUrl: string | null; vide
     </div>
   </section>
 
-  <!-- YouTube Video & Recording Grid (Managed via Master Google Sheet `Media` Tab) -->
-  <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+  <!-- YouTube Video & Recording Grid (Curated Selection) -->
+  <section id="youtube" class="scroll-mt-8 mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
     <div class="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
-          Video & Audio Gallery
+          Featured Selection
         </span>
         <h2 class="mt-1 font-editorial text-4xl font-bold text-navy-950">
           Featured YouTube Performances & Albums
         </h2>
+        <p class="mt-1.5 text-xs text-zinc-600 sm:text-sm">
+          A curated selection of signature choral recordings, followed by our live Instagram feed below.
+        </p>
       </div>
       <a
         href={youtubeChannel}
         target="_blank"
         rel="noopener noreferrer"
-        class="text-sm font-semibold text-navy-900 underline decoration-gold-500 decoration-2 underline-offset-4"
+        class="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-900 underline decoration-gold-500 decoration-2 underline-offset-4"
       >
-        Browse all videos on YouTube →
+        <span>Browse all on YouTube</span>
+        <span>→</span>
       </a>
     </div>
 
+    <!-- Top Featured Videos Grid -->
     <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {mediaItems.map((item) => {
+      {featuredVideos.map((item) => {
         const { embedUrl } = extractYouTubeEmbedUrl(item.youtubeUrl);
 
         return (
@@ -206,62 +199,144 @@ function extractYouTubeEmbedUrl(rawUrl: string): { embedUrl: string | null; vide
       })}
     </div>
 
-    <!-- Instagram Behind-the-Scenes & Stories Section -->
-    <div class="mt-20">
-      <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-pink-600">
-            <svg class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+    <!-- Optional Expander for remaining videos if catalog is larger -->
+    {remainingVideos.length > 0 && (
+      <details class="group mt-10 rounded-2xl border border-zinc-200 bg-ivory-50/70 p-6 transition">
+        <summary class="flex cursor-pointer list-none items-center justify-between text-sm font-bold text-navy-950 focus:outline-hidden">
+          <span class="flex items-center gap-2">
+            <svg class="h-4 w-4 text-gold-500 transition duration-200 group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
-            Instagram Stories & Reels
+            <span>Show more YouTube recordings ({remainingVideos.length} additional videos)</span>
           </span>
-          <h2 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
-            Behind the Scenes on Instagram
+          <span class="text-xs font-semibold uppercase tracking-wider text-gold-600 group-open:hidden">
+            Expand Catalog ↓
+          </span>
+          <span class="hidden text-xs font-semibold uppercase tracking-wider text-gold-600 group-open:inline">
+            Collapse ↑
+          </span>
+        </summary>
+
+        <div class="mt-6 grid gap-8 md:grid-cols-2 lg:grid-cols-3 border-t border-zinc-200/80 pt-6">
+          {remainingVideos.map((item) => {
+            const { embedUrl } = extractYouTubeEmbedUrl(item.youtubeUrl);
+
+            return (
+              <article class="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs transition hover:border-gold-400/60 hover:shadow-md">
+                {embedUrl ? (
+                  <div class="aspect-video w-full bg-navy-950">
+                    <iframe
+                      src={embedUrl}
+                      title={item.title}
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowfullscreen
+                      class="h-full w-full border-0"
+                    />
+                  </div>
+                ) : (
+                  <a
+                    href={item.youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="group relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden bg-navy-950 p-6 text-center text-white"
+                  >
+                    <span class="relative flex h-12 w-12 items-center justify-center rounded-full bg-gold-500 text-white shadow-lg">
+                      <svg class="ml-0.5 h-5 w-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </span>
+                    <span class="relative mt-2 text-xs font-semibold uppercase tracking-widest text-gold-300">
+                      Watch on YouTube ↗
+                    </span>
+                  </a>
+                )}
+
+                <div class="flex flex-1 flex-col justify-between p-6">
+                  <div>
+                    <span class="inline-block rounded-full bg-copper-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-gold-500">
+                      {item.category}
+                    </span>
+                    <h3 class="mt-2.5 font-editorial text-xl font-bold text-navy-950 leading-snug">
+                      {item.title}
+                    </h3>
+                    {item.subtitle && (
+                      <p class="mt-1 text-xs font-semibold text-zinc-600">{item.subtitle}</p>
+                    )}
+                    {item.description && (
+                      <p class="mt-2.5 text-xs leading-relaxed text-zinc-600">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div class="mt-4 border-t border-zinc-100 pt-3">
+                    <a
+                      href={item.youtubeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gold-500 hover:text-navy-950"
+                    >
+                      Open on YouTube ↗
+                    </a>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </details>
+    )}
+
+    <!-- Instagram Section (Directly Embedded with Captions) -->
+    <div id="instagram" class="scroll-mt-8 mt-20">
+      <div class="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-[0.18em] text-pink-600">
+            Instagram Feed
+          </span>
+          <h2 class="mt-0.5 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+            Latest Posts & Reels from {instagramShowcase.handle}
           </h2>
         </div>
         <a
           href={instagramShowcase.profileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 rounded-full border border-pink-300 bg-pink-50/60 px-4 py-2 text-xs font-bold uppercase tracking-wider text-pink-700 transition hover:bg-pink-100"
+          class="inline-flex items-center gap-1.5 rounded-full border border-pink-300 bg-pink-50/70 px-4 py-2 text-xs font-bold uppercase tracking-wider text-pink-700 transition hover:bg-pink-100"
         >
-          Follow {instagramShowcase.handle} →
+          Follow on Instagram →
         </a>
       </div>
 
-      <div class="grid gap-6 md:grid-cols-3">
+      <!-- Vertical Flowing Grid of Captioned Instagram Posts -->
+      <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 items-start">
         {instagramShowcase.posts.map((post) => (
-          <a
-            href={post.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="group flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs transition hover:border-pink-300 hover:shadow-md"
-          >
-            <div>
-              <div class="flex items-center justify-between">
-                <span class="rounded-full bg-pink-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-pink-800">
-                  {post.category}
-                </span>
-                <span class="text-xs text-zinc-400 group-hover:text-pink-600">↗</span>
-              </div>
-              <h3 class="mt-3 font-editorial text-xl font-bold text-navy-950 group-hover:text-pink-700">
-                {post.title}
-              </h3>
-              <p class="mt-2 text-xs leading-relaxed text-zinc-600">
-                {post.summary}
-              </p>
-            </div>
-            <div class="mt-4 border-t border-zinc-100 pt-3 text-[11px] font-semibold text-pink-700">
-              View on Instagram →
-            </div>
-          </a>
+          <div class="w-full flex justify-center">
+            <blockquote
+              class="instagram-media w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs"
+              data-instgrm-captioned
+              data-instgrm-permalink={`https://www.instagram.com/p/${post.shortcode}/?utm_source=ig_embed&amp;utm_campaign=loading`}
+              data-instgrm-version="14"
+              style="margin: 0; min-width: 280px; max-width: 100%; width: 100%;"
+            >
+              <iframe
+                src={`https://www.instagram.com/p/${post.shortcode}/embed/captioned/`}
+                title={`Instagram post from ${instagramShowcase.handle}`}
+                loading="lazy"
+                allowtransparency="true"
+                allow="encrypted-media"
+                class="w-full border-0 overflow-hidden rounded-2xl"
+                style="min-height: 640px; height: 680px;"
+              />
+            </blockquote>
+          </div>
         ))}
       </div>
     </div>
 
     <!-- Social Community Strip -->
-    <div class="mt-16 rounded-3xl border border-zinc-200 bg-ivory-100 p-8 sm:p-10">
+    <div id="connect" class="scroll-mt-8 mt-20 rounded-3xl border border-zinc-200 bg-ivory-100 p-8 sm:p-10">
       <div class="grid gap-8 lg:grid-cols-12 lg:items-center">
         <div class="lg:col-span-7">
           <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
@@ -304,4 +379,7 @@ function extractYouTubeEmbedUrl(rawUrl: string): { embedUrl: string | null; vide
       </div>
     </div>
   </section>
+
+  <!-- Optional Instagram client script for native responsive embedding -->
+  <script is:inline async src="//www.instagram.com/embed.js"></script>
 </PublicLayout>

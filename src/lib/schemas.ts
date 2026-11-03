@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { sanitizeHeroImageUrl } from './utils';
 import {
   CONCERT_STATUSES,
   EVENT_TYPES,
@@ -202,7 +203,7 @@ export const ConcertRowSchema = z
         description,
         ttEventSeriesId: ttEventSeriesId || 'DEMO_SERIES_ID',
         status: normalizedStatus,
-        heroImageUrl: heroImageUrl || undefined,
+        heroImageUrl: sanitizeHeroImageUrl(heroImageUrl),
       };
     }
   );

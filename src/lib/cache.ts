@@ -6,6 +6,8 @@ export type CacheTag =
   | 'concerts'
   | 'tickettailor_events'
   | 'youtube_media'
+  | 'instagram_shortcodes'
+  | 'instagram_media'
   | 'media'
   | 'config'
   | 'music'
@@ -43,6 +45,7 @@ export async function cachedFetchJson<T>(
 ): Promise<T> {
   const key = buildCacheUrl(tag);
   const now = Date.now();
+  const effectiveTtl = import.meta.env.DEV ? Math.min(ttlSeconds, 10) : ttlSeconds;
 
   const memHit = memoryCache.get(key);
   if (memHit && memHit.expiresAt > now) {
@@ -55,7 +58,7 @@ export async function cachedFetchJson<T>(
       const cachedRes = await edgeCache.match(key);
       if (cachedRes) {
         const json = await cachedRes.text();
-        memoryCache.set(key, { expiresAt: now + Math.min(ttlSeconds, 15) * 1000, json });
+        memoryCache.set(key, { expiresAt: now + effectiveTtl * 1000, json });
         return JSON.parse(json) as T;
       }
     } catch {
@@ -99,7 +102,7 @@ export async function cachedFetchJson<T>(
   const serialized = JSON.stringify(freshData);
 
   memoryCache.set(key, {
-    expiresAt: now + ttlSeconds * 1000,
+    expiresAt: now + effectiveTtl * 1000,
     json: serialized,
   });
 
@@ -110,7 +113,7 @@ export async function cachedFetchJson<T>(
         new Response(serialized, {
           headers: {
             'Content-Type': 'application/json',
-            'Cache-Control': `public, max-age=${ttlSeconds}`,
+            'Cache-Control': `public, max-age=${effectiveTtl}`,
           },
         })
       );
