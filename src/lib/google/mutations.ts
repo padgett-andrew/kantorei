@@ -9,7 +9,7 @@ import {
 } from '../../types/choir';
 import { invalidateCacheTag } from '../cache';
 import { isSandboxSheetMode } from '../env';
-import { ScheduleRowSchema } from '../schemas';
+import { AbsenceRowSchema, ScheduleRowSchema } from '../schemas';
 import {
   ConflictError,
   NotFoundError,
@@ -233,7 +233,7 @@ export async function clearAbsenceRecord(params: {
   singerEmail: string;
   clearedBy: string;
   locals?: App.Locals;
-}): Promise<void> {
+}): Promise<AbsenceRecord> {
   const { eventId, singerEmail, clearedBy, locals } = params;
   const normalizedEmail = singerEmail.trim().toLowerCase();
 
@@ -244,10 +244,11 @@ export async function clearAbsenceRecord(params: {
     if (!existing) {
       throw new NotFoundError('No matching absence record found.');
     }
+    const priorRecord: AbsenceRecord = { ...existing };
     existing.status = 'Cleared';
     existing.timestamp = new Date().toISOString();
     existing.submittedBy = clearedBy;
-    return;
+    return priorRecord;
   }
 
   const rows = await readSheetValues('Absences!A2:I', locals);
@@ -262,13 +263,17 @@ export async function clearAbsenceRecord(params: {
   }
 
   const freshRowIndex = existingIdx + 2;
-  const row = padRow(rows[existingIdx], 9);
-  row[0] = new Date().toISOString();
-  row[7] = clearedBy;
-  row[8] = 'Cleared';
+  const rawRow = padRow(rows[existingIdx], 9);
+  const priorRecord = AbsenceRowSchema.parse(rawRow);
 
-  await writeSheetValues(`Absences!A${freshRowIndex}:I${freshRowIndex}`, [row], locals);
+  const updatedRow = [...rawRow];
+  updatedRow[0] = new Date().toISOString();
+  updatedRow[7] = clearedBy;
+  updatedRow[8] = 'Cleared';
+
+  await writeSheetValues(`Absences!A${freshRowIndex}:I${freshRowIndex}`, [updatedRow], locals);
   await invalidateCacheTag('absences');
+  return priorRecord;
 }
 
 export async function upsertRosterSinger(params: {

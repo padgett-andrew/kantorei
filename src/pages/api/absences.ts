@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { hasRole } from '../../lib/auth';
-import { sendAbsenceAlertEmail } from '../../lib/email';
+import { sendAbsenceAlertEmail, sendAbsenceRescindedEmail } from '../../lib/email';
 import {
   clearAbsenceRecord,
   getAbsences,
@@ -18,11 +18,14 @@ const PostAbsenceSchema = z.object({
   targetEmail: z.string().trim().email().optional(),
   targetSingerEmail: z.string().trim().email().optional(),
   status: z.enum(['Absent', 'Late']).default('Absent'),
+  source: z.string().optional(),
 });
 
 const DeleteAbsenceSchema = z.object({
   eventId: z.string().trim().min(1),
   targetEmail: z.string().trim().email().optional(),
+  targetSingerEmail: z.string().trim().email().optional(),
+  source: z.string().optional(),
 });
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -46,6 +49,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const requestedEmail = (parsed.data.targetEmail || parsed.data.targetSingerEmail)?.toLowerCase();
     const isSelf = !requestedEmail || requestedEmail === caller.email;
+    const isRollCall = parsed.data.source === 'roll_call' || !isSelf;
 
     if (!isSelf && !hasRole(caller, ['Section_Leader', 'Admin'])) {
       return new Response(
@@ -115,26 +119,30 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const sectionAbsenceCount = sectionRecords.filter((a) => a.status === 'Absent').length;
     const sectionLateCount = sectionRecords.filter((a) => a.status === 'Late').length;
 
-    const sectionLeaders = roster.filter(
-      (s) =>
-        s.active &&
-        s.role === 'Section_Leader' &&
-        s.sectionGroup === targetSinger.sectionGroup
-    );
+    let emailResult = null;
+    // Only send the absence notification when a singer creates one, NOT during roll call.
+    if (!isRollCall) {
+      const sectionLeaders = roster.filter(
+        (s) =>
+          s.active &&
+          s.role === 'Section_Leader' &&
+          s.sectionGroup === targetSinger.sectionGroup
+      );
 
-    const admins = roster.filter((s) => s.active && s.role === 'Admin');
+      const admins = roster.filter((s) => s.active && s.role === 'Admin');
 
-    const emailResult = await sendAbsenceAlertEmail({
-      absence,
-      event,
-      sectionGroup: targetSinger.sectionGroup,
-      sectionLeaders,
-      admins,
-      config,
-      sectionAbsenceCount,
-      sectionLateCount,
-      locals,
-    });
+      emailResult = await sendAbsenceAlertEmail({
+        absence,
+        event,
+        sectionGroup: targetSinger.sectionGroup,
+        sectionLeaders,
+        admins,
+        config,
+        sectionAbsenceCount,
+        sectionLateCount,
+        locals,
+      });
+    }
 
     return new Response(
       JSON.stringify({
@@ -175,8 +183,10 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    const requestedEmail = parsed.data.targetEmail?.toLowerCase();
+    const requestedEmail = (parsed.data.targetEmail || parsed.data.targetSingerEmail)?.toLowerCase();
     const isSelf = !requestedEmail || requestedEmail === caller.email;
+    const isRollCall = parsed.data.source === 'roll_call' || !isSelf;
+
     if (!isSelf && !hasRole(caller, ['Section_Leader', 'Admin'])) {
       return new Response(
         JSON.stringify({ error: 'Only Section Leaders or Admins can clear another singer.' }),
@@ -184,17 +194,78 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    await clearAbsenceRecord({
+    const targetEmail = isSelf ? caller.email : requestedEmail!;
+    const clearedBy = isSelf ? 'Self (Withdrawn)' : `${caller.name} (Cleared)`;
+
+    const clearedRecord = await clearAbsenceRecord({
       eventId: parsed.data.eventId,
-      singerEmail: isSelf ? caller.email : requestedEmail!,
-      clearedBy: isSelf ? 'Self (Cleared)' : `${caller.name} (Cleared)`,
+      singerEmail: targetEmail,
+      clearedBy,
       locals,
     });
 
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    let emailResult = null;
+    // Only send the notification if an absence is rescinded by the singer, NOT during roll call.
+    if (!isRollCall) {
+      const [roster, schedule, config] = await Promise.all([
+        getRoster(locals),
+        getSchedule(locals),
+        getPortalConfig(locals),
+      ]);
+
+      const targetSinger = isSelf
+        ? caller
+        : roster.find((s) => s.email === targetEmail);
+
+      if (targetSinger) {
+        const event = schedule.find((e) => e.eventId === parsed.data.eventId);
+        const allAbsences = await getAbsences(locals);
+        const sectionEmails = new Set(
+          roster
+            .filter((s) => s.sectionGroup === targetSinger.sectionGroup)
+            .map((s) => s.email)
+        );
+        const sectionRecords = allAbsences.filter(
+          (a) =>
+            a.eventId === parsed.data.eventId &&
+            (sectionEmails.has(a.singerEmail) ||
+              a.voicePart[0] === targetSinger.voicePart[0])
+        );
+        const sectionAbsenceCount = sectionRecords.filter((a) => a.status === 'Absent').length;
+        const sectionLateCount = sectionRecords.filter((a) => a.status === 'Late').length;
+
+        const sectionLeaders = roster.filter(
+          (s) =>
+            s.active &&
+            s.role === 'Section_Leader' &&
+            s.sectionGroup === targetSinger.sectionGroup
+        );
+        const admins = roster.filter((s) => s.active && s.role === 'Admin');
+
+        emailResult = await sendAbsenceRescindedEmail({
+          absence: clearedRecord,
+          event,
+          sectionGroup: targetSinger.sectionGroup,
+          sectionLeaders,
+          admins,
+          config,
+          sectionAbsenceCount,
+          sectionLateCount,
+          rescindedBy: clearedBy,
+          locals,
+        });
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        rescinded: true,
+        clearedRecord,
+        emailResult,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
   } catch (err) {
     if (err instanceof NotFoundError) {
       return new Response(JSON.stringify({ error: err.message }), {

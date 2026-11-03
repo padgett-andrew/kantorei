@@ -57,3 +57,22 @@ export function highlightVoicePartInHtml(
     .join('');
 }
 
+export function driveFolderUrl(
+  folderId?: string,
+  fallback = 'https://drive.google.com/drive/folders/1tIPYJBkibVLjQOaGSzZ2y7L9UOTNOyJc'
+): string {
+  if (
+    folderId &&
+    folderId !== 'DEMO' &&
+    !folderId.startsWith('piece-') &&
+    !folderId.startsWith('notes-') &&
+    !folderId.startsWith('k:') &&
+    !folderId.startsWith('n:') &&
+    /^[a-zA-Z0-9_-]{15,}$/.test(folderId)
+  ) {
+    return `https://drive.google.com/drive/folders/${folderId}`;
+  }
+  return fallback;
+}
+
+

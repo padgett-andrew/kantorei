@@ -133,8 +133,8 @@ export default function AbsenceManager({
       setFeedback({
         type: 'success',
         text: wasLate
-          ? `Welcome! Your late notice for ${formatEventDate(date)} has been cleared.`
-          : `Welcome back! Your absence for ${formatEventDate(date)} has been marked Cleared.`,
+          ? `Welcome! Your running late notice for ${formatEventDate(date)} has been withdrawn. Section leadership has been notified that you will be on time!`
+          : `Welcome back! Your absence for ${formatEventDate(date)} has been withdrawn. Section leadership has been notified that you are attending!`,
       });
     } catch {
       setFeedback({ type: 'error', text: 'Network error clearing record.' });

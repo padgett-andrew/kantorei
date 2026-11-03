@@ -1,6 +1,5 @@
 import type {
   DriveMusicFile,
-  PortalConfig,
   RepertoirePiece,
 } from '../../types/choir';
 import { cachedFetchJson } from '../cache';
@@ -111,65 +110,16 @@ export async function driveListQuery(query: string, locals?: App.Locals): Promis
   return data.files ?? [];
 }
 
-export interface ConfiguredFolderTarget {
-  folderId: string;
-  explicitLabel?: string;
-}
+import {
+  parseRepertoireFolderTargets,
+  type ConfiguredFolderTarget,
+} from './workspace-links';
 
-export function parseRepertoireFolderTargets(config: PortalConfig): ConfiguredFolderTarget[] {
-  const seen = new Set<string>();
-  const targets: ConfiguredFolderTarget[] = [];
+export {
+  parseRepertoireFolderTargets,
+  type ConfiguredFolderTarget,
+};
 
-  function addRawEntries(rawValue: string, fallbackLabel?: string) {
-    const entries = rawValue
-      .split(/\s*(?:\||;|\r?\n|,)\s*/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    for (const entry of entries) {
-      const colonIdx = entry.indexOf(':');
-      let label = fallbackLabel;
-      let targetPart = entry;
-
-      if (colonIdx > 0) {
-        const prefix = entry.slice(0, colonIdx).trim();
-        const rest = entry.slice(colonIdx + 1).trim();
-        if (!/^https?$/i.test(prefix) && rest.length >= 10) {
-          label = prefix;
-          targetPart = rest;
-        }
-      }
-
-      const folderId = extractGoogleId(targetPart);
-      if (
-        !folderId ||
-        folderId === 'DEMO' ||
-        folderId.startsWith('PASTE_') ||
-        seen.has(folderId)
-      ) {
-        continue;
-      }
-      seen.add(folderId);
-      targets.push({ folderId, explicitLabel: label });
-    }
-  }
-
-  if (config.Repertoire_Drive_Folder_ID) {
-    addRawEntries(config.Repertoire_Drive_Folder_ID);
-  }
-
-  for (const [key, val] of Object.entries(config)) {
-    if (/^Repertoire_Folder_/i.test(key) && val) {
-      const derivedLabel = key
-        .replace(/^Repertoire_Folder_/i, '')
-        .replace(/_/g, ' ')
-        .trim();
-      addRawEntries(val, derivedLabel || undefined);
-    }
-  }
-
-  return targets;
-}
 
 export async function resolveFolderConcertName(
   target: ConfiguredFolderTarget,

@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Eye,
   FileText,
+  FolderOpen,
   Headphones,
   Music2,
   Play,
@@ -15,12 +16,19 @@ import type { DriveMusicFile, Singer } from '../../../types/choir';
 import type { ProgramPiece, ProgramRecording } from '../../../lib/program';
 import type { ActiveAudioState } from './AudioPlayer';
 import type { ActiveVideoState } from './VideoPlayer';
-import { formatFileSize, highlightVoicePartInHtml, prettifyScoreName, streamUrl } from './utils';
+import {
+  driveFolderUrl,
+  formatFileSize,
+  highlightVoicePartInHtml,
+  prettifyScoreName,
+  streamUrl,
+} from './utils';
 
 interface Props {
   piece: ProgramPiece;
   programTitle: string;
   singer: Singer;
+  concertDriveUrl?: string;
   isNotesExpanded: boolean;
   onToggleNotes: (pieceId: string) => void;
   highlightMyPart: boolean;
@@ -36,6 +44,7 @@ export default function ProgramPieceCard({
   piece,
   programTitle,
   singer,
+  concertDriveUrl,
   isNotesExpanded,
   onToggleNotes,
   highlightMyPart,
@@ -47,6 +56,7 @@ export default function ProgramPieceCard({
   onProseClick,
 }: Props) {
   const hasNotes = Boolean(piece.notesHtml);
+  const pieceDriveUrl = driveFolderUrl(piece.folderId, concertDriveUrl);
 
   return (
     <article className="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-2xs transition hover:border-zinc-300">
@@ -102,6 +112,21 @@ export default function ProgramPieceCard({
             );
           })}
 
+          {pieceDriveUrl && (
+            <a
+              href={pieceDriveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-navy-900 hover:text-navy-950"
+              title={`Open folder for "${piece.title}" in Google Drive`}
+            >
+              <FolderOpen className="h-3.5 w-3.5 text-amber-600" />
+              <span className="hidden sm:inline">Drive Folder</span>
+              <span className="sm:hidden">Drive</span>
+              <ExternalLink className="h-2.5 w-2.5 text-zinc-400" />
+            </a>
+          )}
+
           {hasNotes && (
             <button
               type="button"
@@ -153,8 +178,20 @@ export default function ProgramPieceCard({
 
       {/* File Items (PDFs and Audio Tracks) */}
       {piece.files.length === 0 ? (
-        <div className="px-5 py-4 text-xs text-zinc-500 italic">
-          Score / rehearsal tracks pending upload to Google Drive folder.
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 text-xs text-zinc-500">
+          <p className="italic">Scores & tracks pending upload in Google Drive.</p>
+          {pieceDriveUrl && (
+            <a
+              href={pieceDriveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50/70 px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-100"
+            >
+              <FolderOpen className="h-3.5 w-3.5 text-amber-600" />
+              <span>Open in Google Drive</span>
+              <ExternalLink className="h-3 w-3 text-amber-700" />
+            </a>
+          )}
         </div>
       ) : (
         <ul className="divide-y divide-zinc-100">

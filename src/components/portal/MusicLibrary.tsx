@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { FolderOpen, Music2, Search, Sparkles } from 'lucide-react';
+import { ExternalLink, FolderOpen, Music2, Search, Sparkles } from 'lucide-react';
 import type { DriveMusicFile, RepertoirePiece, Singer } from '../../types/choir';
 import { doesFileApplyToSinger, isSpecificVoicePartMatch } from '../../lib/utils';
 import { parseYouTubeUrl, type ReferenceRecordingLink } from '../../lib/youtube';
@@ -14,12 +14,15 @@ import DocMarkingsModal, { type ModalDocFileState } from './music/DocMarkingsMod
 import PdfPreviewModal, { type PreviewPdfState } from './music/PdfPreviewModal';
 import ProgramSection from './music/ProgramSection';
 import VideoPlayer, { type ActiveVideoState } from './music/VideoPlayer';
-import { prettifyScoreName } from './music/utils';
+import { driveFolderUrl, prettifyScoreName } from './music/utils';
 
 interface Props {
   singer: Singer;
   pieces: RepertoirePiece[];
   initialDocs?: Record<string, LoadedDocPayload>;
+  repertoireDriveUrl?: string;
+  masterSheetUrl?: string;
+  masterSheetMode?: 'edit' | 'view';
 }
 
 export interface LoadedDocPayload {
@@ -30,7 +33,14 @@ export interface LoadedDocPayload {
   referenceLinks: ReferenceRecordingLink[];
 }
 
-export default function MusicLibrary({ singer, pieces, initialDocs }: Props) {
+export default function MusicLibrary({
+  singer,
+  pieces,
+  initialDocs,
+  repertoireDriveUrl,
+  masterSheetUrl,
+  masterSheetMode = 'view',
+}: Props) {
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'my-part'>('all');
   const [selectedConcertId, setSelectedConcertId] = useState<string>('all');
@@ -288,65 +298,114 @@ export default function MusicLibrary({ singer, pieces, initialDocs }: Props) {
     setModalDocFile({ concertTitle, file });
   }
 
+  const activeConcertDriveUrl =
+    selectedConcertId === 'all'
+      ? repertoireDriveUrl
+      : driveFolderUrl(selectedConcertId, repertoireDriveUrl);
+
   return (
     <div className="space-y-6 pb-24">
-      {/* Concert Program Switcher */}
-      <div className="flex flex-wrap items-center gap-2">
-        {rawPrograms.length > 1 ? (
-          <>
-            <button
-              type="button"
-              onClick={() => setSelectedConcertId('all')}
-              className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-semibold transition ${
-                selectedConcertId === 'all'
-                  ? 'bg-navy-900 text-white shadow-xs'
-                  : 'border border-zinc-200 bg-white text-zinc-700 hover:border-navy-900'
-              }`}
-            >
-              <FolderOpen className="h-3.5 w-3.5 text-gold-400" />
-              All Active Concerts ({totalScoresAndTracks})
-            </button>
-            {rawPrograms.map((prog) => {
-              const fileCount = prog.pieces.reduce((s, p) => s + p.files.length, 0);
-              return (
-                <button
-                  key={prog.id}
-                  type="button"
-                  onClick={() => setSelectedConcertId(prog.id)}
-                  className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-semibold transition ${
-                    selectedConcertId === prog.id
-                      ? 'bg-navy-900 text-white shadow-xs'
-                      : 'border border-zinc-200 bg-white text-zinc-700 hover:border-navy-900'
-                  }`}
-                >
-                  <span>{prog.title}</span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+      {/* Concert Program Switcher & Cloud Links */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          {rawPrograms.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setSelectedConcertId('all')}
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-semibold transition ${
+                  selectedConcertId === 'all'
+                    ? 'bg-navy-900 text-white shadow-xs'
+                    : 'border border-zinc-200 bg-white text-zinc-700 hover:border-navy-900'
+                }`}
+              >
+                <FolderOpen className="h-3.5 w-3.5 text-gold-400" />
+                All Active Concerts ({totalScoresAndTracks})
+              </button>
+              {rawPrograms.map((prog) => {
+                const fileCount = prog.pieces.reduce((s, p) => s + p.files.length, 0);
+                return (
+                  <button
+                    key={prog.id}
+                    type="button"
+                    onClick={() => setSelectedConcertId(prog.id)}
+                    className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-semibold transition ${
                       selectedConcertId === prog.id
-                        ? 'bg-white/15 text-gold-300'
-                        : 'bg-zinc-100 text-zinc-600'
+                        ? 'bg-navy-900 text-white shadow-xs'
+                        : 'border border-zinc-200 bg-white text-zinc-700 hover:border-navy-900'
                     }`}
                   >
-                    {fileCount}
-                  </span>
-                </button>
-              );
-            })}
-          </>
-        ) : rawPrograms[0] ? (
-          <div className="inline-flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200/90 bg-white px-4 py-2 text-xs font-semibold text-navy-950 shadow-2xs">
-            <FolderOpen className="h-3.5 w-3.5 text-gold-500" />
-            <span>Active Program: {rawPrograms[0].title}</span>
-            <span className="rounded-full bg-ivory-100 px-2 py-0.5 text-[10px] font-bold text-navy-900">
-              {totalScoresAndTracks} scores & tracks
-            </span>
-            {rawPrograms[0].docs.length > 0 && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
-                + Director Markings
+                    <span>{prog.title}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        selectedConcertId === prog.id
+                          ? 'bg-white/15 text-gold-300'
+                          : 'bg-zinc-100 text-zinc-600'
+                      }`}
+                    >
+                      {fileCount}
+                    </span>
+                  </button>
+                );
+              })}
+            </>
+          ) : rawPrograms[0] ? (
+            <div className="inline-flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200/90 bg-white px-4 py-2 text-xs font-semibold text-navy-950 shadow-2xs">
+              <FolderOpen className="h-3.5 w-3.5 text-gold-500" />
+              <span>Active Program: {rawPrograms[0].title}</span>
+              <span className="rounded-full bg-ivory-100 px-2 py-0.5 text-[10px] font-bold text-navy-900">
+                {totalScoresAndTracks} scores & tracks
               </span>
+              {rawPrograms[0].docs.length > 0 && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
+                  + Director Markings
+                </span>
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        {repertoireDriveUrl && (
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+            <a
+              href={activeConcertDriveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-zinc-200/90 bg-white px-3.5 py-2 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+              title="Open current concert music folder in Google Drive"
+            >
+              <FolderOpen className="h-3.5 w-3.5 text-amber-600" />
+              <span>Drive Music</span>
+              <ExternalLink className="h-3 w-3 text-zinc-400" />
+            </a>
+
+            {masterSheetUrl && (
+              <a
+                href={masterSheetUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-2xl border border-zinc-200/90 bg-white px-3.5 py-2 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+                title={
+                  masterSheetMode === 'edit'
+                    ? 'Open Master Google Sheet with Edit Access'
+                    : 'Open Master Google Sheet with View Access'
+                }
+              >
+                <span>Master Sheet</span>
+                <span
+                  className={`rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider ${
+                    masterSheetMode === 'edit'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-zinc-100 text-zinc-600'
+                  }`}
+                >
+                  {masterSheetMode === 'edit' ? 'Edit' : 'View'}
+                </span>
+                <ExternalLink className="h-3 w-3 text-zinc-400" />
+              </a>
             )}
           </div>
-        ) : null}
+        )}
       </div>
 
       {/* Filter & Search Toolbar */}
@@ -460,6 +519,7 @@ export default function MusicLibrary({ singer, pieces, initialDocs }: Props) {
               key={prog.id}
               prog={prog}
               singer={singer}
+              repertoireDriveUrl={repertoireDriveUrl}
               expandedDocIds={expandedDocIds}
               onToggleDocExpanded={toggleDocExpanded}
               onOpenModalDoc={handleOpenModalDoc}

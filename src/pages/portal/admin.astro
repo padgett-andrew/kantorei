@@ -1,6 +1,7 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import AdminRollCall from '../../components/portal/AdminRollCall';
+import WorkspaceLinksBar from '../../components/portal/WorkspaceLinksBar.astro';
 import { hasRole } from '../../lib/auth';
 import {
   getAbsences,
@@ -8,6 +9,7 @@ import {
   getPortalConfig,
   getRoster,
   getSchedule,
+  getWorkspaceLinks,
 } from '../../lib/google';
 import { getTodayIso } from '../../lib/utils';
 import { getCalendarId } from '../../lib/env';
@@ -29,19 +31,40 @@ const [config, roster, schedule, absences, sheetWarnings] = await Promise.all([
 
 const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
 const upcomingEvents = schedule.filter((ev) => ev.date >= today);
+const isAdmin = singer.role === 'Admin';
+const workspace = getWorkspaceLinks(isAdmin, config, Astro.locals);
 ---
 
 <PortalLayout title="Roll Call & Roster">
-  <div class="mb-6">
+  <div class="mb-5">
     <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
-      Section Leader & Admin Console
+      Section Leader &amp; Admin Console
     </span>
     <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
-      Roll Call & Master Roster
+      Roll Call &amp; Master Roster
     </h1>
     <p class="mt-1 text-sm text-zinc-600">
       Track rehearsal headcounts by section, mark or clear attendance during roll call, and manage active Roster access.
     </p>
+  </div>
+
+  <!-- Admin Google Workspace Direct Access Banner -->
+  <div class="mb-6">
+    <WorkspaceLinksBar
+      variant="banner"
+      isAdmin={isAdmin}
+      repertoireDriveUrl={workspace.repertoireDriveUrl}
+      masterSheetUrl={workspace.masterSheetUrl}
+      masterSheetMode={workspace.masterSheetMode}
+      masterSheetLabel={workspace.masterSheetLabel}
+      concertDriveFolders={workspace.concertDriveFolders}
+      title="Admin Master Sheet & Repertoire Drive"
+      subtitle={
+        isAdmin
+          ? 'You have Edit Access to the Master Sheet. Changes to Roster, Schedule, or Config sync with the portal.'
+          : 'Section Leaders have view-only access to the Master Sheet. Full edit rights belong to Choir Admins.'
+      }
+    />
   </div>
 
   <AdminRollCall
@@ -53,6 +76,7 @@ const upcomingEvents = schedule.filter((ev) => ev.date >= today);
     allScheduleEvents={schedule}
     initialAbsences={absences}
     sheetWarnings={sheetWarnings}
+    masterSheetUrl={workspace.masterSheetUrl}
+    repertoireDriveUrl={workspace.repertoireDriveUrl}
   />
 </PortalLayout>
-

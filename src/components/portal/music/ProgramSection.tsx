@@ -5,6 +5,7 @@ import {
   ChevronUp,
   Download,
   ExternalLink,
+  FolderOpen,
   Maximize2,
   Play,
   Sparkles,
@@ -15,13 +16,19 @@ import type { ConcertProgram, ProgramRecording } from '../../../lib/program';
 import type { ActiveAudioState } from './AudioPlayer';
 import type { ActiveVideoState } from './VideoPlayer';
 import ProgramPieceCard from './ProgramPieceCard';
-import { highlightVoicePartInHtml, prettifyScoreName, streamUrl } from './utils';
+import {
+  driveFolderUrl,
+  highlightVoicePartInHtml,
+  prettifyScoreName,
+  streamUrl,
+} from './utils';
 
 export type FilteredProgram = ConcertProgram & { visibleFileCount: number };
 
 interface Props {
   prog: FilteredProgram;
   singer: Singer;
+  repertoireDriveUrl?: string;
   expandedDocIds: Record<string, boolean>;
   onToggleDocExpanded: (file: DriveMusicFile) => void;
   onOpenModalDoc: (concertTitle: string, file: DriveMusicFile) => void;
@@ -40,6 +47,7 @@ interface Props {
 export default function ProgramSection({
   prog,
   singer,
+  repertoireDriveUrl,
   expandedDocIds,
   onToggleDocExpanded,
   onOpenModalDoc,
@@ -54,6 +62,7 @@ export default function ProgramSection({
   onPreviewPdf,
   onProseClick,
 }: Props) {
+  const concertDriveUrl = driveFolderUrl(prog.id, repertoireDriveUrl);
   return (
     <div className="space-y-4">
       {/* Concert Program Header */}
@@ -75,7 +84,20 @@ export default function ProgramSection({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {concertDriveUrl && (
+            <a
+              href={concertDriveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+              title={`Open ${prog.title} folder in Google Drive`}
+            >
+              <FolderOpen className="h-3.5 w-3.5 text-amber-600" />
+              <span>Drive Folder</span>
+              <ExternalLink className="h-3 w-3 text-zinc-400" />
+            </a>
+          )}
           <span className="rounded-full bg-ivory-100 px-3 py-1 text-xs font-semibold text-navy-900">
             {prog.visibleFileCount}{' '}
             {prog.visibleFileCount === 1 ? 'score / track' : 'scores & tracks'}
@@ -251,6 +273,7 @@ export default function ProgramSection({
             piece={piece}
             programTitle={prog.title}
             singer={singer}
+            concertDriveUrl={concertDriveUrl}
             isNotesExpanded={Boolean(expandedPieceNotes[piece.id])}
             onToggleNotes={onTogglePieceNotes}
             highlightMyPart={highlightMyPart}

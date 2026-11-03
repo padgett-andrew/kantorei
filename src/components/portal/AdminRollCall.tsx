@@ -1,5 +1,5 @@
 import { useEffect, useState, type SyntheticEvent } from 'react';
-import { Moon, Plus } from 'lucide-react';
+import { ExternalLink, FolderOpen, Moon, Plus } from 'lucide-react';
 import {
   inferSectionGroup,
   type AbsenceRecord,
@@ -26,6 +26,8 @@ interface Props {
   allScheduleEvents?: ScheduleEvent[];
   initialAbsences: AbsenceRecord[];
   sheetWarnings: SheetWarning[];
+  masterSheetUrl?: string;
+  repertoireDriveUrl?: string;
 }
 
 export default function AdminRollCall({
@@ -36,6 +38,8 @@ export default function AdminRollCall({
   allScheduleEvents,
   initialAbsences,
   sheetWarnings,
+  masterSheetUrl,
+  repertoireDriveUrl,
 }: Props) {
   const [roster, setRoster] = useState<Singer[]>(initialRoster);
   const [absences, setAbsences] = useState<AbsenceRecord[]>(initialAbsences);
@@ -166,6 +170,7 @@ export default function AdminRollCall({
           body: JSON.stringify({
             eventId: selectedEventId,
             targetEmail: target.email,
+            source: 'roll_call',
           }),
         });
         if (!res.ok) throw new Error('Failed to mark present.');
@@ -190,6 +195,7 @@ export default function AdminRollCall({
             targetEmail: target.email,
             status: newStatus,
             reason: `Marked ${actionLabel} during roll call by ${caller.name}`,
+            source: 'roll_call',
           }),
         });
         if (!res.ok) throw new Error(`Failed to mark ${actionLabel}.`);
@@ -481,6 +487,40 @@ export default function AdminRollCall({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {masterSheetUrl && (
+            <a
+              href={masterSheetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2.5 text-xs font-semibold text-emerald-900 shadow-2xs transition hover:bg-emerald-100"
+              title={isAdmin ? 'Open Master Google Sheet with Edit Access' : 'Open Master Google Sheet with View Access'}
+            >
+              <span>{isAdmin ? 'Edit Master Sheet' : 'View Master Sheet'}</span>
+              <span
+                className={`rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider ${
+                  isAdmin ? 'bg-emerald-200 text-emerald-950' : 'bg-zinc-200 text-zinc-700'
+                }`}
+              >
+                {isAdmin ? 'Edit' : 'View'}
+              </span>
+              <ExternalLink className="h-3.5 w-3.5 text-emerald-700" />
+            </a>
+          )}
+
+          {repertoireDriveUrl && (
+            <a
+              href={repertoireDriveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+              title="Open Repertoire Google Drive folder"
+            >
+              <FolderOpen className="h-3.5 w-3.5 text-amber-600" />
+              <span>Drive Music</span>
+              <ExternalLink className="h-3 w-3 text-zinc-400" />
+            </a>
+          )}
+
           {onLeaveSingers.length > 0 && activeTab === 'rollcall' && (
             <button
               type="button"

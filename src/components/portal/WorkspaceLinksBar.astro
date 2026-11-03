@@ -1,0 +1,267 @@
+---
+import type { DriveFolderTargetLink } from '../../lib/google/workspace-links';
+
+interface Props {
+  isAdmin: boolean;
+  repertoireDriveUrl: string;
+  masterSheetUrl: string;
+  masterSheetMode: 'edit' | 'view';
+  masterSheetLabel?: string;
+  concertDriveFolders?: DriveFolderTargetLink[];
+  variant?: 'cards' | 'banner' | 'compact';
+  title?: string;
+  subtitle?: string;
+}
+
+const {
+  isAdmin,
+  repertoireDriveUrl,
+  masterSheetUrl,
+  masterSheetMode,
+  masterSheetLabel = isAdmin
+    ? 'Master Google Sheet (Edit Access)'
+    : 'Master Google Sheet (View Access)',
+  concertDriveFolders = [],
+  variant = 'cards',
+  title = 'Ensemble Google Workspace',
+  subtitle = isAdmin
+    ? 'Admins have live edit access; singers have view-only access to the main sheet.'
+    : 'Direct access to the Google Drive music folders and view-only Master Sheet.',
+} = Astro.props;
+
+const isEditMode = masterSheetMode === 'edit';
+---
+
+{variant === 'banner' && (
+  <aside class="overflow-hidden rounded-2xl border border-zinc-200/90 bg-gradient-to-r from-ivory-50 via-white to-amber-50/30 p-4 shadow-2xs sm:p-5">
+    <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+      <div class="flex items-start gap-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-gold-400 shadow-2xs">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
+        </span>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="font-sans text-sm font-bold text-navy-950 sm:text-base">{title}</h3>
+            <span class="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10px] font-semibold text-zinc-600">
+              Live Google Cloud
+            </span>
+          </div>
+          <p class="mt-0.5 text-xs text-zinc-600">{subtitle}</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <a
+          href={repertoireDriveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+          title="Open Google Drive folder where scores and tracks are stored"
+        >
+          <svg class="h-3.5 w-3.5 text-amber-600" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z" />
+          </svg>
+          <span>Music Drive Folder</span>
+          <span class="text-zinc-400">↗</span>
+        </a>
+
+        <a
+          href={masterSheetUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class:list={[
+            'inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold shadow-2xs transition',
+            isEditMode
+              ? 'bg-emerald-700 text-white hover:bg-emerald-800'
+              : 'border border-zinc-200 bg-white text-navy-950 hover:border-navy-900 hover:bg-zinc-50',
+          ]}
+          title={masterSheetLabel}
+        >
+          <svg class="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+          </svg>
+          <span>{isEditMode ? 'Edit Master Sheet' : 'View Master Sheet'}</span>
+          <span class:list={['rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider', isEditMode ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800']}>
+            {isEditMode ? 'Edit' : 'View'}
+          </span>
+          <span class={isEditMode ? 'text-emerald-200' : 'text-zinc-400'}>↗</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+)}
+
+{variant === 'compact' && (
+  <div class="flex flex-wrap items-center gap-2">
+    <a
+      href={repertoireDriveUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+      title="Open Google Drive folder where scores and tracks are stored"
+    >
+      <svg class="h-3.5 w-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+      </svg>
+      <span>Drive Music Folder</span>
+      <span class="text-zinc-400">↗</span>
+    </a>
+
+    <a
+      href={masterSheetUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+      title={masterSheetLabel}
+    >
+      <svg class="h-3.5 w-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18M9 3v18" />
+      </svg>
+      <span>Master Sheet</span>
+      <span class:list={['rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider', isEditMode ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-100 text-zinc-600']}>
+        {isEditMode ? 'Edit' : 'View'}
+      </span>
+      <span class="text-zinc-400">↗</span>
+    </a>
+  </div>
+)}
+
+{variant === 'cards' && (
+  <section class="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white p-5 shadow-2xs sm:p-6">
+    <div class="flex flex-col justify-between gap-2 border-b border-zinc-100 pb-4 sm:flex-row sm:items-center">
+      <div>
+        <span class="text-[10px] font-bold uppercase tracking-[0.16em] text-gold-600">
+          Google Workspace Integration
+        </span>
+        <h2 class="mt-0.5 font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
+          {title}
+        </h2>
+        <p class="mt-0.5 text-xs text-zinc-500">
+          {subtitle}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200/70">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          Connected
+        </span>
+      </div>
+    </div>
+
+    <div class="mt-5 grid gap-4 sm:grid-cols-2">
+      <!-- 1. Google Drive Music Folders -->
+      <div class="flex flex-col justify-between rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/40 via-white to-ivory-50/30 p-4.5 transition hover:border-amber-400/80 hover:shadow-sm sm:p-5">
+        <div>
+          <div class="flex items-center justify-between gap-2">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 ring-1 ring-amber-300/60">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+            </span>
+            <span class="rounded-full bg-amber-100/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-900">
+              Google Drive
+            </span>
+          </div>
+
+          <h3 class="mt-3 font-sans text-base font-bold text-navy-950">
+            Repertoire Music Folders
+          </h3>
+          <p class="mt-1 text-xs leading-relaxed text-zinc-600">
+            Open the live Google Drive shared folder where digital sheet music PDFs, audio rehearsal tracks, and director markings are stored.
+          </p>
+
+          {concertDriveFolders.length > 1 && (
+            <div class="mt-3 flex flex-wrap gap-1.5">
+              {concertDriveFolders.map((target) => (
+                <a
+                  href={target.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-white/90 px-2.5 py-1 text-[11px] font-medium text-amber-950 transition hover:bg-amber-100 hover:text-amber-900"
+                >
+                  <span>{target.label}</span>
+                  <span class="text-amber-600">↗</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-amber-100/80">
+          <a
+            href={repertoireDriveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-navy-900 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-navy-800"
+          >
+            <span>Open Repertoire in Google Drive</span>
+            <span class="text-gold-400">↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 2. Master Google Sheet (Edit for Admins, View for Singers) -->
+      <div class="flex flex-col justify-between rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50/40 via-white to-ivory-50/30 p-4.5 transition hover:border-emerald-400/80 hover:shadow-sm sm:p-5">
+        <div>
+          <div class="flex items-center justify-between gap-2">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-300/60">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+              </svg>
+            </span>
+            <span
+              class:list={[
+                'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                isEditMode
+                  ? 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300/60'
+                  : 'bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200',
+              ]}
+            >
+              {isEditMode ? 'Admin Edit Access' : 'Singer View-Only'}
+            </span>
+          </div>
+
+          <h3 class="mt-3 font-sans text-base font-bold text-navy-950">
+            Master Google Sheet
+          </h3>
+          <p class="mt-1 text-xs leading-relaxed text-zinc-600">
+            {isEditMode
+              ? 'You have Edit Access to the Master Sheet. Modify Roster, Schedule calls, Absences, Concerts, and Choir Config in real time.'
+              : 'You have View Access to the Master Sheet. View the full choir roster, rehearsal calendar calls, and season plans directly in Google Sheets.'}
+          </p>
+
+          <div class="mt-3 flex flex-wrap gap-1 text-[11px] text-zinc-500">
+            <span class="rounded bg-zinc-100 px-2 py-0.5 font-mono">Roster</span>
+            <span class="rounded bg-zinc-100 px-2 py-0.5 font-mono">Schedule</span>
+            <span class="rounded bg-zinc-100 px-2 py-0.5 font-mono">Absences</span>
+            <span class="rounded bg-zinc-100 px-2 py-0.5 font-mono">Concerts</span>
+            <span class="rounded bg-zinc-100 px-2 py-0.5 font-mono">Config</span>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-emerald-100/80">
+          <a
+            href={masterSheetUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class:list={[
+              'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold shadow-xs transition',
+              isEditMode
+                ? 'bg-emerald-700 text-white hover:bg-emerald-800'
+                : 'border border-zinc-200 bg-white text-navy-950 hover:border-navy-900 hover:bg-zinc-50',
+            ]}
+          >
+            <span>{isEditMode ? 'Edit Master Sheet in Google Sheets' : 'View Master Sheet in Google Sheets'}</span>
+            <span class={isEditMode ? 'text-emerald-200' : 'text-zinc-400'}>↗</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+)}

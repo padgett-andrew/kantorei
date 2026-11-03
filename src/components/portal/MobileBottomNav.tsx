@@ -3,6 +3,9 @@ import {
   BookOpen,
   Calendar,
   CheckSquare,
+  ExternalLink,
+  FileSpreadsheet,
+  FolderOpen,
   LogOut,
   MoreHorizontal,
   Music,
@@ -17,6 +20,9 @@ interface Props {
   isAdmin: boolean;
   singerName: string;
   voicePart: string;
+  repertoireDriveUrl?: string;
+  masterSheetUrl?: string;
+  isSheetAdmin?: boolean;
 }
 
 export default function MobileBottomNav({
@@ -24,6 +30,9 @@ export default function MobileBottomNav({
   isAdmin,
   singerName,
   voicePart,
+  repertoireDriveUrl,
+  masterSheetUrl,
+  isSheetAdmin = isAdmin,
 }: Props) {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
@@ -93,6 +102,51 @@ export default function MobileBottomNav({
                     <ShieldCheck className="h-4 w-4" />
                   </span>
                   <span>Roll Call &amp; Roster Admin</span>
+                </a>
+              )}
+
+              {repertoireDriveUrl && (
+                <a
+                  href={repertoireDriveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-2xl p-3 text-sm font-semibold text-zinc-800 transition hover:bg-amber-50/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                      <FolderOpen className="h-4 w-4" />
+                    </span>
+                    <span>Music Drive Folder</span>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-zinc-400" />
+                </a>
+              )}
+
+              {masterSheetUrl && (
+                <a
+                  href={masterSheetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-2xl p-3 text-sm font-semibold text-zinc-800 transition hover:bg-emerald-50/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                      <FileSpreadsheet className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <span>Master Google Sheet</span>
+                      <span
+                        className={`ml-2 rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider ${
+                          isSheetAdmin
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-zinc-100 text-zinc-600'
+                        }`}
+                      >
+                        {isSheetAdmin ? 'Edit' : 'View'}
+                      </span>
+                    </div>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-zinc-400" />
                 </a>
               )}
 

@@ -4,4 +4,5 @@ export * from './calendar';
 export * from './sheets';
 export * from './mutations';
 export * from './drive';
+export * from './workspace-links';
 

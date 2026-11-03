@@ -3,7 +3,7 @@ import '../styles/global.css';
 import PortalNav from '../components/portal/PortalNav.astro';
 import DevPersonaSwitcher from '../components/portal/DevPersonaSwitcher';
 import MobileBottomNav from '../components/portal/MobileBottomNav';
-import { getPortalConfig, getRoster } from '../lib/google';
+import { getPortalConfig, getRoster, getWorkspaceLinks } from '../lib/google';
 
 interface Props {
   title: string;
@@ -19,6 +19,8 @@ if (!singer) {
 const config = await getPortalConfig(Astro.locals);
 const choirName = config.Choir_Name || 'Kantorei';
 const isDevPreview = Boolean(Astro.locals.isDevPreview);
+const isAdmin = singer.role === 'Admin';
+const workspace = getWorkspaceLinks(isAdmin, config, Astro.locals);
 
 let devPersonas: { email: string; label: string }[] = [];
 if (isDevPreview) {
@@ -66,21 +68,77 @@ if (isDevPreview) {
       rel="stylesheet"
     />
   </head>
-  <body class="min-h-screen bg-ivory-50/60 text-zinc-900 antialiased">
-    {isDevPreview && (
-      <DevPersonaSwitcher client:load currentSinger={singer} personas={devPersonas} />
-    )}
-    <PortalNav singer={singer} choirName={choirName} currentPath={Astro.url.pathname} />
-    <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
-      <slot />
-    </main>
+  <body class="min-h-screen bg-ivory-50/60 text-zinc-900 antialiased flex flex-col justify-between">
+    <div>
+      {isDevPreview && (
+        <DevPersonaSwitcher client:load currentSinger={singer} personas={devPersonas} />
+      )}
+      <PortalNav
+        singer={singer}
+        choirName={choirName}
+        currentPath={Astro.url.pathname}
+        repertoireDriveUrl={workspace.repertoireDriveUrl}
+        masterSheetUrl={workspace.masterSheetUrl}
+        isSheetAdmin={isAdmin}
+      />
+      <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
+        <slot />
+      </main>
+    </div>
+
+    <!-- Ensemble Google Workspace Cloud Footer -->
+    <footer class="border-t border-zinc-200/80 bg-white/70 py-6 text-xs text-zinc-500 backdrop-blur-xs pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6">
+      <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6">
+        <div class="flex flex-wrap items-center justify-center gap-2 text-center sm:text-left">
+          <span class="font-semibold text-navy-950">{choirName} Singer Portal</span>
+          <span class="text-zinc-300">·</span>
+          <span>Google Workspace Connected</span>
+          <span class="text-zinc-300">·</span>
+          <span
+            class:list={[
+              'rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+              isAdmin ? 'bg-emerald-100 text-emerald-900' : 'bg-zinc-100 text-zinc-700',
+            ]}
+          >
+            {isAdmin ? 'Admin Edit Access' : 'Singer View Access'}
+          </span>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-4">
+          <a
+            href={workspace.repertoireDriveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 font-medium text-zinc-700 transition hover:text-navy-950"
+            title="Open Repertoire Google Drive folder"
+          >
+            <span>📁 Music Drive Folder</span>
+            <span class="text-zinc-400">↗</span>
+          </a>
+          <span class="text-zinc-300">·</span>
+          <a
+            href={workspace.masterSheetUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 font-medium text-zinc-700 transition hover:text-navy-950"
+            title={isAdmin ? 'Open Master Google Sheet with Edit Access' : 'Open Master Google Sheet with View-Only Access'}
+          >
+            <span>📊 Master Google Sheet ({isAdmin ? 'Edit' : 'View'})</span>
+            <span class="text-zinc-400">↗</span>
+          </a>
+        </div>
+      </div>
+    </footer>
+
     <MobileBottomNav
       client:load
       currentPath={Astro.url.pathname}
       isAdmin={singer.role === 'Admin' || singer.role === 'Section_Leader'}
       singerName={singer.name}
       voicePart={singer.voicePart}
+      repertoireDriveUrl={workspace.repertoireDriveUrl}
+      masterSheetUrl={workspace.masterSheetUrl}
+      isSheetAdmin={isAdmin}
     />
   </body>
 </html>
-

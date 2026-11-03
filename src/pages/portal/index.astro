@@ -10,7 +10,9 @@ import {
   getPortalConfig,
   getRepertoire,
   getSchedule,
+  getWorkspaceLinks,
 } from '../../lib/google';
+import WorkspaceLinksBar from '../../components/portal/WorkspaceLinksBar.astro';
 import { parseSnackEntry } from '../../types/choir';
 import {
   eventTypeBadgeColor,
@@ -27,6 +29,9 @@ const [config, schedule, absences, repertoire, feedToken] = await Promise.all([
   getRepertoire(Astro.locals),
   getCalendarFeedToken(Astro.locals),
 ]);
+
+const isAdmin = singer.role === 'Admin';
+const workspace = getWorkspaceLinks(isAdmin, config, Astro.locals);
 
 const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
 const upcomingEvents = schedule.filter((ev) => ev.date >= today);
@@ -230,6 +235,16 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
           >
             Open Digital Scores ({totalScoreFiles})
           </a>
+          <a
+            href={workspace.repertoireDriveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-white/20"
+            title="Open Repertoire Google Drive folder"
+          >
+            <span>📁 Music Drive</span>
+            <span class="text-zinc-400">↗</span>
+          </a>
           {nextEvent && (
             <QuickLateNoticeModal
               client:load
@@ -364,6 +379,17 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
         </a>
       </div>
     </div>
+
+    <!-- Ensemble Google Workspace: Drive Folders & Master Sheet -->
+    <WorkspaceLinksBar
+      variant="cards"
+      isAdmin={isAdmin}
+      repertoireDriveUrl={workspace.repertoireDriveUrl}
+      masterSheetUrl={workspace.masterSheetUrl}
+      masterSheetMode={workspace.masterSheetMode}
+      masterSheetLabel={workspace.masterSheetLabel}
+      concertDriveFolders={workspace.concertDriveFolders}
+    />
 
     <!-- Full Upcoming Rehearsal & Concert Schedule -->
     <section class="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-2xs">

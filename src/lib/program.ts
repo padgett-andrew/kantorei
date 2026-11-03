@@ -43,6 +43,8 @@ export interface ProgramPiece {
   files: DriveMusicFile[];
   recordings: ProgramRecording[];
   notesHtml: string;
+  /** Google Drive folder ID where this piece's files reside, if known */
+  folderId?: string;
 }
 
 export interface ConcertProgram {
@@ -439,6 +441,7 @@ function matchScore(entryTokens: string[], groupKeys: string[][]): number {
 interface PieceGroup {
   id: string;
   folderTitle?: string;
+  folderId?: string;
   prefixNum: number | null;
   files: DriveMusicFile[];
   keys: string[][];
@@ -527,9 +530,15 @@ function buildSingleProgram(
   // 1. Collect director docs + group media files into pieces
   const docFiles: DriveMusicFile[] = [];
   const groupsById = new Map<string, PieceGroup>();
-  const newGroup = (id: string, folderTitle?: string, prefixNum: number | null = null): PieceGroup => ({
+  const newGroup = (
+    id: string,
+    folderTitle?: string,
+    prefixNum: number | null = null,
+    folderId?: string
+  ): PieceGroup => ({
     id,
     folderTitle,
+    folderId,
     prefixNum,
     files: [],
     keys: [],
@@ -548,7 +557,9 @@ function buildSingleProgram(
     if (media.length === 0) continue;
 
     if (!isRootCollection(piece, concertId, concertTitle)) {
-      const g = groupsById.get(piece.folderId) ?? newGroup(piece.folderId, piece.title);
+      const g =
+        groupsById.get(piece.folderId) ??
+        newGroup(piece.folderId, piece.title, null, piece.folderId);
       for (const variant of extractNameVariants(piece.title)) {
         addKey(g, keyTokens(variant));
       }
@@ -866,6 +877,7 @@ function buildSingleProgram(
     files: sortFiles(g.files),
     recordings: g.recordings,
     notesHtml: g.notes.join('\n'),
+    folderId: g.folderId,
   });
 
   return {

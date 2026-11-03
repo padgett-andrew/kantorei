@@ -1,12 +1,22 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import MusicLibrary, { type LoadedDocPayload } from '../../components/portal/MusicLibrary';
-import { getRepertoire, getRepertoireDocHtml } from '../../lib/google';
+import WorkspaceLinksBar from '../../components/portal/WorkspaceLinksBar.astro';
+import {
+  getPortalConfig,
+  getRepertoire,
+  getRepertoireDocHtml,
+  getWorkspaceLinks,
+} from '../../lib/google';
 import { extractReferenceRecordingsFromHtml } from '../../lib/youtube';
 
 const singer = Astro.locals.singer!;
-const pieces = await getRepertoire(Astro.locals);
+const [config, pieces] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getRepertoire(Astro.locals),
+]);
 const isAdmin = singer.role === 'Admin';
+const workspace = getWorkspaceLinks(isAdmin, config, Astro.locals);
 
 const docFiles = pieces.flatMap((p) => p.files.filter((f) => f.isDoc));
 const initialDocsEntries = await Promise.all(
@@ -26,7 +36,7 @@ const initialDocs: Record<string, LoadedDocPayload> = Object.fromEntries(
 ---
 
 <PortalLayout title="Scores & Audio">
-  <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+  <div class="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
     <div>
       <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
         Digital Music Folder · iPad &amp; Tablet Ready
@@ -44,17 +54,64 @@ const initialDocs: Record<string, LoadedDocPayload> = Object.fromEntries(
         <summary class="cursor-pointer font-semibold text-navy-950">
           Librarian Tip: Concerts & Director Markings
         </summary>
-        <div class="mt-2 space-y-1.5 leading-relaxed">
+        <div class="mt-2 space-y-2 leading-relaxed">
           <p>
             <strong>Markings & YouTube Links:</strong> Drop any <strong>Google Doc</strong> or <strong>Word (<code>.docx</code>)</strong> file into a concert&apos;s Drive folder—it automatically appears at the top of that concert&apos;s section with clickable YouTube reference players!
           </p>
           <p>
             <strong>Overlapping Concerts:</strong> Paste comma-separated Drive folder links in <code class="rounded bg-zinc-100 px-1 py-0.5">Config → Repertoire_Drive_Folder_ID</code> (e.g. <code class="rounded bg-zinc-100 px-1 py-0.5">Día de los Muertos: https://..., Advent: https://...</code>).
           </p>
+          <div class="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px]">
+            <a
+              href={workspace.masterSheetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-semibold text-emerald-700 hover:text-emerald-900 underline inline-flex items-center gap-1"
+            >
+              <span>Edit Master Sheet</span>
+              <span>↗</span>
+            </a>
+            <a
+              href={workspace.repertoireDriveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-semibold text-amber-700 hover:text-amber-900 underline inline-flex items-center gap-1"
+            >
+              <span>Music Drive Folder</span>
+              <span>↗</span>
+            </a>
+          </div>
         </div>
       </details>
     )}
   </div>
 
-  <MusicLibrary client:load singer={singer} pieces={pieces} initialDocs={initialDocs} />
+  <!-- Prominent Google Drive & Master Sheet Action Bar -->
+  <div class="mb-6">
+    <WorkspaceLinksBar
+      variant="banner"
+      isAdmin={isAdmin}
+      repertoireDriveUrl={workspace.repertoireDriveUrl}
+      masterSheetUrl={workspace.masterSheetUrl}
+      masterSheetMode={workspace.masterSheetMode}
+      masterSheetLabel={workspace.masterSheetLabel}
+      concertDriveFolders={workspace.concertDriveFolders}
+      title="Music Google Drive & Master Sheet"
+      subtitle={
+        isAdmin
+          ? 'Admins have Edit Access to the Master Sheet; singers have View Access.'
+          : 'Direct links to the Google Drive music folders and view-only Master Sheet.'
+      }
+    />
+  </div>
+
+  <MusicLibrary
+    client:load
+    singer={singer}
+    pieces={pieces}
+    initialDocs={initialDocs}
+    repertoireDriveUrl={workspace.repertoireDriveUrl}
+    masterSheetUrl={workspace.masterSheetUrl}
+    masterSheetMode={workspace.masterSheetMode}
+  />
 </PortalLayout>

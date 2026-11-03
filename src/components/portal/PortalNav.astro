@@ -6,9 +6,20 @@ interface Props {
   singer: Singer;
   choirName: string;
   currentPath: string;
+  repertoireDriveUrl?: string;
+  masterSheetUrl?: string;
+  isSheetAdmin?: boolean;
 }
 
-const { singer, choirName, currentPath } = Astro.props;
+const {
+  singer,
+  choirName,
+  currentPath,
+  repertoireDriveUrl = 'https://drive.google.com/drive/folders/1tIPYJBkibVLjQOaGSzZ2y7L9UOTNOyJc',
+  masterSheetUrl = 'https://docs.google.com/spreadsheets',
+  isSheetAdmin = singer.role === 'Admin',
+} = Astro.props;
+
 const showAdminTab = singer.role === 'Admin' || singer.role === 'Section_Leader';
 const isOnLeave = singer.status === 'On_Leave';
 
@@ -43,7 +54,7 @@ const badgeClass = voicePartBadgeColor(singer.voicePart);
         </span>
       </a>
 
-      <div class="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+      <div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
         <div class="flex items-center gap-1.5">
           <span class="hidden text-sm font-semibold text-zinc-800 md:inline">{singer.name}</span>
           <span class={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${badgeClass}`}>
@@ -60,6 +71,37 @@ const badgeClass = voicePartBadgeColor(singer.voicePart);
             </span>
           )}
         </div>
+
+        <!-- Google Drive & Master Sheet Direct Links (Desktop) -->
+        <a
+          href={repertoireDriveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hidden sm:inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+          title="Open Repertoire Google Drive folder"
+        >
+          <span>📁 Drive</span>
+          <span class="text-zinc-400">↗</span>
+        </a>
+
+        <a
+          href={masterSheetUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hidden sm:inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+          title={isSheetAdmin ? 'Open Master Google Sheet with Edit Access' : 'Open Master Google Sheet with View Access'}
+        >
+          <span>📊 Sheet</span>
+          <span
+            class:list={[
+              'rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider',
+              isSheetAdmin ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-100 text-zinc-600',
+            ]}
+          >
+            {isSheetAdmin ? 'Edit' : 'View'}
+          </span>
+          <span class="text-zinc-400">↗</span>
+        </a>
 
         <a
           href="/"
