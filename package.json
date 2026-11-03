@@ -12,11 +12,12 @@
     "doctor:env:prod": "node scripts/doctor-env.mjs --mode=production",
     "env:sync-dev": "node scripts/sync-dev-vars.mjs",
     "backup:sheets": "node scripts/backup-sheets.mjs",
+    "init:sheets": "node scripts/init-sheets.mjs",
     "setup:key": "node scripts/import-service-account.mjs",
     "verify:google": "node scripts/verify-google.mjs",
     "verify:resend": "node scripts/verify-resend.mjs",
     "deploy:secrets": "node scripts/sync-cloudflare-secrets.mjs",
-    "deploy": "ASTRO_TELEMETRY_DISABLED=1 astro build && wrangler deploy"
+    "deploy": "npm run check && npm run build && wrangler deploy"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.5.0",

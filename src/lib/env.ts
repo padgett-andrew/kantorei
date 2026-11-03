@@ -31,6 +31,8 @@ export const EnvSchema = z.object({
   PUBLIC_TICKET_TAILOR_BOX_OFFICE_URL: z.string().optional(),
   PUBLIC_GIVEBUTTER_ACCOUNT_ID: z.string().optional(),
   PUBLIC_GIVEBUTTER_CAMPAIGN_ID: z.string().optional(),
+
+  SHEET_WEBHOOK_SECRET: z.string().optional(),
 });
 
 export type ValidatedEnv = z.infer<typeof EnvSchema>;
@@ -61,6 +63,7 @@ export const KNOWN_ENV_KEYS = [
   'PUBLIC_TICKET_TAILOR_BOX_OFFICE_URL',
   'PUBLIC_GIVEBUTTER_ACCOUNT_ID',
   'PUBLIC_GIVEBUTTER_CAMPAIGN_ID',
+  'SHEET_WEBHOOK_SECRET',
 ] as const;
 
 export type KnownEnvKey = (typeof KNOWN_ENV_KEYS)[number] | (string & {});
@@ -88,6 +91,7 @@ export const ENV_CLASSIFICATIONS: Record<(typeof KNOWN_ENV_KEYS)[number], EnvCla
   PORTAL_FROM_EMAIL: 'config',
   SANDBOX_OVERRIDE_EMAIL: 'config',
   ABSENCE_NOTIFICATION_EMAILS: 'config',
+  SHEET_WEBHOOK_SECRET: 'secret',
 };
 
 export const DEV_AUTH_SECRET_FALLBACK = 'kantorei-dev-fallback-secret-key-32chars';

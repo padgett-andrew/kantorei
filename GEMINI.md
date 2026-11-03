@@ -79,7 +79,15 @@ Kantorei operates with three clear environment tiers governed by `src/lib/env.ts
 - `npm run doctor:env:prod`: Audits environment against strict production invariants prior to deployment.
 - `npm run env:sync-dev`: Synchronizes `.env` into `.dev.vars` for Cloudflare Workers local preview (`wrangler dev`).
 - `npm run backup:sheets`: Creates an instantaneous JSON snapshot of all Master Sheet tabs in a git-ignored `backups/` directory for disaster recovery.
+- `npm run init:sheets`: Idempotently audits and provisions any missing Master Sheet tabs with canonical headers, frozen row 1, and column styling.
 - `npm run deploy:secrets`: Verifies production `AUTH_SECRET` entropy before uploading secrets via `wrangler secret bulk`.
+
+#### CI/CD & Deployment Pipeline (`.github/workflows/deploy.yml`)
+- **Pull Requests & Non-Main Branches:** Automatically verifies `npm ci`, `npm run check` (TypeScript), and `npm run build` on Node 22.
+- **Push / Merge to `main`:** Runs full verification and deploys worker to Cloudflare using `cloudflare/wrangler-action@v3`.
+- **Required GitHub Secrets:**
+  - `CLOUDFLARE_API_TOKEN`: Cloudflare API Token with Edit Workers permissions.
+  - `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Account ID found on the Workers overview dashboard.
 
 ---
 
@@ -344,6 +352,8 @@ src/
         ├── snacks.ts               # POST: looks up Event_ID live and updates Schedule cell G{row} or H{row}
         ├── roster.ts               # POST/PUT: Admin-only endpoint to add or update a singer row by Email
         ├── seating.ts              # GET/POST/PUT/DELETE: Seating chart layout, drafts & publish status
+        ├── webhooks/
+        │   └── sheet-sync.ts       # POST/GET: Instant push edge cache purge (<100ms) from Google Apps Script
         └── calendar.ics.ts         # GET: HMAC-authenticated subscribable iCalendar feed for Apple/Google/Outlook
 ```
 

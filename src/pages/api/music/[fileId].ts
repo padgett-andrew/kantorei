@@ -19,10 +19,21 @@ function sliceBytesForRange(
   rangeHeader: string | null,
   mimeType: string,
   filename: string,
-  forceDownload: boolean
+  forceDownload: boolean,
+  etag?: string
 ): Response {
   const total = bytes.byteLength;
   const disposition = `${forceDownload ? 'attachment' : 'inline'}; filename="${filename}"`;
+
+  const headers: Record<string, string> = {
+    'Content-Type': mimeType,
+    'Accept-Ranges': 'bytes',
+    'Content-Disposition': disposition,
+    'Cache-Control': 'private, max-age=3600',
+  };
+  if (etag) {
+    headers['ETag'] = etag;
+  }
 
   if (rangeHeader && rangeHeader.startsWith('bytes=')) {
     const match = /bytes=(\d*)-(\d*)/.exec(rangeHeader);
@@ -32,31 +43,21 @@ function sliceBytesForRange(
 
       if (start >= 0 && start <= end && start < total) {
         const chunk = bytes.slice(start, end + 1);
+        headers['Content-Length'] = String(chunk.byteLength);
+        headers['Content-Range'] = `bytes ${start}-${end}/${total}`;
         return new Response(chunk.buffer, {
           status: 206,
-          headers: {
-            'Content-Type': mimeType,
-            'Content-Length': String(chunk.byteLength),
-            'Content-Range': `bytes ${start}-${end}/${total}`,
-            'Accept-Ranges': 'bytes',
-            'Content-Disposition': disposition,
-            'Cache-Control': 'private, max-age=3600',
-          },
+          headers,
         });
       }
     }
   }
 
   const fullCopy = bytes.slice();
+  headers['Content-Length'] = String(total);
   return new Response(fullCopy.buffer, {
     status: 200,
-    headers: {
-      'Content-Type': mimeType,
-      'Content-Length': String(total),
-      'Accept-Ranges': 'bytes',
-      'Content-Disposition': disposition,
-      'Cache-Control': 'private, max-age=3600',
-    },
+    headers,
   });
 }
 
@@ -77,6 +78,7 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
   const format = url.searchParams.get('format');
   const forceDownload = url.searchParams.get('download') === '1';
   const rangeHeader = request.headers.get('range');
+  const ifNoneMatch = request.headers.get('if-none-match')?.trim();
 
   // 1. HTML JSON payload for Director's Markings & Program Notes (Google Docs, .docx, .txt)
   if (format === 'html') {
@@ -120,22 +122,50 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
     if (fileId.startsWith('demo-pdf-') || fileId.startsWith('demo-doc-')) {
       const basePdfName = cleanName.replace(/\.(docx|doc|txt)$/i, '');
       const pdfBytes = generateDemoPdfBytes(requestedName);
+      const etag = `W/"demo-${fileId}-${pdfBytes.byteLength}"`;
+
+      if (ifNoneMatch && (ifNoneMatch === etag || ifNoneMatch === '*')) {
+        return new Response(null, {
+          status: 304,
+          headers: {
+            ETag: etag,
+            'Cache-Control': 'private, max-age=3600',
+            'Accept-Ranges': 'bytes',
+          },
+        });
+      }
+
       return sliceBytesForRange(
         pdfBytes,
         rangeHeader,
         'application/pdf',
         basePdfName.endsWith('.pdf') ? basePdfName : `${basePdfName}.pdf`,
-        forceDownload
+        forceDownload,
+        etag
       );
     }
 
     const wavBytes = generateDemoWavBytes(fileId);
+    const etag = `W/"demo-${fileId}-${wavBytes.byteLength}"`;
+
+    if (ifNoneMatch && (ifNoneMatch === etag || ifNoneMatch === '*')) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ETag: etag,
+          'Cache-Control': 'private, max-age=3600',
+          'Accept-Ranges': 'bytes',
+        },
+      });
+    }
+
     return sliceBytesForRange(
       wavBytes,
       rangeHeader,
       'audio/wav',
       cleanName.endsWith('.wav') ? cleanName : `${cleanName}.wav`,
-      forceDownload
+      forceDownload,
+      etag
     );
   }
 
@@ -143,6 +173,19 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
   try {
     const meta = await getDriveFileMetadata(fileId, locals);
     const isGoogleDoc = meta.mimeType === 'application/vnd.google-apps.document';
+    const etag = `W/"${fileId}-${meta.size ?? 'live'}"`;
+
+    // Fast-path HTTP 304 Not Modified for unchanged scores / audio on iPad & browsers
+    if (ifNoneMatch && (ifNoneMatch === etag || ifNoneMatch === '*')) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ETag: etag,
+          'Cache-Control': 'private, max-age=3600',
+          'Accept-Ranges': 'bytes',
+        },
+      });
+    }
 
     if (isGoogleDoc) {
       const pdfRes = await exportGoogleDocPdfResponse(fileId, locals);
@@ -161,6 +204,7 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
             forceDownload ? 'attachment' : 'inline'
           }; filename="${baseName}.pdf"`,
           'Cache-Control': 'private, max-age=600',
+          ETag: etag,
         },
       });
     }
@@ -204,6 +248,7 @@ export const GET: APIRoute = async ({ params, request, url, locals }) => {
     );
     headers.set('Accept-Ranges', 'bytes');
     headers.set('Cache-Control', 'private, max-age=3600');
+    headers.set('ETag', etag);
 
     const contentLength = driveRes.headers.get('content-length');
     if (contentLength) headers.set('Content-Length', contentLength);

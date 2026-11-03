@@ -48,6 +48,44 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
+  // Edge CSRF Defense: Block cross-origin mutations to API endpoints
+  const isMutatingMethod = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(context.request.method);
+  const isExcludedFromCsrf =
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/webhooks/');
+
+  if (isMutatingMethod && pathname.startsWith('/api/') && !isExcludedFromCsrf) {
+    const secFetchSite = context.request.headers.get('sec-fetch-site');
+    if (secFetchSite === 'cross-site') {
+      return new Response(JSON.stringify({ error: 'Cross-origin mutation forbidden.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const origin = context.request.headers.get('origin');
+    if (origin) {
+      try {
+        const originUrl = new URL(origin);
+        const isLocalDev =
+          import.meta.env.DEV &&
+          (originUrl.hostname === 'localhost' || originUrl.hostname === '127.0.0.1');
+
+        if (!isLocalDev && originUrl.host !== context.url.host) {
+          return new Response(JSON.stringify({ error: 'Origin mismatch forbidden.' }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+      } catch {
+        return new Response(JSON.stringify({ error: 'Invalid origin header.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+  }
+
   // Gate protected /api routes (excluding /api/auth/* and HMAC-verified /api/calendar.ics)
   if (
     pathname.startsWith('/api/') &&
