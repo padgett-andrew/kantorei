@@ -2,10 +2,12 @@ import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-const envPath = resolve(process.cwd(), '.env');
+const targetFile =
+  process.argv.slice(2).find((arg) => !arg.startsWith('--')) || '.env';
+const envPath = resolve(process.cwd(), targetFile);
 
 if (!existsSync(envPath)) {
-  console.error('❌ No .env file found in project root.');
+  console.error(`❌ File not found: ${targetFile}`);
   process.exit(1);
 }
 

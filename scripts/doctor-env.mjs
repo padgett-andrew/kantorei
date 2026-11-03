@@ -25,10 +25,15 @@ const args = process.argv.slice(2);
 const modeArg = args.find((a) => a.startsWith('--mode='))?.split('=')[1]?.toLowerCase();
 const targetMode = modeArg === 'production' || modeArg === 'preview' ? modeArg : 'development';
 
-const dotEnv = loadEnvFile('.env');
+const fileArg =
+  args.find((a) => a.startsWith('--file='))?.split('=')[1] ||
+  args.find((a) => !a.startsWith('--'));
+const targetEnvFile = fileArg || '.env';
+
+const dotEnv = loadEnvFile(targetEnvFile);
 const devVars = loadEnvFile('.dev.vars');
 
-// Precedence: process.env > .env > .dev.vars
+// Precedence: process.env > file > .dev.vars
 const env = { ...devVars, ...dotEnv, ...process.env };
 
 function extractId(raw = '') {
