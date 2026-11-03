@@ -145,6 +145,7 @@ const SCHEMA_SPEC = {
       'TT_Event_Series_ID',
       'Status',
       'Hero_Image_URL',
+      'Box_Office_Note',
     ],
     sampleRows: [
       [
@@ -156,6 +157,7 @@ const SCHEMA_SPEC = {
         'Join us for an evening of choral masterworks.',
         'DEMO_SERIES_ID',
         'On_Sale',
+        '',
         '',
       ],
     ],

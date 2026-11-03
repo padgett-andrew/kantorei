@@ -164,6 +164,7 @@ Powers the public `/` home spotlight and `/concerts` box-office page.
 | `G` | `TT_Event_Series_ID` | `https://www.minnesotaorchestra.org/...` | Ticket Tailor series ID/URL, external partner URL (e.g. `https://www.minnesotaorchestra.org/...`), `FREE`, or `DEMO_SERIES_ID` |
 | `H` | `Status` | `On_Sale` | `Upcoming`, `On_Sale`, `Past` |
 | `I` | `Hero_Image_URL` | `https://...` | Optional banner image URL |
+| `J` | `Box_Office_Note` | `Kantorei joins the Minnesota Orchestra for this special presentation...` | Optional custom box office notice or partner relationship blurb (overrides the default guest ensemble blurb) |
 
 ### Tab 5: `Config` (Range: `Config!A2:B`)
 Key-value settings editable by the board without redeploying code.

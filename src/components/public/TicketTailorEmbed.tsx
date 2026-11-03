@@ -16,6 +16,7 @@ interface Props {
   concertTitle?: string;
   datesDisplay?: string;
   venueName?: string;
+  boxOfficeNote?: string;
 }
 
 export default function TicketTailorEmbed({
@@ -24,6 +25,7 @@ export default function TicketTailorEmbed({
   concertTitle = 'Concert Program',
   datesDisplay = 'Sat (7:30 PM) & Sun (3:00 PM)',
   venueName,
+  boxOfficeNote,
 }: Props) {
   const containersRef = useRef<(HTMLDivElement | null)[]>([]);
   const initializedIndicesRef = useRef<Set<number>>(new Set());
@@ -218,12 +220,16 @@ export default function TicketTailorEmbed({
               <strong className="font-semibold">
                 {isFree ? 'Registration' : 'Tickets'} Managed by {providerName}
               </strong>
-              <p className="mt-1 text-xs text-amber-900/90">
-                Kantorei is performing as a featured guest ensemble for this concert. All{' '}
-                {isFree
-                  ? 'reservations, seating, and admission policies'
-                  : 'ticket sales, seat selections, subscriber discounts, and box office policies'}{' '}
-                are administered directly by {providerName}.
+              <p className="mt-1 text-xs leading-relaxed text-amber-900/90">
+                {boxOfficeNote || (
+                  <>
+                    Kantorei is performing as a featured guest ensemble for this concert. All{' '}
+                    {isFree
+                      ? 'reservations, seating, and admission policies'
+                      : 'ticket sales, seat selections, subscriber discounts, and box office policies'}{' '}
+                    are administered directly by {providerName}.
+                  </>
+                )}
               </p>
             </div>
           </div>

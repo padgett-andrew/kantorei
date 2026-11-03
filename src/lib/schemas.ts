@@ -152,54 +152,47 @@ export const AbsenceRowSchema = z
   );
 
 export const ConcertRowSchema = z
-  .tuple([
-    trimmedString.pipe(z.string().min(1, 'Missing Concert_Slug')),
-    trimmedString.pipe(z.string().min(1, 'Missing Concert Title')),
-    trimmedString,
-    trimmedString,
-    trimmedString,
-    trimmedString,
-    trimmedString,
-    trimmedString,
-    trimmedString,
-  ])
-  .transform(
-    ([
+  .array(trimmedString)
+  .refine((arr) => arr.length >= 7, { message: 'Concert row must have at least 7 columns' })
+  .refine((arr) => Boolean(arr[0] && arr[0].trim().length > 0), { message: 'Missing Concert_Slug' })
+  .refine((arr) => Boolean(arr[1] && arr[1].trim().length > 0), { message: 'Missing Concert Title' })
+  .transform((row): ConcertEvent => {
+    const slug = row[0] || '';
+    const title = row[1] || '';
+    const datesDisplay = row[2] || '';
+    const venueName = row[3] || '';
+    const venueAddress = row[4] || '';
+    const description = row[5] || '';
+    const ttEventSeriesId = row[6] || 'DEMO_SERIES_ID';
+    const rawStatus = row[7] || '';
+    const heroImageUrl = row[8] || '';
+    const boxOfficeNote = row[9] || undefined;
+
+    const normalizedStatus =
+      CONCERT_STATUSES.find(
+        (s) => s.toLowerCase() === rawStatus.replace(/\s+/g, '_').toLowerCase()
+      ) ?? 'Upcoming';
+
+    const { datesDisplay: processedDates, performances } = processConcertDates(
+      datesDisplay,
+      venueName,
+      venueAddress
+    );
+
+    return {
       slug,
       title,
-      datesDisplay,
+      datesDisplay: processedDates || datesDisplay,
       venueName,
       venueAddress,
       description,
-      ttEventSeriesId,
-      rawStatus,
-      heroImageUrl,
-    ]): ConcertEvent => {
-      const normalizedStatus =
-        CONCERT_STATUSES.find(
-          (s) => s.toLowerCase() === rawStatus.replace(/\s+/g, '_').toLowerCase()
-        ) ?? 'Upcoming';
-
-      const { datesDisplay: processedDates, performances } = processConcertDates(
-        datesDisplay,
-        venueName,
-        venueAddress
-      );
-
-      return {
-        slug,
-        title,
-        datesDisplay: processedDates || datesDisplay,
-        venueName,
-        venueAddress,
-        description,
-        ttEventSeriesId: ttEventSeriesId || 'DEMO_SERIES_ID',
-        status: normalizedStatus,
-        heroImageUrl: sanitizeHeroImageUrl(heroImageUrl),
-        performances: performances.length > 0 ? performances : undefined,
-      };
-    }
-  );
+      ttEventSeriesId: ttEventSeriesId || 'DEMO_SERIES_ID',
+      status: normalizedStatus,
+      heroImageUrl: sanitizeHeroImageUrl(heroImageUrl),
+      performances: performances.length > 0 ? performances : undefined,
+      boxOfficeNote: boxOfficeNote ? boxOfficeNote.trim() : undefined,
+    };
+  });
 
 
 export const MediaRowSchema = z

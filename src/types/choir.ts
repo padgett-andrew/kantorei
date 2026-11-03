@@ -111,6 +111,7 @@ export interface ConcertEvent {
   status: ConcertStatus;
   heroImageUrl?: string;
   performances?: ConcertPerformance[];
+  boxOfficeNote?: string;
 }
 
 export interface MediaItem {
