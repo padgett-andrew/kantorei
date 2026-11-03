@@ -96,7 +96,7 @@ npm run deploy           # Runs typecheck + build + Cloudflare deployment in one
 │   ├── sync-dev-vars.mjs       # .env -> .dev.vars synchronizer
 │   └── sync-cloudflare-secrets.mjs # Validated Cloudflare secret uploader
 ├── setup/
-│   └── google-apps-script.js   # Ready-to-paste instant push webhook (<100ms updates)
+│   └── kantorei-master-sheet-starter.xlsx # Starter Master Google Sheet template
 ├── src/
 │   ├── middleware.ts           # Route guard, singer hydration, CSRF defense & security headers
 │   ├── lib/

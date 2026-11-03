@@ -352,8 +352,6 @@ src/
         ├── snacks.ts               # POST: looks up Event_ID live and updates Schedule cell G{row} or H{row}
         ├── roster.ts               # POST/PUT: Admin-only endpoint to add or update a singer row by Email
         ├── seating.ts              # GET/POST/PUT/DELETE: Seating chart layout, drafts & publish status
-        ├── webhooks/
-        │   └── sheet-sync.ts       # POST/GET: Instant push edge cache purge (<100ms) from Google Apps Script
         └── calendar.ics.ts         # GET: HMAC-authenticated subscribable iCalendar feed for Apple/Google/Outlook
 ```
 

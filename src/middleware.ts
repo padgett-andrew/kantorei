@@ -50,9 +50,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Edge CSRF Defense: Block cross-origin mutations to API endpoints
   const isMutatingMethod = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(context.request.method);
-  const isExcludedFromCsrf =
-    pathname.startsWith('/api/auth/') ||
-    pathname.startsWith('/api/webhooks/');
+  const isExcludedFromCsrf = pathname.startsWith('/api/auth/');
 
   if (isMutatingMethod && pathname.startsWith('/api/') && !isExcludedFromCsrf) {
     const secFetchSite = context.request.headers.get('sec-fetch-site');

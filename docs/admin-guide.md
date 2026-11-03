@@ -25,7 +25,7 @@ The entire Kantorei website and Singer Portal are powered by **Google Workspace 
 * **The Master Google Sheet** is your database. Editing a cell in Google Sheets updates the website and singer portal.
 * **Google Drive** holds all sheet music PDFs, audio rehearsal tracks, and director markings docs.
 * **Google Calendar** (optional) allows the Artistic Director to post rehearsals directly from their phone or computer.
-* **Cloudflare Workers** caches data for fast loading worldwide. Changes appear within 60 seconds automatically, or in **under 100 milliseconds** if the instant webhook is installed.
+* **Cloudflare Workers** caches data for fast loading worldwide. Changes appear within 60 seconds automatically on the next page refresh (or immediately if an Admin clicks the sync button).
 
 ---
 
@@ -183,9 +183,8 @@ Controls the recordings and video showcase at `/media`:
 3. If they use a Gmail or Google Workspace account, they can use the 1-click **"Continue with Google"** button instead.
 
 ### "I edited a cell in Google Sheets, but the website hasn't updated yet."
-* Cloudflare caches sheets for up to **60 seconds** to ensure zero-lag page loads.
-* If you have the instant webhook installed (see [`setup/google-apps-script.js`](../setup/google-apps-script.js)), updates appear within **100 milliseconds**.
-* As an Admin, you can also click the **"Sync Calendar & Sheet"** button at the top of `/portal`.
+* Cloudflare caches sheets for up to **60 seconds** to ensure lightning-fast page loads. Simply refresh the page after 60 seconds.
+* As an Admin, you can also click the **"Sync Calendar & Sheet"** button at the top of `/portal` to fetch the changes immediately.
 
 ### "A yellow banner says 'Data Health Warning' on my portal."
 * Kantorei uses strict validation to protect against accidental typos. If a cell in `Roster` has an invalid voice part (e.g. `Bass` instead of `B1`) or a missing email, the portal safely skips that row and alerts Admins in the banner so you can fix the typo.
