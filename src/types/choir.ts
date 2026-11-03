@@ -1,4 +1,9 @@
-export const VOICE_PARTS = ['S1', 'S2', 'A1', 'A2', 'T1', 'T2', 'B1', 'B2'] as const;
+export const VOICE_PARTS = [
+  'S', 'S1', 'S2',
+  'A', 'A1', 'A2',
+  'T', 'T1', 'T2',
+  'B', 'B1', 'B2',
+] as const;
 export const SECTION_GROUPS = ['Soprano', 'Alto', 'Tenor', 'Bass'] as const;
 export const MEMBER_ROLES = ['Singer', 'Section_Leader', 'Admin'] as const;
 export const SINGER_STATUSES = ['Active', 'On_Leave', 'Inactive'] as const;
@@ -134,11 +139,68 @@ export interface PortalConfig {
   YouTube_URL: string;
   Instagram_URL: string;
   Facebook_URL: string;
+  // Official Contact Info
+  Contact_Email?: string;
+  Contact_Phone?: string;
+  Contact_Address?: string;
+  // Dynamic Content & Statements (Editable via Google Sheet Config tab)
+  Mission_Statement?: string;
+  Vision_Statement?: string;
+  Hero_Tagline?: string;
+  Hero_Subtitle?: string;
+  About_Header_Title?: string;
+  About_History_P1?: string;
+  About_History_P2?: string;
+  Auditions_Blurb?: string;
+  Auditions_Timing_Note?: string;
+  Auditions_Rehearsal_Cadence?: string;
+  Auditions_Process_Note?: string;
+  Auditions_Form_URL?: string;
+  Auditions_Google_Form_URL?: string;
+  Support_Hero_Title?: string;
+  Support_Hero_Subtitle?: string;
+  Support_Gala_Blurb?: string;
+  Tax_Exempt_Disclaimer?: string;
   [key: string]: string | undefined;
 }
 
+export interface BoardMember {
+  name: string;
+  role: string;
+  order: number;
+  bioNotes?: string;
+  active: boolean;
+}
+
+export interface LeadershipMember {
+  name: string;
+  title: string;
+  bio: string;
+  order: number;
+  email?: string;
+  imageUrl?: string;
+  active: boolean;
+}
+
+export interface GivingTier {
+  name: string;
+  range: string;
+  description: string;
+  order: number;
+  active: boolean;
+}
+
 export interface SheetWarning {
-  tab: 'Roster' | 'Schedule' | 'Absences' | 'Concerts' | 'Media' | 'Seating_Charts';
+  tab:
+    | 'Roster'
+    | 'Schedule'
+    | 'Absences'
+    | 'Concerts'
+    | 'Media'
+    | 'Seating_Charts'
+    | 'Board'
+    | 'Leadership'
+    | 'Giving_Tiers';
   rowNumber: number;
   message: string;
 }
@@ -163,11 +225,67 @@ export interface RepertoirePiece {
   files: DriveMusicFile[];
 }
 
-export function inferSectionGroup(voicePart: VoicePart): SectionGroup {
-  if (voicePart.startsWith('S')) return 'Soprano';
-  if (voicePart.startsWith('A')) return 'Alto';
-  if (voicePart.startsWith('T')) return 'Tenor';
+export function inferSectionGroup(voicePart: VoicePart | string): SectionGroup {
+  const norm = String(voicePart || '').trim().toUpperCase();
+  if (norm.startsWith('S')) return 'Soprano';
+  if (norm.startsWith('A')) return 'Alto';
+  if (norm.startsWith('T')) return 'Tenor';
   return 'Bass';
+}
+
+export function formatVoicePartLabel(vp: VoicePart | string): string {
+  switch (vp) {
+    case 'S':
+      return 'S — Soprano (General)';
+    case 'S1':
+      return 'S1 — Soprano 1';
+    case 'S2':
+      return 'S2 — Soprano 2';
+    case 'A':
+      return 'A — Alto (General)';
+    case 'A1':
+      return 'A1 — Alto 1';
+    case 'A2':
+      return 'A2 — Alto 2';
+    case 'T':
+      return 'T — Tenor (General)';
+    case 'T1':
+      return 'T1 — Tenor 1';
+    case 'T2':
+      return 'T2 — Tenor 2';
+    case 'B':
+      return 'B — Bass (General)';
+    case 'B1':
+      return 'B1 — Bass 1';
+    case 'B2':
+      return 'B2 — Bass 2';
+    default:
+      return String(vp || '');
+  }
+}
+
+export function normalizeVoicePart(raw: unknown): VoicePart | null {
+  if (typeof raw !== 'string') return null;
+  const cleaned = raw.trim().toUpperCase().replace(/[\s_-]+/g, '');
+  if (!cleaned) return null;
+
+  if ((VOICE_PARTS as readonly string[]).includes(cleaned)) {
+    return cleaned as VoicePart;
+  }
+
+  // Common full name and variation handling
+  if (/^SOPRANO1?$/i.test(cleaned)) return cleaned.endsWith('1') ? 'S1' : 'S';
+  if (/^SOPRANO2$/i.test(cleaned)) return 'S2';
+  if (/^ALTO1?$/i.test(cleaned)) return cleaned.endsWith('1') ? 'A1' : 'A';
+  if (/^ALTO2$/i.test(cleaned)) return 'A2';
+  if (/^TENOR1?$/i.test(cleaned)) return cleaned.endsWith('1') ? 'T1' : 'T';
+  if (/^TENOR2$/i.test(cleaned)) return 'T2';
+  if (/^BASS1?$/i.test(cleaned)) return cleaned.endsWith('1') ? 'B1' : 'B';
+  if (/^BASS2$/i.test(cleaned)) return 'B2';
+  if (/^BARITONE$/i.test(cleaned)) return 'B1';
+  if (/^MEZZO(SOPRANO)?$/i.test(cleaned)) return 'A1';
+
+  return null;
 }
 
 export const SEATING_CHART_STATUSES = ['Draft', 'Published'] as const;

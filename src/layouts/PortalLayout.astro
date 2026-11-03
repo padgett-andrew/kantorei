@@ -84,7 +84,6 @@ if (isDevPreview) {
         singer={singer}
         choirName={choirName}
         currentPath={Astro.url.pathname}
-        repertoireDriveUrl={workspace.repertoireDriveUrl}
         masterSheetUrl={workspace.masterSheetUrl}
         isSheetAdmin={isAdmin}
       />
@@ -112,27 +111,18 @@ if (isDevPreview) {
         </div>
 
         <div class="flex flex-wrap items-center justify-center gap-4">
-          <a
-            href={workspace.repertoireDriveUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 font-medium text-zinc-700 transition hover:text-navy-950"
-            title="Open Repertoire Google Drive folder"
-          >
-            <span>📁 Music Drive Folder</span>
-            <span class="text-zinc-400">↗</span>
-          </a>
-          <span class="text-zinc-300">·</span>
-          <a
-            href={workspace.masterSheetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 font-medium text-zinc-700 transition hover:text-navy-950"
-            title={isAdmin ? 'Open Master Google Sheet with Edit Access' : 'Open Master Google Sheet with View-Only Access'}
-          >
-            <span>📊 Master Google Sheet ({isAdmin ? 'Edit' : 'View'})</span>
-            <span class="text-zinc-400">↗</span>
-          </a>
+          {isAdmin && (
+            <a
+              href={workspace.masterSheetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 font-medium text-zinc-700 transition hover:text-navy-950"
+              title="Open Master Google Sheet with Edit Access"
+            >
+              <span>📊 Master Google Sheet (Edit)</span>
+              <span class="text-zinc-400">↗</span>
+            </a>
+          )}
         </div>
       </div>
     </footer>
@@ -143,7 +133,6 @@ if (isDevPreview) {
       isAdmin={singer.role === 'Admin' || singer.role === 'Section_Leader'}
       singerName={singer.name}
       voicePart={singer.voicePart}
-      repertoireDriveUrl={workspace.repertoireDriveUrl}
       masterSheetUrl={workspace.masterSheetUrl}
       isSheetAdmin={isAdmin}
       calendarUrl={calendarUrl}

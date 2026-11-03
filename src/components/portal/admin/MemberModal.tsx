@@ -2,7 +2,6 @@ import type { SyntheticEvent } from 'react';
 import { Check, X } from 'lucide-react';
 import {
   MEMBER_ROLES,
-  VOICE_PARTS,
   inferSectionGroup,
   type MemberRole,
   type SectionGroup,
@@ -101,16 +100,36 @@ export default function MemberModal({
               </label>
               <select
                 value={formState.voicePart}
-                onChange={(e) =>
-                  onChange({ ...formState, voicePart: e.target.value as VoicePart })
-                }
+                onChange={(e) => {
+                  const vp = e.target.value as VoicePart;
+                  onChange({
+                    ...formState,
+                    voicePart: vp,
+                    sectionGroup: inferSectionGroup(vp),
+                  });
+                }}
                 className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm"
               >
-                {VOICE_PARTS.map((vp) => (
-                  <option key={vp} value={vp}>
-                    {vp} ({inferSectionGroup(vp)})
-                  </option>
-                ))}
+                <optgroup label="Soprano">
+                  <option value="S">S — Soprano (General)</option>
+                  <option value="S1">S1 — Soprano 1</option>
+                  <option value="S2">S2 — Soprano 2</option>
+                </optgroup>
+                <optgroup label="Alto">
+                  <option value="A">A — Alto (General)</option>
+                  <option value="A1">A1 — Alto 1</option>
+                  <option value="A2">A2 — Alto 2</option>
+                </optgroup>
+                <optgroup label="Tenor">
+                  <option value="T">T — Tenor (General)</option>
+                  <option value="T1">T1 — Tenor 1</option>
+                  <option value="T2">T2 — Tenor 2</option>
+                </optgroup>
+                <optgroup label="Bass">
+                  <option value="B">B — Bass (General)</option>
+                  <option value="B1">B1 — Bass 1</option>
+                  <option value="B2">B2 — Bass 2</option>
+                </optgroup>
               </select>
             </div>
 

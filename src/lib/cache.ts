@@ -10,6 +10,9 @@ export type CacheTag =
   | 'instagram_media'
   | 'media'
   | 'config'
+  | 'board'
+  | 'leadership'
+  | 'giving_tiers'
   | 'music'
   | 'seating_charts'
   | `repertoire-doc:${string}`

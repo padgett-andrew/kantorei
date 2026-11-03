@@ -5,7 +5,6 @@ import {
   CheckSquare,
   ExternalLink,
   FileSpreadsheet,
-  FolderOpen,
   Layers,
   LogOut,
   MoreHorizontal,
@@ -31,7 +30,6 @@ export default function MobileBottomNav({
   isAdmin,
   singerName,
   voicePart,
-  repertoireDriveUrl,
   masterSheetUrl,
   isSheetAdmin = isAdmin,
   calendarUrl,
@@ -140,24 +138,7 @@ export default function MobileBottomNav({
                 </a>
               )}
 
-              {repertoireDriveUrl && (
-                <a
-                  href={repertoireDriveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between rounded-2xl p-3 text-sm font-semibold text-zinc-800 transition hover:bg-amber-50/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
-                      <FolderOpen className="h-4 w-4" />
-                    </span>
-                    <span>Music Drive Folder</span>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-zinc-400" />
-                </a>
-              )}
-
-              {masterSheetUrl && (
+              {isSheetAdmin && masterSheetUrl && (
                 <a
                   href={masterSheetUrl}
                   target="_blank"
@@ -170,14 +151,8 @@ export default function MobileBottomNav({
                     </span>
                     <div>
                       <span>Master Google Sheet</span>
-                      <span
-                        className={`ml-2 rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider ${
-                          isSheetAdmin
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-zinc-100 text-zinc-600'
-                        }`}
-                      >
-                        {isSheetAdmin ? 'Edit' : 'View'}
+                      <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider text-emerald-800">
+                        Edit
                       </span>
                     </div>
                   </div>

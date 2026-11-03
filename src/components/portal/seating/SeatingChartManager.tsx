@@ -2090,13 +2090,7 @@ export default function SeatingChartManager({
                                 email: seat.singerEmail!,
                                 name: seat.singerName || 'Singer',
                                 voicePart: voicePart as VoicePart,
-                                sectionGroup: (voicePart.startsWith('S')
-                                  ? 'Soprano'
-                                  : voicePart.startsWith('A')
-                                  ? 'Alto'
-                                  : voicePart.startsWith('T')
-                                  ? 'Tenor'
-                                  : 'Bass'),
+                                sectionGroup: inferSectionGroup(voicePart as VoicePart),
                                 role: 'Singer',
                                 phone: '',
                                 active: true,

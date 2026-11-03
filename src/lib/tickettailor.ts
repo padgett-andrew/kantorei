@@ -7,6 +7,9 @@ export interface ResolvedTicketTailorEntry {
   label: string;
   widgetUrl: string;
   publicUrl: string;
+  isExternal?: boolean;
+  isFree?: boolean;
+  externalProvider?: string;
 }
 
 const resolvedUrlCache = new Map<string, { widgetUrl: string; expiresAt: number }>();
@@ -61,13 +64,115 @@ async function resolveEventPageToWidgetUrl(eventPageUrl: string): Promise<string
   return eventPageUrl;
 }
 
+/**
+ * Detects an arts presenter, ticketing platform, or venue organization name from an external URL.
+ */
+export function detectProviderFromUrl(urlStr: string): string {
+  try {
+    const parsed = new URL(urlStr);
+    const fullHost = parsed.hostname.toLowerCase();
+    // Strip common technical subdomains that don't indicate the actual presenter organization
+    const host = fullHost.replace(
+      /^(?:www|tickets?|boxoffice|secure|events?|buy|order|store|shop|portal|app|tours?)\./,
+      ''
+    );
+
+    // 1. Regional Orchestras, Halls & Twin Cities Arts Partners
+    if (host.includes('minnesotaorchestra')) return 'Minnesota Orchestra';
+    if (host.includes('thespco') || host.includes('spco')) return 'Saint Paul Chamber Orchestra';
+    if (host.includes('ordway')) return 'The Ordway';
+    if (host.includes('schubert')) return 'The Schubert Club';
+    if (host.includes('vocalessence')) return 'VocalEssence';
+    if (host.includes('northrop')) return 'Northrop';
+    if (host.includes('thecedar') || host.includes('thecedar.org')) return 'The Cedar Cultural Center';
+    if (host.includes('fitzgeraldtheater') || host.includes('first-avenue')) return 'The Fitzgerald Theater';
+    if (host.includes('dakotacooks') || host.includes('dakotajazz')) return 'The Dakota';
+    if (host.includes('walkerart')) return 'Walker Art Center';
+    if (host.includes('artsmia')) return 'Minneapolis Institute of Art';
+    if (host.includes('choralarts')) return 'Choral Arts';
+    if (host.includes('dalewarland')) return 'Dale Warland Singers';
+    if (host.includes('lakesareamusic') || host.includes('lamf')) return 'Lakes Area Music Festival';
+    if (host.includes('carnegiehall')) return 'Carnegie Hall';
+    if (host.includes('kennedy-center')) return 'The Kennedy Center';
+    if (host.includes('mpr.org') || host.includes('yourclassical')) return 'Minnesota Public Radio';
+
+    // 2. Twin Cities & Regional Sacred / Cathedral Venues
+    if (host.includes('cathedralsaintpaul') || host.includes('cathedral-stpaul')) return 'Cathedral of Saint Paul';
+    if (host.includes('mary.org') || host.includes('basilicastmary') || host.includes('basilica')) return 'The Basilica of Saint Mary';
+    if (host.includes('cpcstpaul')) return 'Central Presbyterian Church';
+    if (host.includes('westminstermpls')) return 'Westminster Presbyterian Church';
+
+    // 3. Choral Associations
+    if (host.includes('acda.org') || host.includes('acda-mn')) return 'ACDA';
+    if (host.includes('chorusamerica')) return 'Chorus America';
+
+    // 4. Universities & Colleges
+    if (host.includes('umn.edu')) return 'University of Minnesota';
+    if (host.includes('stthomas.edu')) return 'University of St. Thomas';
+    if (host.includes('stolaf.edu')) return 'St. Olaf College';
+    if (host.includes('gustavus.edu')) return 'Gustavus Adolphus College';
+    if (host.includes('cord.edu') || host.includes('concordiacollege')) return 'Concordia College';
+    if (host.includes('csbsju.edu')) return "College of Saint Benedict & Saint John's University";
+    if (host.includes('luther.edu')) return 'Luther College';
+    if (host.includes('macalester.edu')) return 'Macalester College';
+    if (host.includes('augsburg.edu')) return 'Augsburg University';
+    if (host.includes('unwsp.edu')) return 'University of Northwestern – St. Paul';
+
+    // 5. Ticketing Platforms
+    if (host.includes('ticketmaster') || host.includes('livenation')) return 'Ticketmaster';
+    if (host.includes('eventbrite')) return 'Eventbrite';
+    if (host.includes('axs.com') || host.includes('axs.')) return 'AXS';
+    if (host.includes('etix.com')) return 'Etix';
+    if (host.includes('tixr.com')) return 'Tixr';
+    if (host.includes('seatgeek')) return 'SeatGeek';
+    if (host.includes('ovationtix') || host.includes('audienceview')) return 'AudienceView';
+    if (host.includes('brownpapertickets')) return 'Brown Paper Tickets';
+    if (host.includes('citywinery')) return 'City Winery';
+
+    // 6. Generic clean fallback for other domains (e.g. crosstown-arts.org -> "Crosstown Arts")
+    const baseName = host.split('.')[0] || '';
+    if (baseName && baseName !== 'tickets' && baseName !== 'boxoffice') {
+      const words = baseName.split(/[-_]+/).filter(Boolean);
+      return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+  } catch {
+    // ignore
+  }
+  return '';
+}
+
+function isPerformanceTimeLabel(text: string): boolean {
+  return /\b(?:mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december|\d{1,2}:\d{2}|\d{1,2}\s*(?:am|pm)|matinee|evening|night|performance|show)\b/i.test(
+    text
+  );
+}
+
 async function resolveSingleTarget(
   rawTarget: string,
   boxOfficeBaseUrl: string
-): Promise<{ widgetUrl: string; publicUrl: string } | null> {
+): Promise<{
+  widgetUrl: string;
+  publicUrl: string;
+  isExternal?: boolean;
+  isFree?: boolean;
+  externalProvider?: string;
+} | null> {
   const trimmed = rawTarget.trim();
   if (!trimmed || trimmed === 'DEMO' || trimmed === 'DEMO_SERIES_ID') {
     return null;
+  }
+
+  // 0. Free / No tickets / Goodwill admission keywords
+  if (
+    /^(?:FREE|FREE_ADMISSION|DOOR|AT_DOOR|DONATION|NO_TICKETS|UNRESERVED)$/i.test(
+      trimmed
+    )
+  ) {
+    return {
+      widgetUrl: '',
+      publicUrl: '',
+      isFree: true,
+    };
   }
 
   // 1. Pasted <script data-url="https://..."> embed snippet
@@ -140,6 +245,20 @@ async function resolveSingleTarget(
     };
   }
 
+  // 6. External partner box office (e.g. Minnesota Orchestra, SPCO, Ordway, Schubert Club, Eventbrite, etc.)
+  if (/^https?:\/\//i.test(trimmed)) {
+    const provider = detectProviderFromUrl(trimmed);
+    const isFree = /\b(?:free|rsvp|admission|open-seating)\b/i.test(trimmed);
+
+    return {
+      widgetUrl: '',
+      publicUrl: trimmed,
+      isExternal: true,
+      isFree,
+      externalProvider: provider || undefined,
+    };
+  }
+
   return null;
 }
 
@@ -170,20 +289,52 @@ export async function resolveTicketTailorEntries(
       .map((p) => p.trim())
       .filter(Boolean);
 
+  // Check for explicit partner/presenter directive (e.g. "Partner: Minnesota Orchestra" or "Presenter: SPCO")
+  let explicitGlobalProvider = '';
+  const candidateParts: string[] = [];
+
+  for (const part of parts) {
+    const directiveMatch =
+      /^(?:partner|presenter|host|provider|organization|org):\s*(.+)$/i.exec(part);
+    if (directiveMatch) {
+      explicitGlobalProvider = directiveMatch[1].trim();
+      continue;
+    }
+    candidateParts.push(part);
+  }
+
   const resolved = await Promise.all(
-    parts.map(async (part, idx): Promise<ResolvedTicketTailorEntry | null> => {
-      const labeledMatch = /^(.*?):\s*(https?:\/\/\S+|\d+)$/.exec(part);
-      const customLabel =
-        labeledMatch && !/^https?$/i.test(labeledMatch[1]) ? labeledMatch[1].trim() : '';
-      const targetStr = customLabel && labeledMatch ? labeledMatch[2] : part;
+    candidateParts.map(async (part, idx): Promise<ResolvedTicketTailorEntry | null> => {
+      // Support "Label: URL", "[Label] URL", or "(Label) URL"
+      const bracketMatch = /^[\[\(](.*?)[\]\)]\s*(https?:\/\/\S+|\d+)$/.exec(part);
+      const colonMatch = /^(.*?):\s*(https?:\/\/\S+|\d+)$/.exec(part);
+      const matched =
+        bracketMatch ||
+        (colonMatch && !/^https?$/i.test(colonMatch[1]) ? colonMatch : null);
+
+      const customLabel = matched ? matched[1].trim() : '';
+      const targetStr = customLabel && matched ? matched[2] : part;
 
       const res = await resolveSingleTarget(targetStr, boxOfficeBaseUrl);
       if (!res) return null;
 
+      const isTimeLabel = customLabel ? isPerformanceTimeLabel(customLabel) : false;
+      const providerOverride =
+        explicitGlobalProvider ||
+        (!isTimeLabel && customLabel ? customLabel : '') ||
+        res.externalProvider;
+
       return {
-        label: customLabel || defaultLabels[idx] || `Performance ${idx + 1}`,
+        label:
+          (isTimeLabel ? customLabel : '') ||
+          defaultLabels[idx] ||
+          (customLabel && !explicitGlobalProvider ? customLabel : '') ||
+          (res.isFree ? 'Free Admission' : `Performance ${idx + 1}`),
         widgetUrl: res.widgetUrl,
         publicUrl: res.publicUrl,
+        isExternal: res.isExternal,
+        isFree: res.isFree,
+        externalProvider: providerOverride,
       };
     })
   );
@@ -523,6 +674,229 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
       return [];
     }
   });
+}
+
+const MONTH_MAP: Record<string, number> = {
+  jan: 0, january: 0,
+  feb: 1, february: 1,
+  mar: 2, march: 2,
+  apr: 3, april: 3,
+  may: 4,
+  jun: 5, june: 5,
+  jul: 6, july: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9,
+  nov: 10, november: 10,
+  dec: 11, december: 11,
+};
+
+export function parseConcertDateTimestamp(concert: ConcertEvent): number {
+  if (concert.performances && concert.performances.length > 0) {
+    for (const perf of concert.performances) {
+      if (perf.dateDisplay) {
+        const d = new Date(perf.dateDisplay);
+        if (!isNaN(d.getTime())) return d.getTime();
+      }
+    }
+  }
+
+  const raw = concert.datesDisplay || '';
+  const isoMatch = /\b(202\d)-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b/.exec(raw);
+  if (isoMatch) {
+    const d = new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}T12:00:00Z`);
+    if (!isNaN(d.getTime())) return d.getTime();
+  }
+
+  const monthMatch =
+    /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(202\d))?/i.exec(
+      raw
+    );
+
+  if (monthMatch) {
+    const monthKey = monthMatch[1].toLowerCase();
+    const month = MONTH_MAP[monthKey] ?? 0;
+    const day = parseInt(monthMatch[2], 10);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    let year = monthMatch[3] ? parseInt(monthMatch[3], 10) : 0;
+    if (!year) {
+      const currentMonth = now.getMonth();
+      if (currentMonth >= 7) {
+        year = month >= 7 ? currentYear : currentYear + 1;
+      } else {
+        year = month >= 7 ? currentYear - 1 : currentYear;
+      }
+    }
+
+    let hours = 19;
+    let minutes = 30;
+    const timeMatch = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(raw);
+    if (timeMatch) {
+      let h = parseInt(timeMatch[1], 10);
+      const m = parseInt(timeMatch[2], 10);
+      const ampm = timeMatch[3].toLowerCase();
+      if (ampm === 'pm' && h < 12) h += 12;
+      if (ampm === 'am' && h === 12) h = 0;
+      hours = h;
+      minutes = m;
+    }
+
+    const d = new Date(year, month, day, hours, minutes);
+    if (!isNaN(d.getTime())) return d.getTime();
+  }
+
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function extractTicketIdentifiers(c: ConcertEvent): Set<string> {
+  const ids = new Set<string>();
+  const collect = (str?: string) => {
+    if (!str) return;
+    const matches = str.match(/\b(?:\d{5,}|ev_\w+)\b/g);
+    if (matches) {
+      for (const m of matches) ids.add(m);
+    }
+  };
+  collect(c.ttEventSeriesId);
+  collect(c.slug);
+  if (c.performances) {
+    for (const p of c.performances) {
+      collect(p.venueAddress);
+      collect(p.venueName);
+    }
+  }
+  return ids;
+}
+
+function levenshteinDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+export function areSameConcert(a: ConcertEvent, b: ConcertEvent): boolean {
+  // 1. Direct Ticket Tailor numeric ID or event ID overlap (e.g. 2507642)
+  const aIds = extractTicketIdentifiers(a);
+  const bIds = extractTicketIdentifiers(b);
+  if (aIds.size > 0 && bIds.size > 0) {
+    for (const id of aIds) {
+      if (bIds.has(id)) return true;
+    }
+  }
+
+  // 2. Normalized slug or title match
+  const norm = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const aSlug = norm(a.slug);
+  const bSlug = norm(b.slug);
+  const aTitle = norm(a.title);
+  const bTitle = norm(b.title);
+
+  if (aSlug && (aSlug === bSlug || aSlug === bTitle)) return true;
+  if (bSlug && (bSlug === aSlug || bSlug === aTitle)) return true;
+  if (aTitle && aTitle === bTitle) return true;
+
+  // 3. Fuzzy title match (e.g. "aventwithkantorei" vs "adventwithkantorei" = distance 1)
+  if (aTitle && bTitle) {
+    const dist = levenshteinDistance(aTitle, bTitle);
+    const maxLen = Math.max(aTitle.length, bTitle.length);
+    if (dist <= 2 || (maxLen >= 10 && dist <= 3)) {
+      return true;
+    }
+    // Substring containment (e.g. "voicesacrossborders" contained in longer title)
+    if (
+      (aTitle.length >= 8 && bTitle.includes(aTitle)) ||
+      (bTitle.length >= 8 && aTitle.includes(bTitle))
+    ) {
+      return true;
+    }
+  }
+
+  // 4. Same calendar day + shared title keyword
+  const aTime = parseConcertDateTimestamp(a);
+  const bTime = parseConcertDateTimestamp(b);
+  if (
+    aTime !== Number.MAX_SAFE_INTEGER &&
+    bTime !== Number.MAX_SAFE_INTEGER &&
+    Math.abs(aTime - bTime) < 24 * 60 * 60 * 1000
+  ) {
+    const aWords = a.title.toLowerCase().split(/\s+/).filter((w) => w.length >= 4);
+    const bWords = b.title.toLowerCase().split(/\s+/).filter((w) => w.length >= 4);
+    const sharedWord = aWords.some((w) => bWords.includes(w));
+    if (sharedWord) return true;
+  }
+
+  return false;
+}
+
+export function sortConcertsByDate(concerts: ConcertEvent[]): ConcertEvent[] {
+  return [...concerts].sort((a, b) => {
+    const aTime = parseConcertDateTimestamp(a);
+    const bTime = parseConcertDateTimestamp(b);
+    if (aTime !== bTime) {
+      return aTime - bTime;
+    }
+    return a.title.localeCompare(b.title);
+  });
+}
+
+export function mergeAndSortConcerts(
+  ttConcerts: ConcertEvent[],
+  sheetConcerts: ConcertEvent[]
+): ConcertEvent[] {
+  const merged: ConcertEvent[] = [];
+
+  // Start with all Ticket Tailor concerts
+  for (const tt of ttConcerts) {
+    merged.push({ ...tt });
+  }
+
+  // Process Google Sheet concerts
+  for (const sc of sheetConcerts) {
+    const matchIdx = merged.findIndex((existing) => areSameConcert(existing, sc));
+    if (matchIdx === -1) {
+      // New concert only in sheet (e.g. Free concert, Minnesota Orchestra collaboration)
+      merged.push({ ...sc });
+    } else {
+      // Same concert found! Merge them cleanly:
+      // Prefer Google Sheet's curated human titles, descriptions, hero posters, and venues.
+      // Prefer Ticket Tailor's live checkout widget URLs and occurrences.
+      const existing = merged[matchIdx];
+      merged[matchIdx] = {
+        slug: sc.slug || existing.slug,
+        title: sc.title || existing.title, // Fixes any typo in Ticket Tailor (e.g. "Avent")
+        datesDisplay: sc.datesDisplay || existing.datesDisplay,
+        venueName: sc.venueName || existing.venueName,
+        venueAddress: sc.venueAddress || existing.venueAddress,
+        description: sc.description || existing.description,
+        heroImageUrl: sc.heroImageUrl || existing.heroImageUrl,
+        ttEventSeriesId: existing.ttEventSeriesId || sc.ttEventSeriesId,
+        status: existing.status || sc.status,
+        performances:
+          existing.performances && existing.performances.length > 0
+            ? existing.performances
+            : sc.performances,
+      };
+    }
+  }
+
+  return sortConcertsByDate(merged);
 }
 
 

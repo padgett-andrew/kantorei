@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, ExternalLink, Heart, KeyRound, Sparkles, Ticket } from 'lucide-react';
+import {
+  CheckCircle2,
+  ExternalLink,
+  Heart,
+  Info,
+  KeyRound,
+  Sparkles,
+  Ticket,
+} from 'lucide-react';
 import type { ResolvedTicketTailorEntry } from '../../lib/tickettailor';
 
 interface Props {
@@ -7,6 +15,7 @@ interface Props {
   resolvedEntries?: ResolvedTicketTailorEntry[];
   concertTitle?: string;
   datesDisplay?: string;
+  venueName?: string;
 }
 
 export default function TicketTailorEmbed({
@@ -14,8 +23,10 @@ export default function TicketTailorEmbed({
   resolvedEntries = [],
   concertTitle = 'Concert Program',
   datesDisplay = 'Sat (7:30 PM) & Sun (3:00 PM)',
+  venueName,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containersRef = useRef<(HTMLDivElement | null)[]>([]);
+  const initializedIndicesRef = useRef<Set<number>>(new Set());
 
   const performanceOptions = datesDisplay.includes('&')
     ? datesDisplay.split('&').map((s) => s.trim())
@@ -26,7 +37,13 @@ export default function TicketTailorEmbed({
   const isDemo = resolvedEntries.length === 0;
   const activeLiveEntry =
     resolvedEntries[Math.min(selectedPerf, Math.max(0, resolvedEntries.length - 1))];
-  const resolvedUrl = activeLiveEntry?.widgetUrl || '';
+
+  const prevUrlsKey = resolvedEntries.map((e) => e.widgetUrl).join('|');
+  const lastUrlsKeyRef = useRef(prevUrlsKey);
+  if (lastUrlsKeyRef.current !== prevUrlsKey) {
+    lastUrlsKeyRef.current = prevUrlsKey;
+    initializedIndicesRef.current.clear();
+  }
 
   const [showPassInput, setShowPassInput] = useState(false);
   const [passCode, setPassCode] = useState('');
@@ -37,36 +54,198 @@ export default function TicketTailorEmbed({
   const [addOnDonation, setAddOnDonation] = useState<number>(0);
   const [completedOrder, setCompletedOrder] = useState<string | null>(null);
 
+  const handleSelectPerf = (idx: number) => {
+    setSelectedPerf(idx);
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
+    }
+  };
+
   useEffect(() => {
-    if (isDemo || !containerRef.current || !resolvedUrl) return;
-    containerRef.current.innerHTML = '';
+    if (isDemo || resolvedEntries.length === 0) return;
 
-    const widgetDiv = document.createElement('div');
-    widgetDiv.className = 'tt-widget';
+    const initWidget = (idx: number) => {
+      const entry = resolvedEntries[idx];
+      if (!entry?.widgetUrl || entry.isExternal || entry.isFree) return;
+      if (initializedIndicesRef.current.has(idx)) return;
 
-    const fallbackDiv = document.createElement('div');
-    fallbackDiv.className = 'tt-widget-fallback';
-    const link = document.createElement('a');
-    link.href = activeLiveEntry?.publicUrl || resolvedUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.className = 'text-xs font-medium text-zinc-500 underline';
-    link.textContent = 'Loading Ticket Tailor box office…';
-    fallbackDiv.appendChild(link);
-    widgetDiv.appendChild(fallbackDiv);
+      const container = containersRef.current[idx];
+      if (!container) return;
 
-    const script = document.createElement('script');
-    script.src = 'https://cdn.tickettailor.com/js/widgets/min/widget.js';
-    script.setAttribute('data-url', resolvedUrl);
-    script.setAttribute('data-type', 'inline');
-    script.setAttribute('data-inline-minimal', 'true');
-    script.setAttribute('data-inline-show-logo', 'false');
-    script.setAttribute('data-inline-bg-fill', 'false');
-    script.async = true;
+      initializedIndicesRef.current.add(idx);
+      container.innerHTML = '';
 
-    widgetDiv.appendChild(script);
-    containerRef.current.appendChild(widgetDiv);
-  }, [isDemo, resolvedUrl, activeLiveEntry?.publicUrl]);
+      const widgetDiv = document.createElement('div');
+      widgetDiv.className = 'tt-widget';
+
+      const fallbackDiv = document.createElement('div');
+      fallbackDiv.className = 'tt-widget-fallback py-10 text-center';
+      const link = document.createElement('a');
+      link.href = entry.publicUrl || entry.widgetUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = 'text-xs font-medium text-zinc-500 hover:text-navy-950 underline';
+      link.textContent = 'Loading Ticket Tailor box office…';
+      fallbackDiv.appendChild(link);
+      widgetDiv.appendChild(fallbackDiv);
+
+      const script = document.createElement('script');
+      script.src = 'https://cdn.tickettailor.com/js/widgets/min/widget.js';
+      script.setAttribute('data-url', entry.widgetUrl);
+      script.setAttribute('data-type', 'inline');
+      script.setAttribute('data-inline-minimal', 'true');
+      script.setAttribute('data-inline-show-logo', 'false');
+      script.setAttribute('data-inline-bg-fill', 'false');
+      script.async = true;
+
+      widgetDiv.appendChild(script);
+      container.appendChild(widgetDiv);
+    };
+
+    // 1. Immediately initialize the currently selected day
+    initWidget(selectedPerf);
+
+    // 2. Pre-load remaining performance days in the background so day switching is instant
+    const timer = setTimeout(() => {
+      resolvedEntries.forEach((_, idx) => {
+        if (idx !== selectedPerf) {
+          initWidget(idx);
+        }
+      });
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isDemo, resolvedEntries, selectedPerf]);
+
+  if (!isDemo && activeLiveEntry?.isFree) {
+    return (
+      <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/40 p-6 shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 pb-3">
+          <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold uppercase tracking-wider text-emerald-900">
+            Free Admission
+          </span>
+          <span className="text-xs font-medium text-emerald-800">
+            No Advance Ticket Required
+          </span>
+        </div>
+
+        <h4 className="mt-4 font-editorial text-2xl font-bold text-navy-950">
+          Open Seating · Goodwill Offering
+        </h4>
+        <p className="mt-2 text-sm leading-relaxed text-zinc-700">
+          This performance is free and open to the public. Advance reservations are not needed—doors open 30 minutes prior to concert time. Goodwill offerings supporting Kantorei’s artistic and community programs are gratefully accepted at the door.
+        </p>
+
+        {resolvedEntries.length > 1 && (
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {resolvedEntries.map((entry, idx) => (
+              <button
+                key={entry.label || idx}
+                type="button"
+                onClick={() => handleSelectPerf(idx)}
+                className={`cursor-pointer rounded-xl border px-3.5 py-2.5 text-left text-xs font-semibold transition ${
+                  selectedPerf === idx
+                    ? 'border-emerald-800 bg-emerald-800 text-white shadow-2xs'
+                    : 'border-emerald-200 bg-white text-emerald-950 hover:border-emerald-700'
+                }`}
+              >
+                {entry.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (!isDemo && activeLiveEntry?.isExternal) {
+    const providerName =
+      activeLiveEntry.externalProvider ||
+      (() => {
+        try {
+          return new URL(activeLiveEntry.publicUrl).hostname.replace(/^www\./, '');
+        } catch {
+          return venueName || 'Partner Box Office';
+        }
+      })();
+
+    let displayDomain = '';
+    try {
+      displayDomain = new URL(activeLiveEntry.publicUrl).hostname.replace(/^www\./, '');
+    } catch {
+      displayDomain = 'partner box office';
+    }
+
+    const isFree = Boolean(
+      activeLiveEntry.isFree ||
+      /free|rsvp|admission/i.test(activeLiveEntry.label || '')
+    );
+    const actionVerb = isFree ? 'Reserve Tickets' : 'Purchase Tickets';
+    const buttonText = `${actionVerb} via ${providerName}`;
+
+    return (
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xs sm:p-6">
+        {resolvedEntries.length > 1 && (
+          <div className="mb-4">
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 mb-2">
+              Select Performance:
+            </span>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {resolvedEntries.map((entry, idx) => (
+                <button
+                  key={entry.publicUrl || idx}
+                  type="button"
+                  onClick={() => handleSelectPerf(idx)}
+                  className={`cursor-pointer rounded-xl border px-3.5 py-2.5 text-left text-xs font-semibold transition ${
+                    selectedPerf === idx
+                      ? 'border-navy-900 bg-navy-900 text-white shadow-2xs'
+                      : 'border-zinc-300 bg-ivory-50 text-zinc-700 hover:border-navy-900'
+                  }`}
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-4">
+          <div className="flex items-start gap-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+            <div className="text-xs leading-relaxed text-amber-950 sm:text-sm">
+              <strong className="font-semibold">
+                {isFree ? 'Registration' : 'Tickets'} Managed by {providerName}
+              </strong>
+              <p className="mt-1 text-xs text-amber-900/90">
+                Kantorei is performing as a featured guest ensemble for this concert. All{' '}
+                {isFree
+                  ? 'reservations, seating, and admission policies'
+                  : 'ticket sales, seat selections, subscriber discounts, and box office policies'}{' '}
+                are administered directly by {providerName}.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <a
+            href={activeLiveEntry.publicUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold-500 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition hover:bg-copper-600"
+          >
+            {buttonText}
+            <ExternalLink className="h-4 w-4" />
+          </a>
+          <p className="mt-2 text-center text-[11px] text-zinc-500">
+            Secure checkout opens in a new tab on <span className="font-mono">{displayDomain}</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isDemo && activeLiveEntry) {
     return (
@@ -90,9 +269,9 @@ export default function TicketTailorEmbed({
           <div className="mb-4 grid gap-2 sm:grid-cols-2">
             {resolvedEntries.map((entry, idx) => (
               <button
-                key={entry.widgetUrl}
+                key={entry.widgetUrl || idx}
                 type="button"
-                onClick={() => setSelectedPerf(idx)}
+                onClick={() => handleSelectPerf(idx)}
                 className={`cursor-pointer rounded-xl border px-3.5 py-2.5 text-left text-xs font-semibold transition ${
                   selectedPerf === idx
                     ? 'border-navy-900 bg-navy-900 text-white shadow-2xs'
@@ -105,7 +284,25 @@ export default function TicketTailorEmbed({
           </div>
         )}
 
-        <div ref={containerRef} className="min-h-[260px]" />
+        <div className="relative min-h-[300px]">
+          {resolvedEntries.map((entry, idx) => {
+            const isSelected = selectedPerf === idx;
+            return (
+              <div
+                key={entry.widgetUrl || idx}
+                ref={(el) => {
+                  containersRef.current[idx] = el;
+                }}
+                className={
+                  isSelected
+                    ? 'block w-full transition-opacity duration-150'
+                    : 'pointer-events-none absolute inset-0 -z-10 opacity-0 overflow-hidden'
+                }
+                aria-hidden={!isSelected}
+              />
+            );
+          })}
+        </div>
       </div>
     );
   }

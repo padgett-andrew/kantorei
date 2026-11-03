@@ -2,7 +2,7 @@
 import PublicLayout from '../layouts/PublicLayout.astro';
 import LoginCard from '../components/portal/LoginCard';
 import { isDevPreviewEnabled } from '../lib/env';
-import { getRoster } from '../lib/google';
+import { getPortalConfig, getRoster } from '../lib/google';
 
 const errorParam = Astro.url.searchParams.get('error') ?? undefined;
 const nextPath = Astro.url.searchParams.get('next') ?? '/portal';
@@ -13,9 +13,26 @@ if (Astro.locals.singer && !Astro.locals.isDevPreview && !errorParam) {
 }
 
 const devAvailable = isDevPreviewEnabled(Astro.locals);
+const [config, allSingers] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  devAvailable ? getRoster(Astro.locals) : Promise.resolve([]),
+]);
+
+const choirName = config.Choir_Name || 'Kantorei';
+const publicContactEmail = config.Contact_Email || 'info@kantorei.net';
+const auditionsTimingNote =
+  config.Auditions_Timing_Note ||
+  'We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out a roster of singers for the coming season. Auditions are heard by Artistic Director Adam Reinwald and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview. Inquiries and submissions are warmly welcomed year-round. Come sing with us!';
+const auditionsBlurb =
+  config.Auditions_Blurb ||
+  'We welcome inquiries from experienced Twin Cities choral singers across all voice parts who share our commitment to vocal health, independent preparation, and expressive a cappella ensemble singing.';
+const auditionsCadence =
+  config.Auditions_Rehearsal_Cadence ||
+  `${choirName} rehearses Sunday evenings at rotating venues across the Twin Cities metro area.`;
+
 let devPersonas: { email: string; shortLabel: string }[] = [];
 if (devAvailable) {
-  const activeRoster = (await getRoster(Astro.locals)).filter((s) => s.active);
+  const activeRoster = allSingers.filter((s) => s.active);
   const picked = [
     activeRoster.find((s) => s.role === 'Admin'),
     activeRoster.find((s) => s.role === 'Section_Leader'),
@@ -38,28 +55,105 @@ if (devAvailable) {
 }
 ---
 
-<PublicLayout title="Singer Portal Sign-In">
-  <section class="py-16 sm:py-24">
+<PublicLayout title="Singer Portal & Auditions">
+  <section class="py-12 sm:py-20">
     <div class="mx-auto max-w-6xl px-4 sm:px-6">
-      <div class="mx-auto max-w-md text-center mb-8">
+      <div class="mx-auto max-w-2xl text-center mb-10 sm:mb-14">
         <span class="text-xs font-semibold uppercase tracking-[0.2em] text-gold-500">
-          Ensemble Member Access
+          Ensemble Portal & Singer Access
         </span>
-        <h1 class="mt-2 font-editorial text-4xl font-bold text-navy-950">
-          Singer & Section Leader Portal
+        <h1 class="mt-2 font-editorial text-4xl font-bold text-navy-950 sm:text-5xl">
+          Singers of {choirName}
         </h1>
-        <p class="mt-2 text-sm text-zinc-600">
-          Sign in with Google or receive an instant 6-digit login code at the email address listed on the Kantorei Roster.
+        <p class="mt-3 text-sm text-zinc-600 sm:text-base">
+          Sign in to your member portal account or learn how to audition for our upcoming concert season.
         </p>
       </div>
 
-      <LoginCard
-        client:load
-        oauthError={errorParam}
-        nextPath={nextPath}
-        isDevPreviewAvailable={devAvailable}
-        devPersonas={devPersonas}
-      />
+      <div class="grid gap-10 lg:grid-cols-12 lg:items-start">
+        <!-- Current Members: Sign-In Card -->
+        <div class="lg:col-span-7">
+          <div class="mb-4">
+            <span class="text-xs font-bold uppercase tracking-[0.16em] text-navy-900">
+              Current Ensemble Members
+            </span>
+            <h2 class="mt-1 font-editorial text-2xl font-bold text-navy-950">
+              Portal Sign-In
+            </h2>
+            <p class="mt-1 text-xs text-zinc-500">
+              Sign in with your Google account or receive an instant 6-digit login code at your roster email address.
+            </p>
+          </div>
+
+          <LoginCard
+            client:load
+            oauthError={errorParam}
+            nextPath={nextPath}
+            isDevPreviewAvailable={devAvailable}
+            devPersonas={devPersonas}
+          />
+        </div>
+
+        <!-- Prospective Singers: Auditions Information Card -->
+        <div class="space-y-6 lg:col-span-5">
+          <div class="rounded-3xl border border-zinc-200 bg-ivory-100/90 p-6 sm:p-8 shadow-2xs">
+            <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
+              Prospective Singers
+            </span>
+            <h2 class="mt-1.5 font-editorial text-3xl font-bold text-navy-950">
+              Audition for {choirName}
+            </h2>
+
+            <!-- Gentle Timing Reminder -->
+            <div class="mt-4 rounded-2xl border border-gold-300/70 bg-amber-50/80 p-4 text-xs leading-relaxed text-zinc-800">
+              <span class="font-bold text-navy-950">Audition Schedule:</span> {auditionsTimingNote}
+            </div>
+
+            <p class="mt-4 text-xs leading-relaxed text-zinc-700 sm:text-sm">
+              {auditionsBlurb}
+            </p>
+
+            <ul class="mt-4 space-y-2 text-xs text-zinc-600">
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-gold-500">✓</span>
+                <span>{auditionsCadence}</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-gold-500">✓</span>
+                <span>Prepared a cappella selection, basic musicianship checks &amp; interview with Adam Reinwald and section leaders</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-gold-500">✓</span>
+                <span>Accessible participation with zero mandatory singer dues</span>
+              </li>
+            </ul>
+
+            <div class="mt-6 flex flex-col gap-3">
+              <a
+                href="/auditions"
+                class="inline-flex items-center justify-center gap-2 rounded-full bg-gold-500 px-6 py-3 text-center text-xs font-bold uppercase tracking-wider text-white shadow-xs transition hover:bg-copper-600"
+              >
+                Audition Details & Google Form →
+              </a>
+              <a
+                href={`mailto:${publicContactEmail}?subject=${encodeURIComponent(
+                  `${choirName} Audition Inquiry`
+                )}`}
+                class="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-300 bg-white px-6 py-3 text-center text-xs font-bold uppercase tracking-wider text-navy-950 transition hover:bg-zinc-50"
+              >
+                Email Adam Reinwald Directly
+              </a>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-zinc-200 bg-white p-5 text-xs text-zinc-600 shadow-2xs">
+            <span class="font-bold text-navy-950">Questions about auditioning?</span> Contact Artistic Director Adam Reinwald at{' '}
+            <a href={`mailto:${publicContactEmail}`} class="text-navy-900 underline decoration-gold-500 underline-offset-2">
+              {publicContactEmail}
+            </a>.
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </PublicLayout>

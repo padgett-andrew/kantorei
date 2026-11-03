@@ -2,6 +2,8 @@
 import PublicLayout from '../layouts/PublicLayout.astro';
 import TicketTailorEmbed from '../components/public/TicketTailorEmbed';
 import LocationDirectionsButton from '../components/common/LocationDirectionsButton';
+import AddToCalendarButton from '../components/common/AddToCalendarButton';
+import { buildCleanLocationQuery } from '../lib/maps';
 import { getEnv } from '../lib/env';
 import { getConcerts } from '../lib/google';
 import { resolveTicketTailorEntries } from '../lib/tickettailor';
@@ -16,9 +18,12 @@ const activeConcerts = await Promise.all(
   allConcerts
     .filter((c) => c.status === 'On_Sale' || c.status === 'Upcoming')
     .map(async (c) => {
-      const defaultLabels = c.datesDisplay.includes('&')
-        ? c.datesDisplay.split('&').map((s) => s.trim())
-        : [c.datesDisplay];
+      const defaultLabels =
+        c.performances && c.performances.length > 0
+          ? c.performances.map((p) => p.label || p.dateDisplay)
+          : c.datesDisplay.includes('&')
+            ? c.datesDisplay.split('&').map((s) => s.trim())
+            : [c.datesDisplay];
       const resolvedEntries = await resolveTicketTailorEntries(
         c.ttEventSeriesId,
         boxOfficeBaseUrl,
@@ -91,13 +96,25 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
                           <p class="font-bold text-navy-950">{perf.dateDisplay}</p>
                           <p class="text-xs text-zinc-600">{perf.venueName}</p>
                         </div>
-                        <LocationDirectionsButton
-                          client:load
-                          location={`${perf.venueName}${perf.venueAddress ? ', ' + perf.venueAddress : ''}`}
-                          venueName={perf.venueName}
-                          label={perf.label ? `${perf.label} Directions` : 'Get Directions'}
-                          variant="pill"
-                        />
+                        <div class="flex flex-wrap items-center gap-2">
+                          <LocationDirectionsButton
+                            client:load
+                            location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
+                            venueName={perf.venueName}
+                            label={perf.label ? `${perf.label} Directions` : 'Directions'}
+                            variant="pill"
+                          />
+                          <AddToCalendarButton
+                            client:load
+                            title={concert.title}
+                            description={concert.description}
+                            dateStr={perf.dateDisplay}
+                            location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
+                            venueName={perf.venueName}
+                            venueAddress={perf.venueAddress}
+                            variant="pill"
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -107,11 +124,21 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
                       🗓 {concert.datesDisplay}
                     </p>
                     {concert.venueName && (
-                      <div class="flex items-center gap-2">
+                      <div class="flex flex-wrap items-center gap-2">
                         <LocationDirectionsButton
                           client:load
-                          location={`${concert.venueName}${concert.venueAddress ? ', ' + concert.venueAddress : ''}`}
+                          location={buildCleanLocationQuery(concert.venueName, concert.venueAddress)}
                           venueName={concert.venueName}
+                          variant="pill"
+                        />
+                        <AddToCalendarButton
+                          client:load
+                          title={concert.title}
+                          description={concert.description}
+                          dateStr={concert.datesDisplay}
+                          location={buildCleanLocationQuery(concert.venueName, concert.venueAddress)}
+                          venueName={concert.venueName}
+                          venueAddress={concert.venueAddress}
                           variant="pill"
                         />
                       </div>
@@ -131,6 +158,7 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
                   resolvedEntries={concert.resolvedEntries}
                   concertTitle={concert.title}
                   datesDisplay={concert.datesDisplay}
+                  venueName={concert.venueName}
                 />
               </div>
             </div>

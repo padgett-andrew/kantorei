@@ -10,6 +10,7 @@ Non-technical choir board members, music librarians, and section leaders MUST be
 3. **Zero Custom Payment Math:** All concert ticketing and Flex Season Passes use embedded **Ticket Tailor** widgets (`0%` fee on `$0` pass redemptions, `50%` charity discount on paid tickets, plus in-cart add-on donations). Standalone fundraising uses an embedded **Givebutter** widget.
 4. **Universal Singer Login (Gmail & Non-Gmail):** Supports **both** 1-click **"Continue with Google"** OAuth *and* a **stateless 6-digit Email Login Code (OTP)** via Resend + HMAC-signed `httpOnly` cookies (`jose`), so singers using `@icloud.com`, `@yahoo.com`, `@outlook.com`, or work/university emails can sign in seamlessly with zero database.
 5. **Sandbox / Prototype Resilience:** The codebase MUST gracefully handle missing or placeholder credentials during local/sandbox development (rendering realistic mock repertoire/schedule/roster data, interactive preview cards when `DEMO` / `DEMO_SERIES_ID` is configured, and supporting Resend's `onboarding@resend.dev` sandbox rules).
+6. **100% Dynamic Content via Google Sheets CMS (Zero Code Deploys for Copy, Contact & Staff Changes):** ALL public site copy, statements, official contact details, board of directors, artistic leadership bios, and giving tiers MUST be manageable directly from the **Master Google Sheet** (`Config`, `Board`, `Leadership`, `Giving_Tiers`) or Google Drive. Future AI instances and engineers MUST NEVER hardcode copy, statements, emails, phone numbers, or staff rosters into `.astro` or `.tsx` templates. Always read from `getPortalConfig()` or the corresponding sheet getters with safe default fallbacks and 60-second edge caching.
 
 ---
 
@@ -81,7 +82,7 @@ Kantorei operates with three clear environment tiers governed by `src/lib/env.ts
 - `npm run doctor:env:prod`: Audits environment against strict production invariants prior to deployment.
 - `npm run env:sync-dev`: Synchronizes `.env` into `.dev.vars` for Cloudflare Workers local preview (`wrangler dev`).
 - `npm run backup:sheets`: Creates an instantaneous JSON snapshot of all Master Sheet tabs in a git-ignored `backups/` directory for disaster recovery.
-- `npm run init:sheets`: Idempotently audits and provisions any missing Master Sheet tabs with canonical headers, frozen row 1, and column styling.
+- `npm run init:sheets`: Idempotently audits and provisions any missing Master Sheet tabs with canonical headers, frozen row 1, column styling, and in-cell Data Validation dropdowns/chips for all constrained fields.
 - `npm run deploy:secrets`: Verifies production `AUTH_SECRET` entropy before uploading secrets via `wrangler secret bulk`.
 
 #### CI/CD & Deployment Pipeline (`.github/workflows/deploy.yml`)
@@ -98,15 +99,15 @@ Recommend placing the Master Google Sheet, Repertoire folder, and Choir Handbook
 
 ### Tab 1: `Roster` (Range: `Roster!A2:G`)
 Controls portal login access (both Google OAuth and Email OTP), section filtering, and absence routing.
-| Col | Header | Example Value | Specification |
+| Col | Header | Example Value | Specification & Data Validation |
 | :-- | :--- | :--- | :--- |
 | `A` | `Email` | `singer@example.com` | Primary key (normalize with `.trim().toLowerCase()`) |
 | `B` | `Name` | `Andrew Padgett` | Full display name |
-| `C` | `Voice_Part` | `B2` | `S1`, `S2`, `A1`, `A2`, `T1`, `T2`, `B1`, `B2` |
-| `D` | `Section_Group` | `Bass` | `Soprano`, `Alto`, `Tenor`, `Bass` (Used for routing to Section Leaders) |
-| `E` | `Role` | `Admin` | `Singer`, `Section_Leader`, `Admin` |
+| `C` | `Voice_Part` | `B2` | Dropdown: `S`, `S1`, `S2`, `A`, `A1`, `A2`, `T`, `T1`, `T2`, `B`, `B1`, `B2` |
+| `D` | `Section_Group` | `Bass` | Dropdown: `Soprano`, `Alto`, `Tenor`, `Bass` (Used for routing to Section Leaders) |
+| `E` | `Role` | `Admin` | Dropdown: `Singer`, `Section_Leader`, `Admin` |
 | `F` | `Phone` | `612-555-0100` | Display string for member directory |
-| `G` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` (case-insensitive; only active members can access `/portal`) |
+| `G` | `Active` | `Active` | Dropdown: `Active`, `On_Leave`, `Inactive` (or legacy `TRUE`/`FALSE`) |
 
 ### Tab 2: `Schedule` (Google Calendar API v3 or Master Sheet `Schedule!A2:K`)
 Powers the Singer Portal rehearsal calendar, subscribable `/api/calendar.ics` feed, Absence form date selector, and 1-tap Snack Signup.
@@ -144,6 +145,13 @@ Upserted/updated via `POST` and `DELETE /api/absences` (deduplicated by `Event_I
 ### Tab 4: `Concerts` (Range: `Concerts!A2:I` or Ticket Tailor REST API)
 Powers the public `/` home spotlight and `/concerts` box-office page.
 - **Ticket Tailor Primary Source (Zero Double-Entry)**: When `TICKET_TAILOR_API_KEY` is configured in `.env`, `/concerts` and the home page auto-fetch published events directly from Ticket Tailor REST API (`/v1/events`). Event titles, dates, venues, blurbs, posters, and embedded checkout widgets are populated automatically with edge caching.
+- **Natural Date & Multi-Performance Input**: Column C (`Dates_Display`) accepts natural date & time inputs without manual day-of-week formatting. Examples:
+  - Multi-line in cell: `12/19/2026 3:00 PM (Shoreview)\n12/20/2026 3:00 PM (Edina)`
+  - Delimited: `12/19/26 3pm & 12/20/26 3pm` or `March 20, 2027 7:30 PM | March 21, 2027 3:00 PM`
+  - Single performance: `3/20/2027 7:30pm` or `May 14 at 8:00 PM`
+  - The site automatically computes the weekday, standardizes times (`3:00 PM`), formats editorial headlines, and constructs structured multi-performance cards with venue directions. Existing editorial strings (e.g. `Sat, Dec 12...`) continue to be supported seamlessly.
+- **Partner Presenters & External Box Offices (e.g., Minnesota Orchestra, SPCO, The Ordway, Schubert Club)**: For guest appearances or co-productions where Kantorei is not managing tickets, enter the partner's box office URL in Column G (`TT_Event_Series_ID`). The website automatically detects external ticketing domains, suppresses the Ticket Tailor embed, and renders a high-trust **Partner Presenter Box Office Card** with direct links to the host presenter's ticketing portal.
+- **Free / Non-Ticketed Concerts**: Enter `FREE`, `DOOR`, or `FREE_ADMISSION` in Column G to render an **Open Seating · Goodwill Offering** card.
 - **Sheet Fallback / Manual Override Table**:
 | Col | Header | Example Value | Specification |
 | :-- | :--- | :--- | :--- |
@@ -153,7 +161,7 @@ Powers the public `/` home spotlight and `/concerts` box-office page.
 | `D` | `Venue_Name` | `Cathedral Sanctuary` | Venue name |
 | `E` | `Venue_Address` | `Minneapolis, MN` | Address for Google Maps link |
 | `F` | `Description` | `Join us for an evening of...` | Concert program blurb |
-| `G` | `TT_Event_Series_ID` | `DEMO_SERIES_ID` | Ticket Tailor series ID or full checkout URL (renders mock UI if `DEMO_SERIES_ID`) |
+| `G` | `TT_Event_Series_ID` | `https://www.minnesotaorchestra.org/...` | Ticket Tailor series ID/URL, external partner URL (e.g. `https://www.minnesotaorchestra.org/...`), `FREE`, or `DEMO_SERIES_ID` |
 | `H` | `Status` | `On_Sale` | `Upcoming`, `On_Sale`, `Past` |
 | `I` | `Hero_Image_URL` | `https://...` | Optional banner image URL |
 
@@ -171,6 +179,23 @@ Key-value settings editable by the board without redeploying code.
 - `YouTube_URL`: `https://www.youtube.com/@kantoreiMN`
 - `Instagram_URL`: `https://www.instagram.com/kantorei_mn`
 - `Facebook_URL`: `https://www.facebook.com/kantoreimn`
+- `Contact_Email`: `info@kantorei.net` (Official choir contact & audition inquiry email)
+- `Contact_Phone`: `612-21-SINGS (612-217-4647)` (Official box office & general inquiries line)
+- `Contact_Address`: `660 23rd Ave NW, Saint Paul, MN 55112` (Official administrative & mailing address)
+- `Mission_Statement`: `Expanding the worldview of artists and audiences through passionate and crafted artistic performances, partnerships, and projects.`
+- `Vision_Statement`: `Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.`
+- `Hero_Tagline`: `Sing, Laugh, Cry. Be Real…Together.`
+- `Hero_Subtitle`: `Kantorei is an a cappella chamber choir based in the Minnesota Twin Cities...`
+- `About_Header_Title`: `Vocal health, effortless sound, and singing for a lifetime.`
+- `Auditions_Blurb`: `We welcome inquiries from experienced Twin Cities choral singers across all voice parts...`
+- `Auditions_Timing_Note`: `We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out a roster of singers for the coming season. Auditions are heard by Artistic Director Adam Reinwald and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview. Come sing with us!`
+- `Auditions_Rehearsal_Cadence`: `Kantorei rehearses Sunday evenings at rotating venues across the Twin Cities metro area (typically 6–8 rehearsals per concert cycle), beginning each season with a community retreat.`
+- `Auditions_Process_Note`: `Auditions are heard by Artistic Director Adam Reinwald and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview.`
+- `Auditions_Form_URL`: `Full Google Form URL (embedded iframe on /auditions; empty fallback renders direct mailto submission)`
+- `Support_Hero_Title`: `Sustain choral artistry and lifelong singing in Minnesota.`
+- `Support_Hero_Subtitle`: `Every contribution to Kantorei funds performances...`
+- `Support_Gala_Blurb`: `Our annual Gala is Kantorei’s signature fundraising celebration...`
+- `Tax_Exempt_Disclaimer`: `Kantorei is a registered 501(c)(3) nonprofit arts organization in Minnesota...`
 
 ### Tab 6: `Media` (Range: `Media!A2:F` or Live YouTube RSS Feed)
 Powers the public `/media` YouTube & recordings showcase (plus featured recordings on `/` and Instagram behind-the-scenes).
@@ -200,13 +225,49 @@ Powers visual choir formations, physical riser positions, draft/published status
 | `H` | `Created_At` | `2026-10-15T12:00:00.000Z` | ISO timestamp |
 | `I` | `Updated_At` | `2026-11-01T15:30:00.000Z` | ISO timestamp |
 
+### Tab 8: `Board` (Range: `Board!A2:E`)
+Powers the Board of Directors grid on the public `/about` page.
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Name` | `Michael Campana` | Board member full display name |
+| `B` | `Role` | `President & Chair` | Officer title or role description |
+| `C` | `Order` | `1` | Integer sorting rank (ascending) |
+| `D` | `Bio_Notes` | `` | Optional internal or display note |
+| `E` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` |
+
+### Tab 9: `Leadership` (Range: `Leadership!A2:G`)
+Powers the Artistic & Organizational Leadership profile cards on `/about`.
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Name` | `Adam Reinwald` | Leader full display name |
+| `B` | `Title` | `Artistic & Executive Director` | Staff title |
+| `C` | `Bio` | `Appointed in 2021...` | Biography text (double newline separates paragraphs) |
+| `D` | `Order` | `1` | Integer sorting rank (ascending) |
+| `E` | `Email` | `adam.reinwald@kantorei.net` | Optional public contact email |
+| `F` | `Image_URL` | `` | Optional portrait headshot URL |
+| `G` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` |
+
+### Tab 10: `Giving_Tiers` (Range: `Giving_Tiers!A2:E`)
+Powers the Annual Giving Circles list on `/support`.
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Tier_Name` | `Friends of Kantorei` | Name of giving circle |
+| `B` | `Amount_Range` | `$25 – $99` | Display price/contribution tier |
+| `C` | `Description` | `Supports music licensing...` | Circle impact / donor perks blurb |
+| `D` | `Order` | `1` | Integer sorting rank (ascending) |
+| `E` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` |
+
 ---
 
 ## 5. TypeScript Interfaces & Zod Schemas (`src/types/choir.ts`)
 Always use these strict types and row-level Zod validators across the application:
 
 ```typescript
-export type VoicePart = 'S1' | 'S2' | 'A1' | 'A2' | 'T1' | 'T2' | 'B1' | 'B2';
+export type VoicePart =
+  | 'S' | 'S1' | 'S2'
+  | 'A' | 'A1' | 'A2'
+  | 'T' | 'T1' | 'T2'
+  | 'B' | 'B1' | 'B2';
 export type SectionGroup = 'Soprano' | 'Alto' | 'Tenor' | 'Bass';
 export type MemberRole = 'Singer' | 'Section_Leader' | 'Admin';
 export type AbsenceStatus = 'Absent' | 'Cleared';

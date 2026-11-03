@@ -2,18 +2,18 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { hasRole } from '../../lib/auth';
 import { ConflictError, upsertRosterSinger } from '../../lib/google';
+import { voicePartSchema } from '../../lib/schemas';
 import {
   inferSectionGroup,
   MEMBER_ROLES,
   SECTION_GROUPS,
   SINGER_STATUSES,
-  VOICE_PARTS,
 } from '../../types/choir';
 
 const RosterPayloadSchema = z.object({
   email: z.string().trim().email('Valid email address is required.'),
   name: z.string().trim().min(1, 'Full name is required.'),
-  voicePart: z.enum(VOICE_PARTS),
+  voicePart: voicePartSchema,
   sectionGroup: z.enum(SECTION_GROUPS).optional(),
   role: z.enum(MEMBER_ROLES).default('Singer'),
   phone: z.string().trim().default(''),

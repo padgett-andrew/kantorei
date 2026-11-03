@@ -26,21 +26,24 @@ export function highlightVoicePartInHtml(
   voicePart: string,
   sectionGroup: string
 ): string {
-  const partNum = voicePart.slice(1);
-  const letter = voicePart.charAt(0);
+  const normVoicePart = (voicePart || '').trim().toUpperCase();
+  const partNum = normVoicePart.slice(1);
+  const letter = normVoicePart.charAt(0);
   const comboTokens =
     letter === 'S' || letter === 'A'
       ? ['SSA', 'SSAA', 'SA', `${letter}1/${letter}2`, `${letter}1-${letter}2`]
       : ['TTB', 'TTBB', 'TB', 'T/B', `${letter}1/${letter}2`, `${letter}1-${letter}2`];
 
-  const escapedTokens = [
+  const rawTokens = [
     voicePart,
     `${sectionGroup}s`,
     `${sectionGroup}es`,
     sectionGroup,
-    `${sectionGroup} ${partNum}`,
+    partNum ? `${sectionGroup} ${partNum}` : '',
     ...comboTokens,
-  ].map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  ].filter(Boolean);
+
+  const escapedTokens = rawTokens.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
   const pattern = new RegExp(`\\b(${escapedTokens.join('|')})\\b`, 'gi');
 

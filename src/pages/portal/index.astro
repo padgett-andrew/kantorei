@@ -12,7 +12,6 @@ import {
   getRepertoire,
   getSchedule,
   getSeatingCharts,
-  getWorkspaceLinks,
 } from '../../lib/google';
 import { findSingerSeatInChart, parseSnackEntry } from '../../types/choir';
 import {
@@ -34,7 +33,6 @@ const [config, schedule, absences, repertoire, feedToken, seatingCharts] = await
 
 const isAdmin = singer.role === 'Admin';
 const calendarId = getCalendarId(Astro.locals);
-const workspace = getWorkspaceLinks(isAdmin, config, Astro.locals);
 
 const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
 const upcomingEvents = schedule.filter((ev) => ev.date >= today);
@@ -229,16 +227,6 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
             class="inline-flex items-center gap-2 rounded-xl bg-navy-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-2xs transition hover:bg-navy-950"
           >
             Open Digital Scores ({totalScoreFiles})
-          </a>
-          <a
-            href={workspace.repertoireDriveUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider text-zinc-700 shadow-2xs transition hover:border-zinc-300 hover:bg-zinc-50"
-            title="Open Repertoire Google Drive folder"
-          >
-            <span>📁 Music Drive</span>
-            <span class="text-zinc-400">↗</span>
           </a>
           {nextEvent && (
             <QuickLateNoticeModal

@@ -43,10 +43,11 @@ export function formatShortMonthDay(isoDate: string): { weekday: string; month: 
   };
 }
 
-export function voicePartBadgeColor(part: VoicePart): string {
-  if (part.startsWith('S')) return 'bg-rose-100 text-rose-800 border-rose-200';
-  if (part.startsWith('A')) return 'bg-amber-100 text-amber-800 border-amber-200';
-  if (part.startsWith('T')) return 'bg-sky-100 text-sky-800 border-sky-200';
+export function voicePartBadgeColor(part: VoicePart | string): string {
+  const norm = (part || '').trim().toUpperCase();
+  if (norm.startsWith('S')) return 'bg-rose-100 text-rose-800 border-rose-200';
+  if (norm.startsWith('A')) return 'bg-amber-100 text-amber-800 border-amber-200';
+  if (norm.startsWith('T')) return 'bg-sky-100 text-sky-800 border-sky-200';
   return 'bg-emerald-100 text-emerald-800 border-emerald-200';
 }
 
@@ -67,14 +68,19 @@ export function eventTypeBadgeColor(type: EventType): string {
 
 export function isSpecificVoicePartMatch(
   filename: string,
-  voicePart: VoicePart,
+  voicePart: VoicePart | string,
   sectionGroup: string
 ): boolean {
   const lower = filename.toLowerCase();
-  const partLower = voicePart.toLowerCase(); // e.g., b2
-  const sectionLower = sectionGroup.toLowerCase(); // e.g., bass
+  const partLower = (voicePart || '').toLowerCase(); // e.g., 's', 'b2'
+  const sectionLower = (sectionGroup || '').toLowerCase(); // e.g., 'soprano', 'bass'
 
-  const partRegex = new RegExp(`(^|[^a-z0-9])${partLower}([^a-z0-9]|$)`, 'i');
+  // If general SATB (e.g. 's', 'a', 't', 'b'), match both general and split parts (e.g. s, s1, s2)
+  const partRegex =
+    partLower.length === 1
+      ? new RegExp(`(^|[^a-z0-9])${partLower}[12]?([^a-z0-9]|$)`, 'i')
+      : new RegExp(`(^|[^a-z0-9])${partLower}([^a-z0-9]|$)`, 'i');
+
   const sectionRegex = new RegExp(`(^|[^a-z])${sectionLower}(es|s)?([^a-z]|$)`, 'i');
 
   return partRegex.test(lower) || sectionRegex.test(lower);
@@ -128,8 +134,13 @@ export function doesFileApplyToSinger(
     const otherSections = ['soprano', 'alto', 'tenor', 'bass'].filter(
       (s) => s !== sectionGroup.toLowerCase()
     );
-    const otherParts = ['s1', 's2', 'a1', 'a2', 't1', 't2', 'b1', 'b2'].filter(
-      (p) => p !== voicePart.toLowerCase()
+    const otherParts = ['s', 's1', 's2', 'a', 'a1', 'a2', 't', 't1', 't2', 'b', 'b1', 'b2'].filter(
+      (p) => {
+        if (p === voicePart.toLowerCase()) return false;
+        // If user has a general voice part (e.g. 'b'), do not treat 'b1' or 'b2' as other parts to exclude
+        if (voicePart.length === 1 && p.startsWith(voicePart.toLowerCase())) return false;
+        return true;
+      }
     );
 
     const hasOtherSection = otherSections.some((s) => {
@@ -158,7 +169,7 @@ export function doesFileApplyToSinger(
   return true;
 }
 
-export function doesFilenameMatchSection(filename: string, voicePart: VoicePart, sectionGroup: string): boolean {
+export function doesFilenameMatchSection(filename: string, voicePart: VoicePart | string, sectionGroup: string): boolean {
   return isSpecificVoicePartMatch(filename, voicePart, sectionGroup);
 }
 

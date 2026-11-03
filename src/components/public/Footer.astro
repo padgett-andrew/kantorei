@@ -4,6 +4,10 @@ interface Props {
   youtubeUrl?: string;
   instagramUrl?: string;
   facebookUrl?: string;
+  taxExemptDisclaimer?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  contactAddress?: string;
 }
 
 const {
@@ -11,6 +15,10 @@ const {
   youtubeUrl = 'https://www.youtube.com/@kantoreiMN',
   instagramUrl = 'https://www.instagram.com/kantorei_mn',
   facebookUrl = 'https://www.facebook.com/kantoreimn',
+  taxExemptDisclaimer,
+  contactEmail = 'info@kantorei.net',
+  contactPhone = '612-21-SINGS (612-217-4647)',
+  contactAddress = '660 23rd Ave NW, Saint Paul, MN 55112',
 } = Astro.props;
 
 const year = new Date().getFullYear();
@@ -76,8 +84,34 @@ const year = new Date().getFullYear();
           )}
         </div>
 
+        <!-- Contact Information -->
+        <div class="mt-5 space-y-1.5 text-xs text-zinc-300">
+          <p class="flex items-center gap-2">
+            <span class="font-medium text-gold-400">Email:</span>
+            <a
+              href={`mailto:${contactEmail}`}
+              class="text-zinc-200 transition hover:text-white underline decoration-zinc-600 underline-offset-2"
+            >
+              {contactEmail}
+            </a>
+          </p>
+          <p class="flex items-center gap-2">
+            <span class="font-medium text-gold-400">Phone:</span>
+            <a
+              href="tel:+16122174647"
+              class="text-zinc-200 transition hover:text-white underline decoration-zinc-600 underline-offset-2"
+            >
+              {contactPhone}
+            </a>
+          </p>
+          <p class="flex items-start gap-2">
+            <span class="font-medium text-gold-400 shrink-0">Mailing:</span>
+            <span class="text-zinc-300">{contactAddress}</span>
+          </p>
+        </div>
+
         <p class="mt-4 text-xs text-zinc-500">
-          {choirName} is a registered 501(c)(3) nonprofit arts organization in Minnesota. Contributions are tax-deductible to the fullest extent permitted by law.
+          {taxExemptDisclaimer || `${choirName} is a registered 501(c)(3) nonprofit arts organization in Minnesota. Contributions are tax-deductible to the fullest extent permitted by law.`}
         </p>
       </div>
 
@@ -88,20 +122,26 @@ const year = new Date().getFullYear();
         <ul class="mt-4 space-y-2.5 text-sm text-zinc-300">
           <li><a href="/concerts" class="hover:text-white transition">Concerts & Tickets</a></li>
           <li><a href="/media" class="hover:text-white transition">Media & Recordings</a></li>
-          <li><a href="/about" class="hover:text-white transition">Leadership & History</a></li>
-          <li><a href="/about#auditions" class="hover:text-white transition">Audition for {choirName}</a></li>
+          <li><a href="/about" class="hover:text-white transition">About & Leadership</a></li>
+          <li><a href="/auditions" class="hover:text-white transition">Audition for {choirName}</a></li>
           <li><a href="/support" class="hover:text-white transition">Tax-Deductible Giving</a></li>
         </ul>
       </div>
 
       <div class="md:col-span-4">
         <h3 class="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-gold-400">
-          Ensemble Members & Box Office
+          Ensemble Members & Auditions
         </h3>
         <p class="mt-4 text-sm text-zinc-400">
-          Current roster singers and section leaders can access digital ForScore scores, rehearsal part tracks, and attendance tools in the portal.
+          Interested in singing? Auditions are held each May for our fall season (inquiries welcome year-round). Current roster members can access scores and tools in the portal.
         </p>
-        <div class="mt-5 flex flex-wrap gap-3">
+        <div class="mt-5 flex flex-wrap gap-2.5">
+          <a
+            href="/auditions"
+            class="inline-flex items-center gap-1.5 rounded-full border border-gold-400/40 bg-gold-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gold-300 transition hover:border-gold-400 hover:bg-gold-500/20"
+          >
+            Audition Info
+          </a>
           <a
             href="/portal"
             class="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-navy-900 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-ivory-100 transition hover:border-gold-400 hover:text-gold-300"

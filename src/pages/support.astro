@@ -2,11 +2,26 @@
 import PublicLayout from '../layouts/PublicLayout.astro';
 import GivebutterEmbed from '../components/public/GivebutterEmbed';
 import { getEnv } from '../lib/env';
-import { getPortalConfig } from '../lib/google';
+import { getGivingTiers, getPortalConfig } from '../lib/google';
 
-const config = await getPortalConfig(Astro.locals);
+const [config, givingTiers] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getGivingTiers(Astro.locals),
+]);
+
 const choirName = config.Choir_Name || 'Kantorei';
-const publicContactEmail = config.Conductor_Email || 'adam.reinwald@kantorei.net';
+const publicContactEmail = config.Contact_Email || 'info@kantorei.net';
+const publicContactPhone = config.Contact_Phone || '612-21-SINGS (612-217-4647)';
+const publicContactAddress = config.Contact_Address || '660 23rd Ave NW, Saint Paul, MN 55112';
+const supportHeroTitle =
+  config.Support_Hero_Title || 'Sustain choral artistry and lifelong singing in Minnesota.';
+const supportHeroSubtitle =
+  config.Support_Hero_Subtitle ||
+  `Every contribution to ${choirName} funds performances, composer commissions, recordings shared worldwide, Friends of Kantorei community programming, and keeps ensemble membership free of mandatory singer dues.`;
+const supportGalaBlurb =
+  config.Support_Gala_Blurb ||
+  `Our annual Gala is ${choirName}’s signature fundraising celebration—bringing singers, alumni, and patrons together for live music, hospitality, and community support. Follow us on Instagram and Facebook for upcoming Gala dates and sponsorship opportunities.`;
+
 const accountId =
   config.Givebutter_Account_ID ||
   getEnv('PUBLIC_GIVEBUTTER_ACCOUNT_ID', Astro.locals) ||
@@ -16,13 +31,6 @@ const campaignId =
   config.Givebutter_Campaign_ID ||
   getEnv('PUBLIC_GIVEBUTTER_CAMPAIGN_ID', Astro.locals) ||
   'DEMO';
-
-const givingTiers = [
-  { name: 'Friends of Kantorei', range: '$25 – $99', desc: 'Supports music licensing and recognition in our concert programs.' },
-  { name: 'Chorister Circle', range: '$100 – $249', desc: 'Helps keep participation free of mandatory singer dues and folder fees.' },
-  { name: 'Recording & Outreach Patron', range: '$250 – $499', desc: 'Advances worldwide digital recordings and community choral partnerships.' },
-  { name: 'Director’s Circle', range: '$500+', desc: 'Underwrites living composer commissions, guest collaborators, and touring.' },
-];
 ---
 
 <PublicLayout title="Support Our Season">
@@ -32,10 +40,10 @@ const givingTiers = [
         501(c)(3) Tax-Deductible Giving
       </span>
       <h1 class="mt-3 max-w-3xl font-editorial text-4xl font-bold text-white sm:text-5xl">
-        Sustain choral artistry and lifelong singing in Minnesota.
+        {supportHeroTitle}
       </h1>
       <p class="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-        Every contribution to {choirName} funds performances, composer commissions, recordings shared worldwide, <em>Friends of Kantorei</em> community programming, and keeps ensemble membership free of mandatory singer dues.
+        {supportHeroSubtitle}
       </p>
     </div>
   </section>
@@ -65,7 +73,7 @@ const givingTiers = [
                   <span class="font-semibold text-navy-950">{tier.name}</span>
                   <span class="text-xs font-bold text-gold-500">{tier.range}</span>
                 </div>
-                <p class="mt-1 text-xs text-zinc-600">{tier.desc}</p>
+                <p class="mt-1 text-xs text-zinc-600">{tier.description}</p>
               </li>
             ))}
           </ul>
@@ -76,7 +84,7 @@ const givingTiers = [
             Annual Kantorei Gala & Friendraisers
           </h3>
           <p class="mt-2 text-xs leading-relaxed text-zinc-700">
-            Our annual Gala is {choirName}’s signature fundraising celebration—bringing singers, alumni, and patrons together for live music, hospitality, and community support. Follow us on Instagram and Facebook for upcoming Gala dates and sponsorship opportunities.
+            {supportGalaBlurb}
           </p>
         </div>
 
@@ -92,8 +100,36 @@ const givingTiers = [
             >
               {publicContactEmail}
             </a>{' '}
-            for our EIN and mailing details.
+            or call{' '}
+            <a
+              href="tel:+16122174647"
+              class="font-semibold text-navy-900 underline decoration-gold-500 underline-offset-4"
+            >
+              {publicContactPhone}
+            </a>{' '}
+            for our EIN and delivery instructions. Checks may be mailed to {publicContactAddress}.
           </p>
+        </div>
+
+        <!-- Sing With Us / Auditions Callout -->
+        <div class="rounded-2xl border border-gold-200/80 bg-amber-50/70 p-6 shadow-2xs">
+          <span class="text-xs font-bold uppercase tracking-[0.16em] text-gold-600">
+            Support with Your Voice
+          </span>
+          <h3 class="mt-1 font-editorial text-xl font-bold text-navy-950">
+            Audition for {choirName}
+          </h3>
+          <p class="mt-2 text-xs leading-relaxed text-zinc-700">
+            Beyond financial contributions, {choirName} is sustained by the dedication and artistry of our singers. We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out our roster of singers for the coming season, rehearsing at rotating venues across the Twin Cities. Inquiries and submissions are warmly welcomed year-round. Come sing with us!
+          </p>
+          <div class="mt-4">
+            <a
+              href="/auditions"
+              class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-navy-950 underline decoration-gold-500 underline-offset-4 hover:text-gold-600"
+            >
+              Audition Information &amp; Interest Form &rarr;
+            </a>
+          </div>
         </div>
       </div>
     </div>

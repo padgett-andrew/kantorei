@@ -1,15 +1,20 @@
 import { z } from 'zod';
 import { sanitizeHeroImageUrl } from './utils';
+import { processConcertDates } from './dates';
 import {
   CONCERT_STATUSES,
   EVENT_TYPES,
   inferSectionGroup,
   MEMBER_ROLES,
+  normalizeVoicePart,
   SECTION_GROUPS,
   SEATING_CHART_STATUSES,
   VOICE_PARTS,
   type AbsenceRecord,
+  type BoardMember,
   type ConcertEvent,
+  type GivingTier,
+  type LeadershipMember,
   type ScheduleEvent,
   type SeatingChart,
   type SeatingRow,
@@ -18,11 +23,16 @@ import {
 
 const trimmedString = z.preprocess((v) => String(v ?? '').trim(), z.string());
 
+export const voicePartSchema = z.preprocess((v) => {
+  const norm = normalizeVoicePart(v);
+  return norm ?? (typeof v === 'string' ? v.trim().toUpperCase() : v);
+}, z.enum(VOICE_PARTS));
+
 export const SingerRowSchema = z
   .tuple([
     trimmedString.pipe(z.string().email('Invalid email address')).transform((e) => e.toLowerCase()),
     trimmedString.pipe(z.string().min(1, 'Missing singer name')),
-    trimmedString.transform((v) => v.toUpperCase()).pipe(z.enum(VOICE_PARTS)),
+    voicePartSchema,
     trimmedString,
     trimmedString,
     trimmedString,
@@ -79,31 +89,7 @@ export const ScheduleRowSchema = z
     const rawType = row[3] || 'Rehearsal';
     const title = row[4];
     const location = row[5] || 'TBD';
-
-    let snack1Name = '';
-    let snack2Name = '';
-    let snack3Name = '';
-    let snack4Name = '';
-    let notes = '';
-
-    if (row.length >= 11) {
-      // Columns: [id, date, time, type, title, location, s1, s2, s3, s4, notes]
-      snack1Name = row[6] || '';
-      snack2Name = row[7] || '';
-      snack3Name = row[8] || '';
-      snack4Name = row[9] || '';
-      notes = row[10] || '';
-    } else if (row.length === 10) {
-      snack1Name = row[6] || '';
-      snack2Name = row[7] || '';
-      snack3Name = row[8] || '';
-      notes = row[9] || '';
-    } else {
-      // Legacy 9-column format: [id, date, time, type, title, location, s1, s2, notes]
-      snack1Name = row[6] || '';
-      snack2Name = row[7] || '';
-      notes = row[8] || '';
-    }
+    const notes = row[row.length - 1] || '';
 
     const type =
       EVENT_TYPES.find((t) => t.toLowerCase() === rawType.toLowerCase()) ?? 'Rehearsal';
@@ -115,10 +101,10 @@ export const ScheduleRowSchema = z
       type,
       title,
       location,
-      snack1Name,
-      snack2Name,
-      snack3Name,
-      snack4Name,
+      snack1Name: '',
+      snack2Name: '',
+      snack3Name: '',
+      snack4Name: '',
       notes,
       description: notes,
     };
@@ -131,7 +117,7 @@ export const AbsenceRowSchema = z
     trimmedString,
     trimmedString.pipe(z.string().min(1, 'Missing Singer_Name')),
     trimmedString.pipe(z.string().email('Invalid Singer_Email')).transform((e) => e.toLowerCase()),
-    trimmedString.transform((v) => v.toUpperCase()).pipe(z.enum(VOICE_PARTS)),
+    voicePartSchema,
     trimmedString,
     trimmedString,
     trimmedString,
@@ -194,16 +180,23 @@ export const ConcertRowSchema = z
           (s) => s.toLowerCase() === rawStatus.replace(/\s+/g, '_').toLowerCase()
         ) ?? 'Upcoming';
 
+      const { datesDisplay: processedDates, performances } = processConcertDates(
+        datesDisplay,
+        venueName,
+        venueAddress
+      );
+
       return {
         slug,
         title,
-        datesDisplay,
+        datesDisplay: processedDates || datesDisplay,
         venueName,
         venueAddress,
         description,
         ttEventSeriesId: ttEventSeriesId || 'DEMO_SERIES_ID',
         status: normalizedStatus,
         heroImageUrl: sanitizeHeroImageUrl(heroImageUrl),
+        performances: performances.length > 0 ? performances : undefined,
       };
     }
   );
@@ -231,7 +224,7 @@ export const SeatingSeatSchema = z.object({
   seatIndex: z.number().int().min(1),
   singerEmail: z.string().trim().email().optional().or(z.literal('')),
   singerName: z.string().trim().optional(),
-  voicePart: z.enum(VOICE_PARTS).optional(),
+  voicePart: voicePartSchema.optional(),
   isAisle: z.boolean().optional(),
   customLabel: z.string().trim().optional(),
 });
@@ -302,4 +295,72 @@ export const UpsertSeatingChartRequestSchema = z.object({
   status: z.enum(SEATING_CHART_STATUSES).default('Draft'),
   rows: z.array(SeatingRowSchema).default([]),
 });
+
+export const BoardMemberRowSchema = z
+  .tuple([
+    trimmedString.pipe(z.string().min(1, 'Missing Board Member Name')),
+    trimmedString.pipe(z.string().min(1, 'Missing Board Member Role')),
+    trimmedString,
+    trimmedString,
+    trimmedString,
+  ])
+  .transform(([name, role, rawOrder, bioNotes, rawActive]): BoardMember => {
+    const order = Number(rawOrder) || 999;
+    const normActive = rawActive.trim().toLowerCase();
+    const active = normActive === '' || ['true', 'yes', '1', 'y', 'active'].includes(normActive);
+    return {
+      name,
+      role,
+      order,
+      bioNotes: bioNotes || undefined,
+      active,
+    };
+  });
+
+export const LeadershipRowSchema = z
+  .tuple([
+    trimmedString.pipe(z.string().min(1, 'Missing Leadership Name')),
+    trimmedString.pipe(z.string().min(1, 'Missing Leadership Title')),
+    trimmedString.pipe(z.string().min(1, 'Missing Leadership Bio')),
+    trimmedString,
+    trimmedString,
+    trimmedString,
+    trimmedString,
+  ])
+  .transform(([name, title, bio, rawOrder, email, imageUrl, rawActive]): LeadershipMember => {
+    const order = Number(rawOrder) || 999;
+    const normActive = rawActive.trim().toLowerCase();
+    const active = normActive === '' || ['true', 'yes', '1', 'y', 'active'].includes(normActive);
+    return {
+      name,
+      title,
+      bio,
+      order,
+      email: email || undefined,
+      imageUrl: imageUrl || undefined,
+      active,
+    };
+  });
+
+export const GivingTierRowSchema = z
+  .tuple([
+    trimmedString.pipe(z.string().min(1, 'Missing Giving Tier Name')),
+    trimmedString.pipe(z.string().min(1, 'Missing Giving Tier Amount/Range')),
+    trimmedString.pipe(z.string().min(1, 'Missing Giving Tier Description')),
+    trimmedString,
+    trimmedString,
+  ])
+  .transform(([name, range, description, rawOrder, rawActive]): GivingTier => {
+    const order = Number(rawOrder) || 999;
+    const normActive = rawActive.trim().toLowerCase();
+    const active = normActive === '' || ['true', 'yes', '1', 'y', 'active'].includes(normActive);
+    return {
+      name,
+      range,
+      description,
+      order,
+      active,
+    };
+  });
+
 

@@ -11,8 +11,9 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/concerts', label: 'Concerts & Tickets' },
   { href: '/media', label: 'Media' },
-  { href: '/about', label: 'About & Auditions' },
+  { href: '/about', label: 'About' },
   { href: '/support', label: 'Support' },
+  { href: isSignedIn ? '/portal' : '/login', label: isSignedIn ? 'Singer Portal' : 'Singer Login' },
 ];
 ---
 
@@ -28,7 +29,7 @@ const navLinks = [
       />
     </a>
 
-    <nav class="hidden items-center gap-7 md:flex" aria-label="Primary">
+    <nav class="hidden items-center gap-5 lg:gap-7 md:flex" aria-label="Primary">
       {navLinks.map((link) => {
         const active =
           link.href === '/'
@@ -50,16 +51,10 @@ const navLinks = [
       })}
     </nav>
 
-    <div class="hidden items-center gap-3 md:flex">
-      <a
-        href={isSignedIn ? '/portal' : '/login'}
-        class="rounded-full border border-zinc-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-700 transition hover:border-gold-500 hover:text-navy-900"
-      >
-        {isSignedIn ? 'Singer Portal →' : 'Singer Login'}
-      </a>
+    <div class="hidden items-center md:flex">
       <a
         href="/concerts"
-        class="rounded-full bg-gold-500 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-copper-600"
+        class="rounded-full bg-gold-500 px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-copper-600"
       >
         Buy Tickets
       </a>
@@ -89,12 +84,6 @@ const navLinks = [
             class="rounded-full bg-gold-500 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-white"
           >
             Buy Tickets
-          </a>
-          <a
-            href={isSignedIn ? '/portal' : '/login'}
-            class="rounded-full border border-zinc-300 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider text-zinc-700"
-          >
-            {isSignedIn ? 'Open Singer Portal' : 'Singer Login'}
           </a>
         </div>
       </div>

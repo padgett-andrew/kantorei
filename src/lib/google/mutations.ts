@@ -1,7 +1,6 @@
 import {
   formatSnackEntry,
   inferSectionGroup,
-  parseSnackEntry,
   type AbsenceRecord,
   type AbsenceStatus,
   type ScheduleEvent,
@@ -10,7 +9,7 @@ import {
 } from '../../types/choir';
 import { invalidateCacheTag } from '../cache';
 import { isSandboxSheetMode } from '../env';
-import { AbsenceRowSchema, ScheduleRowSchema } from '../schemas';
+import { AbsenceRowSchema } from '../schemas';
 import {
   ConflictError,
   NotFoundError,
@@ -98,68 +97,89 @@ export async function mutateSnackSlot(params: {
     return schedule.find((e) => e.eventId === eventId) || ev!;
   }
 
-  // Uncached live lookup of Schedule!A1:K to find exact current row by Event_ID
-  const allRows = await readSheetValues('Schedule!A1:K', locals);
-  const headerRow = allRows[0] || [];
-  const rows = allRows.slice(1);
-  const matchIdx = rows.findIndex((r) => (r[0] ?? '').trim() === eventId);
-  if (matchIdx === -1) {
-    throw new NotFoundError(`Rehearsal event "${eventId}" not found in Schedule sheet.`);
-  }
-
-  // Check if legacy 9-column sheet has Notes in Column I (index 8)
-  const isLegacyNineCol = (headerRow[8] || '').trim().toLowerCase().includes('note');
-  if (isLegacyNineCol) {
-    // Automatically modernize headers: Column I -> Snack_3, Column J -> Snack_4, Column K -> Notes
-    await writeSheetValues('Schedule!I1:K1', [['Snack_3', 'Snack_4', 'Notes']], locals);
-    for (let i = 0; i < rows.length; i++) {
-      if (rows[i][8] && !rows[i][10]) {
-        await writeSheetValues(`Schedule!I${i + 2}:K${i + 2}`, [['', '', rows[i][8]]], locals);
-        rows[i][10] = rows[i][8];
-        rows[i][8] = '';
-      }
-    }
-  }
-
-  const freshRowIndex = matchIdx + 2;
-  const row = padRow(rows[matchIdx], 11);
-  const colIndex = 5 + slot;
-  const colLetter = ['G', 'H', 'I', 'J'][slot - 1];
-  const currentRaw = row[colIndex]?.trim() || '';
-  const parsed = parseSnackEntry(currentRaw);
-
-  if (action === 'claim') {
-    if (parsed.name.trim() !== '') {
-      throw new ConflictError(`Hospitality Slot ${slot} was just claimed by ${parsed.name}.`);
-    }
-    const formatted = formatSnackEntry(caller.name, item);
-    await writeSheetValues(`Schedule!${colLetter}${freshRowIndex}`, [[formatted]], locals);
-    row[colIndex] = formatted;
-  } else if (action === 'update_item') {
-    const canUpdate =
-      caller.role === 'Admin' ||
-      parsed.name.trim().toLowerCase() === caller.name.trim().toLowerCase();
-    if (!canUpdate) {
-      throw new ConflictError(
-        `Only ${parsed.name || 'the slot owner'} or an Admin can edit what they are bringing.`
+  // 1. Try dedicated Snacks tab (used with Google Calendar or modernized Master Sheet)
+  try {
+    const snackRows = await readSheetValues('Snacks!A2:E', locals);
+    if (snackRows) {
+      const existingIdx = snackRows.findIndex(
+        (r) => (r[0] ?? '').trim() === eventId && Number(r[1]) === slot
       );
+
+      if (action === 'claim') {
+        if (existingIdx !== -1 && (snackRows[existingIdx][2] ?? '').trim() !== '') {
+          throw new ConflictError(
+            `Hospitality Slot ${slot} was just claimed by ${snackRows[existingIdx][2]}.`
+          );
+        }
+        const nowIso = new Date().toISOString();
+        if (existingIdx !== -1) {
+          await writeSheetValues(
+            `Snacks!C${existingIdx + 2}:E${existingIdx + 2}`,
+            [[caller.name, item || '', nowIso]],
+            locals
+          );
+        } else {
+          await appendSheetValues(
+            'Snacks!A2:E',
+            [[eventId, String(slot), caller.name, item || '', nowIso]],
+            locals
+          );
+        }
+      } else if (action === 'update_item') {
+        if (existingIdx === -1) {
+          throw new NotFoundError(`Snack slot ${slot} for event "${eventId}" has not been claimed yet.`);
+        }
+        const existingName = (snackRows[existingIdx][2] ?? '').trim();
+        const canUpdate =
+          caller.role === 'Admin' ||
+          existingName.toLowerCase() === caller.name.trim().toLowerCase();
+        if (!canUpdate) {
+          throw new ConflictError(
+            `Only ${existingName || 'the slot owner'} or an Admin can edit what they are bringing.`
+          );
+        }
+        await writeSheetValues(
+          `Snacks!D${existingIdx + 2}:E${existingIdx + 2}`,
+          [[item || '', new Date().toISOString()]],
+          locals
+        );
+      } else {
+        // release
+        if (existingIdx !== -1) {
+          const existingName = (snackRows[existingIdx][2] ?? '').trim();
+          const canRelease =
+            caller.role === 'Admin' ||
+            existingName.toLowerCase() === caller.name.trim().toLowerCase();
+          if (!canRelease) {
+            throw new ConflictError(
+              `Only ${existingName || 'the slot owner'} or an Admin can release this slot.`
+            );
+          }
+          await writeSheetValues(
+            `Snacks!C${existingIdx + 2}:E${existingIdx + 2}`,
+            [['', '', new Date().toISOString()]],
+            locals
+          );
+        }
+      }
+
+      await invalidateCacheTag('schedule');
+      const { schedule } = await getScheduleWithWarnings(locals);
+      const ev = schedule.find((e) => e.eventId === eventId);
+      if (ev) return ev;
     }
-    const formatted = formatSnackEntry(parsed.name || caller.name, item);
-    await writeSheetValues(`Schedule!${colLetter}${freshRowIndex}`, [[formatted]], locals);
-    row[colIndex] = formatted;
-  } else {
-    const canRelease =
-      caller.role === 'Admin' ||
-      parsed.name.trim().toLowerCase() === caller.name.trim().toLowerCase();
-    if (!canRelease) {
-      throw new ConflictError(`Only ${parsed.name || 'the slot owner'} or an Admin can release this slot.`);
-    }
-    await writeSheetValues(`Schedule!${colLetter}${freshRowIndex}`, [['']], locals);
-    row[colIndex] = '';
+  } catch (err) {
+    if (err instanceof ConflictError || err instanceof NotFoundError) throw err;
+    console.error('[mutateSnackSlot] Failed to update Snacks tab:', err);
+    throw err;
   }
 
-  await invalidateCacheTag('schedule');
-  return ScheduleRowSchema.parse(row);
+  const { schedule } = await getScheduleWithWarnings(locals);
+  const ev = schedule.find((e) => e.eventId === eventId);
+  if (!ev) {
+    throw new NotFoundError(`Rehearsal event "${eventId}" not found.`);
+  }
+  return ev;
 }
 
 export async function upsertAbsenceRecord(params: {
@@ -318,10 +338,10 @@ export async function upsertRosterSinger(params: {
 
   const sheetStatusCell =
     normalized.status === 'On_Leave'
-      ? 'ON_LEAVE'
+      ? 'On_Leave'
       : normalized.status === 'Active'
-        ? 'TRUE'
-        : 'FALSE';
+        ? 'Active'
+        : 'Inactive';
 
   const rowValues = [
     normalized.email,

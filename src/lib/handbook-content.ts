@@ -61,7 +61,7 @@ export const DEFAULT_HANDBOOK_HTML = `
 
   <h2>Kantorei Membership</h2>
   <h3>Auditions</h3>
-  <p>If you know anyone who wants to try out for Kantorei, or you think would be a good addition to our membership, send them to <a href="/about#auditions">kantorei.net/about#auditions</a> and let Adam know you’re sending them along.</p>
+  <p>If you know anyone who wants to try out for Kantorei, or you think would be a good addition to our membership, send them to <a href="/auditions">kantorei.net/auditions</a> and let Adam know you’re sending them along.</p>
 
   <h3>Folder Fees</h3>
   <p>Kantorei attempts to keep participation costs low for members and currently does not require folder fees from members. When necessary to maintain Kantorei’s budget, singers may be asked to contribute folder fees to cover some costs, especially of music licensing.</p>

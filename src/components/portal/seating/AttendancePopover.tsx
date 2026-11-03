@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import type {
-  AbsenceRecord,
-  ScheduleEvent,
-  SeatingRow,
-  SeatingSeat,
-  Singer,
+import {
+  type AbsenceRecord,
+  inferSectionGroup,
+  type ScheduleEvent,
+  type SeatingRow,
+  type SeatingSeat,
+  type Singer,
 } from '../../../types/choir';
 import { voicePartBadgeColor } from '../../../lib/utils';
 import {
@@ -70,13 +71,7 @@ export default function AttendancePopover({
         email: seat.singerEmail,
         name: displayName,
         voicePart,
-        sectionGroup: voicePart.startsWith('S')
-          ? 'Soprano'
-          : voicePart.startsWith('A')
-          ? 'Alto'
-          : voicePart.startsWith('T')
-          ? 'Tenor'
-          : 'Bass',
+        sectionGroup: inferSectionGroup(voicePart),
         role: 'Singer',
         phone: '',
         active: true,

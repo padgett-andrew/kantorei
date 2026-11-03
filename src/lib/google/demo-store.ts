@@ -1,6 +1,9 @@
 import type {
   AbsenceRecord,
+  BoardMember,
   ConcertEvent,
+  GivingTier,
+  LeadershipMember,
   MediaItem,
   PortalConfig,
   RepertoirePiece,
@@ -26,6 +29,9 @@ export interface DemoStore {
   concerts: ConcertEvent[];
   media: MediaItem[];
   config: PortalConfig;
+  board: BoardMember[];
+  leadership: LeadershipMember[];
+  givingTiers: GivingTier[];
   repertoire: RepertoirePiece[];
   warnings: SheetWarning[];
   seatingCharts: SeatingChart[];
@@ -62,7 +68,99 @@ export const demoStore: DemoStore = {
     YouTube_URL: 'https://www.youtube.com/@kantoreiMN',
     Instagram_URL: 'https://www.instagram.com/kantorei_mn',
     Facebook_URL: 'https://www.facebook.com/kantoreimn',
+    Contact_Email: 'info@kantorei.net',
+    Contact_Phone: '612-21-SINGS (612-217-4647)',
+    Contact_Address: '660 23rd Ave NW, Saint Paul, MN 55112',
+    Mission_Statement:
+      'Expanding the worldview of artists and audiences through passionate and crafted artistic performances, partnerships, and projects.',
+    Vision_Statement:
+      'Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.',
+    Hero_Tagline: 'Sing, Laugh, Cry. Be Real…Together.',
+    Hero_Subtitle:
+      'Kantorei is an a cappella chamber choir based in the Minnesota Twin Cities. Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.',
+    About_Header_Title:
+      'Vocal health, effortless sound, and singing for a lifetime.',
+    Auditions_Blurb:
+      'We welcome inquiries from experienced Twin Cities choral singers across all voice parts (SATB · general sections and split parts) who share our commitment to vocal health, independent preparation, and expressive a cappella ensemble singing.',
+    Auditions_Timing_Note:
+      'We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out a roster of singers for the coming season. Auditions are heard by Artistic Director Adam Reinwald and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview. Inquiries and submissions are warmly welcomed year-round. Come sing with us!',
+    Auditions_Rehearsal_Cadence:
+      'Kantorei rehearses Sunday evenings at rotating venues across the Twin Cities metro area (typically 6–8 rehearsals per concert cycle), beginning each season with a community retreat.',
+    Auditions_Process_Note:
+      'Auditions are heard by Artistic Director Adam Reinwald and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview.',
+    Auditions_Form_URL: '',
+    Support_Hero_Title:
+      'Sustain choral artistry and lifelong singing in Minnesota.',
+    Support_Hero_Subtitle:
+      'Every contribution to Kantorei funds performances, composer commissions, recordings shared worldwide, Friends of Kantorei community programming, and keeps ensemble membership free of mandatory singer dues.',
+    Support_Gala_Blurb:
+      'Our annual Gala is Kantorei’s signature fundraising celebration—bringing singers, alumni, and patrons together for live music, hospitality, and community support. Follow us on Instagram and Facebook for upcoming Gala dates and sponsorship opportunities.',
+    Tax_Exempt_Disclaimer:
+      'Kantorei is a registered 501(c)(3) nonprofit arts organization in Minnesota. Contributions are tax-deductible to the fullest extent permitted by law.',
   },
+  board: [
+    { name: 'Michael Campana', role: 'President & Chair', order: 1, active: true },
+    { name: 'Joe Cook Morey', role: 'Vice-President & Vice Chair', order: 2, active: true },
+    { name: 'Kressen Anderson', role: 'Treasurer', order: 3, active: true },
+    { name: 'Molly Tengwall', role: 'Secretary', order: 4, active: true },
+    { name: 'Genna Palumbo', role: 'Singer Representative', order: 5, active: true },
+    { name: 'Dan Belknap', role: 'At-Large Member', order: 6, active: true },
+    { name: 'Naomi Karstad', role: 'At-Large Member', order: 7, active: true },
+  ],
+  leadership: [
+    {
+      name: 'Adam Reinwald',
+      title: 'Artistic & Executive Director',
+      bio: 'Appointed in 2021, Adam Reinwald is a nationally recognized vocal chamber artist, conductor, and nonprofit arts strategist with over two decades of experience in the choral arts—including work with the National Lutheran Choir and nearly two decades with the acclaimed vocal ensemble Cantus.\n\nIn demand as a coach for small- to mid-size arts organizations focusing on new media and digital branding, Adam has presented nationally at Chorus America, ACDA, and the Young Nonprofit Professionals Network.',
+      order: 1,
+      email: 'adam.reinwald@kantorei.net',
+      active: true,
+    },
+    {
+      name: 'Tony Rangel',
+      title: 'Assistant Conductor',
+      bio: 'Tony Rangel serves as Assistant Conductor, collaborating closely on ensemble preparation and directing one or more pieces on every Kantorei concert program.\n\nAn experienced choral educator and Twin Cities ensemble singer, Tony has directed the choral programs at Columbia Heights and Armstrong high schools, currently leads the choral program at Stillwater Middle School, and authors graduate-level music education courses through Forward Motion Online Learning.',
+      order: 2,
+      active: true,
+    },
+    {
+      name: 'Dr. Axel Theimer',
+      title: 'Founder & Artistic Director Emeritus',
+      bio: 'Born in St. Johann in Tirol, Austria, and trained in the Vienna Choir Boys before earning his MFA and DMA at the University of Minnesota, Dr. Axel Theimer founded Kantorei in 1988.\n\nDirector of Choral Activities at the College of Saint Benedict and Saint John’s University for 52 years, founder of the Amadeus Chamber Symphony, Music Director of the National Catholic Youth Choir, and Executive Director of The VoiceCare Network, Dr. Theimer is a recipient of the ACDA-MN Choir Director of the Year Award (2001), MMEA Hall of Fame induction (2004), and the F. Melius Christiansen Lifetime Achievement Award (2011).',
+      order: 3,
+      active: true,
+    },
+  ],
+  givingTiers: [
+    {
+      name: 'Friends of Kantorei',
+      range: '$25 – $99',
+      description: 'Supports music licensing and recognition in our concert programs.',
+      order: 1,
+      active: true,
+    },
+    {
+      name: 'Chorister Circle',
+      range: '$100 – $249',
+      description: 'Helps keep participation free of mandatory singer dues and folder fees.',
+      order: 2,
+      active: true,
+    },
+    {
+      name: 'Recording & Outreach Patron',
+      range: '$250 – $499',
+      description: 'Advances worldwide digital recordings and community choral partnerships.',
+      order: 3,
+      active: true,
+    },
+    {
+      name: 'Director’s Circle',
+      range: '$500+',
+      description: 'Underwrites living composer commissions, guest collaborators, and touring.',
+      order: 4,
+      active: true,
+    },
+  ],
   roster: [
     {
       email: 'andrew@kantorei.net',
@@ -207,7 +305,7 @@ export const demoStore: DemoStore = {
     {
       email: 'sarah.jenkins@example.com',
       name: 'Sarah Jenkins',
-      voicePart: 'S1',
+      voicePart: 'S',
       sectionGroup: 'Soprano',
       role: 'Singer',
       phone: '612-555-0201',
@@ -307,7 +405,7 @@ export const demoStore: DemoStore = {
     {
       email: 'kendra.nelson@example.com',
       name: 'Kendra Nelson',
-      voicePart: 'A1',
+      voicePart: 'A',
       sectionGroup: 'Alto',
       role: 'Singer',
       phone: '651-555-0211',
@@ -367,7 +465,7 @@ export const demoStore: DemoStore = {
     {
       email: 'kevin.anderson@example.com',
       name: 'Kevin Anderson',
-      voicePart: 'T1',
+      voicePart: 'T',
       sectionGroup: 'Tenor',
       role: 'Singer',
       phone: '651-555-0217',
@@ -447,7 +545,7 @@ export const demoStore: DemoStore = {
     {
       email: 'benjamin.hayes@example.com',
       name: 'Benjamin Hayes',
-      voicePart: 'B1',
+      voicePart: 'B',
       sectionGroup: 'Bass',
       role: 'Singer',
       phone: '651-555-0225',
