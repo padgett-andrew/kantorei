@@ -61,6 +61,8 @@ SANDBOX_OVERRIDE_EMAIL=""
 # 4. Box Office & Fundraising Embeds (Use "DEMO" in sandbox mode)
 # Base Ticket Tailor box office URL; combined with Concerts.TT_Event_Series_ID as `${BOX_OFFICE_URL}/${ttEventSeriesId}`
 PUBLIC_TICKET_TAILOR_BOX_OFFICE_URL="https://www.tickettailor.com/events/demo"
+# Optional API key: when provided, /concerts and home page auto-fetch directly from Ticket Tailor REST API (zero Google Sheet double-entry)
+TICKET_TAILOR_API_KEY=""
 PUBLIC_GIVEBUTTER_ACCOUNT_ID="DEMO"
 PUBLIC_GIVEBUTTER_CAMPAIGN_ID="DEMO"
 ```
@@ -139,8 +141,10 @@ Upserted/updated via `POST` and `DELETE /api/absences` (deduplicated by `Event_I
 | `H` | `Submitted_By` | `Self` | `"Self"` or Section Leader/Admin name if marked during roll call |
 | `I` | `Status` | `Absent` | `"Absent"` or `"Cleared"` (allows singers/admins to withdraw an absence cleanly) |
 
-### Tab 4: `Concerts` (Range: `Concerts!A2:I`)
+### Tab 4: `Concerts` (Range: `Concerts!A2:I` or Ticket Tailor REST API)
 Powers the public `/` home spotlight and `/concerts` box-office page.
+- **Ticket Tailor Primary Source (Zero Double-Entry)**: When `TICKET_TAILOR_API_KEY` is configured in `.env`, `/concerts` and the home page auto-fetch published events directly from Ticket Tailor REST API (`/v1/events`). Event titles, dates, venues, blurbs, posters, and embedded checkout widgets are populated automatically with edge caching.
+- **Sheet Fallback / Manual Override Table**:
 | Col | Header | Example Value | Specification |
 | :-- | :--- | :--- | :--- |
 | `A` | `Concert_Slug` | `winter-2026` | URL-safe slug |
@@ -168,8 +172,11 @@ Key-value settings editable by the board without redeploying code.
 - `Instagram_URL`: `https://www.instagram.com/kantorei_mn`
 - `Facebook_URL`: `https://www.facebook.com/kantoreimn`
 
-### Tab 6: `Media` (Range: `Media!A2:F`)
-Powers the public `/media` YouTube & recordings showcase (plus featured recordings on `/`).
+### Tab 6: `Media` (Range: `Media!A2:F` or Live YouTube RSS Feed)
+Powers the public `/media` YouTube & recordings showcase (plus featured recordings on `/` and Instagram behind-the-scenes).
+- **YouTube RSS Primary Source**: Auto-fetches Kantorei's latest videos from `@kantoreiMN` public XML feed (`/feeds/videos.xml?channel_id=...`) with 5-minute Cloudflare edge caching ($0 quota, zero maintenance).
+- **Instagram Showcase**: Displays `@kantorei_mn` behind-the-scenes stories, rehearsal blends, and singer spotlights on `/media`.
+- **Sheet Fallback / Manual Featured Curation**:
 | Col | Header | Example Value | Specification |
 | :-- | :--- | :--- | :--- |
 | `A` | `Media_ID` | `yt-dickinson` | Unique slug/ID |

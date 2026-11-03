@@ -28,6 +28,8 @@ import {
 import { fetchGoogleCalendarEvents } from './calendar';
 import { isBlankRow, padRow, readSheetValues } from './client';
 import { demoStore, type SnackClaim } from './demo-store';
+import { fetchTicketTailorEvents } from '../tickettailor';
+import { fetchYouTubeChannelMedia } from '../media';
 
 export async function getRosterWithWarnings(
   locals?: App.Locals
@@ -260,6 +262,15 @@ export async function getConcertsWithWarnings(
 }
 
 export async function getConcerts(locals?: App.Locals): Promise<ConcertEvent[]> {
+  try {
+    const ttConcerts = await fetchTicketTailorEvents(locals);
+    if (ttConcerts.length > 0) {
+      return ttConcerts;
+    }
+  } catch (err) {
+    console.warn('[Concerts] Error checking Ticket Tailor API, falling back to sheet:', err);
+  }
+
   const { concerts } = await getConcertsWithWarnings(locals);
   return concerts;
 }
@@ -302,6 +313,15 @@ export async function getMediaWithWarnings(
 }
 
 export async function getMedia(locals?: App.Locals): Promise<MediaItem[]> {
+  try {
+    const ytMedia = await fetchYouTubeChannelMedia(locals);
+    if (ytMedia.length > 0) {
+      return ytMedia;
+    }
+  } catch (err) {
+    console.warn('[Media] Error fetching live YouTube media, falling back to sheet:', err);
+  }
+
   const { media } = await getMediaWithWarnings(locals);
   return media;
 }

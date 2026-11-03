@@ -365,7 +365,7 @@ export async function sendLoginOtpEmail(params: {
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;color:#18181b;">
       ${sandboxBanner}
       <div style="background:#101b33;color:#fcfbf8;padding:20px 24px;border-radius:12px 12px 0 0;">
-        <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:#af673c;">${escapeHtml(choirName)} Singer Portal</p>
+        <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:#b16437;">${escapeHtml(choirName)} Singer Portal</p>
         <h2 style="margin:6px 0 0;font-size:20px;">Your 6-Digit Sign-In Code</h2>
       </div>
       <div style="border:1px solid #e4e4e7;border-top:none;padding:24px;border-radius:0 0 12px 12px;background:#ffffff;">

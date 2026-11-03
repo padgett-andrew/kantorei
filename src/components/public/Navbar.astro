@@ -9,7 +9,7 @@ const { choirName = 'Kantorei', currentPath = '/', isSignedIn = false } = Astro.
 
 const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/concerts', label: 'Concerts & Passes' },
+  { href: '/concerts', label: 'Concerts & Tickets' },
   { href: '/media', label: 'Media' },
   { href: '/about', label: 'About & Auditions' },
   { href: '/support', label: 'Support' },
@@ -88,7 +88,7 @@ const navLinks = [
             href="/concerts"
             class="rounded-full bg-gold-500 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-white"
           >
-            Buy Tickets & Passes
+            Buy Tickets
           </a>
           <a
             href={isSignedIn ? '/portal' : '/login'}

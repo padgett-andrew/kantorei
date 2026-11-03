@@ -9,13 +9,13 @@
   --color-navy-900: #142438;
   --color-navy-800: #1f3652;
 
-  /* Official Kantorei burnished copper palette sampled from brand logo (#af673c) */
-  --color-gold-500: #af673c;
-  --color-gold-400: #c87b4d;
-  --color-gold-300: #e5b293;
-  --color-copper-600: #93532d;
-  --color-copper-500: #af673c;
-  --color-copper-100: #f9efe9;
+  /* Official Kantorei burnished copper palette sampled from true brand logo (#b16437) */
+  --color-gold-500: #b16437;
+  --color-gold-400: #cb7b4b;
+  --color-gold-300: #e8b291;
+  --color-copper-600: #955029;
+  --color-copper-500: #b16437;
+  --color-copper-100: #f9efe8;
 
   --color-ivory-50: #fcfaf7;
   --color-ivory-100: #f5efe8;
@@ -108,14 +108,14 @@
 }
 
 .handbook-prose a {
-  color: #af673c;
+  color: #b16437;
   text-decoration: underline;
   text-underline-offset: 3px;
   font-weight: 500;
 }
 
 .handbook-prose blockquote {
-  border-left: 3px solid #af673c;
+  border-left: 3px solid #b16437;
   background-color: #f5efe8;
   padding: 0.875rem 1.25rem;
   border-radius: 0 0.5rem 0.5rem 0;

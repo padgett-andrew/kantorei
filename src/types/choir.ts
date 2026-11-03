@@ -88,6 +88,13 @@ export interface AbsenceRecord {
   status: AbsenceStatus;
 }
 
+export interface ConcertPerformance {
+  dateDisplay: string;
+  venueName: string;
+  venueAddress?: string;
+  label?: string;
+}
+
 export interface ConcertEvent {
   slug: string;
   title: string;
@@ -98,6 +105,7 @@ export interface ConcertEvent {
   ttEventSeriesId: string;
   status: ConcertStatus;
   heroImageUrl?: string;
+  performances?: ConcertPerformance[];
 }
 
 export interface MediaItem {

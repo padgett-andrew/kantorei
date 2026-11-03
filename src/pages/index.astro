@@ -20,7 +20,7 @@ const featuredMedia = media.slice(0, 3);
   <section class="relative overflow-hidden bg-navy-950 text-ivory-50">
     <div
       class="pointer-events-none absolute inset-0 opacity-35"
-      style="background: radial-gradient(circle at 22% 20%, #af673c 0%, transparent 46%), radial-gradient(circle at 80% 75%, #233d5c 0%, transparent 52%);"
+      style="background: radial-gradient(circle at 22% 20%, #b16437 0%, transparent 46%), radial-gradient(circle at 80% 75%, #233d5c 0%, transparent 52%);"
     ></div>
 
     <div class="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-26">
@@ -40,7 +40,7 @@ const featuredMedia = media.slice(0, 3);
             href="/concerts"
             class="rounded-full bg-gold-500 px-6 py-3.5 text-xs font-bold uppercase tracking-[0.14em] text-white shadow-lg transition hover:bg-copper-600 sm:px-7 sm:tracking-[0.16em]"
           >
-            Advent Concert Tickets & Passes
+            Concerts & Tickets
           </a>
           <a
             href="/media"
@@ -80,7 +80,7 @@ const featuredMedia = media.slice(0, 3);
                   Next Concert
                 </span>
                 <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">
-                  {featuredConcert.status === 'On_Sale' ? 'Tickets & Passes Available' : 'Upcoming'}
+                  {featuredConcert.status === 'On_Sale' ? 'Tickets Available' : 'Upcoming'}
                 </span>
               </div>
 
@@ -88,50 +88,44 @@ const featuredMedia = media.slice(0, 3);
                 {featuredConcert.title}
               </h2>
 
-              {featuredConcert.slug === 'advent-with-kantorei' ? (
+              {featuredConcert.performances && featuredConcert.performances.length > 1 ? (
                 <div class="mt-4 space-y-3 rounded-2xl bg-ivory-100 p-4 text-sm">
-                  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p class="font-bold text-navy-950">Saturday, December 19 · 3:00 PM</p>
-                      <p class="text-xs text-zinc-700">
-                        Shepherd of the Hills Lutheran Church, Shoreview
-                      </p>
+                  {featuredConcert.performances.map((perf, pIdx) => (
+                    <div
+                      class:list={[
+                        'flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between',
+                        pIdx > 0 && 'border-t border-zinc-200/80 pt-3',
+                      ]}
+                    >
+                      <div>
+                        <p class="font-bold text-navy-950">{perf.dateDisplay}</p>
+                        <p class="text-xs text-zinc-700">{perf.venueName}</p>
+                      </div>
+                      <LocationDirectionsButton
+                        client:load
+                        location={`${perf.venueName}${perf.venueAddress ? ', ' + perf.venueAddress : ''}`}
+                        venueName={perf.venueName}
+                        label={perf.label ? `${perf.label} Directions` : 'Get Directions'}
+                        variant="pill"
+                      />
                     </div>
-                    <LocationDirectionsButton
-                      client:load
-                      location="Shepherd of the Hills Lutheran Church, 3920 Victoria St N, Shoreview, MN 55126"
-                      label="Shoreview Directions"
-                      variant="pill"
-                    />
-                  </div>
-                  <div class="border-t border-zinc-200/80 pt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p class="font-bold text-navy-950">Sunday, December 20 · 3:00 PM</p>
-                      <p class="text-xs text-zinc-700">
-                        Lutheran Church of the Good Shepherd, Edina
-                      </p>
-                    </div>
-                    <LocationDirectionsButton
-                      client:load
-                      location="Lutheran Church of the Good Shepherd, 4801 France Ave S, Minneapolis, MN 55410"
-                      label="Edina Directions"
-                      variant="pill"
-                    />
-                  </div>
+                  ))}
                 </div>
               ) : (
                 <div class="mt-3 space-y-2">
                   <p class="text-sm font-semibold text-zinc-800">
                     🗓 {featuredConcert.datesDisplay}
                   </p>
-                  <div class="flex items-center gap-2">
-                    <LocationDirectionsButton
-                      client:load
-                      location={`${featuredConcert.venueName}, ${featuredConcert.venueAddress}`}
-                      venueName={featuredConcert.venueName}
-                      variant="pill"
-                    />
-                  </div>
+                  {featuredConcert.venueName && (
+                    <div class="flex items-center gap-2">
+                      <LocationDirectionsButton
+                        client:load
+                        location={`${featuredConcert.venueName}${featuredConcert.venueAddress ? ', ' + featuredConcert.venueAddress : ''}`}
+                        venueName={featuredConcert.venueName}
+                        variant="pill"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -146,12 +140,6 @@ const featuredMedia = media.slice(0, 3);
                 class="rounded-full bg-gold-500 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-copper-600"
               >
                 Reserve Tickets →
-              </a>
-              <a
-                href="/concerts"
-                class="rounded-full border border-zinc-300 px-5 py-3 text-xs font-semibold uppercase tracking-wider text-navy-900 transition hover:border-navy-900"
-              >
-                Flex Season Pass
               </a>
             </div>
           </div>

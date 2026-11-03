@@ -29,6 +29,8 @@ export const EnvSchema = z.object({
   ABSENCE_NOTIFICATION_EMAILS: z.string().optional(),
 
   PUBLIC_TICKET_TAILOR_BOX_OFFICE_URL: z.string().optional(),
+  TICKET_TAILOR_API_KEY: z.string().optional(),
+  YOUTUBE_CHANNEL_ID: z.string().optional(),
   PUBLIC_GIVEBUTTER_ACCOUNT_ID: z.string().optional(),
   PUBLIC_GIVEBUTTER_CAMPAIGN_ID: z.string().optional(),
 });
@@ -59,6 +61,8 @@ export const KNOWN_ENV_KEYS = [
   'SANDBOX_OVERRIDE_EMAIL',
   'ABSENCE_NOTIFICATION_EMAILS',
   'PUBLIC_TICKET_TAILOR_BOX_OFFICE_URL',
+  'TICKET_TAILOR_API_KEY',
+  'YOUTUBE_CHANNEL_ID',
   'PUBLIC_GIVEBUTTER_ACCOUNT_ID',
   'PUBLIC_GIVEBUTTER_CAMPAIGN_ID',
 ] as const;
@@ -74,6 +78,7 @@ export const ENV_CLASSIFICATIONS: Record<(typeof KNOWN_ENV_KEYS)[number], EnvCla
   PUBLIC_GIVEBUTTER_CAMPAIGN_ID: 'public',
 
   AUTH_SECRET: 'secret',
+  TICKET_TAILOR_API_KEY: 'secret',
   GOOGLE_SERVICE_ACCOUNT_EMAIL: 'secret',
   GOOGLE_PRIVATE_KEY: 'secret',
   GOOGLE_OAUTH_CLIENT_SECRET: 'secret',
@@ -85,6 +90,7 @@ export const ENV_CLASSIFICATIONS: Record<(typeof KNOWN_ENV_KEYS)[number], EnvCla
   GOOGLE_MASTER_SHEET_ID: 'config',
   REPERTOIRE_DRIVE_FOLDER_ID: 'config',
   GOOGLE_CALENDAR_ID: 'config',
+  YOUTUBE_CHANNEL_ID: 'config',
   PORTAL_FROM_EMAIL: 'config',
   SANDBOX_OVERRIDE_EMAIL: 'config',
   ABSENCE_NOTIFICATION_EMAILS: 'config',

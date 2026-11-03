@@ -4,6 +4,8 @@ export type CacheTag =
   | `schedule:${string}`
   | 'absences'
   | 'concerts'
+  | 'tickettailor_events'
+  | 'youtube_media'
   | 'media'
   | 'config'
   | 'music'
