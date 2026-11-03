@@ -32,7 +32,6 @@ export default function NewChartModal({
   );
   const [season, setSeason] = useState(sourceChart?.season || currentSeason);
   const [concertSlug, setConcertSlug] = useState(sourceChart?.concertSlug || '');
-  const [description, setDescription] = useState(sourceChart?.description || '');
   const [status, setStatus] = useState<'Draft' | 'Published'>('Draft');
   const [rowCount, setRowCount] = useState(sourceChart ? sourceChart.rows.length : 3);
   const [seatsPerRow, setSeatsPerRow] = useState(17);
@@ -88,7 +87,6 @@ export default function NewChartModal({
         season: season.trim(),
         concertSlug: concertSlug || undefined,
         concertTitle: selectedConcert?.title,
-        description: description.trim() || undefined,
         status,
         rows,
       });
@@ -186,19 +184,6 @@ export default function NewChartModal({
                 ))}
               </select>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600">
-              Description / Venue Notes
-            </label>
-            <textarea
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. 4 rows; Soprano/Alto stage right, Tenor/Bass stage left."
-              className="mt-1 w-full rounded-xl border border-zinc-200 px-3.5 py-2 text-xs text-zinc-900 focus:border-navy-900 focus:outline-hidden"
-            />
           </div>
 
           {!sourceChart && (

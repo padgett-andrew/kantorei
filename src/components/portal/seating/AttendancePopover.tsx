@@ -56,14 +56,12 @@ export default function AttendancePopover({
   const voicePart = seat.voicePart || singer?.voicePart || 'B1';
   const badgeClass = voicePartBadgeColor(voicePart);
 
-  const currentStatus: 'Present' | 'Late' | 'Absent' | 'Unmarked' =
+  const currentStatus: 'Present' | 'Late' | 'Absent' =
     absenceRecord?.status === 'Absent'
       ? 'Absent'
       : absenceRecord?.status === 'Late'
       ? 'Late'
-      : absenceRecord?.status === 'Cleared'
-      ? 'Present'
-      : 'Unmarked';
+      : 'Present';
 
   async function handleAction(status: 'Present' | 'Late' | 'Absent') {
     if (!singer && seat.singerEmail) {

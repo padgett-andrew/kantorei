@@ -148,15 +148,13 @@ export default function SeatCard({
   const fullDisplayName = seat.singerName || assignedSinger?.name || seat.singerEmail || 'Singer';
   const isOnLeave = assignedSinger?.status === 'On_Leave';
 
-  // Attendance status resolution
-  const attendanceStatus: 'Present' | 'Late' | 'Absent' | 'Unmarked' =
+  // Attendance status resolution: All singers are Present by default unless marked Absent or Late
+  const attendanceStatus: 'Present' | 'Late' | 'Absent' =
     absenceRecord?.status === 'Absent'
       ? 'Absent'
       : absenceRecord?.status === 'Late'
       ? 'Late'
-      : mode === 'attendance' && absenceRecord?.status === 'Cleared'
-      ? 'Present'
-      : 'Unmarked';
+      : 'Present';
 
   let attendanceBg = 'bg-white border-zinc-200/80 hover:border-zinc-300';
   if (mode === 'attendance') {
@@ -164,7 +162,7 @@ export default function SeatCard({
       attendanceBg = 'bg-rose-50/90 border-rose-300 ring-1 ring-rose-300 shadow-xs';
     } else if (attendanceStatus === 'Late') {
       attendanceBg = 'bg-amber-50/90 border-amber-300 ring-1 ring-amber-300 shadow-xs';
-    } else if (attendanceStatus === 'Present') {
+    } else {
       attendanceBg = 'bg-emerald-50/80 border-emerald-300 shadow-xs';
     }
   }
@@ -220,9 +218,7 @@ export default function SeatCard({
           ? 'cursor-grab active:cursor-grabbing hover:border-gold-400'
           : 'cursor-pointer'
       } hover:shadow-xs`}
-      title={`${fullDisplayName} (${voicePart}) · ${row.name}, Seat #${seat.seatIndex}${
-        attendanceStatus !== 'Unmarked' ? ` · Status: ${attendanceStatus}` : ''
-      }`}
+      title={`${fullDisplayName} (${voicePart}) · ${row.name}, Seat #${seat.seatIndex} · Status: ${attendanceStatus}`}
     >
       {/* Top Header: Voice Part & Seat Number / Badges */}
       <div className="flex items-center justify-between gap-0.5">
@@ -302,14 +298,10 @@ export default function SeatCard({
               <Clock className="h-2.5 w-2.5 stroke-[2.5]" />
               <span className={isCompact ? 'text-[9px]' : ''}>Late</span>
             </span>
-          ) : attendanceStatus === 'Present' ? (
+          ) : (
             <span className="inline-flex items-center gap-0.5 font-bold text-emerald-700">
               <Check className="h-2.5 w-2.5 stroke-[2.5]" />
               <span className={isCompact ? 'text-[9px]' : ''}>Present</span>
-            </span>
-          ) : (
-            <span className="text-zinc-400 group-hover:text-zinc-600 font-medium text-[9px]">
-              {isCompact ? '·' : 'Tap to mark'}
             </span>
           )
         ) : mode === 'edit' ? (

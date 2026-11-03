@@ -253,7 +253,8 @@ export default function SeatingChartManager({
                 status: 'Late',
                 reason: record.reason,
               });
-            } else if (record?.status === 'Cleared') {
+            } else {
+              // All other singers are Present by default unless marked Absent or Late
               presentCount++;
             }
           }
@@ -261,20 +262,17 @@ export default function SeatingChartManager({
       }
     }
 
-    const unmarkedCount = Math.max(0, filledSeats - (presentCount + absentCount + lateCount));
-
     return {
       totalSeats,
       filledSeats,
       presentCount,
       absentCount,
       lateCount,
-      unmarkedCount,
       missingSingers,
     };
   }, [currentDisplayRows, attendanceMap]);
 
-  // Section-by-section attendance headcounts for the selected event
+  // Section-by-section attendance headcounts for the selected event (Default: all active singers Present)
   const sectionHeadcounts = useMemo(() => {
     return (['Soprano', 'Alto', 'Tenor', 'Bass'] as const).map((sec) => {
       const sectionSingers = roster.filter((s) => s.active && s.sectionGroup === sec);
@@ -284,9 +282,7 @@ export default function SeatingChartManager({
       const absentCount = sectionSingers.filter(
         (s) => attendanceMap.get(s.email.toLowerCase())?.status === 'Absent'
       ).length;
-      const presentCount = sectionSingers.filter(
-        (s) => attendanceMap.get(s.email.toLowerCase())?.status === 'Cleared'
-      ).length;
+      const presentCount = Math.max(0, sectionSingers.length - (absentCount + lateCount));
 
       return {
         section: sec,
@@ -1287,12 +1283,6 @@ export default function SeatingChartManager({
           </div>
         </div>
 
-        {/* Description / Venue Notes */}
-        {activeChart?.description && (
-          <p className="mt-3 border-t border-zinc-100 pt-2 text-xs text-zinc-500">
-            <strong>Venue Notes:</strong> {activeChart.description}
-          </p>
-        )}
       </div>
 
       {/* Personal Singer Placement Banner (Mobile & Desktop Quick Locator) */}
@@ -1392,9 +1382,6 @@ export default function SeatingChartManager({
               <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100 px-2.5 py-1 text-amber-800">
                 <Clock className="h-3.5 w-3.5" />
                 Late: {chartStats.lateCount}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-zinc-200 px-2.5 py-1 text-zinc-600">
-                Unmarked: {chartStats.unmarkedCount}
               </span>
             </div>
           </div>
@@ -2033,14 +2020,12 @@ export default function SeatingChartManager({
                     const badgeClass = voicePartBadgeColor(voicePart);
                     const isOccupied = Boolean(seat.singerEmail || seat.singerName);
 
-                    const attendanceStatus =
+                    const attendanceStatus: 'Present' | 'Late' | 'Absent' =
                       absenceRecord?.status === 'Absent'
                         ? 'Absent'
                         : absenceRecord?.status === 'Late'
                         ? 'Late'
-                        : mode === 'attendance' && absenceRecord?.status === 'Cleared'
-                        ? 'Present'
-                        : 'Unmarked';
+                        : 'Present';
 
                     return (
                       <div
