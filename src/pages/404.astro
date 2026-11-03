@@ -1,0 +1,62 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { Music2, Home, LogIn, Calendar } from 'lucide-react';
+
+const isSignedIn = Boolean(Astro.locals.singer);
+---
+
+<PublicLayout title="Score Not Found (404)">
+  <div class="relative flex min-h-[70vh] items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
+    <div class="w-full max-w-xl text-center">
+      <!-- Musical measure rest badge -->
+      <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 ring-8 ring-amber-500/5">
+        <Music2 className="h-10 w-10 animate-pulse text-amber-600" />
+      </div>
+
+      <p class="mt-6 text-sm font-semibold uppercase tracking-wider text-amber-700">404 Error</p>
+      <h1 class="mt-2 font-serif text-4xl font-bold tracking-tight text-navy-950 sm:text-5xl">
+        Score Not Found
+      </h1>
+      <p class="mx-auto mt-4 max-w-md text-base leading-relaxed text-zinc-600">
+        It looks like this measure is missing from our score or the page has moved to another section.
+      </p>
+
+      <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <a
+          href="/"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-navy-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-navy-900 sm:w-auto"
+        >
+          <Home className="h-4 w-4" />
+          Return Home
+        </a>
+
+        {isSignedIn ? (
+          <a
+            href="/portal"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 sm:w-auto"
+          >
+            <LogIn className="h-4 w-4 text-amber-600" />
+            Singer Portal
+          </a>
+        ) : (
+          <a
+            href="/login"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 sm:w-auto"
+          >
+            <LogIn className="h-4 w-4 text-amber-600" />
+            Singer Login
+          </a>
+        )}
+
+        <a
+          href="/concerts"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 sm:w-auto"
+        >
+          <Calendar className="h-4 w-4 text-zinc-500" />
+          Concerts & Tickets
+        </a>
+      </div>
+    </div>
+  </div>
+</PublicLayout>
+

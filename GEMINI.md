@@ -19,7 +19,7 @@ Non-technical choir board members, music librarians, and section leaders MUST be
 - **Authentication:** Native Web Crypto **Google OAuth 2.0 PKCE** + **`jose`** (JWKS ID-token verification, Web Crypto JWT sessions & stateless HMAC-signed 6-digit Email OTP verification — zero database required). Access to `/portal/*` and protected `/api/*` routes is gated by `src/middleware.ts` + live `requireSinger()` / `requireAdmin()` checks against the cached `Roster` sheet.
 - **Backend / Google Workspace Integration:** Direct **Google Sheets API v4 & Google Drive API v3 REST calls** via `fetch()` authenticated with a **`jose`** Service Account RS256 JWT (replaces the 180 MB Node-only `googleapis` package for `0ms` Cloudflare Worker cold starts; supports Google Shared Drives via `supportsAllDrives=true&includeItemsFromAllDrives=true`).
 - **Schema Resilience:** **`zod`** row-level `.safeParse()` validation on all Google Sheet tabs so blank spacer rows or board typos never crash the site (and surface clear data-health warnings on `/portal/admin`).
-- **Edge Caching:** Cloudflare Cache API (`caches.default`) with automatic in-memory TTL fallback during local `astro dev`, plus instant cache-key invalidation on mutations.
+- **Edge Caching & Resilience:** Cloudflare Cache API (`caches.default`) with automatic in-memory TTL fallback during local `astro dev`, instant cache-key invalidation on mutations, **serve-stale-on-error** fallback (preventing mass singer logouts during Google API hiccups), and **exponential backoff + jitter retries** (`fetchWithRetry`) on all Google Workspace REST requests.
 - **HTML Sanitization:** Edge-safe HTML sanitizer (`sanitize-html` / pure-JS whitelist sanitizer) for rendering the exported Choir Handbook Google Doc cleanly.
 - **Transactional Email:** Direct **Resend REST API** via `fetch()` (zero Node SDK overhead; routes absence alerts dynamically to the Artistic Director + Section Leaders, and delivers 6-digit login codes).
 - **Hosting:** **Cloudflare Workers** (`wrangler.jsonc`)
@@ -78,6 +78,7 @@ Kantorei operates with three clear environment tiers governed by `src/lib/env.ts
 - `npm run doctor:env`: Audits current environment against local development rules.
 - `npm run doctor:env:prod`: Audits environment against strict production invariants prior to deployment.
 - `npm run env:sync-dev`: Synchronizes `.env` into `.dev.vars` for Cloudflare Workers local preview (`wrangler dev`).
+- `npm run backup:sheets`: Creates an instantaneous JSON snapshot of all Master Sheet tabs in a git-ignored `backups/` directory for disaster recovery.
 - `npm run deploy:secrets`: Verifies production `AUTH_SECRET` entropy before uploading secrets via `wrangler secret bulk`.
 
 ---

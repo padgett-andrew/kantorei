@@ -1,0 +1,55 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
+
+interface Props {
+  error?: unknown;
+}
+
+const { error } = Astro.props;
+const errorMessage = error instanceof Error ? error.message : 'An unexpected server error occurred.';
+---
+
+<PublicLayout title="Intermission (500)">
+  <div class="relative flex min-h-[70vh] items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
+    <div class="w-full max-w-xl text-center">
+      <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10 text-red-600 ring-8 ring-red-500/5">
+        <AlertTriangle className="h-10 w-10 text-red-600" />
+      </div>
+
+      <p class="mt-6 text-sm font-semibold uppercase tracking-wider text-red-700">Unexpected Pause</p>
+      <h1 class="mt-2 font-serif text-4xl font-bold tracking-tight text-navy-950 sm:text-5xl">
+        Intermission
+      </h1>
+      <p class="mx-auto mt-4 max-w-md text-base leading-relaxed text-zinc-600">
+        We encountered a momentary dissonance while loading this page. Our choir bots have been notified.
+      </p>
+
+      {import.meta.env.DEV && (
+        <div class="mx-auto mt-6 max-w-lg rounded-xl border border-red-200 bg-red-50/50 p-4 text-left font-mono text-xs text-red-900 overflow-x-auto">
+          <p class="font-bold text-red-950">Development Diagnostic:</p>
+          <p class="mt-1 whitespace-pre-wrap">{errorMessage}</p>
+        </div>
+      )}
+
+      <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <a
+          href="/"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-navy-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-navy-900 sm:w-auto"
+        >
+          <Home className="h-4 w-4" />
+          Return Home
+        </a>
+
+        <button
+          onclick="window.location.reload()"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 sm:w-auto"
+        >
+          <RefreshCw className="h-4 w-4 text-zinc-500" />
+          Try Again
+        </button>
+      </div>
+    </div>
+  </div>
+</PublicLayout>
+

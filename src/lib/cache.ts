@@ -61,7 +61,39 @@ export async function cachedFetchJson<T>(
     }
   }
 
-  const freshData = await fetcher();
+  let freshData: T;
+  try {
+    freshData = await fetcher();
+  } catch (err) {
+    // Resilience: Fall back to stale memory cache or edge cache on transient network/API failures
+    if (memHit) {
+      console.warn(
+        `[Cache Resilience] Fetch failed for tag "${tag}". Serving stale memory-cached data. Reason:`,
+        err instanceof Error ? err.message : err
+      );
+      return JSON.parse(memHit.json) as T;
+    }
+
+    if (edgeCache) {
+      try {
+        const cachedRes = await edgeCache.match(key);
+        if (cachedRes) {
+          const json = await cachedRes.text();
+          console.warn(
+            `[Cache Resilience] Fetch failed for tag "${tag}". Serving stale edge-cached data. Reason:`,
+            err instanceof Error ? err.message : err
+          );
+          memoryCache.set(key, { expiresAt: now + 30 * 1000, json });
+          return JSON.parse(json) as T;
+        }
+      } catch {
+        // Ignore edge cache read error
+      }
+    }
+
+    throw err;
+  }
+
   const serialized = JSON.stringify(freshData);
 
   memoryCache.set(key, {

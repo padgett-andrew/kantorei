@@ -13,6 +13,7 @@ node_modules/
 .dev.vars
 *service-account*.json
 *credentials*.json
+backups/
 
 # OS & editor files
 .DS_Store

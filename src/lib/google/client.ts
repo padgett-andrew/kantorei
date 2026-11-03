@@ -23,6 +23,57 @@ const GOOGLE_SCOPES = [
 
 let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 
+/**
+ * Executes a fetch request with exponential backoff and jitter for transient errors.
+ * Retries automatically on HTTP 429 (rate limit), 500, 502, 503, 504, or network timeouts.
+ */
+export async function fetchWithRetry(
+  url: string | URL,
+  init?: RequestInit,
+  maxRetries = 2,
+  baseDelayMs = 300
+): Promise<Response> {
+  let attempt = 0;
+  while (true) {
+    try {
+      const res = await fetch(url, init);
+      const isTransient =
+        res.status === 429 ||
+        res.status === 500 ||
+        res.status === 502 ||
+        res.status === 503 ||
+        res.status === 504;
+
+      if (!isTransient || attempt >= maxRetries) {
+        return res;
+      }
+
+      const retryAfterSec = Number(res.headers.get('retry-after'));
+      const delayMs =
+        !isNaN(retryAfterSec) && retryAfterSec > 0
+          ? retryAfterSec * 1000
+          : baseDelayMs * Math.pow(2, attempt) + Math.random() * 100;
+
+      console.warn(
+        `[Google API Retry] Transient HTTP ${res.status} on ${url.toString().split('?')[0]}. Retrying in ${Math.round(delayMs)}ms (attempt ${attempt + 1}/${maxRetries})...`
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      attempt++;
+    } catch (err) {
+      if (attempt >= maxRetries) {
+        throw err;
+      }
+      const delayMs = baseDelayMs * Math.pow(2, attempt) + Math.random() * 100;
+      console.warn(
+        `[Google API Retry] Network error on ${url.toString().split('?')[0]}. Retrying in ${Math.round(delayMs)}ms (attempt ${attempt + 1}/${maxRetries})...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      attempt++;
+    }
+  }
+}
+
 export async function getGoogleAccessToken(locals?: App.Locals): Promise<string> {
   if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now() + 60_000) {
     return cachedAccessToken.token;
@@ -47,7 +98,7 @@ export async function getGoogleAccessToken(locals?: App.Locals): Promise<string>
     .setExpirationTime(nowSec + 3600)
     .sign(privateKey);
 
-  const res = await fetch('https://oauth2.googleapis.com/token', {
+  const res = await fetchWithRetry('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -75,7 +126,7 @@ export async function readSheetValues(range: string, locals?: App.Locals): Promi
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -98,7 +149,7 @@ export async function writeSheetValues(
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}?valueInputOption=USER_ENTERED`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -123,7 +174,7 @@ export async function appendSheetValues(
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,

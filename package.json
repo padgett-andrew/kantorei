@@ -11,6 +11,7 @@
     "doctor:env": "node scripts/doctor-env.mjs",
     "doctor:env:prod": "node scripts/doctor-env.mjs --mode=production",
     "env:sync-dev": "node scripts/sync-dev-vars.mjs",
+    "backup:sheets": "node scripts/backup-sheets.mjs",
     "setup:key": "node scripts/import-service-account.mjs",
     "verify:google": "node scripts/verify-google.mjs",
     "verify:resend": "node scripts/verify-resend.mjs",

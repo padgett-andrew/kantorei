@@ -1,5 +1,5 @@
 import type { EventType, ScheduleEvent } from '../../types/choir';
-import { getGoogleAccessToken } from './client';
+import { fetchWithRetry, getGoogleAccessToken } from './client';
 
 export interface GCalEventItem {
   id: string;
@@ -73,7 +73,7 @@ export async function fetchGoogleCalendarEvents(
   url.searchParams.set('timeMax', timeMax);
   url.searchParams.set('maxResults', '250');
 
-  const res = await fetch(url.toString(), {
+  const res = await fetchWithRetry(url.toString(), {
     headers: { Authorization: `Bearer ${token}` },
   });
 

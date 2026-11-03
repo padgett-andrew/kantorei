@@ -7,7 +7,7 @@ import { convertDocxToHtml, convertPlainTextToHtml } from '../docx';
 import { extractGoogleId, hasGoogleServiceAccount } from '../env';
 import { DEFAULT_HANDBOOK_HTML, DEFAULT_STRATEGIC_PLAN_HTML } from '../handbook-content';
 import { sanitizeHandbookHtml } from '../sanitize';
-import { NotFoundError, getGoogleAccessToken } from './client';
+import { NotFoundError, fetchWithRetry, getGoogleAccessToken } from './client';
 import { demoStore } from './demo-store';
 import { getConcerts, getPortalConfig } from './sheets';
 
@@ -97,7 +97,7 @@ export async function driveListQuery(query: string, locals?: App.Locals): Promis
     includeItemsFromAllDrives: 'true',
   });
 
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
+  const res = await fetchWithRetry(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -402,7 +402,7 @@ export async function getRepertoireDocHtml(
 
     if (meta.mimeType === 'application/vnd.google-apps.document') {
       const token = await getGoogleAccessToken(locals);
-      const res = await fetch(
+      const res = await fetchWithRetry(
         `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
           fileId
         )}/export?mimeType=text/html`,
@@ -471,7 +471,7 @@ export async function exportGoogleDocPdfResponse(
   locals?: App.Locals
 ): Promise<Response> {
   const token = await getGoogleAccessToken(locals);
-  return fetch(
+  return fetchWithRetry(
     `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
       fileId
     )}/export?mimeType=application/pdf`,
@@ -488,7 +488,7 @@ export async function getDriveFileMetadata(
     fields: 'id,name,mimeType,size',
     supportsAllDrives: 'true',
   });
-  const res = await fetch(
+  const res = await fetchWithRetry(
     `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?${params.toString()}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
@@ -519,7 +519,7 @@ export async function fetchDriveMediaResponse(
     headers.Range = rangeHeader;
   }
 
-  return fetch(
+  return fetchWithRetry(
     `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
       fileId
     )}?alt=media&supportsAllDrives=true`,
@@ -539,7 +539,7 @@ export async function getHandbookHtml(
 
   const sanitized = await cachedFetchJson('handbook', 300, async () => {
     const token = await getGoogleAccessToken(locals);
-    const res = await fetch(
+    const res = await fetchWithRetry(
       `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
         docId
       )}/export?mimeType=text/html`,
@@ -567,7 +567,7 @@ export async function getStrategicPlanHtml(
 
   const sanitized = await cachedFetchJson('strategic-plan', 300, async () => {
     const token = await getGoogleAccessToken(locals);
-    const res = await fetch(
+    const res = await fetchWithRetry(
       `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(
         docId
       )}/export?mimeType=text/html`,
