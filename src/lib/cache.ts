@@ -7,6 +7,7 @@ export type CacheTag =
   | 'media'
   | 'config'
   | 'music'
+  | 'seating_charts'
   | `repertoire-doc:${string}`
   | 'handbook'
   | 'strategic-plan';

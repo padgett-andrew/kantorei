@@ -5,10 +5,13 @@ import {
   inferSectionGroup,
   MEMBER_ROLES,
   SECTION_GROUPS,
+  SEATING_CHART_STATUSES,
   VOICE_PARTS,
   type AbsenceRecord,
   type ConcertEvent,
   type ScheduleEvent,
+  type SeatingChart,
+  type SeatingRow,
   type Singer,
 } from '../types/choir';
 
@@ -222,3 +225,80 @@ export const MediaRowSchema = z
     category: category || 'Performance Video',
     description: description || undefined,
   }));
+
+export const SeatingSeatSchema = z.object({
+  seatIndex: z.number().int().min(1),
+  singerEmail: z.string().trim().email().optional().or(z.literal('')),
+  singerName: z.string().trim().optional(),
+  voicePart: z.enum(VOICE_PARTS).optional(),
+  isAisle: z.boolean().optional(),
+  customLabel: z.string().trim().optional(),
+});
+
+export const SeatingRowSchema = z.object({
+  rowNumber: z.number().int().min(1),
+  name: z.string().trim().min(1),
+  seats: z.array(SeatingSeatSchema),
+});
+
+export const SeatingChartRowSchema = z
+  .tuple([
+    trimmedString.pipe(z.string().min(1, 'Missing Chart_ID')),
+    trimmedString.pipe(z.string().min(1, 'Missing Season')),
+    trimmedString,
+    trimmedString.pipe(z.string().min(1, 'Missing Title')),
+    trimmedString,
+    trimmedString,
+    trimmedString,
+    trimmedString,
+    trimmedString,
+  ])
+  .transform(
+    ([
+      id,
+      season,
+      concertSlug,
+      title,
+      description,
+      rawStatus,
+      rawLayoutJson,
+      createdAt,
+      updatedAt,
+    ]): SeatingChart => {
+      let rows: SeatingRow[] = [];
+      if (rawLayoutJson) {
+        try {
+          const parsed = JSON.parse(rawLayoutJson);
+          if (Array.isArray(parsed)) {
+            rows = parsed;
+          }
+        } catch {
+          rows = [];
+        }
+      }
+      const status = rawStatus.toLowerCase() === 'published' ? 'Published' : 'Draft';
+      return {
+        id,
+        season,
+        concertSlug: concertSlug || undefined,
+        title,
+        description: description || undefined,
+        status,
+        rows,
+        createdAt: createdAt || new Date().toISOString(),
+        updatedAt: updatedAt || new Date().toISOString(),
+      };
+    }
+  );
+
+export const UpsertSeatingChartRequestSchema = z.object({
+  id: z.string().trim().optional(),
+  season: z.string().trim().min(1, 'Season is required (e.g. 2026–2027)'),
+  concertSlug: z.string().trim().optional(),
+  concertTitle: z.string().trim().optional(),
+  title: z.string().trim().min(1, 'Chart title is required'),
+  description: z.string().trim().optional(),
+  status: z.enum(SEATING_CHART_STATUSES).default('Draft'),
+  rows: z.array(SeatingRowSchema).default([]),
+});
+

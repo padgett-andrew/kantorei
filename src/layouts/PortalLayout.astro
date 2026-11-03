@@ -3,6 +3,7 @@ import '../styles/global.css';
 import PortalNav from '../components/portal/PortalNav.astro';
 import DevPersonaSwitcher from '../components/portal/DevPersonaSwitcher';
 import MobileBottomNav from '../components/portal/MobileBottomNav';
+import { getCalendarId } from '../lib/env';
 import { getPortalConfig, getRoster, getWorkspaceLinks } from '../lib/google';
 
 interface Props {
@@ -21,6 +22,11 @@ const choirName = config.Choir_Name || 'Kantorei';
 const isDevPreview = Boolean(Astro.locals.isDevPreview);
 const isAdmin = singer.role === 'Admin';
 const workspace = getWorkspaceLinks(isAdmin, config, Astro.locals);
+const calendarId = getCalendarId(Astro.locals);
+const calendarUrl =
+  calendarId && calendarId !== 'DEMO'
+    ? `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarId)}`
+    : 'https://calendar.google.com/calendar/u/0/r';
 
 let devPersonas: { email: string; label: string }[] = [];
 if (isDevPreview) {
@@ -139,6 +145,7 @@ if (isDevPreview) {
       repertoireDriveUrl={workspace.repertoireDriveUrl}
       masterSheetUrl={workspace.masterSheetUrl}
       isSheetAdmin={isAdmin}
+      calendarUrl={calendarUrl}
     />
   </body>
 </html>

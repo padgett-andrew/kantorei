@@ -5,6 +5,7 @@ import {
   type AbsenceRecord,
   type AbsenceStatus,
   type ScheduleEvent,
+  type SeatingChart,
   type Singer,
 } from '../../types/choir';
 import { invalidateCacheTag } from '../cache';
@@ -473,4 +474,137 @@ export async function deleteScheduleEvent(params: {
   await invalidateCacheTag('schedule');
   return { ok: true, eventId };
 }
+
+export async function upsertSeatingChart(params: {
+  chart: Partial<SeatingChart> & { title: string; season: string };
+  mode?: 'create' | 'update';
+  locals?: App.Locals;
+}): Promise<SeatingChart> {
+  const { chart, mode, locals } = params;
+  const now = new Date().toISOString();
+  const resolvedId =
+    chart.id?.trim() ||
+    `chart-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+  const normalized: SeatingChart = {
+    id: resolvedId,
+    season: chart.season.trim(),
+    concertSlug: chart.concertSlug?.trim() || undefined,
+    concertTitle: chart.concertTitle?.trim() || undefined,
+    title: chart.title.trim(),
+    description: chart.description?.trim() || undefined,
+    status: chart.status || 'Draft',
+    rows: chart.rows || [],
+    createdAt: chart.createdAt || now,
+    updatedAt: now,
+  };
+
+  if (isSandboxSheetMode(locals)) {
+    const idx = demoStore.seatingCharts.findIndex((c) => c.id === normalized.id);
+    if (mode === 'create' && idx >= 0) {
+      throw new ConflictError(`A seating chart with ID "${normalized.id}" already exists.`);
+    }
+    if (idx >= 0) {
+      normalized.createdAt = demoStore.seatingCharts[idx].createdAt;
+      demoStore.seatingCharts[idx] = normalized;
+    } else {
+      demoStore.seatingCharts.unshift(normalized);
+    }
+    await invalidateCacheTag('seating_charts');
+    return normalized;
+  }
+
+  // Google Sheets live mode
+  try {
+    const allRows = await readSheetValues('Seating_Charts!A1:I', locals);
+    const headerRow = allRows[0] || [];
+    const rows = allRows.slice(1);
+    const matchIdx = rows.findIndex((r) => (r[0] ?? '').trim() === normalized.id);
+
+    if (mode === 'create' && matchIdx >= 0) {
+      throw new ConflictError(`A seating chart with ID "${normalized.id}" already exists.`);
+    }
+
+    const layoutJson = JSON.stringify(normalized.rows);
+    const rowValues = [
+      normalized.id,
+      normalized.season,
+      normalized.concertSlug || '',
+      normalized.title,
+      normalized.description || '',
+      normalized.status,
+      layoutJson,
+      matchIdx >= 0 ? rows[matchIdx][7] || normalized.createdAt : normalized.createdAt,
+      normalized.updatedAt,
+    ];
+
+    if (matchIdx >= 0) {
+      const freshRowIndex = matchIdx + 2;
+      await writeSheetValues(`Seating_Charts!A${freshRowIndex}:I${freshRowIndex}`, [rowValues], locals);
+    } else {
+      if (allRows.length === 0 || headerRow.length === 0) {
+        await writeSheetValues('Seating_Charts!A1:I1', [
+          ['Chart_ID', 'Season', 'Concert_Slug', 'Title', 'Description', 'Status', 'Layout_JSON', 'Created_At', 'Updated_At'],
+        ], locals);
+      }
+      await appendSheetValues('Seating_Charts!A:I', [rowValues], locals);
+    }
+  } catch (err) {
+    try {
+      const layoutJson = JSON.stringify(normalized.rows);
+      await writeSheetValues('Seating_Charts!A1:I2', [
+        ['Chart_ID', 'Season', 'Concert_Slug', 'Title', 'Description', 'Status', 'Layout_JSON', 'Created_At', 'Updated_At'],
+        [
+          normalized.id,
+          normalized.season,
+          normalized.concertSlug || '',
+          normalized.title,
+          normalized.description || '',
+          normalized.status,
+          layoutJson,
+          normalized.createdAt,
+          normalized.updatedAt,
+        ],
+      ], locals);
+    } catch {
+      throw err;
+    }
+  }
+
+  await invalidateCacheTag('seating_charts');
+  return normalized;
+}
+
+export async function deleteSeatingChart(params: {
+  chartId: string;
+  locals?: App.Locals;
+}): Promise<{ ok: boolean; chartId: string }> {
+  const { chartId, locals } = params;
+
+  if (isSandboxSheetMode(locals)) {
+    const idx = demoStore.seatingCharts.findIndex((c) => c.id === chartId);
+    if (idx === -1) throw new NotFoundError(`Seating chart with ID "${chartId}" not found.`);
+    demoStore.seatingCharts.splice(idx, 1);
+    await invalidateCacheTag('seating_charts');
+    return { ok: true, chartId };
+  }
+
+  const allRows = await readSheetValues('Seating_Charts!A1:I', locals);
+  const rows = allRows.slice(1);
+  const matchIdx = rows.findIndex((r) => (r[0] ?? '').trim() === chartId);
+  if (matchIdx === -1) {
+    throw new NotFoundError(`Seating chart with ID "${chartId}" not found.`);
+  }
+
+  const freshRowIndex = matchIdx + 2;
+  await writeSheetValues(
+    `Seating_Charts!A${freshRowIndex}:I${freshRowIndex}`,
+    [['', '', '', '', '', '', '', '', '']],
+    locals
+  );
+
+  await invalidateCacheTag('seating_charts');
+  return { ok: true, chartId };
+}
+
 

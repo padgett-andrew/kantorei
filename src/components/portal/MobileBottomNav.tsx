@@ -6,10 +6,10 @@ import {
   ExternalLink,
   FileSpreadsheet,
   FolderOpen,
+  Layers,
   LogOut,
   MoreHorizontal,
   Music,
-  ShieldCheck,
   UserX,
   Users,
   X,
@@ -23,6 +23,7 @@ interface Props {
   repertoireDriveUrl?: string;
   masterSheetUrl?: string;
   isSheetAdmin?: boolean;
+  calendarUrl?: string;
 }
 
 export default function MobileBottomNav({
@@ -33,6 +34,7 @@ export default function MobileBottomNav({
   repertoireDriveUrl,
   masterSheetUrl,
   isSheetAdmin = isAdmin,
+  calendarUrl,
 }: Props) {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
@@ -40,10 +42,11 @@ export default function MobileBottomNav({
   const isMusicActive = currentPath.startsWith('/portal/music');
   const isSnacksActive = currentPath.startsWith('/portal/snacks');
   const isAbsencesActive = currentPath.startsWith('/portal/absences');
+  const isSeatingActive = currentPath.startsWith('/portal/seating');
   const isMoreActive =
     currentPath.startsWith('/portal/directory') ||
     currentPath.startsWith('/portal/handbook') ||
-    currentPath.startsWith('/portal/admin');
+    isSeatingActive;
 
   return (
     <>
@@ -74,13 +77,23 @@ export default function MobileBottomNav({
 
             <div className="mt-3 space-y-1.5">
               <a
+                href="/portal/seating"
+                className="flex items-center gap-3 rounded-2xl p-3 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ivory-100 text-gold-600">
+                  <Layers className="h-4 w-4" />
+                </span>
+                <span>Seating &amp; Attendance</span>
+              </a>
+
+              <a
                 href="/portal/directory"
                 className="flex items-center gap-3 rounded-2xl p-3 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50"
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ivory-100 text-gold-600">
                   <Users className="h-4 w-4" />
                 </span>
-                <span>Member Contact Directory</span>
+                <span>Roster &amp; Member Directory</span>
               </a>
 
               <a
@@ -93,15 +106,20 @@ export default function MobileBottomNav({
                 <span>Choir Handbook &amp; Vision</span>
               </a>
 
-              {isAdmin && (
+              {isAdmin && calendarUrl && (
                 <a
-                  href="/portal/admin"
-                  className="flex items-center gap-3 rounded-2xl p-3 text-sm font-semibold text-navy-950 transition hover:bg-amber-50/50"
+                  href={calendarUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-2xl p-3 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy-900 text-gold-400">
-                    <ShieldCheck className="h-4 w-4" />
-                  </span>
-                  <span>Roll Call &amp; Roster Admin</span>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy-900 text-gold-400">
+                      <Calendar className="h-4 w-4" />
+                    </span>
+                    <span>Google Calendar</span>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
                 </a>
               )}
 

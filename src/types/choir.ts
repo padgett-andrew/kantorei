@@ -130,7 +130,7 @@ export interface PortalConfig {
 }
 
 export interface SheetWarning {
-  tab: 'Roster' | 'Schedule' | 'Absences' | 'Concerts' | 'Media';
+  tab: 'Roster' | 'Schedule' | 'Absences' | 'Concerts' | 'Media' | 'Seating_Charts';
   rowNumber: number;
   message: string;
 }
@@ -161,3 +161,69 @@ export function inferSectionGroup(voicePart: VoicePart): SectionGroup {
   if (voicePart.startsWith('T')) return 'Tenor';
   return 'Bass';
 }
+
+export const SEATING_CHART_STATUSES = ['Draft', 'Published'] as const;
+export type SeatingChartStatus = (typeof SEATING_CHART_STATUSES)[number];
+
+export interface SeatingSeat {
+  seatIndex: number;
+  singerEmail?: string;
+  singerName?: string;
+  voicePart?: VoicePart;
+  isAisle?: boolean;
+  customLabel?: string;
+}
+
+export interface SeatingRow {
+  rowNumber: number;
+  name: string;
+  seats: SeatingSeat[];
+}
+
+export interface SeatingChart {
+  id: string;
+  season: string;
+  concertSlug?: string;
+  concertTitle?: string;
+  title: string;
+  description?: string;
+  status: SeatingChartStatus;
+  rows: SeatingRow[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SingerSeatLocation {
+  chartId: string;
+  chartTitle: string;
+  rowNumber: number;
+  rowName: string;
+  seatIndex: number;
+  totalSeatsInRow: number;
+  voicePart?: VoicePart;
+}
+
+export function findSingerSeatInChart(
+  chart: SeatingChart,
+  singerEmail: string
+): SingerSeatLocation | null {
+  const normEmail = (singerEmail || '').trim().toLowerCase();
+  if (!normEmail) return null;
+  for (const row of chart.rows) {
+    for (const seat of row.seats) {
+      if (seat.singerEmail && seat.singerEmail.trim().toLowerCase() === normEmail) {
+        return {
+          chartId: chart.id,
+          chartTitle: chart.title,
+          rowNumber: row.rowNumber,
+          rowName: row.name,
+          seatIndex: seat.seatIndex,
+          totalSeatsInRow: row.seats.filter((s) => !s.isAisle).length,
+          voicePart: seat.voicePart,
+        };
+      }
+    }
+  }
+  return null;
+}
+

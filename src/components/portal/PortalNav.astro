@@ -20,19 +20,16 @@ const {
   isSheetAdmin = singer.role === 'Admin',
 } = Astro.props;
 
-const showAdminTab = singer.role === 'Admin' || singer.role === 'Section_Leader';
 const isOnLeave = singer.status === 'On_Leave';
 
 const tabs = [
   { href: '/portal', label: 'Overview', exact: true },
   { href: '/portal/music', label: 'Scores & Audio', exact: false },
+  { href: '/portal/seating', label: 'Seating & Attendance', exact: false },
   { href: '/portal/absences', label: 'Absences', exact: false },
   { href: '/portal/snacks', label: 'Duties & Hospitality', exact: false },
-  { href: '/portal/directory', label: 'Directory', exact: false },
+  { href: '/portal/directory', label: 'Roster & Directory', exact: false },
   { href: '/portal/handbook', label: 'Handbook & Vision', exact: false },
-  ...(showAdminTab
-    ? [{ href: '/portal/admin', label: 'Roll Call & Roster', exact: false }]
-    : []),
 ];
 
 const badgeClass = voicePartBadgeColor(singer.voicePart);

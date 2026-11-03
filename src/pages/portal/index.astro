@@ -1,19 +1,20 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import CalendarSubscribeModal from '../../components/portal/CalendarSubscribeModal';
-import CalendarSyncBanner from '../../components/portal/CalendarSyncBanner';
+import CalendarAdminControls from '../../components/portal/CalendarAdminControls';
 import LocationDirectionsButton from '../../components/common/LocationDirectionsButton';
 import QuickLateNoticeModal from '../../components/portal/QuickLateNoticeModal';
 import { getCalendarFeedToken } from '../../lib/calendar';
+import { getCalendarId } from '../../lib/env';
 import {
   getAbsences,
   getPortalConfig,
   getRepertoire,
   getSchedule,
+  getSeatingCharts,
   getWorkspaceLinks,
 } from '../../lib/google';
-import WorkspaceLinksBar from '../../components/portal/WorkspaceLinksBar.astro';
-import { parseSnackEntry } from '../../types/choir';
+import { findSingerSeatInChart, parseSnackEntry } from '../../types/choir';
 import {
   eventTypeBadgeColor,
   formatEventDate,
@@ -22,15 +23,17 @@ import {
 } from '../../lib/utils';
 
 const singer = Astro.locals.singer!;
-const [config, schedule, absences, repertoire, feedToken] = await Promise.all([
+const [config, schedule, absences, repertoire, feedToken, seatingCharts] = await Promise.all([
   getPortalConfig(Astro.locals),
   getSchedule(Astro.locals),
   getAbsences(Astro.locals),
   getRepertoire(Astro.locals),
   getCalendarFeedToken(Astro.locals),
+  getSeatingCharts(Astro.locals),
 ]);
 
 const isAdmin = singer.role === 'Admin';
+const calendarId = getCalendarId(Astro.locals);
 const workspace = getWorkspaceLinks(isAdmin, config, Astro.locals);
 
 const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
@@ -86,6 +89,10 @@ const uniqueConcertPrograms = new Set(
 
 const isOnLeave = singer.status === 'On_Leave';
 
+const publishedCharts = seatingCharts.filter((c) => c.status === 'Published');
+const primaryChart = publishedCharts[0];
+const mySeatLocation = primaryChart ? findSingerSeatInChart(primaryChart, singer.email) : null;
+
 const httpsFeedUrl = `${Astro.url.origin}/api/calendar.ics?token=${feedToken}`;
 const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
 ---
@@ -137,35 +144,23 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
       />
     </div>
 
-    <!-- 1-Tap Calendar Subscription Banner (Dismissible) -->
-    <CalendarSyncBanner
-      client:load
-      httpsFeedUrl={httpsFeedUrl}
-      webcalFeedUrl={webcalFeedUrl}
-    />
-
     <!-- Next Rehearsal Hero Card + Modern Quick Action Tiles -->
     <div class="grid gap-5 lg:grid-cols-12">
       <!-- Left: Next Call Hero -->
-      <div class="relative overflow-hidden rounded-3xl bg-navy-950 p-6 text-ivory-50 shadow-lg sm:p-7 lg:col-span-7 flex flex-col justify-between">
-        <div
-          class="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full opacity-25"
-          style="background: radial-gradient(circle, #af673c 0%, transparent 70%);"
-        ></div>
-
+      <div class="relative overflow-hidden rounded-3xl border border-zinc-200/90 bg-white p-6 shadow-2xs sm:p-7 lg:col-span-7 flex flex-col justify-between">
         <div class="relative">
           <div class="flex items-center justify-between gap-2">
             <span
               class:list={[
                 'text-[11px] font-bold uppercase tracking-[0.18em]',
-                isCallToday ? 'text-amber-300 flex items-center gap-1.5' : 'text-gold-400',
+                isCallToday ? 'text-amber-700 flex items-center gap-1.5' : 'text-gold-500',
               ]}
             >
-              {isCallToday && <span class="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />}
+              {isCallToday && <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
               {isCallToday ? 'Today’s Ensemble Call' : 'Next Ensemble Call'}
             </span>
             {nextEvent && (
-              <span class="rounded-full border border-white/15 bg-white/10 px-3 py-0.5 text-xs font-semibold text-ivory-50">
+              <span class="rounded-full border border-zinc-200 bg-ivory-50 px-3 py-0.5 text-xs font-bold text-navy-950">
                 {nextEvent.type}
               </span>
             )}
@@ -173,26 +168,26 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
 
           {nextEvent ? (
             <div class="mt-4">
-              <h2 class="font-editorial text-3xl font-bold text-white sm:text-4xl">
+              <h2 class="font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
                 {nextEvent.title}
               </h2>
               <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm">
-                <span class="font-semibold text-gold-300">
+                <span class="font-bold text-gold-500">
                   🗓 {isCallToday ? 'Today · ' : ''}{formatEventDate(nextEvent.date)} · {nextEvent.time}
                 </span>
                 <LocationDirectionsButton
                   client:load
                   location={nextEvent.location}
-                  variant="dark"
+                  variant="badge"
                 />
               </div>
 
               {nextEvent.notes && (
-                <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-xs leading-relaxed text-zinc-200">
-                  <span class="font-semibold uppercase tracking-wider text-gold-300 text-[11px] block mb-1.5">
-                    Call Details & Rehearsal Focus
+                <div class="mt-4 rounded-2xl border border-zinc-200/80 bg-ivory-50/70 p-4 text-xs leading-relaxed text-zinc-700">
+                  <span class="font-bold uppercase tracking-wider text-gold-500 text-[11px] block mb-1.5">
+                    Call Details &amp; Rehearsal Focus
                   </span>
-                  <p class="whitespace-pre-line leading-relaxed text-zinc-200">
+                  <p class="whitespace-pre-line leading-relaxed text-zinc-700">
                     {nextEvent.notes}
                   </p>
                 </div>
@@ -201,10 +196,10 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               {nextEventConflict && (
                 <div
                   class:list={[
-                    'mt-4 flex items-start gap-2.5 rounded-2xl border p-3.5 text-xs',
+                    'mt-4 flex items-start gap-2.5 rounded-2xl border p-3.5 text-xs font-semibold',
                     nextEventConflict.status === 'Late'
-                      ? 'border-amber-400/40 bg-amber-400/15 text-amber-200'
-                      : 'border-rose-400/40 bg-rose-500/15 text-rose-200',
+                      ? 'border-amber-300 bg-amber-50 text-amber-950'
+                      : 'border-rose-300 bg-rose-50 text-rose-950',
                   ]}
                 >
                   <span class="text-sm mt-0.5">{nextEventConflict.status === 'Late' ? '⏰' : '🔴'}</span>
@@ -214,7 +209,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                         ? 'Running Late Notice Active'
                         : 'Absence Reported for this Call'}
                     </span>
-                    <p class="mt-0.5 opacity-90 text-[11px]">
+                    <p class="mt-0.5 opacity-80 text-[11px]">
                       {nextEventConflict.reason || (nextEventConflict.status === 'Late' ? 'Running late' : 'Absence recorded')}
                     </p>
                   </div>
@@ -222,7 +217,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               )}
             </div>
           ) : (
-            <p class="mt-4 text-sm text-zinc-300">
+            <p class="mt-4 text-sm text-zinc-500">
               No upcoming rehearsals are posted on the Schedule tab right now.
             </p>
           )}
@@ -231,7 +226,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
         <div class="relative mt-6 flex flex-wrap gap-2.5 pt-2">
           <a
             href="/portal/music"
-            class="inline-flex items-center gap-2 rounded-xl bg-gold-500 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-xs transition hover:bg-copper-600"
+            class="inline-flex items-center gap-2 rounded-xl bg-navy-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-2xs transition hover:bg-navy-950"
           >
             Open Digital Scores ({totalScoreFiles})
           </a>
@@ -239,7 +234,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
             href={workspace.repertoireDriveUrl}
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-white/20"
+            class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider text-zinc-700 shadow-2xs transition hover:border-zinc-300 hover:bg-zinc-50"
             title="Open Repertoire Google Drive folder"
           >
             <span>📁 Music Drive</span>
@@ -262,14 +257,6 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                   : 'Report Conflict / Late'
               }
             />
-          )}
-          {singer.role === 'Admin' && nextEvent && (
-            <a
-              href={`/portal/admin?tab=schedule&edit=${nextEvent.eventId}`}
-              class="inline-flex items-center gap-1.5 rounded-xl border border-gold-400/30 bg-gold-400/10 px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider text-gold-300 transition hover:bg-gold-400/20"
-            >
-              ✏ Edit Call
-            </a>
           )}
         </div>
       </div>
@@ -377,19 +364,38 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
             Open →
           </span>
         </a>
+
+        <!-- 4. Choir Formation & Seating Card -->
+        <a
+          href="/portal/seating"
+          class="group flex items-start justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white p-4.5 shadow-2xs transition hover:border-navy-900 hover:shadow-sm sm:p-5"
+        >
+          <div class="flex items-start gap-3.5">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ivory-100 text-sm font-bold text-gold-500 ring-1 ring-gold-300/40">
+              🪑
+            </span>
+            <div>
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                Seating &amp; Attendance
+              </span>
+              <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
+                {mySeatLocation
+                  ? `${mySeatLocation.rowName}, Seat #${mySeatLocation.seatIndex}`
+                  : `${publishedCharts.length} Formation Chart${publishedCharts.length === 1 ? '' : 's'}`}
+              </h3>
+              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+                {mySeatLocation
+                  ? `${mySeatLocation.chartTitle} · Voice part ${mySeatLocation.voicePart || singer.voicePart}`
+                  : 'View published concert seating charts & choir positions.'}
+              </p>
+            </div>
+          </div>
+          <span class="shrink-0 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 transition group-hover:bg-navy-900 group-hover:text-white">
+            View →
+          </span>
+        </a>
       </div>
     </div>
-
-    <!-- Ensemble Google Workspace: Drive Folders & Master Sheet -->
-    <WorkspaceLinksBar
-      variant="cards"
-      isAdmin={isAdmin}
-      repertoireDriveUrl={workspace.repertoireDriveUrl}
-      masterSheetUrl={workspace.masterSheetUrl}
-      masterSheetMode={workspace.masterSheetMode}
-      masterSheetLabel={workspace.masterSheetLabel}
-      concertDriveFolders={workspace.concertDriveFolders}
-    />
 
     <!-- Full Upcoming Rehearsal & Concert Schedule -->
     <section class="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-2xs">
@@ -403,13 +409,8 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
           </p>
         </div>
         <div class="flex items-center gap-2">
-          {singer.role === 'Admin' && (
-            <a
-              href="/portal/admin?tab=schedule"
-              class="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
-            >
-              <span>⚙ Manage Calendar</span>
-            </a>
+          {isAdmin && (
+            <CalendarAdminControls client:load calendarId={calendarId} />
           )}
           <span class="rounded-full bg-ivory-100 px-3 py-1 text-xs font-semibold text-navy-900">
             {upcomingEvents.length} calls
@@ -464,14 +465,6 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               </div>
 
               <div class="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
-                {singer.role === 'Admin' && (
-                  <a
-                    href={`/portal/admin?tab=schedule&edit=${ev.eventId}`}
-                    class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-600 shadow-2xs transition hover:border-navy-900 hover:text-navy-950"
-                  >
-                    Edit Call
-                  </a>
-                )}
                 {(ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name) && (
                   <div class="shrink-0 rounded-xl bg-zinc-50 px-3 py-1.5 text-xs text-zinc-600 sm:text-right">
                     <span class="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400">

@@ -6,6 +6,7 @@ import {
   type MediaItem,
   type PortalConfig,
   type ScheduleEvent,
+  type SeatingChart,
   type SheetWarning,
   type Singer,
 } from '../../types/choir';
@@ -21,6 +22,7 @@ import {
   ConcertRowSchema,
   MediaRowSchema,
   ScheduleRowSchema,
+  SeatingChartRowSchema,
   SingerRowSchema,
 } from '../schemas';
 import { fetchGoogleCalendarEvents } from './calendar';
@@ -342,14 +344,62 @@ export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig
   });
 }
 
+export async function getSeatingChartsWithWarnings(
+  locals?: App.Locals
+): Promise<{ seatingCharts: SeatingChart[]; warnings: SheetWarning[] }> {
+  if (isSandboxSheetMode(locals)) {
+    return { seatingCharts: [...demoStore.seatingCharts], warnings: [] };
+  }
+
+  return cachedFetchJson('seating_charts', 60, async () => {
+    try {
+      const rows = await readSheetValues('Seating_Charts!A2:I', locals);
+      const seatingCharts: SeatingChart[] = [];
+      const warnings: SheetWarning[] = [];
+
+      rows.forEach((rawRow, idx) => {
+        if (isBlankRow(rawRow)) return;
+        const parsed = SeatingChartRowSchema.safeParse(padRow(rawRow, 9));
+        if (parsed.success) {
+          seatingCharts.push(parsed.data);
+        } else {
+          warnings.push({
+            tab: 'Seating_Charts',
+            rowNumber: idx + 2,
+            message: parsed.error.issues.map((i) => i.message).join('; '),
+          });
+        }
+      });
+
+      return { seatingCharts, warnings };
+    } catch {
+      // Tab may not exist yet in sheet
+      return { seatingCharts: [...demoStore.seatingCharts], warnings: [] };
+    }
+  });
+}
+
+export async function getSeatingCharts(locals?: App.Locals): Promise<SeatingChart[]> {
+  const { seatingCharts } = await getSeatingChartsWithWarnings(locals);
+  return seatingCharts;
+}
+
 export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWarning[]> {
-  const [r, s, a, c, m] = await Promise.all([
+  const [r, s, a, c, m, sc] = await Promise.all([
     getRosterWithWarnings(locals),
     getScheduleWithWarnings(locals),
     getAbsencesWithWarnings(locals),
     getConcertsWithWarnings(locals),
     getMediaWithWarnings(locals),
+    getSeatingChartsWithWarnings(locals),
   ]);
-  return [...r.warnings, ...s.warnings, ...a.warnings, ...c.warnings, ...m.warnings];
+  return [
+    ...r.warnings,
+    ...s.warnings,
+    ...a.warnings,
+    ...c.warnings,
+    ...m.warnings,
+    ...sc.warnings,
+  ];
 }
 

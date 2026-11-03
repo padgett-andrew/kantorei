@@ -1,27 +1,56 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
-import DirectoryList from '../../components/portal/DirectoryList';
-import { canAccessPortal } from '../../types/choir';
-import { getRoster } from '../../lib/google';
+import RosterDirectory from '../../components/portal/RosterDirectory';
+import {
+  getAllSheetWarnings,
+  getPortalConfig,
+  getRoster,
+  getWorkspaceLinks,
+} from '../../lib/google';
 
-const roster = await getRoster(Astro.locals);
-const directoryMembers = roster
-  .filter((m) => canAccessPortal(m))
-  .sort((a, b) => a.name.localeCompare(b.name));
+const singer = Astro.locals.singer;
+if (!singer) {
+  return Astro.redirect('/login');
+}
+
+const isAdmin = singer.role === 'Admin';
+
+const [config, roster, sheetWarnings] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getRoster(Astro.locals),
+  getAllSheetWarnings(Astro.locals),
+]);
+
+const workspace = getWorkspaceLinks(isAdmin, config, Astro.locals);
+const initialViewMode = Astro.url.searchParams.get('view') === 'table' ? 'table' : 'cards';
 ---
 
-<PortalLayout title="Member Directory">
-  <div class="mb-6">
-    <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
-      Active Season Roster
-    </span>
+<PortalLayout title="Roster & Directory">
+  <div class="mb-5">
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+        Choir Ensemble
+      </span>
+      {isAdmin && (
+        <span class="rounded-full bg-navy-900 px-2 py-0.2 text-[10px] font-bold text-gold-300">
+          Admin Enabled
+        </span>
+      )}
+    </div>
     <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
-      Ensemble Member Directory
+      Roster &amp; Member Directory
     </h1>
     <p class="mt-1 text-sm text-zinc-600">
-      Contact active singers and section leaders for carpools, score markings, or sectional coordination.
+      Contact active singers and section leaders, review section assignments, and manage ensemble member status.
     </p>
   </div>
 
-  <DirectoryList client:load members={directoryMembers} />
+  <RosterDirectory
+    client:load
+    caller={singer}
+    initialRoster={roster}
+    sheetWarnings={sheetWarnings}
+    masterSheetUrl={workspace.masterSheetUrl}
+    initialViewMode={initialViewMode}
+  />
 </PortalLayout>

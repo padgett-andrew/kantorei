@@ -1,0 +1,90 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import SeatingChartManager from '../../components/portal/seating/SeatingChartManager';
+import {
+  getAbsences,
+  getConcerts,
+  getPortalConfig,
+  getRoster,
+  getSchedule,
+  getSeatingCharts,
+} from '../../lib/google';
+import { getTodayIso } from '../../lib/utils';
+import type { SeatingMode } from '../../components/portal/seating/types';
+
+const singer = Astro.locals.singer;
+if (!singer) {
+  return Astro.redirect('/login');
+}
+
+const isAdmin = singer.role === 'Admin';
+const isSectionLeader = singer.role === 'Section_Leader';
+const canTakeAttendance = isAdmin || isSectionLeader;
+
+const [config, roster, schedule, absences, allCharts, concerts] = await Promise.all([
+  getPortalConfig(Astro.locals),
+  getRoster(Astro.locals),
+  getSchedule(Astro.locals),
+  getAbsences(Astro.locals),
+  getSeatingCharts(Astro.locals),
+  getConcerts(Astro.locals),
+]);
+
+// Non-admins and non-section-leaders only see published charts
+const visibleCharts = allCharts.filter((c) => {
+  if (c.status === 'Published') return true;
+  return canTakeAttendance;
+});
+
+const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
+const upcomingEvents = schedule.filter((ev) => ev.date >= today);
+
+// URL parameters
+const requestedMode = Astro.url.searchParams.get('mode') as SeatingMode | null;
+const initialMode: SeatingMode =
+  requestedMode === 'attendance' && canTakeAttendance
+    ? 'attendance'
+    : requestedMode === 'edit' && isAdmin
+    ? 'edit'
+    : 'view';
+
+const initialChartId = Astro.url.searchParams.get('chartId') || undefined;
+const initialEventId = Astro.url.searchParams.get('eventId') || undefined;
+const currentSeason = '2026–2027';
+---
+
+<PortalLayout title="Seating & Attendance">
+  <div class="mb-5">
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+        Choir Formation &amp; Attendance
+      </span>
+      {isAdmin && (
+        <span class="rounded-full bg-navy-900 px-2 py-0.2 text-[10px] font-bold text-gold-300">
+          Admin Enabled
+        </span>
+      )}
+    </div>
+    <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+      Choir Seating &amp; Attendance
+    </h1>
+    <p class="mt-1 text-sm text-zinc-600">
+      Find your riser position and section placement, view physical stage formations, and take live rehearsal roll call.
+    </p>
+  </div>
+
+  <SeatingChartManager
+    client:load
+    caller={singer}
+    initialCharts={visibleCharts}
+    roster={roster}
+    upcomingEvents={upcomingEvents}
+    allScheduleEvents={schedule}
+    initialAbsences={absences}
+    concerts={concerts}
+    currentSeason={currentSeason}
+    initialMode={initialMode}
+    initialChartId={initialChartId}
+    initialEventId={initialEventId}
+  />
+</PortalLayout>

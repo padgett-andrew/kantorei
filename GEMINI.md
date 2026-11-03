@@ -155,6 +155,20 @@ Powers the public `/media` YouTube & recordings showcase (plus featured recordin
 | `E` | `Category` | `Album & Lyric Video` | Badge label (`Concert Video`, `Featured Recording`, etc.) |
 | `F` | `Description` | `Performed by Kantorei...` | Optional program note |
 
+### Tab 7: `Seating_Charts` (Range: `Seating_Charts!A2:I`)
+Powers visual choir formations, physical riser positions, draft/published status, and visual roll call attendance.
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Chart_ID` | `chart-2026-advent-shoreview` | Unique slug/ID |
+| `B` | `Season` | `2026–2027` | Concert season identifier |
+| `C` | `Concert_Slug` | `advent-with-kantorei` | Foreign key to `Concerts.Concert_Slug` (or empty) |
+| `D` | `Title` | `Advent with Kantorei — Shoreview Sanctuary` | Display title |
+| `E` | `Description` | `4 rows on risers; Soprano/Alto stage right...` | Venue & riser layout notes |
+| `F` | `Status` | `Published` | `"Draft"` (admins/leaders only) or `"Published"` (all singers) |
+| `G` | `Layout_JSON` | `[{"rowNumber":1,"name":"Row 1",...}]` | Serialized JSON array of rows, seats, and aisles |
+| `H` | `Created_At` | `2026-10-15T12:00:00.000Z` | ISO timestamp |
+| `I` | `Updated_At` | `2026-11-01T15:30:00.000Z` | ISO timestamp |
+
 ---
 
 ## 5. TypeScript Interfaces & Zod Schemas (`src/types/choir.ts`)
@@ -282,9 +296,10 @@ src/
 │       ├── PortalNav.astro         # Responsive header/bottom-tab nav showing Voice_Part badge & conditional Admin tab
 │       ├── AbsenceManager.tsx      # React island for submitting/updating/withdrawing absences
 │       ├── SnackBoard.tsx          # Optimistic UI 1-tap claim/release snack slots with 409 Conflict handling
+│       ├── seating/                # Seating & Attendance: Visual riser layout, seat cards, draft/publish editor, section headcount cards & 1-tap mobile attendance
 │       ├── MusicLibrary.tsx        # Tablet/ForScore repertoire browser with voice-part filter & inline PDF/Audio player
-│       ├── DirectoryList.tsx       # Searchable active singer directory grouped by section
-│       └── AdminRollCall.tsx       # Section Leader attendance matrix + Add/Edit Roster modal + Sheet Health alerts
+│       ├── RosterDirectory.tsx     # Combined Roster & Directory: Cards vs Table switcher, search, member contact links & admin roster management
+│       └── CalendarAdminControls.tsx # Google Calendar link & instant cache sync button for admins
 └── pages/
     ├── index.astro                 # Public Home: Hero, Next Concert spotlight, ensemble mission, audio samples
     ├── concerts.astro              # Season Pass 2-step Flex explainer + Individual Concert embeds
@@ -294,11 +309,12 @@ src/
     ├── portal/
     │   ├── index.astro             # Singer Dashboard: Announcement banner, next rehearsal, .ics subscribe, quick stats
     │   ├── music.astro             # Repertoire browser optimized for iPad / ForScore
+    │   ├── seating.astro           # Seating & Attendance: Formation risers, singer seat locator & live rehearsal roll call
     │   ├── absences.astro          # Personal absence form & history
     │   ├── snacks.astro            # Upcoming rehearsal snack signups
-    │   ├── directory.astro         # Active member contact directory
+    │   ├── directory.astro         # Roster & Directory: Contact cards, table view, search & admin member editor
     │   ├── handbook.astro          # Sanitized HTML render of Handbook Google Doc
-    │   └── admin.astro             # Protected for Role === 'Section_Leader' | 'Admin'
+    │   └── admin.astro             # Clean redirector for legacy links (routes to /portal/seating or /portal/directory)
     └── api/
         ├── auth/
         │   ├── google.ts           # Initiates Google OAuth PKCE redirect via arctic
@@ -311,6 +327,7 @@ src/
         ├── absences.ts             # POST: upserts absence + sends Resend alert; DELETE: marks Cleared
         ├── snacks.ts               # POST: looks up Event_ID live and updates Schedule cell G{row} or H{row}
         ├── roster.ts               # POST/PUT: Admin-only endpoint to add or update a singer row by Email
+        ├── seating.ts              # GET/POST/PUT/DELETE: Seating chart layout, drafts & publish status
         └── calendar.ics.ts         # GET: HMAC-authenticated subscribable iCalendar feed for Apple/Google/Outlook
 ```
 
