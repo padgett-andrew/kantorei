@@ -1,7 +1,7 @@
 import { createRemoteJWKSet, jwtVerify, SignJWT } from 'jose';
 import type { AstroCookies } from 'astro';
 import { canAccessPortal, type MemberRole, type Singer } from '../types/choir';
-import { getEnv, isDevPreviewEnabled } from './env';
+import { getAuthSecret, getEnv, isDevPreviewEnabled } from './env';
 import { getRoster } from './google';
 
 export const SESSION_COOKIE = 'kantorei_session';
@@ -14,7 +14,7 @@ export const DEV_SIGNOUT_COOKIE = 'kantorei_dev_signed_out';
 const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 
 function getSecretKey(locals?: App.Locals): Uint8Array {
-  const raw = getEnv('AUTH_SECRET', locals) || 'kantorei-dev-fallback-secret-key-32chars';
+  const raw = getAuthSecret(locals);
   return new TextEncoder().encode(raw);
 }
 
@@ -162,7 +162,7 @@ export async function createOtpChallengeToken(
   locals?: App.Locals
 ): Promise<string> {
   const normalized = email.trim().toLowerCase();
-  const secretRaw = getEnv('AUTH_SECRET', locals) || 'kantorei-dev-fallback-secret-key-32chars';
+  const secretRaw = getAuthSecret(locals);
   const digest = await sha256Hex(`${normalized}:${code}:${secretRaw}`);
   const now = Math.floor(Date.now() / 1000);
 
@@ -193,7 +193,7 @@ export async function verifyOtpChallengeToken(params: {
       return false;
     }
 
-    const secretRaw = getEnv('AUTH_SECRET', locals) || 'kantorei-dev-fallback-secret-key-32chars';
+    const secretRaw = getAuthSecret(locals);
     const expected = await sha256Hex(`${normalized}:${cleanCode}:${secretRaw}`);
     if (expected.length !== payload.digest.length) return false;
 

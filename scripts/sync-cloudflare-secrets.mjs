@@ -44,6 +44,17 @@ for (const [key, value] of Object.entries(parsed)) {
   secretsToUpload[key] = value;
 }
 
+if (
+  secretsToUpload.AUTH_SECRET &&
+  (secretsToUpload.AUTH_SECRET.length < 32 ||
+    secretsToUpload.AUTH_SECRET === 'kantorei-dev-fallback-secret-key-32chars' ||
+    secretsToUpload.AUTH_SECRET.startsWith('dev-kantorei-secret'))
+) {
+  console.error('❌ Cannot push secrets to Cloudflare: AUTH_SECRET is using an insecure dev default.');
+  console.error('   Generate a production 32+ byte secret using: openssl rand -base64 32\n');
+  process.exit(1);
+}
+
 const keys = Object.keys(secretsToUpload);
 if (keys.length === 0) {
   console.error('⚠️  No non-empty production variables found in .env.');

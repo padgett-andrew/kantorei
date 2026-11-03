@@ -65,6 +65,21 @@ PUBLIC_GIVEBUTTER_ACCOUNT_ID="DEMO"
 PUBLIC_GIVEBUTTER_CAMPAIGN_ID="DEMO"
 ```
 
+### 3.1 Environment Policy, Tiers & Invariants
+Kantorei operates with three clear environment tiers governed by `src/lib/env.ts` and audited by `npm run doctor:env`:
+
+| Tier | Runtime & Detection | Permitted Fallbacks & Rules |
+| :--- | :--- | :--- |
+| **`development`** | `astro dev` / Vite (`import.meta.env.DEV === true`) | Permissive zero-setup: Fallback to mock data if Sheet ID is `"DEMO"`, dev fallback `AUTH_SECRET` tolerated with warning, OTP code printed on-screen if Resend is unset, `DEV_PREVIEW_BYPASS="true"` allows 1-click role switcher. |
+| **`preview`** | `wrangler dev` (`npm run preview`) / PR previews | Edge parity: Cloudflare Workers runtime, reads `.dev.vars` (synced via `npm run env:sync-dev`), `DEV_PREVIEW_BYPASS` disabled, Resend sandboxing (`SANDBOX_OVERRIDE_EMAIL` or `onboarding@resend.dev`) required to protect real singers. |
+| **`production`** | Cloudflare Workers (`kantorei-web`) | Strict invariant enforcement: `AUTH_SECRET` must be high entropy (>= 32 chars, never default fallback), `DEV_PREVIEW_BYPASS` strictly prohibited, valid Google Service Account credentials & Sheet ID required, `PUBLIC_SITE_URL` must use `https://`, real email routing. |
+
+#### Environment CLI Tooling
+- `npm run doctor:env`: Audits current environment against local development rules.
+- `npm run doctor:env:prod`: Audits environment against strict production invariants prior to deployment.
+- `npm run env:sync-dev`: Synchronizes `.env` into `.dev.vars` for Cloudflare Workers local preview (`wrangler dev`).
+- `npm run deploy:secrets`: Verifies production `AUTH_SECRET` entropy before uploading secrets via `wrangler secret bulk`.
+
 ---
 
 ## 4. Master Google Sheet Schema (`GOOGLE_MASTER_SHEET_ID`)

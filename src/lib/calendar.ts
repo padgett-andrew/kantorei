@@ -1,5 +1,5 @@
 import type { ScheduleEvent } from '../types/choir';
-import { getEnv } from './env';
+import { getAuthSecret } from './env';
 
 async function computeHmacHex(secret: string, message: string): Promise<string> {
   const enc = new TextEncoder();
@@ -18,7 +18,7 @@ async function computeHmacHex(secret: string, message: string): Promise<string> 
 }
 
 export async function getCalendarFeedToken(locals?: App.Locals): Promise<string> {
-  const secret = getEnv('AUTH_SECRET', locals) || 'kantorei-fallback-dev-secret';
+  const secret = getAuthSecret(locals);
   return computeHmacHex(secret, 'kantorei-ics-calendar-v1');
 }
 
