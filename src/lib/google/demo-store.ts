@@ -562,7 +562,7 @@ export const demoStore: DemoStore = {
     {
       eventId: 'reh-2026-11-15',
       date: '2026-11-15',
-      time: '6:30 PM - 9:00 PM',
+      time: '6:00 PM - 8:30 PM',
       type: 'Sectional',
       title: 'Sunday Split Sectionals + Tutti Rehearsal',
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
@@ -570,12 +570,12 @@ export const demoStore: DemoStore = {
       snack2Name: '',
       snack3Name: '',
       snack4Name: '',
-      notes: '6:30-7:20 PM Sectionals on Bach BWV 230 fugue; 7:30 PM tutti after snack break.',
+      notes: '6:00-6:50 PM Sectionals on Bach BWV 230 fugue; 7:00 PM tutti after snack break.',
     },
     {
       eventId: 'reh-2026-11-22',
       date: '2026-11-22',
-      time: '6:30 PM - 9:00 PM',
+      time: '6:00 PM - 8:30 PM',
       type: 'Rehearsal',
       title: 'Sunday Evening Rehearsal',
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
@@ -588,7 +588,7 @@ export const demoStore: DemoStore = {
     {
       eventId: 'reh-2026-12-06',
       date: '2026-12-06',
-      time: '6:30 PM - 9:00 PM',
+      time: '6:00 PM - 8:30 PM',
       type: 'Rehearsal',
       title: 'Sunday Evening Rehearsal — Full Cycle Polishing',
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
@@ -601,7 +601,7 @@ export const demoStore: DemoStore = {
     {
       eventId: 'reh-2026-12-17',
       date: '2026-12-17',
-      time: '6:30 PM - 9:30 PM',
+      time: '6:00 PM - 8:30 PM',
       type: 'Dress',
       title: 'Advent with Kantorei — Acoustic Dress Rehearsal',
       location: 'Shepherd of the Hills Lutheran Church, Shoreview',
