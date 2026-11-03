@@ -272,10 +272,13 @@ export async function getRepertoire(locals?: App.Locals): Promise<RepertoirePiec
   const targets = parseRepertoireFolderTargets(config);
 
   if (!hasGoogleServiceAccount(locals) || targets.length === 0) {
-    return demoStore.repertoire.map((piece) => ({
-      ...piece,
-      files: piece.files.map((f) => ({ ...f })),
-    }));
+    if (import.meta.env.DEV) {
+      return demoStore.repertoire.map((piece) => ({
+        ...piece,
+        files: piece.files.map((f) => ({ ...f })),
+      }));
+    }
+    return [];
   }
 
   const activeConcertTitle =

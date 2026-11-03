@@ -302,11 +302,11 @@ export async function getMediaWithWarnings(
       });
 
       return {
-        media: media.length > 0 ? media : [...demoStore.media],
+        media: media.length > 0 ? media : (import.meta.env.DEV ? [...demoStore.media] : []),
         warnings,
       };
     } catch {
-      return { media: [...demoStore.media], warnings: [] };
+      return { media: import.meta.env.DEV ? [...demoStore.media] : [], warnings: [] };
     }
   });
 }
@@ -422,7 +422,7 @@ export async function getSeatingChartsWithWarnings(
       return { seatingCharts, warnings };
     } catch {
       // Tab may not exist yet in sheet
-      return { seatingCharts: [...demoStore.seatingCharts], warnings: [] };
+      return { seatingCharts: import.meta.env.DEV ? [...demoStore.seatingCharts] : [], warnings: [] };
     }
   });
 }
@@ -463,12 +463,12 @@ export async function getBoardMembersWithWarnings(
 
       board.sort((a, b) => a.order - b.order);
       return {
-        board: board.length > 0 ? board : [...demoStore.board],
+        board: board.length > 0 ? board : (import.meta.env.DEV ? [...demoStore.board] : []),
         warnings,
       };
     } catch {
       // Tab may not exist yet in sheet
-      return { board: [...demoStore.board], warnings: [] };
+      return { board: import.meta.env.DEV ? [...demoStore.board] : [], warnings: [] };
     }
   });
 }
@@ -509,12 +509,12 @@ export async function getLeadershipWithWarnings(
 
       leadership.sort((a, b) => a.order - b.order);
       return {
-        leadership: leadership.length > 0 ? leadership : [...demoStore.leadership],
+        leadership: leadership.length > 0 ? leadership : (import.meta.env.DEV ? [...demoStore.leadership] : []),
         warnings,
       };
     } catch {
       // Tab may not exist yet in sheet
-      return { leadership: [...demoStore.leadership], warnings: [] };
+      return { leadership: import.meta.env.DEV ? [...demoStore.leadership] : [], warnings: [] };
     }
   });
 }
@@ -555,12 +555,12 @@ export async function getGivingTiersWithWarnings(
 
       givingTiers.sort((a, b) => a.order - b.order);
       return {
-        givingTiers: givingTiers.length > 0 ? givingTiers : [...demoStore.givingTiers],
+        givingTiers: givingTiers.length > 0 ? givingTiers : (import.meta.env.DEV ? [...demoStore.givingTiers] : []),
         warnings,
       };
     } catch {
       // Tab may not exist yet in sheet
-      return { givingTiers: [...demoStore.givingTiers], warnings: [] };
+      return { givingTiers: import.meta.env.DEV ? [...demoStore.givingTiers] : [], warnings: [] };
     }
   });
 }

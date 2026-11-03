@@ -199,6 +199,13 @@ export function hasGoogleServiceAccount(locals?: App.Locals): boolean {
 }
 
 export function isSandboxSheetMode(locals?: App.Locals): boolean {
+  // CRITICAL INVARIANT: Mock sandbox data (demoStore with sample singers and schedules)
+  // is strictly locked to local Vite development (import.meta.env.DEV === true).
+  // In any deployed environment (staging / workers.dev or production / kantorei.net),
+  // mock fallback is strictly prohibited.
+  if (import.meta.env.DEV !== true) {
+    return false;
+  }
   const sheetId = extractGoogleId(getEnv('GOOGLE_MASTER_SHEET_ID', locals));
   return (
     !sheetId ||
