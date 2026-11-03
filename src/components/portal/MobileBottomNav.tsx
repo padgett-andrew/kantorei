@@ -103,8 +103,25 @@ export default function MobileBottomNav({
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ivory-100 text-gold-600">
                   <BookOpen className="h-4 w-4" />
                 </span>
-                <span>Choir Handbook &amp; Vision</span>
+                <span>Documents</span>
               </a>
+
+              {isAdmin && (
+                <a
+                  href="/portal/handbook?doc=admin-guide"
+                  className="flex items-center justify-between rounded-2xl p-3 text-sm font-semibold text-zinc-800 transition hover:bg-amber-50/40"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy-900 text-gold-400">
+                      <BookOpen className="h-4 w-4" />
+                    </span>
+                    <span>Admin Guide</span>
+                  </div>
+                  <span className="rounded bg-gold-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-gold-900">
+                    Leader
+                  </span>
+                </a>
+              )}
 
               {isAdmin && calendarUrl && (
                 <a

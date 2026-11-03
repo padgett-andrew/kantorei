@@ -1,40 +1,66 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
+import AdminGuideContent from '../../../docs/admin-guide.md';
 import { getHandbookHtml, getStrategicPlanHtml } from '../../lib/google';
+import { hasRole } from '../../lib/auth';
+
+const singer = Astro.locals.singer;
+const isAdminOrLeader = singer ? hasRole(singer, ['Section_Leader', 'Admin']) : false;
 
 const docParam = Astro.url.searchParams.get('doc');
-const activeDoc = docParam === 'strategic-plan' ? 'strategic-plan' : 'handbook';
+let activeDoc: 'handbook' | 'strategic-plan' | 'admin-guide' = 'handbook';
+
+if (docParam === 'strategic-plan') {
+  activeDoc = 'strategic-plan';
+} else if (docParam === 'admin-guide' && isAdminOrLeader) {
+  activeDoc = 'admin-guide';
+}
 
 const { html, isDemo } =
   activeDoc === 'strategic-plan'
     ? await getStrategicPlanHtml(Astro.locals)
-    : await getHandbookHtml(Astro.locals);
+    : activeDoc === 'admin-guide'
+      ? { html: '', isDemo: false }
+      : await getHandbookHtml(Astro.locals);
+
+const pageTitle =
+  activeDoc === 'admin-guide'
+    ? 'Choir Board & Operations Manual'
+    : activeDoc === 'strategic-plan'
+      ? '2026–2036 Strategic Vision'
+      : 'Singer Handbook';
+
+const subtitle =
+  activeDoc === 'admin-guide'
+    ? 'Board Members, Section Leaders & Staff Operations Guide'
+    : activeDoc === 'strategic-plan'
+      ? '10-Year Ensemble Roadmap & Goals'
+      : 'Policies, Roster Leadership, Attire & Rehearsal Standards';
 ---
 
-<PortalLayout
-  title={activeDoc === 'strategic-plan' ? '2026–2036 Strategic Vision' : 'Singer Handbook'}
->
+<PortalLayout title={pageTitle}>
   <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
     <div>
       <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
-        {activeDoc === 'strategic-plan'
-          ? '10-Year Ensemble Roadmap & Goals'
-          : 'Policies, Roster Leadership, Attire & Rehearsal Standards'}
+        {subtitle}
       </span>
       <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
-        {activeDoc === 'strategic-plan'
-          ? 'Strategic Vision (2026–2036)'
-          : 'Singer Handbook (2026–2027)'}
+        {pageTitle}
       </h1>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
+      {activeDoc === 'admin-guide' && (
+        <span class="rounded-full bg-navy-900 px-3 py-1 text-xs font-semibold text-gold-300">
+          Staff &amp; Leadership Reference
+        </span>
+      )}
       {activeDoc === 'strategic-plan' && isDemo && (
         <span class="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
           Singer Review Working Draft
         </span>
       )}
-      {!isDemo && (
+      {activeDoc !== 'admin-guide' && !isDemo && (
         <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
           Synced Live from Google Docs
         </span>
@@ -42,11 +68,11 @@ const { html, isDemo } =
     </div>
   </div>
 
-  <!-- Document Switcher: Singer Handbook vs. 2026-2036 Strategic Vision -->
+  <!-- Document Switcher: Singer Handbook vs. 2026-2036 Strategic Vision vs. Admin Guide -->
   <div
     class="mb-6 inline-flex flex-wrap gap-1.5 rounded-2xl border border-zinc-200 bg-zinc-100/80 p-1.5"
     role="tablist"
-    aria-label="Member Documents"
+    aria-label="Ensemble Documents"
   >
     <a
       href="/portal/handbook"
@@ -61,6 +87,7 @@ const { html, isDemo } =
     >
       2026–2027 Singer Handbook
     </a>
+
     <a
       href="/portal/handbook?doc=strategic-plan"
       role="tab"
@@ -84,11 +111,42 @@ const { html, isDemo } =
         Draft
       </span>
     </a>
+
+    {isAdminOrLeader && (
+      <a
+        href="/portal/handbook?doc=admin-guide"
+        role="tab"
+        aria-selected={activeDoc === 'admin-guide'}
+        class:list={[
+          'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition',
+          activeDoc === 'admin-guide'
+            ? 'bg-navy-950 text-white shadow-2xs'
+            : 'text-zinc-600 hover:bg-white/70 hover:text-navy-950',
+        ]}
+      >
+        <span>Admin &amp; Board Guide</span>
+        <span
+          class:list={[
+            'rounded-full px-2 py-0.5 text-[10px] font-bold',
+            activeDoc === 'admin-guide'
+              ? 'bg-gold-400 text-navy-950'
+              : 'bg-navy-100 text-navy-800',
+          ]}
+        >
+          Staff &amp; Leaders
+        </span>
+      </a>
+    )}
   </div>
 
-  <article
-    class="handbook-prose rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs sm:p-10"
-    set:html={html}
-  />
+  {activeDoc === 'admin-guide' ? (
+    <article class="handbook-prose rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs sm:p-10">
+      <AdminGuideContent />
+    </article>
+  ) : (
+    <article
+      class="handbook-prose rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs sm:p-10"
+      set:html={html}
+    />
+  )}
 </PortalLayout>
-

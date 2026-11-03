@@ -1,0 +1,32 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import AdminGuideContent from '../../../docs/admin-guide.md';
+import { hasRole } from '../../lib/auth';
+
+const singer = Astro.locals.singer;
+if (!singer || !hasRole(singer, ['Section_Leader', 'Admin'])) {
+  return Astro.redirect('/portal/handbook');
+}
+---
+
+<PortalLayout title="Choir Board & Operations Manual">
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+        Board Members, Section Leaders &amp; Staff Manual
+      </span>
+      <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+        Admin &amp; Operations Guide
+      </h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="rounded-full bg-navy-900 px-3 py-1 text-xs font-semibold text-gold-300">
+        Staff &amp; Leadership Reference
+      </span>
+    </div>
+  </div>
+
+  <article class="handbook-prose rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs sm:p-10">
+    <AdminGuideContent />
+  </article>
+</PortalLayout>

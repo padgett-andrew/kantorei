@@ -142,3 +142,25 @@
   font-weight: 600;
   color: #18181b;
 }
+
+.handbook-prose pre {
+  background-color: #0c1524;
+  color: #f8fafc;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  margin: 1.25rem 0;
+}
+
+.handbook-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.handbook-prose :not(pre) > code {
+  background-color: #f4f4f5;
+  color: #18181b;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.375rem;
+  font-size: 0.875em;
+}

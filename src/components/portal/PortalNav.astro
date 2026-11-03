@@ -29,7 +29,7 @@ const tabs = [
   { href: '/portal/absences', label: 'Absences', exact: false },
   { href: '/portal/snacks', label: 'Duties & Hospitality', exact: false },
   { href: '/portal/directory', label: 'Roster & Directory', exact: false },
-  { href: '/portal/handbook', label: 'Handbook & Vision', exact: false },
+  { href: '/portal/handbook', label: 'Documents', exact: false },
 ];
 
 const badgeClass = voicePartBadgeColor(singer.voicePart);
@@ -99,6 +99,16 @@ const badgeClass = voicePartBadgeColor(singer.voicePart);
           </span>
           <span class="text-zinc-400">↗</span>
         </a>
+
+        {singer.role !== 'Singer' && (
+          <a
+            href="/portal/handbook?doc=admin-guide"
+            class="hidden sm:inline-flex items-center gap-1 rounded-xl border border-gold-300/80 bg-gold-50/70 px-2.5 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-gold-400 hover:bg-gold-100/80"
+            title="Choir Board & Operations Manual"
+          >
+            <span>📖 Guide</span>
+          </a>
+        )}
 
         <a
           href="/"
