@@ -174,8 +174,9 @@ export function doesFilenameMatchSection(filename: string, voicePart: VoicePart 
 }
 
 /**
- * Normalizes an event image URL, filtering out empty values, demo strings,
- * and Ticket Tailor default/stock global placeholders (e.g. abstract-1.jpg).
+ * Normalizes an image URL (for concerts, leadership portraits, etc.),
+ * filtering out empty values, demo strings, and Ticket Tailor default/stock placeholders.
+ * Automatically transforms Google Drive share links to direct, edge-cacheable thumbnail URLs.
  */
 export function sanitizeHeroImageUrl(url?: string | null): string | undefined {
   if (!url || typeof url !== 'string') return undefined;
@@ -192,6 +193,14 @@ export function sanitizeHeroImageUrl(url?: string | null): string | undefined {
   if (trimmed.includes('/userfiles/global/')) return undefined;
   if (/abstract-\d+\.(jpg|jpeg|png|webp)/i.test(trimmed)) return undefined;
   if (/placeholder/i.test(trimmed)) return undefined;
+
+  // Convert Google Drive view/share link into high-res CDN thumbnail URL
+  if (trimmed.includes('drive.google.com')) {
+    const driveMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (driveMatch && driveMatch[1]) {
+      return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1200`;
+    }
+  }
 
   return trimmed;
 }

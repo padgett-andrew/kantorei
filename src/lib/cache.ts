@@ -13,6 +13,8 @@ export type CacheTag =
   | 'board'
   | 'leadership'
   | 'giving_tiers'
+  | 'subscribers'
+  | 'subscribers_with_warnings'
   | 'music'
   | 'seating_charts'
   | `repertoire-doc:${string}`

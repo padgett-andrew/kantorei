@@ -140,6 +140,7 @@ export interface PortalConfig {
   YouTube_URL: string;
   Instagram_URL: string;
   Facebook_URL: string;
+  MailerLite_Group_ID?: string;
   // Official Contact Info
   Contact_Email?: string;
   Contact_Phone?: string;
@@ -191,6 +192,14 @@ export interface GivingTier {
   active: boolean;
 }
 
+export interface SubscriberRecord {
+  timestamp: string;
+  email: string;
+  name?: string;
+  source: string;
+  status: 'Active' | 'Unsubscribed';
+}
+
 export interface SheetWarning {
   tab:
     | 'Roster'
@@ -201,7 +210,8 @@ export interface SheetWarning {
     | 'Seating_Charts'
     | 'Board'
     | 'Leadership'
-    | 'Giving_Tiers';
+    | 'Giving_Tiers'
+    | 'Subscribers';
   rowNumber: number;
   message: string;
 }

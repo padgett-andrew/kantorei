@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import {
   createSessionToken,
+  matchRosterEmail,
   OTP_CHALLENGE_COOKIE,
   setSessionCookie,
   verifyOtpChallengeToken,
@@ -51,7 +52,9 @@ export const POST: APIRoute = async ({ request, url, cookies, locals }) => {
     }
 
     const roster = await getRoster(locals);
-    const singer = roster.find((s) => s.email === normalizedEmail && canAccessPortal(s));
+    const singer = roster.find(
+      (s) => matchRosterEmail(s.email, normalizedEmail) && canAccessPortal(s)
+    );
     if (!singer) {
       return new Response(
         JSON.stringify({ error: 'Your email is not currently marked Active on the choir roster.' }),

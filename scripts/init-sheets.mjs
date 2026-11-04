@@ -46,7 +46,62 @@ const SCHEMA_SPEC = {
   Roster: {
     headers: ['Email', 'Name', 'Voice_Part', 'Section_Group', 'Role', 'Phone', 'Active'],
     sampleRows: [
-      ['singer@example.com', 'Andrew Padgett', 'B2', 'Bass', 'Admin', '612-555-0100', 'Active'],
+      // Sopranos
+      ['karin.almjeld@kantorei.net', 'Karin Almjeld', 'S1', 'Soprano', 'Singer', '', 'Active'],
+      ['angela.barberg@kantorei.net', 'Angela Barberg', 'S1', 'Soprano', 'Singer', '', 'Active'],
+      ['lori.bartz@kantorei.net', 'Lori Bartz', 'S2', 'Soprano', 'Singer', '', 'Active'],
+      ['delaney.broberg@kantorei.net', 'Delaney Broberg', 'S1', 'Soprano', 'Singer', '', 'Active'],
+      ['jill.brown@kantorei.net', 'Jill Brown', 'S2', 'Soprano', 'Singer', '', 'Active'],
+      ['amanda.carlson@kantorei.net', 'Amanda Carlson', 'S1', 'Soprano', 'Singer', '', 'Active'],
+      ['zoey.cookmorey@kantorei.net', 'Zoey Cook Morey', 'S2', 'Soprano', 'Singer', '', 'Active'],
+      ['charlotte.currier@kantorei.net', 'Charlotte Currier', 'S1', 'Soprano', 'Singer', '', 'Active'],
+      ['maria.crea@kantorei.net', 'Maria Crea', 'S2', 'Soprano', 'Singer', '', 'Active'],
+      ['genevievepalumbo@gmail.com', 'Genna Palumbo', 'S1', 'Soprano', 'Singer', '', 'Active'],
+      ['polim0501@gmail.com', 'Maryanne Poliseno', 'S1', 'Soprano', 'Section_Leader', '', 'Active'],
+      ['mollytengwall@gmail.com', 'Molly Tengwall', 'S2', 'Soprano', 'Section_Leader', '', 'Active'],
+
+      // Altos
+      ['maggieakhavan@gmail.com', 'Maggie Akhavan', 'A1', 'Alto', 'Admin', '612-718-5703', 'Active'],
+      ['whitney.delong@kantorei.net', 'Whitney DeLong', 'A2', 'Alto', 'Singer', '', 'Active'],
+      ['marlene.dingmann@kantorei.net', 'Marlene Dingmann', 'A1', 'Alto', 'Singer', '', 'Active'],
+      ['mindy.eschedor@kantorei.net', 'Mindy Eschedor', 'A2', 'Alto', 'Singer', '', 'Active'],
+      ['ruby.eskin@kantorei.net', 'Ruby Eskin', 'A1', 'Alto', 'Singer', '', 'Active'],
+      ['kellie.fitzgerald@kantorei.net', 'Kellie Fitzgerald', 'A2', 'Alto', 'Singer', '', 'Active'],
+      ['nikki.frontz@kantorei.net', 'Nikki Frontz', 'A1', 'Alto', 'Singer', '', 'Active'],
+      ['kristin.hella@kantorei.net', 'Kristin Hella', 'A2', 'Alto', 'Singer', '', 'Active'],
+      ['jessica.mckinnon@kantorei.net', 'Jessica McKinnon', 'A1', 'Alto', 'Singer', '', 'Active'],
+      ['christine.mielke@kantorei.net', 'Christine Mielke', 'A2', 'Alto', 'Singer', '', 'Active'],
+      ['shelby.mielke@kantorei.net', 'Shelby Mielke', 'A1', 'Alto', 'Singer', '', 'Active'],
+      ['ann.skempcook@kantorei.net', 'Ann Skemp-Cook', 'A2', 'Alto', 'Singer', '', 'Active'],
+      ['strand.carlajoy@gmail.com', 'CarlaJoy Strand', 'A1', 'Alto', 'Section_Leader', '', 'Active'],
+      ['catherine.vitt@kantorei.net', 'Catherine Vitt', 'A2', 'Alto', 'Section_Leader', '', 'Active'],
+
+      // Tenors
+      ['mleadcamp@gmail.com', 'Michael Campana', 'T1', 'Tenor', 'Singer', '', 'Active'],
+      ['mclaver8@gmail.com', 'Michael Claver', 'T1', 'Tenor', 'Section_Leader', '', 'Active'],
+      ['peder.flaten@kantorei.net', 'Peder Flaten', 'T2', 'Tenor', 'Singer', '', 'Active'],
+      ['jonathan.guyton@kantorei.net', 'Jonathan Guyton', 'T1', 'Tenor', 'Singer', '', 'Active'],
+      ['james.lewis@kantorei.net', 'James Lewis', 'T2', 'Tenor', 'Singer', '', 'Active'],
+      ['jonathan.posthuma@kantorei.net', 'Jonathan Posthuma', 'T1', 'Tenor', 'Section_Leader', '', 'Active'],
+      ['travis.wiertzema@kantorei.net', 'Travis Wiertzema', 'T2', 'Tenor', 'Section_Leader', '', 'Active'],
+      ['gregg.dahlke@kantorei.net', 'Gregg Dahlke', 'T2', 'Tenor', 'Singer', '', 'Active'],
+
+      // Basses
+      ['alec.barberg@kantorei.net', 'Alec Barberg', 'B1', 'Bass', 'Singer', '', 'Active'],
+      ['djbelknap@gmail.com', 'Daniel Belknap', 'B2', 'Bass', 'Singer', '608-630-0452', 'Active'],
+      ['daniel.bridston@kantorei.net', 'Daniel Bridston', 'B1', 'Bass', 'Singer', '', 'Active'],
+      ['craig.campbell@kantorei.net', 'Craig Campbell', 'B2', 'Bass', 'Singer', '', 'Active'],
+      ['jmorey823@gmail.com', 'Joseph Cook Morey', 'B1', 'Bass', 'Singer', '', 'Active'],
+      ['ron.heil@kantorei.net', 'Ron Heil', 'B2', 'Bass', 'Singer', '', 'Active'],
+      ['jfrankelly@gmail.com', 'John Kelly', 'B1', 'Bass', 'Section_Leader', '', 'Active'],
+      ['erik.linnell@kantorei.net', 'Erik Linnell', 'B1', 'Bass', 'Section_Leader', '', 'Active'],
+      ['mark.neppl@kantorei.net', 'Mark Neppl', 'B2', 'Bass', 'Singer', '', 'Active'],
+      ['joe.polta@kantorei.net', 'Joe Polta', 'B1', 'Bass', 'Singer', '', 'Active'],
+      ['anthonyshanerangel@gmail.com', 'Tony Rangel', 'B2', 'Bass', 'Admin', '', 'Active'],
+      ['sam.theisen@kantorei.net', 'Sam Theisen', 'B1', 'Bass', 'Admin', '', 'Active'],
+      ['jeff.tunseth@kantorei.net', 'Jeff Tunseth', 'B2', 'Bass', 'Singer', '', 'Active'],
+      ['cory.westgard@kantorei.net', 'Cory Westgard', 'B1', 'Bass', 'Singer', '', 'Active'],
+      ['apadgettski@gmail.com', 'Andrew Padgett', 'B2', 'Bass', 'Admin', '612-555-0100', 'Active'],
     ],
     validations: [
       {
@@ -231,6 +286,9 @@ const SCHEMA_SPEC = {
         'Tax_Exempt_Disclaimer',
         'Kantorei is a registered 501(c)(3) nonprofit arts organization in Minnesota. Contributions are tax-deductible to the fullest extent permitted by law.',
       ],
+      ['Givebutter_Account_ID', 'DEMO'],
+      ['Givebutter_Campaign_ID', 'DEMO'],
+      ['LGL_Form_URL', 'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA'],
     ],
   },
   Board: {
@@ -261,7 +319,7 @@ const SCHEMA_SPEC = {
         'Appointed in 2021, Adam Reinwald is a nationally recognized vocal chamber artist, conductor, and nonprofit arts strategist with over two decades of experience in the choral arts—including work with the National Lutheran Choir and nearly two decades with the acclaimed vocal ensemble Cantus.\n\nIn demand as a coach for small- to mid-size arts organizations focusing on new media and digital branding, Adam has presented nationally at Chorus America, ACDA, and the Young Nonprofit Professionals Network.',
         '1',
         'adam.reinwald@kantorei.net',
-        '',
+        '/images/leadership/adam-reinwald.webp',
         'TRUE',
       ],
       [
@@ -270,7 +328,7 @@ const SCHEMA_SPEC = {
         'Tony Rangel serves as Assistant Conductor, collaborating closely on ensemble preparation and directing one or more pieces on every Kantorei concert program.\n\nAn experienced choral educator and Twin Cities ensemble singer, Tony has directed the choral programs at Columbia Heights and Armstrong high schools, currently leads the choral program at Stillwater Middle School, and authors graduate-level music education courses through Forward Motion Online Learning.',
         '2',
         '',
-        '',
+        '/images/leadership/tony-rangel.webp',
         'TRUE',
       ],
       [
@@ -279,7 +337,7 @@ const SCHEMA_SPEC = {
         'Born in St. Johann in Tirol, Austria, and trained in the Vienna Choir Boys before earning his MFA and DMA at the University of Minnesota, Dr. Axel Theimer founded Kantorei in 1988.\n\nDirector of Choral Activities at the College of Saint Benedict and Saint John’s University for 52 years, founder of the Amadeus Chamber Symphony, Music Director of the National Catholic Youth Choir, and Executive Director of The VoiceCare Network, Dr. Theimer is a recipient of the ACDA-MN Choir Director of the Year Award (2001), MMEA Hall of Fame induction (2004), and the F. Melius Christiansen Lifetime Achievement Award (2011).',
         '3',
         '',
-        '',
+        '/images/leadership/axel-theimer.webp',
         'TRUE',
       ],
     ],
@@ -371,6 +429,32 @@ const SCHEMA_SPEC = {
         column: 'Slot',
         options: ['1', '2', '3', '4'],
         message: 'Select snack slot (1, 2, 3, 4)',
+      },
+    ],
+  },
+  Subscribers: {
+    headers: ['Timestamp', 'Email', 'Name', 'Source', 'Status'],
+    sampleRows: [
+      [
+        '2026-10-15T14:22:00.000Z',
+        'patron@example.com',
+        'Eleanor Vance',
+        'Website_Footer',
+        'Active',
+      ],
+      [
+        '2026-10-28T19:10:00.000Z',
+        'choralfan@gmail.com',
+        'David Miller',
+        'Ticket_Tailor',
+        'Active',
+      ],
+    ],
+    validations: [
+      {
+        column: 'Status',
+        options: ['Active', 'Unsubscribed'],
+        message: 'Select subscriber status (Active, Unsubscribed)',
       },
     ],
   },
@@ -688,6 +772,50 @@ async function run() {
       }
     } catch (harmonizeErr) {
       console.warn('   ⚠️ Could not harmonize existing Roster rows:', harmonizeErr.message);
+    }
+
+    // Optionally synchronize full canonical Roster rows to Master Sheet (--sync-roster)
+    if (process.argv.includes('--sync-roster')) {
+      try {
+        console.log('\n👥 Synchronizing full canonical Roster to Master Sheet...');
+        // Clear old rows first to avoid trailing stale entries
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
+            'Roster!A2:G'
+          )}:clear`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const syncRes = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
+            'Roster!A2:G'
+          )}?valueInputOption=USER_ENTERED`,
+          {
+            method: 'PUT',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              range: 'Roster!A2:G',
+              majorDimension: 'ROWS',
+              values: SCHEMA_SPEC.Roster.sampleRows,
+            }),
+          }
+        );
+        if (syncRes.ok) {
+          console.log(`   ✅ Wrote ${SCHEMA_SPEC.Roster.sampleRows.length} active singers to [Roster]!`);
+        } else {
+          console.error('   ⚠️ Failed to sync roster rows:', await syncRes.text());
+        }
+      } catch (syncErr) {
+        console.error('   ⚠️ Error synchronizing roster:', syncErr.message);
+      }
     }
 
     console.log('\n======================================================');

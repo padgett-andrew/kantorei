@@ -33,9 +33,9 @@ export default function LoginCard({
     devPersonas && devPersonas.length > 0
       ? devPersonas
       : [
-          { email: 'andrew@kantorei.net', shortLabel: 'Admin (B2)' },
-          { email: 'claire.lindqvist@icloud.com', shortLabel: 'Sec. Leader (S1)' },
-          { email: 'rachel.kim@outlook.com', shortLabel: 'Singer (A2)' },
+          { email: 'apadgettski@gmail.com', shortLabel: 'Admin (B2)' },
+          { email: 'polim0501@gmail.com', shortLabel: 'Sec. Leader (S1)' },
+          { email: 'karin.almjeld@kantorei.net', shortLabel: 'Singer (S1)' },
         ];
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');

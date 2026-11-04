@@ -64,8 +64,13 @@ SANDBOX_OVERRIDE_EMAIL=""
 PUBLIC_TICKET_TAILOR_BOX_OFFICE_URL="https://www.tickettailor.com/events/demo"
 # Optional API key: when provided, /concerts and home page auto-fetch directly from Ticket Tailor REST API (zero Google Sheet double-entry)
 TICKET_TAILOR_API_KEY=""
+TICKET_TAILOR_WEBHOOK_SECRET=""
 PUBLIC_GIVEBUTTER_ACCOUNT_ID="DEMO"
 PUBLIC_GIVEBUTTER_CAMPAIGN_ID="DEMO"
+
+# 5. Friends of Kantorei Newsletter (MailerLite REST API)
+MAILERLITE_API_KEY=""
+MAILERLITE_GROUP_ID=""
 ```
 
 ### 3.1 Environment Policy, Tiers & Invariants
@@ -257,6 +262,16 @@ Powers the Annual Giving Circles list on `/support`.
 | `C` | `Description` | `Supports music licensing...` | Circle impact / donor perks blurb |
 | `D` | `Order` | `1` | Integer sorting rank (ascending) |
 | `E` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` |
+
+### Tab 11: `Subscribers` (Range: `Subscribers!A2:E`)
+Stores audience patrons and "Friends of Kantorei" subscribers collected from the website footer, home spotlight, ticket purchases, or auditions. Synchronized concurrently with MailerLite.
+| Col | Header | Example Value | Specification |
+| :-- | :--- | :--- | :--- |
+| `A` | `Timestamp` | `2026-11-03T20:00:00.000Z` | ISO timestamp of signup |
+| `B` | `Email` | `patron@example.com` | Subscriber email (normalized lowercase) |
+| `C` | `Name` | `Eleanor Vance` | Optional subscriber display name |
+| `D` | `Source` | `Website_Footer` | Source tag (`Website_Footer`, `Home_Page`, `Concerts_Page`, `Ticket_Tailor`) |
+| `E` | `Status` | `Active` | Dropdown: `Active`, `Unsubscribed` |
 
 ---
 

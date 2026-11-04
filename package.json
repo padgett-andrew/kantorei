@@ -13,9 +13,12 @@
     "env:sync-dev": "node scripts/sync-dev-vars.mjs",
     "backup:sheets": "node scripts/backup-sheets.mjs",
     "init:sheets": "node scripts/init-sheets.mjs",
+    "sync:roster": "node scripts/init-sheets.mjs --sync-roster",
+    "sync:board": "node scripts/init-sheets.mjs --sync-board",
     "setup:key": "node scripts/import-service-account.mjs",
     "verify:google": "node scripts/verify-google.mjs",
     "verify:resend": "node scripts/verify-resend.mjs",
+    "verify:mailerlite": "node scripts/verify-mailerlite.mjs",
     "deploy:secrets": "node scripts/sync-cloudflare-secrets.mjs",
     "deploy": "npm run check && npm run build && wrangler deploy"
   },

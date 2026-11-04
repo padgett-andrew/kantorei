@@ -124,6 +124,16 @@ const auditionsTimingNote =
         {leadership.map((leader) => (
           <article class="flex flex-col justify-between rounded-3xl border border-zinc-200 bg-white p-7 shadow-2xs">
             <div>
+              {leader.imageUrl && (
+                <div class="mb-6 overflow-hidden rounded-2xl bg-zinc-100 aspect-[4/3] w-full">
+                  <img
+                    src={leader.imageUrl}
+                    alt={`Portrait of ${leader.name}`}
+                    class="h-full w-full object-cover object-center transition duration-300 hover:scale-[1.02]"
+                    loading="lazy"
+                  />
+                </div>
+              )}
               <span class="text-xs font-bold uppercase tracking-[0.16em] text-gold-500">
                 {leader.title}
               </span>
@@ -136,7 +146,7 @@ const auditionsTimingNote =
                 ))}
               </div>
             </div>
-            <div class="mt-5 border-t border-zinc-100 pt-4">
+            <div class="mt-6 border-t border-zinc-100 pt-4">
               {leader.email ? (
                 <a
                   href={`mailto:${leader.email}`}

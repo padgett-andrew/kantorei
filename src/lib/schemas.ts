@@ -19,6 +19,7 @@ import {
   type SeatingChart,
   type SeatingRow,
   type Singer,
+  type SubscriberRecord,
 } from '../types/choir';
 
 const trimmedString = z.preprocess((v) => String(v ?? '').trim(), z.string());
@@ -330,7 +331,7 @@ export const LeadershipRowSchema = z
       bio,
       order,
       email: email || undefined,
-      imageUrl: imageUrl || undefined,
+      imageUrl: sanitizeHeroImageUrl(imageUrl),
       active,
     };
   });
@@ -355,5 +356,36 @@ export const GivingTierRowSchema = z
       active,
     };
   });
+
+export const SubscriberRowSchema = z
+  .tuple([
+    trimmedString,
+    trimmedString.pipe(z.string().email('Invalid subscriber email')).transform((e) => e.toLowerCase()),
+    trimmedString,
+    trimmedString,
+    trimmedString,
+  ])
+  .transform(([timestamp, email, name, source, rawStatus]): SubscriberRecord => {
+    const norm = rawStatus.toLowerCase();
+    const status = norm === 'unsubscribed' ? 'Unsubscribed' : 'Active';
+    return {
+      timestamp: timestamp || new Date().toISOString(),
+      email,
+      name: name || undefined,
+      source: source || 'Website',
+      status,
+    };
+  });
+
+export const SubscribeRequestSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email('Please enter a valid email address')
+    .transform((e) => e.toLowerCase()),
+  name: z.string().trim().max(120, 'Name is too long').optional().default(''),
+  source: z.string().trim().max(80).optional().default('Website'),
+  website_hp: z.string().optional().default(''), // Honeypot field for anti-spam
+});
 
 

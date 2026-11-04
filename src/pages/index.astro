@@ -2,6 +2,7 @@
 import PublicLayout from '../layouts/PublicLayout.astro';
 import LocationDirectionsButton from '../components/common/LocationDirectionsButton';
 import AddToCalendarButton from '../components/common/AddToCalendarButton';
+import NewsletterForm from '../components/public/NewsletterForm';
 import { buildCleanLocationQuery } from '../lib/maps';
 import { getConcerts, getMedia, getPortalConfig } from '../lib/google';
 import {
@@ -517,6 +518,20 @@ const visionStatement =
 
   <!-- Optional Instagram client script for native responsive embedding -->
   <script is:inline async src="//www.instagram.com/embed.js"></script>
+
+  <!-- Friends of Kantorei Patron Community Banner -->
+  <section class="border-t border-zinc-200 bg-white py-14 sm:py-16">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <NewsletterForm
+        client:visible
+        variant="banner"
+        source="Home_Page"
+        title="Stay in Tune with Friends of Kantorei"
+        description="Join our circle of patrons, alumni, and choral lovers. Get first access to concert tickets, conductor Adam Reinwald’s listening guides, and unreleased choral recordings."
+        buttonText="Join Friends of Kantorei"
+      />
+    </div>
+  </section>
 
   <!-- Tax-Deductible Patronage CTA -->
   <section class="border-t border-zinc-200 bg-ivory-100/90 py-16">

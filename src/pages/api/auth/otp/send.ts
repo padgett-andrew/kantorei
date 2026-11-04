@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   createOtpChallengeToken,
   generateSixDigitCode,
+  matchRosterEmail,
   OTP_CHALLENGE_COOKIE,
 } from '../../../../lib/auth';
 import { sendLoginOtpEmail } from '../../../../lib/email';
@@ -30,7 +31,9 @@ export const POST: APIRoute = async ({ request, url, cookies, locals }) => {
       getPortalConfig(locals),
     ]);
 
-    const singer = roster.find((s) => s.email === normalizedEmail && canAccessPortal(s));
+    const singer = roster.find(
+      (s) => matchRosterEmail(s.email, normalizedEmail) && canAccessPortal(s)
+    );
 
     // Return identical generic message if email isn't on active roster to prevent enumeration
     if (!singer) {

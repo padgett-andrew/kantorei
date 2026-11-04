@@ -3,6 +3,7 @@ import PublicLayout from '../layouts/PublicLayout.astro';
 import TicketTailorEmbed from '../components/public/TicketTailorEmbed';
 import LocationDirectionsButton from '../components/common/LocationDirectionsButton';
 import AddToCalendarButton from '../components/common/AddToCalendarButton';
+import NewsletterForm from '../components/public/NewsletterForm';
 import { buildCleanLocationQuery } from '../lib/maps';
 import { getEnv } from '../lib/env';
 import { getConcerts } from '../lib/google';
@@ -166,6 +167,18 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
           </article>
         );
       })}
+    </div>
+
+    <!-- Stay in Tune / Early Access Callout -->
+    <div class="mt-14 sm:mt-16">
+      <NewsletterForm
+        client:visible
+        variant="card"
+        source="Concerts_Page"
+        title="Never Miss a Concert Announcement"
+        description="Be the first to hear about upcoming season programs, early-access ticket sales, and guest artist appearances across the Twin Cities."
+        buttonText="Get Early Concert Access"
+      />
     </div>
 
     {pastConcerts.length > 0 && (

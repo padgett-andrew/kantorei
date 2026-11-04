@@ -25,12 +25,11 @@ export const DEFAULT_HANDBOOK_HTML = `
   <h3>Board of Directors</h3>
   <p>The Board of Directors is the volunteer governing board of singers and community members that oversees Kantorei’s operations as a non-profit organization. The board selects the artistic and executive director, provides the overarching direction for the organization, approves and monitors the annual budget, and works to grow Kantorei as an organization. The board meets once every month or two months. Singers are welcome to attend meetings and are encouraged to reach out to members of the board with suggestions, concerns, or questions.</p>
   <ul>
-    <li><strong>Michael Campana</strong>, President and Chair — <a href="mailto:mleadcamp@gmail.com">mleadcamp@gmail.com</a></li>
-    <li><strong>Joe Cook Morey</strong>, Vice-President and Vice Chair — <a href="mailto:jmorey823@gmail.com">jmorey823@gmail.com</a></li>
-    <li><strong>Kressen Anderson</strong>, Treasurer — <a href="mailto:kressen@gmail.com">kressen@gmail.com</a></li>
+    <li><strong>Michael Campana</strong>, President — <a href="mailto:mleadcamp@gmail.com">mleadcamp@gmail.com</a></li>
+    <li><strong>Joseph Cook Morey</strong>, Vice President — <a href="mailto:jmorey823@gmail.com">jmorey823@gmail.com</a></li>
+    <li><strong>Jessi McKinnon</strong>, Treasurer — <a href="mailto:jessica.mckinnon@kantorei.net">jessica.mckinnon@kantorei.net</a></li>
     <li><strong>Molly Tengwall</strong>, Secretary — <a href="mailto:mollytengwall@gmail.com">mollytengwall@gmail.com</a></li>
-    <li><strong>Genna Palumbo</strong>, Singer Representative — <a href="mailto:genevievepalumbo@gmail.com">genevievepalumbo@gmail.com</a></li>
-    <li><strong>Dan Belknap</strong>, At-Large Member — <a href="mailto:djbelknap@gmail.com">djbelknap@gmail.com</a>, <a href="tel:608-630-0452">608-630-0452</a></li>
+    <li><strong>Daniel Belknap</strong>, Singer Representative — <a href="mailto:djbelknap@gmail.com">djbelknap@gmail.com</a>, <a href="tel:608-630-0452">608-630-0452</a></li>
     <li><strong>Naomi Karstad</strong>, At-Large Member — <a href="mailto:nkarstad@usa.net">nkarstad@usa.net</a></li>
   </ul>
 
@@ -46,10 +45,10 @@ export const DEFAULT_HANDBOOK_HTML = `
   <h3>Section Leaders</h3>
   <p>Section leaders help Adam and Tony coordinate with the members of each section and are responsible for making sure their section is ready for every concert. During rehearsal, section leaders may provide helpful suggestions to their section in the nicest way possible on areas that need work.</p>
   <ul>
-    <li><strong>Maryanne Poliseno</strong> — Soprano, <a href="mailto:polim0501@gmail.com">polim0501@gmail.com</a></li>
-    <li><strong>CarlaJoy Strand</strong> — Alto, <a href="mailto:strand.carlajoy@gmail.com">strand.carlajoy@gmail.com</a></li>
-    <li><strong>Michael Claver</strong> — Tenor, <a href="mailto:mclaver8@gmail.com">mclaver8@gmail.com</a></li>
-    <li><strong>John Kelly</strong> — Bass, <a href="mailto:jfrankelly@gmail.com">jfrankelly@gmail.com</a></li>
+    <li><strong>Maryanne Poliseno</strong> (<a href="mailto:polim0501@gmail.com">polim0501@gmail.com</a>) &amp; <strong>Molly Tengwall</strong> (<a href="mailto:mollytengwall@gmail.com">mollytengwall@gmail.com</a>) — Soprano</li>
+    <li><strong>CarlaJoy Strand</strong> (<a href="mailto:strand.carlajoy@gmail.com">strand.carlajoy@gmail.com</a>) &amp; <strong>Catherine Vitt</strong> (<a href="mailto:catherine.vitt@kantorei.net">catherine.vitt@kantorei.net</a>) — Alto</li>
+    <li><strong>Michael Claver</strong> (<a href="mailto:mclaver8@gmail.com">mclaver8@gmail.com</a>), <strong>Jonathan Posthuma</strong> (<a href="mailto:jonathan.posthuma@kantorei.net">jonathan.posthuma@kantorei.net</a>) &amp; <strong>Travis Wiertzema</strong> (<a href="mailto:travis.wiertzema@kantorei.net">travis.wiertzema@kantorei.net</a>) — Tenor</li>
+    <li><strong>John Kelly</strong> (<a href="mailto:jfrankelly@gmail.com">jfrankelly@gmail.com</a>) &amp; <strong>Erik Linnell</strong> (<a href="mailto:erik.linnell@kantorei.net">erik.linnell@kantorei.net</a>) — Bass</li>
   </ul>
 
   <h3>Choir Manager &amp; Music Librarian</h3>
@@ -171,7 +170,7 @@ export const DEFAULT_STRATEGIC_PLAN_HTML = `
     <tbody>
       <tr>
         <td><strong>Board of Directors</strong></td>
-        <td>Mike Campana (President), Joe Morey-Cook (Vice President), Kressen Anderson (Treasurer), Molly Tengwall (Secretary), Naomi Karstad (At-Large), Dan Belknap (At-Large), Genna Palumbo (Singer Representative), Adam Reinwald (Ex Officio)</td>
+        <td>Michael Campana (President), Joseph Cook Morey (Vice President), Jessi McKinnon (Treasurer), Molly Tengwall (Secretary), Daniel Belknap (Singer Representative), Naomi Karstad (At-Large), Adam Reinwald (Ex Officio)</td>
       </tr>
       <tr>
         <td><strong>Artistic &amp; Executive Staff</strong></td>

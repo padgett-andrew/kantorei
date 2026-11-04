@@ -219,6 +219,20 @@ export function setSessionCookie(cookies: AstroCookies, token: string, requestUr
   cookies.delete(DEV_SIGNOUT_COOKIE, { path: '/' });
 }
 
+export function matchRosterEmail(rosterEmail: string, candidateEmail: string): boolean {
+  const r = rosterEmail.trim().toLowerCase();
+  const c = candidateEmail.trim().toLowerCase();
+  if (r === c) return true;
+  // Seamless alias for developer / admin Andrew Padgett
+  if (
+    (r === 'apadgettski@gmail.com' && c === 'andrew@kantorei.net') ||
+    (r === 'andrew@kantorei.net' && c === 'apadgettski@gmail.com')
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export async function resolveAuthenticatedSinger(
   cookies: AstroCookies,
   locals?: App.Locals
@@ -229,7 +243,7 @@ export async function resolveAuthenticatedSinger(
   if (sessionToken) {
     const email = await verifySessionToken(sessionToken, locals);
     if (email) {
-      const match = roster.find((s) => s.email === email && canAccessPortal(s));
+      const match = roster.find((s) => matchRosterEmail(s.email, email) && canAccessPortal(s));
       if (match) {
         return { singer: match, isDevPreview: false };
       }
@@ -243,7 +257,7 @@ export async function resolveAuthenticatedSinger(
       const requestedDevEmail = cookies.get(DEV_ROLE_EMAIL_COOKIE)?.value?.trim().toLowerCase();
       const devSinger =
         (requestedDevEmail
-          ? roster.find((s) => s.email === requestedDevEmail && canAccessPortal(s))
+          ? roster.find((s) => matchRosterEmail(s.email, requestedDevEmail) && canAccessPortal(s))
           : undefined) ??
         roster.find((s) => s.role === 'Admin' && s.active) ??
         roster.find((s) => s.active) ??

@@ -13,9 +13,9 @@ interface Props {
 }
 
 const FALLBACK_PERSONAS: PersonaOption[] = [
-  { email: 'andrew@kantorei.net', label: 'Andrew Padgett (B2 · Admin)' },
-  { email: 'claire.lindqvist@icloud.com', label: 'Claire Lindqvist (S1 · Section Leader)' },
-  { email: 'rachel.kim@outlook.com', label: 'Rachel Kim (A2 · Singer)' },
+  { email: 'apadgettski@gmail.com', label: 'Andrew Padgett (B2 · Admin)' },
+  { email: 'polim0501@gmail.com', label: 'Maryanne Poliseno (S1 · Section Leader)' },
+  { email: 'karin.almjeld@kantorei.net', label: 'Karin Almjeld (S1 · Singer)' },
 ];
 
 export default function DevPersonaSwitcher({ currentSinger, personas }: Props) {

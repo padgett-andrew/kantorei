@@ -1,5 +1,10 @@
 import type { APIRoute } from 'astro';
-import { DEV_ROLE_EMAIL_COOKIE, DEV_SIGNOUT_COOKIE, SESSION_COOKIE } from '../../../lib/auth';
+import {
+  DEV_ROLE_EMAIL_COOKIE,
+  DEV_SIGNOUT_COOKIE,
+  matchRosterEmail,
+  SESSION_COOKIE,
+} from '../../../lib/auth';
 import { isDevPreviewEnabled } from '../../../lib/env';
 import { getRoster } from '../../../lib/google';
 
@@ -14,7 +19,9 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const body = (await request.json().catch(() => ({}))) as { email?: string };
   const targetEmail = body.email?.trim().toLowerCase();
   const roster = await getRoster(locals);
-  const singer = roster.find((s) => s.email === targetEmail && s.active);
+  const singer = roster.find(
+    (s) => matchRosterEmail(s.email, targetEmail || '') && s.active
+  );
 
   if (!singer) {
     return new Response(JSON.stringify({ error: 'Selected demo singer not found.' }), {

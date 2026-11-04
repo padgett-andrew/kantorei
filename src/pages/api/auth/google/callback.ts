@@ -3,6 +3,7 @@ import {
   createSessionToken,
   exchangeGoogleCodeForVerifiedEmail,
   getGoogleOAuthConfig,
+  matchRosterEmail,
   OAUTH_STATE_COOKIE,
   OAUTH_VERIFIER_COOKIE,
   setSessionCookie,
@@ -42,7 +43,7 @@ export const GET: APIRoute = async ({ url, cookies, locals, redirect }) => {
     }
 
     const roster = await getRoster(locals);
-    const singer = roster.find((s) => s.email === email && canAccessPortal(s));
+    const singer = roster.find((s) => matchRosterEmail(s.email, email) && canAccessPortal(s));
     if (!singer) {
       return redirect('/login?error=not_on_roster');
     }

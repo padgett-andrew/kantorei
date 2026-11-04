@@ -33,6 +33,9 @@ export const EnvSchema = z.object({
   YOUTUBE_CHANNEL_ID: z.string().optional(),
   PUBLIC_GIVEBUTTER_ACCOUNT_ID: z.string().optional(),
   PUBLIC_GIVEBUTTER_CAMPAIGN_ID: z.string().optional(),
+  MAILERLITE_API_KEY: z.string().optional(),
+  MAILERLITE_GROUP_ID: z.string().optional(),
+  TICKET_TAILOR_WEBHOOK_SECRET: z.string().optional(),
 });
 
 export type ValidatedEnv = z.infer<typeof EnvSchema>;
@@ -65,6 +68,9 @@ export const KNOWN_ENV_KEYS = [
   'YOUTUBE_CHANNEL_ID',
   'PUBLIC_GIVEBUTTER_ACCOUNT_ID',
   'PUBLIC_GIVEBUTTER_CAMPAIGN_ID',
+  'MAILERLITE_API_KEY',
+  'MAILERLITE_GROUP_ID',
+  'TICKET_TAILOR_WEBHOOK_SECRET',
 ] as const;
 
 export type KnownEnvKey = (typeof KNOWN_ENV_KEYS)[number] | (string & {});
@@ -83,6 +89,8 @@ export const ENV_CLASSIFICATIONS: Record<(typeof KNOWN_ENV_KEYS)[number], EnvCla
   GOOGLE_PRIVATE_KEY: 'secret',
   GOOGLE_OAUTH_CLIENT_SECRET: 'secret',
   RESEND_API_KEY: 'secret',
+  MAILERLITE_API_KEY: 'secret',
+  TICKET_TAILOR_WEBHOOK_SECRET: 'secret',
 
   DEV_PREVIEW_BYPASS: 'config',
   ENVIRONMENT: 'config',
@@ -94,6 +102,7 @@ export const ENV_CLASSIFICATIONS: Record<(typeof KNOWN_ENV_KEYS)[number], EnvCla
   PORTAL_FROM_EMAIL: 'config',
   SANDBOX_OVERRIDE_EMAIL: 'config',
   ABSENCE_NOTIFICATION_EMAILS: 'config',
+  MAILERLITE_GROUP_ID: 'config',
 };
 
 export const DEV_AUTH_SECRET_FALLBACK = 'kantorei-dev-fallback-secret-key-32chars';
