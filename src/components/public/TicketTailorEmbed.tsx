@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   CheckCircle2,
   ExternalLink,
@@ -7,8 +8,13 @@ import {
   KeyRound,
   Sparkles,
   Ticket,
+  X,
 } from 'lucide-react';
+import type { ConcertPerformance } from '../../types/choir';
 import type { ResolvedTicketTailorEntry } from '../../lib/tickettailor';
+import { buildCleanLocationQuery } from '../../lib/maps';
+import AddToCalendarButton from '../common/AddToCalendarButton';
+import LocationDirectionsButton from '../common/LocationDirectionsButton';
 
 interface Props {
   mode: 'season-pass' | 'concert';
@@ -16,7 +22,10 @@ interface Props {
   concertTitle?: string;
   datesDisplay?: string;
   venueName?: string;
+  venueAddress?: string;
   boxOfficeNote?: string;
+  performances?: ConcertPerformance[];
+  concertDescription?: string;
 }
 
 export default function TicketTailorEmbed({
@@ -25,295 +34,73 @@ export default function TicketTailorEmbed({
   concertTitle = 'Concert Program',
   datesDisplay = 'Sat (7:30 PM) & Sun (3:00 PM)',
   venueName,
+  venueAddress,
   boxOfficeNote,
+  performances,
+  concertDescription,
 }: Props) {
-  const containersRef = useRef<(HTMLDivElement | null)[]>([]);
-  const initializedIndicesRef = useRef<Set<number>>(new Set());
-
-  const performanceOptions = datesDisplay.includes('&')
-    ? datesDisplay.split('&').map((s) => s.trim())
-    : ['Saturday Performance', 'Sunday Performance'];
-
-  const [selectedPerf, setSelectedPerf] = useState(0);
-
   const isDemo = resolvedEntries.length === 0;
-  const activeLiveEntry =
-    resolvedEntries[Math.min(selectedPerf, Math.max(0, resolvedEntries.length - 1))];
 
-  const prevUrlsKey = resolvedEntries.map((e) => e.widgetUrl).join('|');
-  const lastUrlsKeyRef = useRef(prevUrlsKey);
-  if (lastUrlsKeyRef.current !== prevUrlsKey) {
-    lastUrlsKeyRef.current = prevUrlsKey;
-    initializedIndicesRef.current.clear();
-  }
+  // Active modal state: null when closed, or index of the performance being viewed
+  const [activeModalIdx, setActiveModalIdx] = useState<number | null>(null);
+  const [iframeLoading, setIframeLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Sandbox Season Pass / Demo State
   const [showPassInput, setShowPassInput] = useState(false);
   const [passCode, setPassCode] = useState('');
   const [passUnlocked, setPassUnlocked] = useState(false);
   const [gaQty, setGaQty] = useState(mode === 'concert' ? 1 : 0);
-  const [vipQty, setVipQty] = useState(0);
+  const [, setVipQty] = useState(0);
   const [passTierQty, setPassTierQty] = useState(1);
   const [addOnDonation, setAddOnDonation] = useState<number>(0);
   const [completedOrder, setCompletedOrder] = useState<string | null>(null);
 
-  const handleSelectPerf = (idx: number) => {
-    setSelectedPerf(idx);
-    if (typeof window !== 'undefined') {
-      requestAnimationFrame(() => {
-        window.dispatchEvent(new Event('resize'));
-      });
-    }
-  };
-
+  // Lock body scroll and handle ESC key when modal is open
   useEffect(() => {
-    if (isDemo || resolvedEntries.length === 0) return;
+    if (activeModalIdx === null) return;
 
-    const initWidget = (idx: number) => {
-      const entry = resolvedEntries[idx];
-      if (!entry?.widgetUrl || entry.isExternal || entry.isFree) return;
-      if (initializedIndicesRef.current.has(idx)) return;
-
-      const container = containersRef.current[idx];
-      if (!container) return;
-
-      initializedIndicesRef.current.add(idx);
-      container.innerHTML = '';
-
-      const widgetDiv = document.createElement('div');
-      widgetDiv.className = 'tt-widget';
-
-      const fallbackDiv = document.createElement('div');
-      fallbackDiv.className = 'tt-widget-fallback py-10 text-center';
-      const link = document.createElement('a');
-      link.href = entry.publicUrl || entry.widgetUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.className = 'text-xs font-medium text-zinc-500 hover:text-navy-950 underline';
-      link.textContent = 'Loading Ticket Tailor box office…';
-      fallbackDiv.appendChild(link);
-      widgetDiv.appendChild(fallbackDiv);
-
-      const script = document.createElement('script');
-      script.src = 'https://cdn.tickettailor.com/js/widgets/min/widget.js';
-      script.setAttribute('data-url', entry.widgetUrl);
-      script.setAttribute('data-type', 'inline');
-      script.setAttribute('data-inline-minimal', 'true');
-      script.setAttribute('data-inline-show-logo', 'false');
-      script.setAttribute('data-inline-bg-fill', 'false');
-      script.async = true;
-
-      widgetDiv.appendChild(script);
-      container.appendChild(widgetDiv);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveModalIdx(null);
+      }
     };
 
-    // 1. Immediately initialize the currently selected day
-    initWidget(selectedPerf);
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
-    // 2. Pre-load remaining performance days in the background so day switching is instant
-    const timer = setTimeout(() => {
-      resolvedEntries.forEach((_, idx) => {
-        if (idx !== selectedPerf) {
-          initWidget(idx);
-        }
-      });
-    }, 100);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [activeModalIdx]);
 
-    return () => clearTimeout(timer);
-  }, [isDemo, resolvedEntries, selectedPerf]);
+  // Construct normalized performance list
+  const performancesList: ConcertPerformance[] =
+    performances && performances.length > 0
+      ? performances
+      : datesDisplay.includes('&')
+        ? datesDisplay.split('&').map((d) => ({
+            dateDisplay: d.trim(),
+            venueName: venueName || '',
+            venueAddress: venueAddress || '',
+          }))
+        : [
+            {
+              dateDisplay: datesDisplay,
+              venueName: venueName || '',
+              venueAddress: venueAddress || '',
+            },
+          ];
 
-  if (!isDemo && activeLiveEntry?.isFree) {
-    return (
-      <div className="rounded-xl sm:rounded-2xl border border-emerald-300/80 bg-emerald-50/50 p-4 sm:p-6 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/60 pb-3">
-          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-900">
-            Free Admission
-          </span>
-          <span className="text-xs sm:text-sm font-semibold text-emerald-900">
-            No Advance Ticket Required
-          </span>
-        </div>
-
-        <h3 className="mt-4 font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
-          Open Seating · Goodwill Offering
-        </h3>
-        <p className="mt-2 text-sm sm:text-base leading-relaxed text-stone-700">
-          This performance is free and open to the public. Advance reservations are not needed—doors open 30 minutes prior to concert time. Goodwill offerings supporting Kantorei’s artistic and community programs are gratefully accepted at the door.
-        </p>
-
-        {resolvedEntries.length > 1 && (
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {resolvedEntries.map((entry, idx) => (
-              <button
-                key={entry.label || idx}
-                type="button"
-                onClick={() => handleSelectPerf(idx)}
-                className={`cursor-pointer rounded-xl border px-4 py-3 text-left text-xs sm:text-sm font-semibold transition ${
-                  selectedPerf === idx
-                    ? 'border-emerald-800 bg-emerald-800 text-white shadow-2xs'
-                    : 'border-emerald-200 bg-white text-emerald-950 hover:border-emerald-700'
-                }`}
-              >
-                {entry.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (!isDemo && activeLiveEntry?.isExternal) {
-    const providerName =
-      activeLiveEntry.externalProvider ||
-      (() => {
-        try {
-          return new URL(activeLiveEntry.publicUrl).hostname.replace(/^www\./, '');
-        } catch {
-          return venueName || 'Partner Box Office';
-        }
-      })();
-
-    let displayDomain = '';
-    try {
-      displayDomain = new URL(activeLiveEntry.publicUrl).hostname.replace(/^www\./, '');
-    } catch {
-      displayDomain = 'partner box office';
-    }
-
-    const isFree = Boolean(
-      activeLiveEntry.isFree ||
-      /free|rsvp|admission/i.test(activeLiveEntry.label || '')
-    );
-    const actionVerb = isFree ? 'Reserve Tickets' : 'Purchase Tickets';
-    const buttonText = `${actionVerb} via ${providerName}`;
-
-    return (
-      <div className="rounded-xl sm:rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
-        {resolvedEntries.length > 1 && (
-          <div className="mb-4">
-            <span className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-2">
-              Select Performance:
-            </span>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {resolvedEntries.map((entry, idx) => (
-                <button
-                  key={entry.publicUrl || idx}
-                  type="button"
-                  onClick={() => handleSelectPerf(idx)}
-                  className={`cursor-pointer rounded-xl border px-4 py-3 text-left text-xs sm:text-sm font-semibold transition ${
-                    selectedPerf === idx
-                      ? 'border-navy-900 bg-navy-900 text-white shadow-2xs'
-                      : 'border-stone-300 bg-stone-50 text-stone-800 hover:border-navy-900'
-                  }`}
-                >
-                  {entry.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-3.5 sm:p-4">
-          <div className="flex items-start gap-3">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-            <div className="text-xs sm:text-sm leading-relaxed text-amber-950">
-              <strong className="font-semibold text-amber-950">
-                {isFree ? 'Registration' : 'Tickets'} Managed by {providerName}
-              </strong>
-              <p className="mt-1 text-xs sm:text-sm leading-relaxed text-amber-900">
-                {boxOfficeNote || (
-                  <>
-                    Kantorei is performing as a featured guest ensemble for this concert. All{' '}
-                    {isFree
-                      ? 'reservations, seating, and admission policies'
-                      : 'ticket sales, seat selections, subscriber discounts, and box office policies'}{' '}
-                    are administered directly by {providerName}.
-                  </>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5">
-          <a
-            href={activeLiveEntry.publicUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-copper-500 px-6 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-xs transition hover:bg-copper-600"
-          >
-            {buttonText}
-            <ExternalLink className="h-4 w-4" />
-          </a>
-          <p className="mt-2 text-center text-xs text-stone-600">
-            Secure checkout opens in a new tab on <span className="font-mono font-medium">{displayDomain}</span>
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isDemo && activeLiveEntry) {
-    return (
-      <div className="rounded-xl sm:rounded-2xl border border-stone-200/80 bg-white p-3.5 sm:p-5 shadow-xs">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-navy-900">
-            {resolvedEntries.length > 1 ? '1. Choose Performance & Venue' : 'Select Tickets'}
-          </span>
-          <a
-            href={activeLiveEntry.publicUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-copper-600 hover:text-navy-950"
-          >
-            Open Box Office in New Tab
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        </div>
-
-        {resolvedEntries.length > 1 && (
-          <div className="mb-4 grid gap-2 sm:grid-cols-2">
-            {resolvedEntries.map((entry, idx) => (
-              <button
-                key={entry.widgetUrl || idx}
-                type="button"
-                onClick={() => handleSelectPerf(idx)}
-                className={`cursor-pointer rounded-xl border px-4 py-3 text-left text-xs sm:text-sm font-semibold transition ${
-                  selectedPerf === idx
-                    ? 'border-navy-900 bg-navy-900 text-white shadow-2xs'
-                    : 'border-stone-300 bg-stone-50 text-stone-800 hover:border-navy-900'
-                }`}
-              >
-                {entry.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="relative min-h-[300px]">
-          {resolvedEntries.map((entry, idx) => {
-            const isSelected = selectedPerf === idx;
-            return (
-              <div
-                key={entry.widgetUrl || idx}
-                ref={(el) => {
-                  containersRef.current[idx] = el;
-                }}
-                className={
-                  isSelected
-                    ? 'block w-full transition-opacity duration-150'
-                    : 'pointer-events-none absolute inset-0 -z-10 opacity-0 overflow-hidden'
-                }
-                aria-hidden={!isSelected}
-              />
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // Sandbox Interactive Season Pass Purchase Widget
+  // =========================================================================
+  // 1. Season Pass Standalone Mode (Sandbox Preview)
+  // =========================================================================
   if (mode === 'season-pass') {
     const passSubtotal = passTierQty * 65 + addOnDonation;
     return (
@@ -416,10 +203,17 @@ export default function TicketTailorEmbed({
     );
   }
 
-  // Sandbox Interactive Individual Concert Checkout Card
-  const totalAmount = gaQty * 25 + addOnDonation;
-  const totalTickets = gaQty + vipQty;
+  // =========================================================================
+  // 2. Active Entry for Modal
+  // =========================================================================
+  const activeEntry =
+    activeModalIdx !== null
+      ? resolvedEntries[activeModalIdx] || resolvedEntries[0]
+      : null;
+  const activePerf =
+    activeModalIdx !== null ? performancesList[activeModalIdx] : null;
 
+  // Sandbox demo checkout submit
   function unlockPass(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!passCode.trim()) return;
@@ -428,177 +222,401 @@ export default function TicketTailorEmbed({
     setGaQty(0);
   }
 
+  // =========================================================================
+  // 3. Pattern A: Unified Performance Cards
+  // =========================================================================
   return (
-    <div className="rounded-xl sm:rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
-        <span className="text-xs font-bold uppercase tracking-wider text-stone-600">
-          Interactive Box Office Preview
+    <div className="space-y-4">
+      <div className="flex items-center justify-between border-b border-stone-200/80 pb-2.5">
+        <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-navy-950">
+          Performances &amp; Tickets
+        </h3>
+        <span className="text-xs text-stone-500">
+          {performancesList.length > 1
+            ? `${performancesList.length} Performances Available`
+            : 'Select Performance'}
         </span>
-        <button
-          type="button"
-          onClick={() => setShowPassInput((v) => !v)}
-          className="inline-flex cursor-pointer items-center gap-1.5 text-xs sm:text-sm font-semibold text-navy-900 underline decoration-copper-500 underline-offset-4"
-        >
-          <KeyRound className="h-3.5 w-3.5 text-copper-600" />
-          {passUnlocked ? 'Season Pass Code Applied ✓' : 'Have a Season Pass? Enter Pass Code'}
-        </button>
       </div>
 
-      {completedOrder ? (
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-          <div className="flex items-center gap-2 font-semibold">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            Reservation Confirmed for {concertTitle}!
-          </div>
-          <p className="mt-1 text-sm text-emerald-800">
-            Performance: <strong>{performanceOptions[selectedPerf]}</strong> · {completedOrder}
-          </p>
-          <button
-            type="button"
-            onClick={() => setCompletedOrder(null)}
-            className="mt-2.5 cursor-pointer text-xs sm:text-sm font-semibold underline"
-          >
-            Modify demo order
-          </button>
-        </div>
-      ) : (
-        <div className="mt-4 space-y-4">
-          {/* Step A: Pick Performance Night (Capacity Management) */}
-          <div>
-            <span className="block text-xs sm:text-sm font-semibold text-stone-700">
-              1. Choose Performance Night:
-            </span>
-            <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-              {performanceOptions.map((perf, idx) => (
-                <button
-                  key={perf}
-                  type="button"
-                  onClick={() => setSelectedPerf(idx)}
-                  className={`cursor-pointer rounded-xl border px-4 py-3 text-left text-xs sm:text-sm font-semibold transition ${
-                    selectedPerf === idx
-                      ? 'border-navy-900 bg-navy-900 text-white shadow-2xs'
-                      : 'border-stone-300 bg-stone-50 text-stone-800 hover:border-zinc-400'
-                  }`}
-                >
-                  {perf}
-                </button>
-              ))}
-            </div>
-          </div>
+      <div className="space-y-3.5">
+        {performancesList.map((perf, idx) => {
+          const entry = resolvedEntries[idx] || resolvedEntries[0];
+          const isExternal = Boolean(entry?.isExternal);
+          const isFree = Boolean(
+            entry?.isFree ||
+              /free|open seating|goodwill|admission/i.test(entry?.label || '')
+          );
+          const providerName =
+            entry?.externalProvider ||
+            (() => {
+              try {
+                return entry?.publicUrl
+                  ? new URL(entry.publicUrl).hostname.replace(/^www\./, '')
+                  : 'Partner Box Office';
+              } catch {
+                return 'Partner Box Office';
+              }
+            })();
 
-          {/* Optional Pass Code Unlock Box */}
-          {showPassInput && !passUnlocked && (
-            <form
-              onSubmit={unlockPass}
-              className="flex flex-col gap-2 rounded-xl border border-copper-400/80 bg-amber-50/70 p-3 sm:flex-row"
+          const cleanLoc = buildCleanLocationQuery(
+            perf.venueName,
+            perf.venueAddress
+          );
+
+          return (
+            <div
+              key={`${perf.dateDisplay}-${idx}`}
+              className="rounded-xl border border-stone-200/80 bg-stone-50/50 p-4 sm:p-5 transition hover:border-stone-300 hover:bg-stone-50/80 shadow-2xs"
             >
-              <input
-                type="text"
-                placeholder="Enter Pass Code (try KANTOREI-VIP-2026)"
-                value={passCode}
-                onChange={(e) => setPassCode(e.target.value)}
-                className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 font-mono text-sm uppercase"
-              />
-              <button
-                type="submit"
-                className="cursor-pointer rounded-lg bg-navy-900 px-4 py-2 text-xs sm:text-sm font-semibold text-white"
-              >
-                Unlock $0.00 VIP Seat
-              </button>
-            </form>
-          )}
+              {/* Header: Full-width Date & Free Admission Badge */}
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h4 className="font-serif text-lg sm:text-xl font-semibold text-navy-950 leading-snug">
+                  {perf.dateDisplay}
+                </h4>
+                {isFree && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-emerald-900">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-700" />
+                    Free Admission
+                  </span>
+                )}
+              </div>
 
-          {/* Ticket Tiers */}
-          <div className="space-y-2.5">
-            {passUnlocked && (
-              <div className="flex items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50/80 px-4 py-3">
-                <div>
-                  <span className="text-sm font-bold text-emerald-950">
-                    Season Pass Holder VIP ($0.00)
-                  </span>
-                  <span className="block text-xs text-emerald-800">
-                    0% Ticket Tailor fee on $0 pass redemptions
-                  </span>
+              {perf.venueName && (
+                <p className="mt-1 text-sm font-medium text-stone-800">
+                  {perf.venueName}
+                  {perf.venueAddress && (
+                    <span className="text-stone-500 font-normal">
+                      {' '}
+                      · {perf.venueAddress}
+                    </span>
+                  )}
+                </p>
+              )}
+
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                {cleanLoc && (
+                  <LocationDirectionsButton
+                    location={cleanLoc}
+                    venueName={perf.venueName}
+                    variant="inline"
+                  />
+                )}
+                <AddToCalendarButton
+                  title={concertTitle}
+                  description={concertDescription}
+                  dateStr={perf.dateDisplay}
+                  location={cleanLoc}
+                  venueName={perf.venueName}
+                  venueAddress={perf.venueAddress}
+                  label="+ Calendar"
+                  variant="inline"
+                  align="left"
+                />
+              </div>
+
+              {/* Informational Sub-Cards for Free or Partner Concerts */}
+              {isFree && (
+                <div className="mt-3.5 rounded-lg border border-emerald-200/80 bg-emerald-50/70 p-3 text-xs leading-relaxed text-emerald-950">
+                  <strong className="font-semibold text-emerald-900">
+                    Open Seating · No Advance Ticket Required.
+                  </strong>{' '}
+                  Doors open 30 minutes prior to concert time. Goodwill offerings
+                  supporting Kantorei&apos;s artistic and community programs are
+                  gratefully accepted at the door.
                 </div>
-                <select
-                  aria-label="Season Pass VIP Quantity"
-                  value={vipQty}
-                  onChange={(e) => setVipQty(Number(e.target.value))}
-                  className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-sm font-bold"
-                >
-                  {[0, 1, 2].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+              )}
 
-            <div className="flex items-center justify-between rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-3">
-              <div>
-                <span className="text-sm font-semibold text-stone-900">
-                  General Admission ($25.00)
-                </span>
-                <span className="block text-xs text-stone-600">
-                  Open sanctuary seating
-                </span>
-              </div>
-              <select
-                aria-label="General Admission Quantity"
-                value={gaQty}
-                onChange={(e) => setGaQty(Number(e.target.value))}
-                className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-semibold"
-              >
-                {[0, 1, 2, 3, 4, 5, 6].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
+              {isExternal && (
+                <div className="mt-3.5 rounded-lg border border-amber-200/80 bg-amber-50/70 p-3 text-xs leading-relaxed text-amber-950">
+                  <div className="flex items-start gap-2">
+                    <Info className="h-4 w-4 shrink-0 text-amber-700 mt-0.5" />
+                    <div>
+                      <strong className="font-semibold text-amber-950">
+                        Tickets Managed by {providerName}.
+                      </strong>{' '}
+                      {boxOfficeNote || (
+                        <span>
+                          Kantorei is performing as a featured guest ensemble.
+                          All ticket purchases, seating, and box office policies
+                          are administered directly by {providerName}.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Action Footer for Ticket Tailor & Partner Presenters */}
+              {!isFree && (
+                <div className="mt-4 pt-3.5 border-t border-stone-200/70 flex flex-wrap items-center justify-between gap-3">
+                  {isExternal ? (
+                    <a
+                      href={entry?.publicUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-copper-500 hover:bg-copper-600 px-5 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-xs transition active:scale-[0.99]"
+                    >
+                      Tickets via {providerName}
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveModalIdx(idx);
+                          setIframeLoading(true);
+                        }}
+                        className="cursor-pointer inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-copper-500 hover:bg-copper-600 px-5 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-xs transition active:scale-[0.99]"
+                      >
+                        <Ticket className="h-4 w-4" />
+                        Select Tickets
+                      </button>
+
+                      {entry?.publicUrl && (
+                        <a
+                          href={entry.publicUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-navy-950 transition"
+                        >
+                          Open box office in new tab
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
+          );
+        })}
+      </div>
 
-          {/* Native In-Cart Tax-Deductible Add-on Donation */}
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-3">
-            <span className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-stone-700">
-              <Heart className="h-3.5 w-3.5 text-rose-600" />
-              Add a tax-deductible donation:
-            </span>
-            <div className="flex gap-1.5">
-              {[0, 10, 25, 50].map((amt) => (
+      {/* =====================================================================
+          4. High-Breathability Mobile & Desktop Checkout Modal Sheet
+          ===================================================================== */}
+      {mounted && activeModalIdx !== null && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex flex-col justify-end sm:justify-center sm:items-center bg-navy-950/80 backdrop-blur-xs transition-opacity duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Tickets for ${concertTitle}`}
+        >
+          {/* Backdrop click dismiss */}
+          <div
+            className="absolute inset-0 -z-10"
+            onClick={() => setActiveModalIdx(null)}
+          />
+
+          {/* Modal Container: Full-width on mobile, centered card on desktop */}
+          <div className="relative flex flex-col w-full h-[94vh] sm:h-[88vh] sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden border border-stone-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-stone-200/80 px-4 py-3 sm:px-6 sm:py-3.5 bg-stone-50/90 shrink-0">
+              <div className="min-w-0 pr-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-copper-600 truncate">
+                  {concertTitle}
+                </p>
+                <h4 className="text-sm sm:text-base font-bold text-navy-950 truncate">
+                  {activePerf?.dateDisplay}
+                  {activePerf?.venueName ? ` · ${activePerf.venueName}` : ''}
+                </h4>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {activeEntry?.publicUrl && (
+                  <a
+                    href={activeEntry.publicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-navy-950 px-2 py-1 rounded-md hover:bg-stone-200/50 transition"
+                    title="Open box office in new window"
+                  >
+                    <span>New Window</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
                 <button
-                  key={amt}
                   type="button"
-                  onClick={() => setAddOnDonation(amt)}
-                  className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
-                    addOnDonation === amt
-                      ? 'bg-navy-900 text-white'
-                      : 'border border-stone-200 bg-white text-stone-700 hover:bg-stone-100'
-                  }`}
+                  onClick={() => setActiveModalIdx(null)}
+                  className="cursor-pointer rounded-full p-1.5 text-stone-500 hover:bg-stone-200 hover:text-navy-950 transition"
+                  aria-label="Close ticket checkout"
                 >
-                  {amt === 0 ? 'None' : `+$${amt}`}
+                  <X className="h-5 w-5" />
                 </button>
-              ))}
+              </div>
+            </div>
+
+            {/* Modal Body / Iframe or Demo Preview */}
+            <div className="relative flex-1 w-full bg-stone-50 overflow-y-auto">
+              {!isDemo && activeEntry?.widgetUrl ? (
+                <>
+                  {iframeLoading && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-10 text-stone-500">
+                      <div className="h-8 w-8 animate-spin rounded-full border-3 border-stone-200 border-t-copper-500" />
+                      <span className="mt-3 text-xs font-medium">
+                        Connecting to secure Ticket Tailor box office…
+                      </span>
+                    </div>
+                  )}
+
+                  <iframe
+                    src={activeEntry.widgetUrl}
+                    title={`Tickets for ${concertTitle}`}
+                    onLoad={() => setIframeLoading(false)}
+                    className="w-full h-full border-0 min-h-[500px]"
+                    allow="payment; fullscreen"
+                  />
+                </>
+              ) : (
+                /* Sandbox Demo Checkout Preview inside Modal */
+                <div className="p-4 sm:p-6 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-stone-600">
+                      Interactive Box Office Preview (Sandbox)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassInput((v) => !v)}
+                      className="inline-flex cursor-pointer items-center gap-1.5 text-xs sm:text-sm font-semibold text-navy-900 underline decoration-copper-500 underline-offset-4"
+                    >
+                      <KeyRound className="h-3.5 w-3.5 text-copper-600" />
+                      {passUnlocked
+                        ? 'Season Pass Applied ✓'
+                        : 'Have a Pass? Enter Code'}
+                    </button>
+                  </div>
+
+                  {completedOrder ? (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                      <div className="flex items-center gap-2 font-semibold">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        Tickets Confirmed! (Demo Mode)
+                      </div>
+                      <p className="mt-1 text-xs text-emerald-800">
+                        Order confirmation sent to your email. Tickets will be
+                        held at will-call.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setCompletedOrder(null)}
+                        className="mt-3 cursor-pointer text-xs font-semibold text-emerald-900 underline"
+                      >
+                        Book more tickets
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {showPassInput && (
+                        <form
+                          onSubmit={unlockPass}
+                          className="flex gap-2 rounded-xl border border-gold-300 bg-gold-50/50 p-3"
+                        >
+                          <input
+                            type="text"
+                            placeholder="Enter Season Pass Code"
+                            value={passCode}
+                            onChange={(e) => setPassCode(e.target.value)}
+                            className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-mono uppercase"
+                          />
+                          <button
+                            type="submit"
+                            className="cursor-pointer rounded-lg bg-navy-950 px-3 py-1.5 text-xs font-semibold text-white"
+                          >
+                            Apply
+                          </button>
+                        </form>
+                      )}
+
+                      <div className="flex items-center justify-between rounded-xl border border-stone-200 bg-white p-3.5">
+                        <div>
+                          <p className="font-semibold text-navy-950 text-sm">
+                            General Admission
+                          </p>
+                          <p className="text-xs text-stone-500">
+                            Open sanctuary seating
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-navy-950 text-sm">
+                            $25
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setGaQty(Math.max(0, gaQty - 1))}
+                              className="h-7 w-7 rounded-md border border-stone-300 text-stone-700 flex items-center justify-center font-bold"
+                            >
+                              -
+                            </button>
+                            <span className="w-4 text-center text-sm font-semibold">
+                              {gaQty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setGaQty(gaQty + 1)}
+                              className="h-7 w-7 rounded-md border border-stone-300 text-stone-700 flex items-center justify-center font-bold"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-stone-200 bg-white p-3">
+                        <span className="flex items-center gap-1.5 text-xs font-semibold text-stone-700">
+                          <Heart className="h-3.5 w-3.5 text-rose-600" />
+                          Add an ensemble donation:
+                        </span>
+                        <div className="flex gap-1.5">
+                          {[0, 10, 25, 50].map((amt) => (
+                            <button
+                              key={amt}
+                              type="button"
+                              onClick={() => setAddOnDonation(amt)}
+                              className={`cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                                addOnDonation === amt
+                                  ? 'bg-navy-950 text-white'
+                                  : 'border border-stone-200 bg-stone-50 text-stone-700 hover:bg-stone-100'
+                              }`}
+                            >
+                              {amt === 0 ? 'None' : `+$${amt}`}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCompletedOrder(
+                            `ORD-${Math.floor(100000 + Math.random() * 900000)}`
+                          )
+                        }
+                        className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-xl bg-copper-500 hover:bg-copper-600 px-5 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-xs transition"
+                      >
+                        Complete Order — ${(gaQty * 25 + addOnDonation).toFixed(2)} (Demo)
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer reassurance */}
+            <div className="flex items-center justify-between border-t border-stone-200/80 bg-white px-4 py-2.5 sm:px-6 text-[11px] text-stone-500 shrink-0">
+              <span>🔒 256-bit SSL Secure Checkout</span>
+              <button
+                type="button"
+                onClick={() => setActiveModalIdx(null)}
+                className="text-xs font-semibold text-stone-600 hover:text-navy-950 underline cursor-pointer"
+              >
+                Close Window
+              </button>
             </div>
           </div>
-
-          <button
-            type="button"
-            disabled={totalTickets === 0 && addOnDonation === 0}
-            onClick={() =>
-              setCompletedOrder(
-                `${totalTickets} ticket(s) — Total charged: $${totalAmount.toFixed(2)}`
-              )
-            }
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-navy-900 px-4 py-3 text-xs sm:text-sm font-semibold uppercase tracking-wider text-white transition hover:bg-navy-800 disabled:opacity-50"
-          >
-            <Ticket className="h-4 w-4 text-gold-400" />
-            {totalAmount === 0 && vipQty > 0
-              ? 'Reserve $0.00 Pass Holder Seat (Demo)'
-              : `Checkout — $${totalAmount.toFixed(2)} (Demo)`}
-          </button>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

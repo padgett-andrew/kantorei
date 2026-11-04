@@ -1,10 +1,7 @@
 ---
 import PublicLayout from '../layouts/PublicLayout.astro';
 import TicketTailorEmbed from '../components/public/TicketTailorEmbed';
-import LocationDirectionsButton from '../components/common/LocationDirectionsButton';
-import AddToCalendarButton from '../components/common/AddToCalendarButton';
 import NewsletterForm from '../components/public/NewsletterForm';
-import { buildCleanLocationQuery } from '../lib/maps';
 import { getEnv } from '../lib/env';
 import { getConcerts } from '../lib/google';
 import { resolveTicketTailorEntries } from '../lib/tickettailor';
@@ -71,7 +68,7 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
             class="scroll-mt-24 rounded-2xl border border-stone-200/80 bg-white shadow-sm relative z-10 overflow-hidden"
           >
             <div class="grid gap-6 sm:gap-8 p-4 sm:p-7 lg:p-9 lg:grid-cols-12 lg:items-start">
-              <div class="lg:col-span-6">
+              <div class="lg:col-span-5">
                 {concertImage && (
                   <div class="mb-5 sm:mb-6 overflow-hidden rounded-xl bg-navy-950">
                     <img
@@ -90,93 +87,23 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
                   {concert.title}
                 </h2>
 
-                {concert.performances && concert.performances.length > 1 ? (
-                  <div class="mt-5 space-y-4 rounded-xl border border-stone-200/70 bg-stone-50/60 p-4 sm:p-5">
-                    {concert.performances.map((perf, pIdx) => (
-                      <div
-                        class:list={[
-                          'space-y-2',
-                          pIdx > 0 && 'border-t border-stone-200/70 pt-3.5 sm:pt-4',
-                        ]}
-                      >
-                        <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5 sm:gap-2">
-                          <h3 class="font-serif font-semibold text-navy-950 text-base sm:text-lg lg:text-xl leading-snug">
-                            {perf.dateDisplay}
-                          </h3>
-                          <div class="shrink-0">
-                            <AddToCalendarButton
-                              client:load
-                              title={concert.title}
-                              description={concert.description}
-                              dateStr={perf.dateDisplay}
-                              location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
-                              venueName={perf.venueName}
-                              venueAddress={perf.venueAddress}
-                              label="+ Calendar"
-                              variant="inline"
-                              align="right"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <LocationDirectionsButton
-                            client:load
-                            location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
-                            venueName={perf.venueName}
-                            variant="inline"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div class="mt-5 space-y-2 rounded-xl border border-stone-200/70 bg-stone-50/60 p-4 sm:p-5">
-                    <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5 sm:gap-2">
-                      <h3 class="font-serif font-semibold text-navy-950 text-base sm:text-lg lg:text-xl leading-snug">
-                        {concert.datesDisplay}
-                      </h3>
-                      <div class="shrink-0">
-                        <AddToCalendarButton
-                          client:load
-                          title={concert.title}
-                          description={concert.description}
-                          dateStr={concert.datesDisplay}
-                          location={buildCleanLocationQuery(concert.venueName, concert.venueAddress)}
-                          venueName={concert.venueName}
-                          venueAddress={concert.venueAddress}
-                          label="+ Calendar"
-                          variant="inline"
-                          align="right"
-                        />
-                      </div>
-                    </div>
-                    {concert.venueName && (
-                      <div>
-                        <LocationDirectionsButton
-                          client:load
-                          location={buildCleanLocationQuery(concert.venueName, concert.venueAddress)}
-                          venueName={concert.venueName}
-                          variant="inline"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <p class="mt-5 text-base sm:text-lg leading-relaxed text-stone-700">
+                <p class="mt-4 text-base sm:text-lg leading-relaxed text-stone-700">
                   {concert.description}
                 </p>
               </div>
 
-              <div class="lg:col-span-6">
+              <div class="lg:col-span-7">
                 <TicketTailorEmbed
-                  client:visible
+                  client:load
                   mode="concert"
                   resolvedEntries={concert.resolvedEntries}
                   concertTitle={concert.title}
                   datesDisplay={concert.datesDisplay}
                   venueName={concert.venueName}
+                  venueAddress={concert.venueAddress}
                   boxOfficeNote={concert.boxOfficeNote}
+                  performances={concert.performances}
+                  concertDescription={concert.description}
                 />
               </div>
             </div>
