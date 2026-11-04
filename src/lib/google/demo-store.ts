@@ -96,6 +96,8 @@ export const demoStore: DemoStore = {
     Hero_Tagline: 'Sing, Laugh, Cry. Be Real…Together.',
     Hero_Subtitle:
       'Kantorei is an a cappella chamber choir based in the Minnesota Twin Cities. Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.',
+    Hero_Video_URL: 'https://www.youtube.com/watch?v=GIvF19VzNPE',
+    Hero_Image_URL: '',
     About_Header_Title:
       'Vocal health, effortless sound, and singing for a lifetime.',
     Auditions_Blurb:
@@ -818,7 +820,7 @@ export const demoStore: DemoStore = {
         'Gather in candlelight and winter stillness for Kantorei’s beloved Advent tradition—weaving luminous a cappella carols from around the world, cherished signature works, and radiant music by contemporary and emerging composers.',
       ttEventSeriesId: 'DEMO_SERIES_ID',
       status: 'On_Sale',
-      heroImageUrl: '/images/advent-with-kantorei.webp',
+      heroImageUrl: '/images/advent-lantern.jpg',
     },
     {
       slug: 'spring-2027',

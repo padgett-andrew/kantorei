@@ -192,6 +192,8 @@ Key-value settings editable by the board without redeploying code.
 - `Vision_Statement`: `Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.`
 - `Hero_Tagline`: `Sing, Laugh, Cry. Be Real…Together.`
 - `Hero_Subtitle`: `Kantorei is an a cappella chamber choir based in the Minnesota Twin Cities...`
+- `Hero_Video_URL`: `https://www.youtube.com/watch?v=GIvF19VzNPE` (YouTube video URL looped softly in the hero background)
+- `Hero_Image_URL`: Optional static fallback or override banner image URL
 - `About_Header_Title`: `Vocal health, effortless sound, and singing for a lifetime.`
 - `Auditions_Blurb`: `We welcome inquiries from experienced Twin Cities choral singers across all voice parts...`
 - `Auditions_Timing_Note`: `We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out a roster of singers for the coming season. Auditions are heard by Artistic Director Adam Reinwald and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview. Come sing with us!`

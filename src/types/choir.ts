@@ -150,6 +150,8 @@ export interface PortalConfig {
   Vision_Statement?: string;
   Hero_Tagline?: string;
   Hero_Subtitle?: string;
+  Hero_Video_URL?: string;
+  Hero_Image_URL?: string;
   About_Header_Title?: string;
   About_History_P1?: string;
   About_History_P2?: string;

@@ -255,6 +255,8 @@ const SCHEMA_SPEC = {
         'Hero_Subtitle',
         'Kantorei is an a cappella chamber choir based in the Minnesota Twin Cities. Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.',
       ],
+      ['Hero_Video_URL', 'https://www.youtube.com/watch?v=GIvF19VzNPE'],
+      ['Hero_Image_URL', ''],
       ['About_Header_Title', 'Vocal health, effortless sound, and singing for a lifetime.'],
       [
         'Auditions_Blurb',
