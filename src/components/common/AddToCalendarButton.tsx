@@ -18,6 +18,7 @@ interface Props {
   durationHours?: number;
   label?: string;
   variant?: 'pill' | 'badge' | 'inline' | 'dark';
+  align?: 'left' | 'right';
   className?: string;
 }
 
@@ -48,11 +49,27 @@ export default function AddToCalendarButton({
   durationHours = 2,
   label = 'Add to Calendar',
   variant = 'pill',
+  align = 'right',
   className = '',
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const [placement, setPlacement] = useState<'bottom' | 'top'>('bottom');
   const [downloaded, setDownloaded] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  function handleToggle() {
+    if (!isOpen && menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      if (spaceBelow < 260 && spaceAbove > 220) {
+        setPlacement('top');
+      } else {
+        setPlacement('bottom');
+      }
+    }
+    setIsOpen((v) => !v);
+  }
 
   const fullLocation =
     location ||
@@ -173,7 +190,7 @@ export default function AddToCalendarButton({
     badge:
       'inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 hover:text-navy-950',
     inline:
-      'inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-gold-600 underline decoration-gold-400 underline-offset-4 hover:text-navy-950',
+      'group inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-stone-500 transition hover:text-navy-950 focus:outline-none focus:ring-1 focus:ring-copper-400 rounded-sm',
     dark: 'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-white/20 bg-navy-900/80 px-3 py-1 text-xs font-semibold text-ivory-50 shadow-2xs transition hover:border-gold-400 hover:text-gold-300',
   }[variant];
 
@@ -181,21 +198,43 @@ export default function AddToCalendarButton({
     <div ref={menuRef} className={`relative inline-block text-left ${className}`}>
       <button
         type="button"
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={handleToggle}
         aria-haspopup="true"
         aria-expanded={isOpen}
         aria-label={`${label} for ${fullTitle}`}
         className={triggerClasses}
       >
-        <CalendarPlus className="h-3 w-3 text-gold-500" />
-        <span>{label}</span>
+        <CalendarPlus
+          className={`h-3.5 w-3.5 shrink-0 transition-colors ${
+            variant === 'inline'
+              ? 'text-copper-600 group-hover:text-copper-700'
+              : 'text-gold-500'
+          }`}
+        />
+        <span
+          className={
+            variant === 'inline'
+              ? 'underline decoration-stone-300 underline-offset-4 transition-colors group-hover:decoration-copper-500'
+              : ''
+          }
+        >
+          {label}
+        </span>
       </button>
 
       {isOpen && (
         <div
           role="menu"
           aria-orientation="vertical"
-          className="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100"
+          className={`absolute ${
+            align === 'left'
+              ? placement === 'top'
+                ? 'left-0 bottom-full mb-1.5 origin-bottom-left'
+                : 'left-0 top-full mt-1.5 origin-top-left'
+              : placement === 'top'
+              ? 'right-0 bottom-full mb-1.5 origin-bottom-right'
+              : 'right-0 top-full mt-1.5 origin-top-right'
+          } z-50 w-64 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100`}
         >
           <div className="border-b border-zinc-100 px-3 py-2">
             <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">

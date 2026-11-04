@@ -68,7 +68,7 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
         return (
           <article
             id={concert.slug}
-            class="scroll-mt-24 overflow-hidden rounded-xl sm:rounded-2xl border border-stone-200/80 bg-[#FAF7F2] shadow-sm"
+            class="scroll-mt-24 rounded-xl sm:rounded-2xl border border-stone-200/80 bg-[#FAF7F2] shadow-sm relative z-10"
           >
             <div class="grid gap-8 p-6 sm:p-9 lg:grid-cols-12 lg:items-start">
               <div class="lg:col-span-6">
@@ -91,26 +91,18 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
                 </h3>
 
                 {concert.performances && concert.performances.length > 1 ? (
-                  <div class="mt-5 space-y-3 rounded-lg border border-stone-200/80 bg-white p-4 sm:p-5 text-sm">
+                  <div class="mt-5 space-y-3.5 rounded-xl border border-stone-200/80 bg-white p-4 sm:p-5 text-sm shadow-2xs">
                     {concert.performances.map((perf, pIdx) => (
                       <div
                         class:list={[
-                          'flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between',
-                          pIdx > 0 && 'border-t border-stone-200/60 pt-3',
+                          'space-y-1.5',
+                          pIdx > 0 && 'border-t border-stone-200/60 pt-3.5',
                         ]}
                       >
-                        <div>
-                          <p class="font-serif font-semibold text-navy-950 text-sm sm:text-base">{perf.dateDisplay}</p>
-                          <p class="text-sm text-stone-600 mt-0.5">{perf.venueName}</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                          <LocationDirectionsButton
-                            client:load
-                            location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
-                            venueName={perf.venueName}
-                            label={perf.label ? `${perf.label} Directions` : 'Directions'}
-                            variant="pill"
-                          />
+                        <div class="flex flex-wrap items-baseline justify-between gap-2">
+                          <p class="font-serif font-semibold text-navy-950 text-sm sm:text-base leading-snug">
+                            {perf.dateDisplay}
+                          </p>
                           <AddToCalendarButton
                             client:load
                             title={concert.title}
@@ -119,34 +111,48 @@ const pastConcerts = allConcerts.filter((c) => c.status === 'Past');
                             location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
                             venueName={perf.venueName}
                             venueAddress={perf.venueAddress}
-                            variant="pill"
+                            label="+ Calendar"
+                            variant="inline"
+                            align="right"
+                          />
+                        </div>
+                        <div>
+                          <LocationDirectionsButton
+                            client:load
+                            location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
+                            venueName={perf.venueName}
+                            variant="inline"
                           />
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div class="mt-4 space-y-2.5">
-                    <p class="text-base font-semibold text-navy-950">
-                      🗓 {concert.datesDisplay}
-                    </p>
+                  <div class="mt-5 rounded-xl border border-stone-200/80 bg-white p-4 sm:p-5 text-sm shadow-2xs space-y-1.5">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                      <p class="font-serif font-semibold text-navy-950 text-sm sm:text-base leading-snug">
+                        {concert.datesDisplay}
+                      </p>
+                      <AddToCalendarButton
+                        client:load
+                        title={concert.title}
+                        description={concert.description}
+                        dateStr={concert.datesDisplay}
+                        location={buildCleanLocationQuery(concert.venueName, concert.venueAddress)}
+                        venueName={concert.venueName}
+                        venueAddress={concert.venueAddress}
+                        label="+ Calendar"
+                        variant="inline"
+                        align="right"
+                      />
+                    </div>
                     {concert.venueName && (
-                      <div class="flex flex-wrap items-center gap-2">
+                      <div>
                         <LocationDirectionsButton
                           client:load
                           location={buildCleanLocationQuery(concert.venueName, concert.venueAddress)}
                           venueName={concert.venueName}
-                          variant="pill"
-                        />
-                        <AddToCalendarButton
-                          client:load
-                          title={concert.title}
-                          description={concert.description}
-                          dateStr={concert.datesDisplay}
-                          location={buildCleanLocationQuery(concert.venueName, concert.venueAddress)}
-                          venueName={concert.venueName}
-                          venueAddress={concert.venueAddress}
-                          variant="pill"
+                          variant="inline"
                         />
                       </div>
                     )}
