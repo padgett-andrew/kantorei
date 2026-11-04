@@ -89,7 +89,7 @@ Kantorei operates with three clear environment tiers governed by `src/lib/env.ts
 | **`preview`**     | `wrangler dev` (`npm run preview`) / PR previews    | Edge parity: Cloudflare Workers runtime, reads `.dev.vars` (synced via `npm run env:sync-dev`), `DEV_PREVIEW_BYPASS` disabled, Resend sandboxing (`SANDBOX_OVERRIDE_EMAIL` or `onboarding@resend.dev`) required to protect real singers.                                   |
 | **`production`**  | Cloudflare Workers (`kantorei-web`)                 | Strict invariant enforcement: `AUTH_SECRET` must be high entropy (>= 32 chars, never default fallback), `DEV_PREVIEW_BYPASS` strictly prohibited, valid Google Service Account credentials & Sheet ID required, `PUBLIC_SITE_URL` must use `https://`, real email routing. |
 
-#### Environment CLI Tooling
+#### Environment CLI Tooling & Automated Health Audits
 
 - `npm run doctor:env`: Audits current environment against local development rules.
 - `npm run doctor:env:prod`: Audits environment against strict production invariants prior to deployment.
@@ -97,6 +97,8 @@ Kantorei operates with three clear environment tiers governed by `src/lib/env.ts
 - `npm run backup:sheets`: Creates an instantaneous JSON snapshot of all Master Sheet tabs in a git-ignored `backups/` directory for disaster recovery.
 - `npm run init:sheets`: Idempotently audits and provisions any missing Master Sheet tabs with canonical headers, frozen row 1, column styling, and in-cell Data Validation dropdowns/chips for all constrained fields.
 - `npm run deploy:secrets`: Verifies production `AUTH_SECRET` entropy before uploading secrets via `wrangler secret bulk`.
+- **Live Health API (`/api/health`)**: Lightweight edge endpoint verifying live connectivity and latency for Google Sheets, Google Drive, Resend, Ticket Tailor, and MailerLite without leaking credentials. Returns HTTP 200 (healthy/degraded) or HTTP 503 (unhealthy/critical failure).
+- **Automated Health Monitor (`.github/workflows/health-check.yml`)**: Automated GitHub Actions cron that audits the live production `/api/health` endpoint every Monday morning and emails maintainers if any credentials or services fail.
 
 #### CI/CD & Deployment Pipeline (`.github/workflows/deploy.yml`)
 
@@ -133,19 +135,20 @@ Powers the Singer Portal rehearsal calendar, subscribable `/api/calendar.ics` fe
 - **Google Calendar Primary Source (Zero-Friction Admin)**: Set `GOOGLE_CALENDAR_ID` in `.env` / `Config`. The Artistic Director and choir admins manage recurring calls, concerts, dress rehearsals, call times, and locations directly in Google Calendar (web or mobile). The portal syncs calls via Google Calendar API v3 every 60s (with instant edge invalidation on demand).
 - **Hospitality & Snack Decoupling**: Snack claims are merged seamlessly by `Event_ID`, stored either in a dedicated `Snacks` sheet tab (`Event_ID`, `Slot`, `Singer_Name`, `Item`, `Updated_At`) or `Schedule!G:J`.
 - **Sheet Fallback Table (Legacy or Demo Mode)**:
-  | Col | Header | Example Value | Specification |
-  | :-- | :--- | :--- | :--- |
-  | `A` | `Event_ID` | `reh-2026-11-10` | Unique primary key (resolved dynamically before any cell write) |
-  | `B` | `Date` | `2026-11-10` | `YYYY-MM-DD` (Sort ascending; filter `>= today` for upcoming views) |
-  | `C` | `Time` | `7:00 PM - 9:30 PM` | Display time string (parsed for `.ics` start/end times with sensible fallback) |
-  | `D` | `Type` | `Rehearsal` | `Rehearsal`, `Sectional`, `Retreat`, `Dress`, `Concert` |
-  | `E` | `Title` | `Tuesday Rehearsal` | Event title |
-  | `F` | `Location` | `Main Sanctuary` | Venue / room |
-  | `G` | `Snack_1_Name` | `Elena Rostova` | Claimed via `/portal/snacks` |
-  | `H` | `Snack_2_Name` | `Marcus Vance` | Claimed via `/portal/snacks` |
-  | `I` | `Snack_3_Name` | ``| Claimed via `/portal/snacks` |
+  | Col | Header         | Example Value       | Specification                                                                  |
+  | :-- | :------------- | :------------------ | :----------------------------------------------------------------------------- |
+  | `A` | `Event_ID`     | `reh-2026-11-10`    | Unique primary key (resolved dynamically before any cell write)                |
+  | `B` | `Date`         | `2026-11-10`        | `YYYY-MM-DD` (Sort ascending; filter `>= today` for upcoming views)            |
+  | `C` | `Time`         | `7:00 PM - 9:30 PM` | Display time string (parsed for `.ics` start/end times with sensible fallback) |
+  | `D` | `Type`         | `Rehearsal`         | `Rehearsal`, `Sectional`, `Retreat`, `Dress`, `Concert`                        |
+  | `E` | `Title`        | `Tuesday Rehearsal` | Event title                                                                    |
+  | `F` | `Location`     | `Main Sanctuary`    | Venue / room                                                                   |
+  | `G` | `Snack_1_Name` | `Elena Rostova`     | Claimed via `/portal/snacks`                                                   |
+  | `H` | `Snack_2_Name` | `Marcus Vance`      | Claimed via `/portal/snacks`                                                   |
+  | `I` | `Snack_3_Name` | ``                  | Claimed via `/portal/snacks`                                                   |
+
 | `J` | `Snack_4_Name` |`` | Claimed via `/portal/snacks` |
-  | `K` | `Notes` | `Focus on movements 1-3` | Rehearsal call notes or repertoire focus |
+| `K` | `Notes` | `Focus on movements 1-3` | Rehearsal call notes or repertoire focus |
 
 ### Tab 3: `Absences` (Range: `Absences!A2:I`)
 
@@ -181,19 +184,19 @@ Powers the public `/` home spotlight and `/concerts` box-office page.
 - **Partner Presenters & External Box Offices (e.g., Minnesota Orchestra, SPCO, The Ordway, Schubert Club)**: For guest appearances or co-productions where Kantorei is not managing tickets, enter the partner's box office URL in Column G (`TT_Event_Series_ID`). The website automatically detects external ticketing domains, suppresses the Ticket Tailor embed, and renders a high-trust **Partner Presenter Box Office Card** with direct links to the host presenter's ticketing portal.
 - **Free / Non-Ticketed Concerts**: Enter `FREE`, `DOOR`, or `FREE_ADMISSION` in Column G to render an **Open Seating · Goodwill Offering** card.
 - **Sheet Fallback / Manual Override Table**:
-  | Col | Header | Example Value | Specification |
-  | :-- | :--- | :--- | :--- |
-  | `A` | `Concert_Slug` | `winter-2026` | URL-safe slug |
-  | `B` | `Title` | `Light in the Winter Dark` | Public concert title |
-  | `C` | `Dates_Display` | `Sat Dec 12 (7:30 PM) & Sun Dec 13 (3:00 PM)` | Human-readable dates |
-  | `D` | `Venue_Name` | `Cathedral Sanctuary` | Venue name |
-  | `E` | `Venue_Address` | `Minneapolis, MN` | Address for Google Maps link |
-  | `F` | `Description` | `Join us for an evening of...` | Concert program blurb |
-  | `G` | `TT_Event_Series_ID` | `https://www.minnesotaorchestra.org/...` | Ticket Tailor series ID/URL, external partner URL (e.g. `https://www.minnesotaorchestra.org/...`), `FREE`, or `DEMO_SERIES_ID` |
-  | `H` | `Status` | `On_Sale` | Dropdown: `Draft`, `Upcoming`, `On_Sale`, `Past` (Leaving blank assumes `Draft`; unpublished `Draft` concerts are hidden from public view; active concerts past their performance date automatically become `Past`) |
-  | `I` | `Hero_Image_URL` | `https://...` | Optional wide/landscape banner image URL (16:9) |
-  | `J` | `Box_Office_Note` | `Kantorei joins the Minnesota Orchestra for this special presentation...` | Optional custom box office notice or partner relationship blurb (overrides the default guest ensemble blurb) |
-  | `K` | `Poster_Image_URL` | `https://...` | Optional portrait flyer / key art poster image URL (3:4 or 4:5 vertical) |
+  | Col | Header               | Example Value                                                             | Specification                                                                                                                                                                                                       |
+  | :-- | :------------------- | :------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+  | `A` | `Concert_Slug`       | `winter-2026`                                                             | URL-safe slug                                                                                                                                                                                                       |
+  | `B` | `Title`              | `Light in the Winter Dark`                                                | Public concert title                                                                                                                                                                                                |
+  | `C` | `Dates_Display`      | `Sat Dec 12 (7:30 PM) & Sun Dec 13 (3:00 PM)`                             | Human-readable dates                                                                                                                                                                                                |
+  | `D` | `Venue_Name`         | `Cathedral Sanctuary`                                                     | Venue name                                                                                                                                                                                                          |
+  | `E` | `Venue_Address`      | `Minneapolis, MN`                                                         | Address for Google Maps link                                                                                                                                                                                        |
+  | `F` | `Description`        | `Join us for an evening of...`                                            | Concert program blurb                                                                                                                                                                                               |
+  | `G` | `TT_Event_Series_ID` | `https://www.minnesotaorchestra.org/...`                                  | Ticket Tailor series ID/URL, external partner URL (e.g. `https://www.minnesotaorchestra.org/...`), `FREE`, or `DEMO_SERIES_ID`                                                                                      |
+  | `H` | `Status`             | `On_Sale`                                                                 | Dropdown: `Draft`, `Upcoming`, `On_Sale`, `Past` (Leaving blank assumes `Draft`; unpublished `Draft` concerts are hidden from public view; active concerts past their performance date automatically become `Past`) |
+  | `I` | `Hero_Image_URL`     | `https://...`                                                             | Optional wide/landscape banner image URL (16:9)                                                                                                                                                                     |
+  | `J` | `Box_Office_Note`    | `Kantorei joins the Minnesota Orchestra for this special presentation...` | Optional custom box office notice or partner relationship blurb (overrides the default guest ensemble blurb)                                                                                                        |
+  | `K` | `Poster_Image_URL`   | `https://...`                                                             | Optional portrait flyer / key art poster image URL (3:4 or 4:5 vertical)                                                                                                                                            |
 
 ### Tab 5: `Config` (Range: `Config!A2:C`)
 
@@ -204,7 +207,9 @@ Key-value settings editable by the board without redeploying code. Structured as
 - **Col C (`Description / Where It Appears`)**: Plain-English explanation of where this text appears across the public website and singer portal
 
 #### Dynamic Variable Tokens in CMS Blurbs (Automatic Cascade)
+
 Any blurb in the Master Sheet (or in site copy) can include dynamic tokens that automatically resolve to the latest master settings in `Config` at runtime (via `src/lib/config-interpolate.ts`). When an administrator updates `Contact_Email`, `Contact_Phone`, `Contact_Address`, `Choir_Name`, or `Conductor_Name`, the change immediately cascades across every blurb on the website without needing to edit each text block individually:
+
 - `{Choir_Name}` / `{choir}`: Organization name
 - `{Contact_Email}` / `{email}`: Primary inquiries and contact email
 - `{Contact_Phone}` / `{phone}`: Primary telephone string
@@ -275,14 +280,14 @@ Powers the public `/media` YouTube & recordings showcase (plus featured recordin
 - **YouTube RSS Primary Source**: Auto-fetches Kantorei's latest videos from `@kantoreiMN` public XML feed (`/feeds/videos.xml?channel_id=...`) with 5-minute Cloudflare edge caching ($0 quota, zero maintenance).
 - **Instagram Showcase**: Displays `@kantorei_mn` behind-the-scenes stories, rehearsal blends, and singer spotlights on `/media`.
 - **Sheet Fallback / Manual Featured Curation**:
-  | Col | Header | Example Value | Specification |
-  | :-- | :--- | :--- | :--- |
-  | `A` | `Media_ID` | `yt-dickinson` | Unique slug/ID |
-  | `B` | `Title` | `Two Dickinson Poems ("Look Back on Time")` | Recording / video title |
-  | `C` | `Subtitle` | `Jonathan Posthuma · Look Back on Time Album` | Composer, album, or concert credit |
-  | `D` | `YouTube_URL` | `https://www.youtube.com/watch?v=...` | Any `youtube.com/watch`, `youtu.be`, playlist, or channel URL |
-  | `E` | `Category` | `Album & Lyric Video` | Badge label (`Concert Video`, `Featured Recording`, etc.) |
-  | `F` | `Description` | `Performed by Kantorei...` | Optional program note |
+  | Col | Header        | Example Value                                 | Specification                                                 |
+  | :-- | :------------ | :-------------------------------------------- | :------------------------------------------------------------ |
+  | `A` | `Media_ID`    | `yt-dickinson`                                | Unique slug/ID                                                |
+  | `B` | `Title`       | `Two Dickinson Poems ("Look Back on Time")`   | Recording / video title                                       |
+  | `C` | `Subtitle`    | `Jonathan Posthuma · Look Back on Time Album` | Composer, album, or concert credit                            |
+  | `D` | `YouTube_URL` | `https://www.youtube.com/watch?v=...`         | Any `youtube.com/watch`, `youtu.be`, playlist, or channel URL |
+  | `E` | `Category`    | `Album & Lyric Video`                         | Badge label (`Concert Video`, `Featured Recording`, etc.)     |
+  | `F` | `Description` | `Performed by Kantorei...`                    | Optional program note                                         |
 
 ### Tab 7: `Seating_Charts` (Range: `Seating_Charts!A2:I`)
 

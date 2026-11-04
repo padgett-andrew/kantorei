@@ -7,6 +7,8 @@ import ConcertArtwork from "../components/public/ConcertArtwork.astro";
 import { buildCleanLocationQuery } from "../lib/maps";
 import { getConcerts, getMedia, getPortalConfig } from "../lib/google";
 import { extractYouTubeEmbedUrl, getInstagramShowcase } from "../lib/media";
+import { getTodayIso } from "../lib/utils";
+import { detectProviderFromUrl } from "../lib/tickettailor";
 
 const [config, concerts, media] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -81,6 +83,76 @@ if (
     // 2. Otherwise if no concert and no other content selected, fallback to Friends of Kantorei CTA
     spotlightMode = "friends";
   }
+}
+
+// Dynamic Spotlight Concert Metadata & Eyebrow
+let spotlightEyebrow = "Next Performance";
+let spotlightActionLabel = "Reserve Tickets →";
+
+if (spotlightConcert) {
+  const isFreeAdmission =
+    /free|goodwill|open seating|admission/i.test(
+      spotlightConcert.ttEventSeriesId || "",
+    ) || /free/i.test(spotlightConcert.datesDisplay || "");
+
+  const isExternalBoxOffice =
+    /^https?:\/\//i.test(spotlightConcert.ttEventSeriesId || "") &&
+    !spotlightConcert.ttEventSeriesId.includes("tickettailor.com");
+
+  const externalProvider = isExternalBoxOffice
+    ? detectProviderFromUrl(spotlightConcert.ttEventSeriesId)
+    : null;
+
+  const today = getTodayIso("America/Chicago");
+
+  // Check proximity of the next upcoming performance
+  const upcomingPerfs = spotlightConcert.performances?.filter((p) => {
+    if (!p.isoDate) return true;
+    return p.isoDate >= today;
+  });
+  const nextPerf =
+    (upcomingPerfs && upcomingPerfs.length > 0
+      ? upcomingPerfs[0]
+      : spotlightConcert.performances?.[0]) || null;
+
+  let daysAway: number | null = null;
+  if (nextPerf?.isoDate) {
+    const diffMs =
+      new Date(nextPerf.isoDate + "T12:00:00").getTime() -
+      new Date(today + "T12:00:00").getTime();
+    daysAway = Math.round(diffMs / 86400000);
+  }
+
+  // Dynamic eyebrow: show context/season or proximity/partner without repeating "Tickets Available" or itinerary details
+  let eyebrowPrefix = "Next Performance";
+  let eyebrowContext = "2026–2027 Season";
+
+  if (daysAway !== null && daysAway >= 0 && daysAway <= 7) {
+    eyebrowPrefix =
+      daysAway === 0
+        ? "Live Today"
+        : daysAway === 1
+          ? "Tomorrow"
+          : "This Weekend";
+  } else if (isExternalBoxOffice && externalProvider) {
+    eyebrowPrefix = "Guest Appearance";
+    eyebrowContext = `With ${externalProvider}`;
+  } else if (isFreeAdmission) {
+    eyebrowPrefix = "Community Concert";
+    eyebrowContext = "Free Admission";
+  }
+
+  spotlightEyebrow = eyebrowContext
+    ? `${eyebrowPrefix} • ${eyebrowContext}`
+    : eyebrowPrefix;
+
+  spotlightActionLabel = isFreeAdmission
+    ? "Event Details & Schedule →"
+    : isExternalBoxOffice && externalProvider
+      ? `Tickets via ${externalProvider} →`
+      : spotlightConcert.status === "On_Sale"
+        ? "Reserve Tickets →"
+        : "Concert Details →";
 }
 
 const spotlightVideoEmbed = spotlightMedia
@@ -244,7 +316,7 @@ const heroBgImage = config.Hero_Image_URL || "";
                   href={`/concerts#${spotlightConcert.slug}`}
                   class="w-full inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"
                 >
-                  Reserve Tickets &rarr;
+                  {spotlightActionLabel}
                 </a>
                 <a
                   href="/concerts"
@@ -258,21 +330,29 @@ const heroBgImage = config.Hero_Image_URL || "";
             {/* Right Column: Editorial Details & Performance Itinerary */}
             <div class="md:col-span-7 flex flex-col justify-between">
               <div>
-                {/* Single clean line of small uppercase text in warm copper accent color */}
+                {/* Dynamic Eyebrow */}
                 <p class="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-copper-600">
-                  Next Performance &bull;{" "}
-                  {spotlightConcert.status === "On_Sale"
-                    ? "Tickets Available"
-                    : "Upcoming Season"}
+                  {spotlightEyebrow}
                 </p>
 
                 <h2 class="mt-1.5 font-editorial text-2xl sm:text-3xl lg:text-4xl font-medium leading-snug tracking-tight text-navy-950">
                   {spotlightConcert.title}
                 </h2>
 
-                <p class="mt-2 text-sm sm:text-base leading-relaxed text-stone-700 line-clamp-3">
+                {/* Full Event Description (No line truncation) */}
+                <p class="mt-2.5 text-sm sm:text-base leading-relaxed text-stone-700">
                   {spotlightConcert.description}
                 </p>
+
+                {/* Optional Box Office / Program Note */}
+                {spotlightConcert.boxOfficeNote && (
+                  <div class="mt-3.5 flex items-start gap-2.5 rounded-lg bg-stone-100/80 border border-stone-200/80 p-3 text-xs leading-relaxed text-stone-700">
+                    <span class="inline-block rounded-sm bg-copper-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-copper-800 shrink-0">
+                      Note
+                    </span>
+                    <p>{spotlightConcert.boxOfficeNote}</p>
+                  </div>
+                )}
 
                 {/* Vertical Performance Itinerary */}
                 {spotlightConcert.performances &&
@@ -367,7 +447,7 @@ const heroBgImage = config.Hero_Image_URL || "";
                   href={`/concerts#${spotlightConcert.slug}`}
                   class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"
                 >
-                  Reserve Tickets &rarr;
+                  {spotlightActionLabel}
                 </a>
                 <a
                   href="/concerts"

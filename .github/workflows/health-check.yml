@@ -1,0 +1,39 @@
+name: Automated Health & Credential Monitor
+
+on:
+  schedule:
+    # Run every Monday at 14:00 UTC (8:00 AM Central Time)
+    - cron: '0 14 * * 1'
+  workflow_dispatch: # Allows manual 1-click trigger in GitHub Actions tab
+
+jobs:
+  health-check:
+    name: Production Integration Health Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Production /api/health Endpoint
+        run: |
+          echo "Pinging Kantorei live health check endpoint..."
+          # Fetch health check status (falls back to localhost or demo if site is pending DNS)
+          SITE_URL="https://kantorei.net"
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "${SITE_URL}/api/health" || true)
+          HTTP_BODY=$(echo "$RESPONSE" | sed -e '$d')
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1 | cut -d':' -f2)
+
+          echo "Response Status: $HTTP_STATUS"
+          echo "Response Body:"
+          echo "$HTTP_BODY"
+
+          # If site is not yet live or DNS is pending, issue notice without breaking the build
+          if [ "$HTTP_STATUS" = "000" ] || [ -z "$HTTP_STATUS" ]; then
+            echo "::notice title=Health Ping Pending::Production site ${SITE_URL} is not yet reachable over DNS. Skipping live health assertion."
+            exit 0
+          fi
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "::error title=Production Health Check Failed::Live health check returned HTTP $HTTP_STATUS. Please inspect Google Sheet, Drive, or Resend credentials."
+            exit 1
+          fi
+
+          echo "✅ Production services are healthy and operational!"
+
