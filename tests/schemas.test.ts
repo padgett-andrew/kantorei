@@ -4,6 +4,7 @@ import {
   ScheduleRowSchema,
   ConcertRowSchema,
   voicePartSchema,
+  SubscribeRequestSchema,
 } from '../src/lib/schemas';
 
 describe('schemas validation', () => {
@@ -122,6 +123,28 @@ describe('schemas validation', () => {
       expect(parsed.heroImageUrl).toBe('https://example.com/banner.jpg');
       // Gracefully falls back to hero image for poster
       expect(parsed.posterImageUrl).toBe('https://example.com/banner.jpg');
+    });
+  });
+
+  describe('SubscribeRequestSchema', () => {
+    it('normalizes email and accepts valid subscriber inputs', () => {
+      const parsed = SubscribeRequestSchema.parse({
+        email: '  Patron@Example.Com  ',
+        name: '  Eleanor Vance  ',
+        source: 'Concerts_Page',
+      });
+      expect(parsed.email).toBe('patron@example.com');
+      expect(parsed.name).toBe('Eleanor Vance');
+      expect(parsed.source).toBe('Concerts_Page');
+      expect(parsed.website_hp).toBe('');
+    });
+
+    it('rejects invalid email addresses', () => {
+      expect(() =>
+        SubscribeRequestSchema.parse({
+          email: 'not-an-email',
+        })
+      ).toThrow();
     });
   });
 });
