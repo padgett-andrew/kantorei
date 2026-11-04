@@ -1,12 +1,14 @@
 ---
 import type { Singer } from '../../types/choir';
-import { voicePartBadgeColor } from '../../lib/utils';
+import UserProfileMenu from './UserProfileMenu';
 
 interface Props {
   singer: Singer;
   choirName: string;
   currentPath: string;
   masterSheetUrl?: string;
+  repertoireDriveUrl?: string;
+  calendarUrl?: string;
   isSheetAdmin?: boolean;
 }
 
@@ -15,125 +17,99 @@ const {
   choirName,
   currentPath,
   masterSheetUrl = 'https://docs.google.com/spreadsheets',
+  repertoireDriveUrl,
+  calendarUrl,
   isSheetAdmin = singer.role === 'Admin',
 } = Astro.props;
 
-const isOnLeave = singer.status === 'On_Leave';
-
 const tabs = [
   { href: '/portal', label: 'Overview', exact: true },
-  { href: '/portal/music', label: 'Scores & Audio', exact: false },
-  { href: '/portal/seating', label: 'Seating & Attendance', exact: false },
+  { href: '/portal/music', label: 'Music', exact: false },
+  { href: '/portal/seating', label: 'Seating', exact: false },
   { href: '/portal/absences', label: 'Absences', exact: false },
-  { href: '/portal/snacks', label: 'Duties & Hospitality', exact: false },
-  { href: '/portal/directory', label: 'Roster & Directory', exact: false },
+  { href: '/portal/snacks', label: 'Hospitality', exact: false },
+  { href: '/portal/directory', label: 'Roster', exact: false },
   { href: '/portal/handbook', label: 'Documents', exact: false },
 ];
-
-const badgeClass = voicePartBadgeColor(singer.voicePart);
 ---
 
-<header class="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md">
+<header class="sticky top-0 z-30 border-b border-white/10 bg-[#0B131E] text-white shadow-md">
   <div class="mx-auto max-w-6xl px-4 sm:px-6">
-    <div class="flex items-center justify-between gap-2 py-2.5 sm:py-3">
-      <a href="/portal" class="flex min-w-0 items-center gap-2 sm:gap-2.5">
-        <img
-          src="/images/kantorei-logo-transparent.webp"
-          alt={`${choirName} logo`}
-          width="96"
-          height="50"
-          class="h-8 w-auto shrink-0 object-contain sm:h-9"
-        />
-        <span class="hidden rounded-full bg-copper-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-500 xs:inline-block sm:inline-block">
-          Singer Portal
-        </span>
-      </a>
+    <div class="flex h-16 items-center justify-between gap-4">
+      {/* Left: Brand Breadcrumb (Kantorei -> Public Site / Portal -> Overview) + Navigation Tabs */}
+      <div class="flex min-w-0 items-center gap-3 sm:gap-5 lg:gap-7">
+        <div class="flex shrink-0 items-center gap-2 sm:gap-2.5">
+          <a
+            href="/"
+            class="group flex items-center gap-1 opacity-90 transition hover:opacity-100"
+            title="Visit Kantorei Public Website (kantorei.net)"
+          >
+            <img
+              src="/images/kantorei-logo-light.webp"
+              alt={`${choirName} public website`}
+              width="110"
+              height="57"
+              class="h-7 w-auto shrink-0 object-contain transition-transform group-hover:scale-[1.03] sm:h-8"
+            />
+          </a>
 
-      <div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
-        <div class="flex items-center gap-1.5">
-          <span class="hidden text-sm font-semibold text-zinc-800 md:inline">{singer.name}</span>
-          <span class={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${badgeClass}`}>
-            {singer.voicePart}
-          </span>
-          {isOnLeave && (
-            <span class="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
-              🌙 Leave
-            </span>
-          )}
-          {singer.role !== 'Singer' && (
-            <span class="hidden rounded-full bg-navy-900 px-2.5 py-0.5 text-[11px] font-semibold text-gold-300 sm:inline-block">
-              {singer.role.replace('_', ' ')}
-            </span>
-          )}
+          <span class="text-sm font-light text-stone-600 select-none" aria-hidden="true">/</span>
+
+          <a
+            href="/portal"
+            class="rounded-sm border border-copper-400/35 bg-copper-500/20 px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-copper-300 transition hover:border-copper-400/60 hover:bg-copper-500/35 hover:text-white"
+            title="Singer Portal Overview"
+          >
+            Portal
+          </a>
         </div>
 
-        {isSheetAdmin && (
-          <a
-            href={masterSheetUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="hidden sm:inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
-            title="Open Master Google Sheet with Edit Access"
-          >
-            <span>📊 Master Sheet</span>
-            <span class="rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider text-emerald-800">
-              Edit
-            </span>
-            <span class="text-zinc-400">↗</span>
-          </a>
-        )}
+        {/* Primary Navigation Tabs — Next to Logo */}
+        <nav
+          class="scrollbar-none hidden sm:flex items-center gap-1 overflow-x-auto py-1"
+          aria-label="Singer Portal Navigation"
+        >
+          {tabs.map((tab) => {
+            const isActive = tab.exact
+              ? currentPath === tab.href || currentPath === `${tab.href}/`
+              : currentPath.startsWith(tab.href);
+            return (
+              <a
+                href={tab.href}
+                class:list={[
+                  'shrink-0 rounded-md px-2.5 py-1 text-xs font-medium transition-colors border',
+                  isActive
+                    ? 'border-copper-400/40 bg-copper-500/25 font-semibold text-copper-300 shadow-2xs'
+                    : 'border-transparent text-stone-300 hover:bg-white/10 hover:text-white',
+                ]}
+              >
+                {tab.label}
+              </a>
+            );
+          })}
+        </nav>
+      </div>
 
-        {singer.role !== 'Singer' && (
-          <a
-            href="/portal/handbook?doc=admin-guide"
-            class="hidden sm:inline-flex items-center gap-1 rounded-xl border border-gold-300/80 bg-gold-50/70 px-2.5 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-gold-400 hover:bg-gold-100/80"
-            title="Choir Board & Operations Manual"
-          >
-            <span>📖 Guide</span>
-          </a>
-        )}
-
+      {/* Right: Quick Public Site link + User Profile Menu */}
+      <div class="flex shrink-0 items-center gap-2 sm:gap-3">
         <a
           href="/"
-          class="rounded-xl border border-zinc-200 bg-zinc-50/70 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-900"
+          class="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-stone-300 transition hover:border-white/25 hover:bg-white/10 hover:text-white"
+          title="Return to Kantorei Public Website"
         >
-          Public Site
+          <span class="text-stone-400">←</span>
+          <span>Public Site</span>
         </a>
 
-        <form method="POST" action="/api/auth/logout">
-          <button
-            type="submit"
-            class="cursor-pointer rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
-          >
-            Sign Out
-          </button>
-        </form>
+        <UserProfileMenu
+          client:load
+          singer={singer}
+          isSheetAdmin={isSheetAdmin}
+          masterSheetUrl={masterSheetUrl}
+          repertoireDriveUrl={repertoireDriveUrl}
+          calendarUrl={calendarUrl}
+        />
       </div>
     </div>
-
-    <!-- Modern Pill Navigation Bar (Desktop & Tablet) -->
-    <nav
-      class="scrollbar-none -mx-1 hidden sm:flex items-center gap-1 overflow-x-auto pb-2.5 pt-0.5 px-1"
-      aria-label="Singer Portal Navigation"
-    >
-      {tabs.map((tab) => {
-        const isActive = tab.exact
-          ? currentPath === tab.href || currentPath === `${tab.href}/`
-          : currentPath.startsWith(tab.href);
-        return (
-          <a
-            href={tab.href}
-            class:list={[
-              'shrink-0 rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-all',
-              isActive
-                ? 'bg-navy-900 text-white font-semibold shadow-2xs'
-                : 'text-zinc-600 hover:bg-zinc-100/80 hover:text-navy-950',
-            ]}
-          >
-            {tab.label}
-          </a>
-        );
-      })}
-    </nav>
   </div>
 </header>

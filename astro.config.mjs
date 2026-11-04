@@ -8,6 +8,9 @@ const isProd =
   globalThis.process?.env?.NODE_ENV === 'production';
 
 export default defineConfig({
+  server: {
+    port: 4321,
+  },
   output: 'server',
   session: {
     driver: 'memory',

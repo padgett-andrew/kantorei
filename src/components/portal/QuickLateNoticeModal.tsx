@@ -25,7 +25,6 @@ const ABSENCE_OPTIONS = [
   { label: '💼 Work / Family Conflict', text: 'Work or family emergency' },
   { label: '✈️ Out of Town', text: 'Out of town / travel conflict' },
   { label: '🩺 Medical Appointment', text: 'Medical appointment conflict' },
-  { label: '😷 COVID / Quarantine', text: 'COVID-19 symptoms or quarantine' },
 ];
 
 export default function QuickLateNoticeModal({
@@ -93,10 +92,10 @@ export default function QuickLateNoticeModal({
         className={
           className ||
           (buttonVariant === 'hero'
-            ? 'inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider text-ivory-50 transition hover:bg-white/20'
+            ? 'inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-stone-300 bg-[#FAF7F2] px-4 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-stone-700 transition hover:bg-stone-100 hover:text-navy-950'
             : buttonVariant === 'pill'
             ? 'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100'
-            : 'inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 transition hover:bg-rose-100')
+            : 'inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 transition hover:bg-rose-100')
         }
       >
         <Clock className="h-3.5 w-3.5" />

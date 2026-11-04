@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev --port 4321",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
     "preview": "wrangler dev",
     "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",

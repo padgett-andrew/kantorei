@@ -189,21 +189,21 @@ export default function MobileBottomNav({
       {/* Fixed Bottom Bar on Mobile Phones */}
       <nav
         aria-label="Mobile Navigation"
-        className="fixed right-0 bottom-0 left-0 z-40 border-t border-zinc-200/90 bg-white/95 px-2 pt-1.5 shadow-lg backdrop-blur-md sm:hidden pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+        className="fixed right-0 bottom-0 left-0 z-40 border-t border-stone-200/80 bg-white/95 px-2 pt-1.5 shadow-lg backdrop-blur-md sm:hidden pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
       >
         <div className="flex items-center justify-around">
           {/* 1. Today / Schedule */}
           <a
             href="/portal"
-            className={`flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-semibold transition ${
+            className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isTodayActive
-                ? 'text-navy-950 font-bold'
-                : 'text-zinc-500 hover:text-zinc-800'
+                ? 'text-copper-600 font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
             }`}
           >
             <span
-              className={`flex h-7 w-7 items-center justify-center rounded-xl transition ${
-                isTodayActive ? 'bg-navy-900 text-gold-300 shadow-2xs' : ''
+              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
+                isTodayActive ? 'bg-copper-500 text-white shadow-2xs' : ''
               }`}
             >
               <Calendar className="h-4 w-4" />
@@ -214,15 +214,15 @@ export default function MobileBottomNav({
           {/* 2. Music */}
           <a
             href="/portal/music"
-            className={`flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-semibold transition ${
+            className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isMusicActive
-                ? 'text-navy-950 font-bold'
-                : 'text-zinc-500 hover:text-zinc-800'
+                ? 'text-copper-600 font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
             }`}
           >
             <span
-              className={`flex h-7 w-7 items-center justify-center rounded-xl transition ${
-                isMusicActive ? 'bg-navy-900 text-gold-300 shadow-2xs' : ''
+              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
+                isMusicActive ? 'bg-copper-500 text-white shadow-2xs' : ''
               }`}
             >
               <Music className="h-4 w-4" />
@@ -233,15 +233,15 @@ export default function MobileBottomNav({
           {/* 3. Duties & Hospitality */}
           <a
             href="/portal/snacks"
-            className={`flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-semibold transition ${
+            className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isSnacksActive
-                ? 'text-navy-950 font-bold'
-                : 'text-zinc-500 hover:text-zinc-800'
+                ? 'text-copper-600 font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
             }`}
           >
             <span
-              className={`flex h-7 w-7 items-center justify-center rounded-xl transition ${
-                isSnacksActive ? 'bg-navy-900 text-gold-300 shadow-2xs' : ''
+              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
+                isSnacksActive ? 'bg-copper-500 text-white shadow-2xs' : ''
               }`}
             >
               <CheckSquare className="h-4 w-4" />
@@ -252,15 +252,15 @@ export default function MobileBottomNav({
           {/* 4. Absences */}
           <a
             href="/portal/absences"
-            className={`flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-semibold transition ${
+            className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isAbsencesActive
-                ? 'text-navy-950 font-bold'
-                : 'text-zinc-500 hover:text-zinc-800'
+                ? 'text-copper-600 font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
             }`}
           >
             <span
-              className={`flex h-7 w-7 items-center justify-center rounded-xl transition ${
-                isAbsencesActive ? 'bg-navy-900 text-gold-300 shadow-2xs' : ''
+              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
+                isAbsencesActive ? 'bg-copper-500 text-white shadow-2xs' : ''
               }`}
             >
               <UserX className="h-4 w-4" />
@@ -272,15 +272,15 @@ export default function MobileBottomNav({
           <button
             type="button"
             onClick={() => setShowMoreMenu(true)}
-            className={`flex cursor-pointer flex-col items-center gap-0.5 rounded-xl px-2.5 py-1 text-[10px] font-semibold transition ${
+            className={`flex cursor-pointer flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isMoreActive
-                ? 'text-navy-950 font-bold'
-                : 'text-zinc-500 hover:text-zinc-800'
+                ? 'text-copper-600 font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
             }`}
           >
             <span
-              className={`flex h-7 w-7 items-center justify-center rounded-xl transition ${
-                isMoreActive ? 'bg-navy-900 text-gold-300 shadow-2xs' : ''
+              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
+                isMoreActive ? 'bg-copper-500 text-white shadow-2xs' : ''
               }`}
             >
               <MoreHorizontal className="h-4 w-4" />

@@ -2400,6 +2400,7 @@ export default function SeatingChartManager({
         <NewChartModal
           concerts={concerts}
           currentSeason={currentSeason}
+          existingCharts={charts}
           sourceChart={duplicateSource || undefined}
           onClose={() => {
             setShowNewChartModal(false);

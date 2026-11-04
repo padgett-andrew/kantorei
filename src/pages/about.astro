@@ -138,28 +138,28 @@ const auditionsTimingNote =
                   />
                 </div>
               )}
-              <span class="text-xs font-bold uppercase tracking-[0.16em] text-gold-500">
+              <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
                 {leader.title}
               </span>
               <h3 class="mt-1.5 font-editorial text-3xl font-bold text-navy-950">
                 {leader.name}
               </h3>
-              <div class="mt-4 space-y-3 text-sm leading-relaxed text-zinc-700">
+              <div class="mt-4 space-y-3 text-sm sm:text-base leading-relaxed text-stone-700">
                 {leader.bio.split('\n\n').map((paragraph) => (
                   <p>{paragraph}</p>
                 ))}
               </div>
             </div>
-            <div class="mt-6 border-t border-zinc-100 pt-4">
+            <div class="mt-6 border-t border-stone-200/60 pt-4">
               {leader.email ? (
                 <a
                   href={`mailto:${leader.email}`}
-                  class="text-xs font-semibold text-navy-900 underline decoration-gold-500 underline-offset-4"
+                  class="text-xs sm:text-sm font-semibold text-copper-600 underline decoration-copper-300 underline-offset-4 hover:text-navy-950"
                 >
                   {leader.email}
                 </a>
               ) : (
-                <span class="text-xs font-medium text-zinc-500">
+                <span class="text-xs sm:text-sm font-medium text-stone-500">
                   {leader.name.includes('Theimer') ? `Founded ${choirName} in 1988` : `Artistic Staff · Twin Cities, MN`}
                 </span>
               )}
@@ -169,26 +169,26 @@ const auditionsTimingNote =
       </div>
 
       <!-- Board of Directors -->
-      <div class="mt-10 rounded-3xl border border-zinc-200 bg-white p-7 sm:p-9">
+      <div class="mt-10 rounded-2xl border border-stone-200/80 bg-white p-7 sm:p-9 shadow-xs">
         <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <span class="text-xs font-bold uppercase tracking-[0.16em] text-gold-500">
+            <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
               501(c)(3) Nonprofit Governance
             </span>
             <h3 class="mt-1 font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
               Board of Directors
             </h3>
           </div>
-          <p class="max-w-md text-xs leading-relaxed text-zinc-500">
+          <p class="max-w-md text-sm leading-relaxed text-stone-600">
             Volunteer governing board of singers and community members overseeing {choirName}’s mission, operations, and long-term sustainability.
           </p>
         </div>
 
-        <div class="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="mt-6 grid gap-3.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {boardMembers.map((member) => (
-            <div class="rounded-2xl border border-zinc-100 bg-ivory-50 px-4 py-3.5">
-              <p class="font-semibold text-navy-950 text-sm">{member.name}</p>
-              <p class="mt-0.5 text-xs text-zinc-600">{member.role}</p>
+            <div class="rounded-xl border border-stone-200/60 bg-[#FAF7F2] px-4 py-3.5">
+              <p class="font-semibold text-navy-950 text-sm sm:text-base">{member.name}</p>
+              <p class="mt-0.5 text-sm text-stone-600">{member.role}</p>
             </div>
           ))}
         </div>

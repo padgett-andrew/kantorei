@@ -112,11 +112,11 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
 
     <!-- Optional Board Announcement Banner from Config Sheet -->
     {config.Portal_Announcement && (
-      <div class="flex flex-col gap-2 rounded-2xl border border-gold-400/50 bg-gradient-to-r from-amber-50/95 to-ivory-100/90 px-5 py-3.5 text-sm text-navy-950 shadow-2xs sm:flex-row sm:items-center sm:gap-3">
-        <span class="w-fit shrink-0 rounded-full bg-navy-900 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-300">
+      <div class="flex flex-col gap-2 rounded-2xl border border-gold-400/40 bg-gradient-to-r from-amber-50/90 to-[#FAF7F2] px-5 py-3.5 text-sm text-navy-950 shadow-xs sm:flex-row sm:items-center sm:gap-3">
+        <span class="w-fit shrink-0 rounded-sm bg-navy-900 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-gold-300">
           Season Note
         </span>
-        <span class="text-xs font-medium leading-relaxed text-zinc-800 sm:text-sm">
+        <span class="text-sm font-medium leading-relaxed text-stone-800">
           {config.Portal_Announcement}
         </span>
       </div>
@@ -126,11 +126,11 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div>
         <div class="flex flex-wrap items-center gap-2">
-          <span class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold text-zinc-600 ring-1 ring-zinc-200/80">
+          <span class="inline-flex items-center rounded-sm bg-white px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-copper-600 border border-stone-200/80 shadow-2xs">
             {singer.sectionGroup} Section · {singer.voicePart}
           </span>
         </div>
-        <h1 class="mt-1.5 font-editorial text-3xl font-bold tracking-tight text-navy-950 sm:text-4xl">
+        <h1 class="mt-1.5 font-editorial text-3xl font-medium tracking-tight text-navy-950 sm:text-4xl">
           Welcome back, {singer.name.split(' ')[0]}
         </h1>
       </div>
@@ -145,20 +145,20 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
     <!-- Next Rehearsal Hero Card + Modern Quick Action Tiles -->
     <div class="grid gap-5 lg:grid-cols-12">
       <!-- Left: Next Call Hero -->
-      <div class="relative overflow-hidden rounded-3xl border border-zinc-200/90 bg-white p-6 shadow-2xs sm:p-7 lg:col-span-7 flex flex-col justify-between">
+      <div class="relative overflow-hidden rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs sm:p-7 lg:col-span-7 flex flex-col justify-between">
         <div class="relative">
           <div class="flex items-center justify-between gap-2">
             <span
               class:list={[
-                'text-[11px] font-bold uppercase tracking-[0.18em]',
-                isCallToday ? 'text-amber-700 flex items-center gap-1.5' : 'text-gold-500',
+                'text-xs font-semibold uppercase tracking-[0.18em]',
+                isCallToday ? 'text-amber-700 flex items-center gap-1.5' : 'text-copper-600',
               ]}
             >
               {isCallToday && <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
               {isCallToday ? 'Today’s Ensemble Call' : 'Next Ensemble Call'}
             </span>
             {nextEvent && (
-              <span class="rounded-full border border-zinc-200 bg-ivory-50 px-3 py-0.5 text-xs font-bold text-navy-950">
+              <span class="rounded-full border border-stone-200/80 bg-[#FAF7F2] px-3 py-0.5 text-xs font-semibold text-navy-950">
                 {nextEvent.type}
               </span>
             )}
@@ -166,11 +166,11 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
 
           {nextEvent ? (
             <div class="mt-4">
-              <h2 class="font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+              <h2 class="font-editorial text-3xl font-semibold text-navy-950 sm:text-4xl">
                 {nextEvent.title}
               </h2>
-              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm">
-                <span class="font-bold text-gold-500">
+              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                <span class="font-serif font-semibold text-navy-950">
                   🗓 {isCallToday ? 'Today · ' : ''}{formatEventDate(nextEvent.date)} · {nextEvent.time}
                 </span>
                 <LocationDirectionsButton
@@ -181,11 +181,11 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               </div>
 
               {nextEvent.notes && (
-                <div class="mt-4 rounded-2xl border border-zinc-200/80 bg-ivory-50/70 p-4 text-xs leading-relaxed text-zinc-700">
-                  <span class="font-bold uppercase tracking-wider text-gold-500 text-[11px] block mb-1.5">
+                <div class="mt-4 rounded-xl border border-stone-200/70 bg-[#FAF7F2] p-4 text-sm leading-relaxed text-stone-700">
+                  <span class="font-semibold uppercase tracking-wider text-copper-600 text-xs block mb-1">
                     Call Details &amp; Rehearsal Focus
                   </span>
-                  <p class="whitespace-pre-line leading-relaxed text-zinc-700">
+                  <p class="whitespace-pre-line leading-relaxed text-stone-700">
                     {nextEvent.notes}
                   </p>
                 </div>
@@ -194,20 +194,20 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               {nextEventConflict && (
                 <div
                   class:list={[
-                    'mt-4 flex items-start gap-2.5 rounded-2xl border p-3.5 text-xs font-semibold',
+                    'mt-4 flex items-start gap-2.5 rounded-xl border p-3.5 text-xs sm:text-sm font-semibold',
                     nextEventConflict.status === 'Late'
                       ? 'border-amber-300 bg-amber-50 text-amber-950'
                       : 'border-rose-300 bg-rose-50 text-rose-950',
                   ]}
                 >
-                  <span class="text-sm mt-0.5">{nextEventConflict.status === 'Late' ? '⏰' : '🔴'}</span>
+                  <span class="text-base mt-0.5">{nextEventConflict.status === 'Late' ? '⏰' : '🔴'}</span>
                   <div>
                     <span class="font-bold">
                       {nextEventConflict.status === 'Late'
                         ? 'Running Late Notice Active'
                         : 'Absence Reported for this Call'}
                     </span>
-                    <p class="mt-0.5 opacity-80 text-[11px]">
+                    <p class="mt-0.5 opacity-90 text-xs font-normal">
                       {nextEventConflict.reason || (nextEventConflict.status === 'Late' ? 'Running late' : 'Absence recorded')}
                     </p>
                   </div>
@@ -215,16 +215,16 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               )}
             </div>
           ) : (
-            <p class="mt-4 text-sm text-zinc-500">
+            <p class="mt-4 text-sm text-stone-500">
               No upcoming rehearsals are posted on the Schedule tab right now.
             </p>
           )}
         </div>
 
-        <div class="relative mt-6 flex flex-wrap gap-2.5 pt-2">
+        <div class="relative mt-6 flex flex-wrap items-center gap-3 pt-2">
           <a
             href="/portal/music"
-            class="inline-flex items-center gap-2 rounded-xl bg-navy-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-2xs transition hover:bg-navy-950"
+            class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"
           >
             Open Digital Scores ({totalScoreFiles})
           </a>
@@ -254,12 +254,12 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
         <!-- 1. Attendance Status Card (Positive, Clear UX — No Weird "0 Absences") -->
         <a
           href="/portal/absences"
-          class="group flex items-start justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white p-4.5 shadow-2xs transition hover:border-navy-900 hover:shadow-sm sm:p-5"
+          class="group flex items-start justify-between gap-4 rounded-xl border border-stone-200/80 bg-white p-4.5 shadow-xs transition hover:border-gold-400/60 hover:shadow-sm sm:p-5"
         >
           <div class="flex items-start gap-3.5">
             <span
               class:list={[
-                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold ring-1',
+                'flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-base font-bold ring-1',
                 myUpcomingConflicts.length === 0
                   ? 'bg-emerald-50 text-emerald-700 ring-emerald-200/80'
                   : myUpcomingAbsences.length > 0
@@ -270,7 +270,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               {myUpcomingConflicts.length === 0 ? '✓' : myUpcomingConflicts.length}
             </span>
             <div>
-              <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+              <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
                 Attendance
               </span>
               <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
@@ -282,7 +282,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                   ? `${myUpcomingAbsences.length} Absence${myUpcomingAbsences.length > 1 ? 's' : ''} Logged`
                   : `${myUpcomingLates.length} Late Notice${myUpcomingLates.length > 1 ? 's' : ''} Logged`}
               </h3>
-              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+              <p class="mt-1 text-sm leading-relaxed text-stone-600">
                 {myUpcomingConflicts.length === 0
                   ? `Marked present across all ${upcomingEvents.length} scheduled dates.`
                   : `Next notice: ${formatEventDate(myUpcomingConflicts[0].date)} (${
@@ -291,7 +291,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               </p>
             </div>
           </div>
-          <span class="shrink-0 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 transition group-hover:bg-navy-900 group-hover:text-white">
+          <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-copper-600 transition group-hover:translate-x-0.5">
             {myUpcomingConflicts.length === 0 ? 'Log' : 'Edit'} →
           </span>
         </a>
@@ -299,14 +299,14 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
         <!-- 2. Duties & Hospitality Signup Card -->
         <a
           href="/portal/snacks"
-          class="group flex items-start justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white p-4.5 shadow-2xs transition hover:border-navy-900 hover:shadow-sm sm:p-5"
+          class="group flex items-start justify-between gap-4 rounded-xl border border-stone-200/80 bg-white p-4.5 shadow-xs transition hover:border-gold-400/60 hover:shadow-sm sm:p-5"
         >
           <div class="flex items-start gap-3.5">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-copper-100 text-base text-gold-500 ring-1 ring-gold-300/50">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-copper-50 text-base text-copper-600 ring-1 ring-copper-200/60">
               ☕
             </span>
             <div>
-              <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+              <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
                 Duties &amp; Hospitality
               </span>
               <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
@@ -314,14 +314,14 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                   ? `${mySnackDates.length} Signup${mySnackDates.length > 1 ? 's' : ''} Claimed`
                   : 'Duty & Snack Signups'}
               </h3>
-              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+              <p class="mt-1 text-sm leading-relaxed text-stone-600">
                 {mySnackDates.length > 0
                   ? `Your next call: ${formatEventDate(mySnackDates[0].date)}`
                   : `${openSnackSlotsCount} open duty & hospitality slots available.`}
               </p>
             </div>
           </div>
-          <span class="shrink-0 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 transition group-hover:bg-navy-900 group-hover:text-white">
+          <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-copper-600 transition group-hover:translate-x-0.5">
             Claim →
           </span>
         </a>
@@ -329,26 +329,26 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
         <!-- 3. Digital Music Folder Summary Card -->
         <a
           href="/portal/music"
-          class="group flex items-start justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white p-4.5 shadow-2xs transition hover:border-navy-900 hover:shadow-sm sm:p-5"
+          class="group flex items-start justify-between gap-4 rounded-xl border border-stone-200/80 bg-white p-4.5 shadow-xs transition hover:border-gold-400/60 hover:shadow-sm sm:p-5"
         >
           <div class="flex items-start gap-3.5">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-sm font-bold text-gold-300">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-navy-950 text-sm font-bold text-gold-300">
               ♫
             </span>
             <div>
-              <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+              <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
                 Music Library
               </span>
               <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
                 {totalScoreFiles} Scores & Part Tracks
               </h3>
-              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+              <p class="mt-1 text-sm leading-relaxed text-stone-600">
                 {uniqueConcertPrograms} active concert folder{uniqueConcertPrograms === 1 ? '' : 's'}
-                {totalMarkingsDocs > 0 ? ' · Director markings' : ''} · ForScore ready.
+                {totalMarkingsDocs > 0 ? ' · Director markings' : ''} · Tablet & print ready.
               </p>
             </div>
           </div>
-          <span class="shrink-0 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 transition group-hover:bg-navy-900 group-hover:text-white">
+          <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-copper-600 transition group-hover:translate-x-0.5">
             Open →
           </span>
         </a>
@@ -356,14 +356,14 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
         <!-- 4. Choir Formation & Seating Card -->
         <a
           href="/portal/seating"
-          class="group flex items-start justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white p-4.5 shadow-2xs transition hover:border-navy-900 hover:shadow-sm sm:p-5"
+          class="group flex items-start justify-between gap-4 rounded-xl border border-stone-200/80 bg-white p-4.5 shadow-xs transition hover:border-gold-400/60 hover:shadow-sm sm:p-5"
         >
           <div class="flex items-start gap-3.5">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ivory-100 text-sm font-bold text-gold-500 ring-1 ring-gold-300/40">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-stone-100 text-sm font-bold text-stone-700 ring-1 ring-stone-200/80">
               🪑
             </span>
             <div>
-              <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+              <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
                 Seating &amp; Attendance
               </span>
               <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
@@ -371,14 +371,14 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                   ? `${mySeatLocation.rowName}, Seat #${mySeatLocation.seatIndex}`
                   : `${publishedCharts.length} Formation Chart${publishedCharts.length === 1 ? '' : 's'}`}
               </h3>
-              <p class="mt-1 text-xs leading-relaxed text-zinc-500">
+              <p class="mt-1 text-sm leading-relaxed text-stone-600">
                 {mySeatLocation
                   ? `${mySeatLocation.chartTitle} · Voice part ${mySeatLocation.voicePart || singer.voicePart}`
                   : 'View published concert seating charts & choir positions.'}
               </p>
             </div>
           </div>
-          <span class="shrink-0 rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 transition group-hover:bg-navy-900 group-hover:text-white">
+          <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-copper-600 transition group-hover:translate-x-0.5">
             View →
           </span>
         </a>
@@ -386,13 +386,13 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
     </div>
 
     <!-- Full Upcoming Rehearsal & Concert Schedule -->
-    <section class="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white shadow-2xs">
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4 sm:px-6">
+    <section class="overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-xs">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200/60 px-5 py-4 sm:px-6">
         <div>
           <h2 class="font-editorial text-2xl font-bold text-navy-950">
             Upcoming Schedule
           </h2>
-          <p class="mt-0.5 text-xs text-zinc-500">
+          <p class="mt-0.5 text-sm text-stone-600">
             Ensemble rehearsal calls, dress rehearsals, and concert times
           </p>
         </div>
@@ -400,52 +400,52 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
           {isAdmin && (
             <CalendarAdminControls client:load calendarId={calendarId} />
           )}
-          <span class="rounded-full bg-ivory-100 px-3 py-1 text-xs font-semibold text-navy-900">
+          <span class="rounded-sm bg-[#FAF7F2] border border-stone-200/80 px-3 py-1 text-xs font-semibold text-navy-950">
             {upcomingEvents.length} calls
           </span>
         </div>
       </div>
 
-      <ul class="divide-y divide-zinc-100">
+      <ul class="divide-y divide-stone-200/60">
         {upcomingEvents.map((ev) => {
           const { weekday, month, day } = formatShortMonthDay(ev.date);
           const isAbsent = myUpcomingAbsences.some((a) => a.eventId === ev.eventId);
 
           return (
-            <li class="flex flex-col gap-3 px-5 py-4 transition hover:bg-ivory-50/60 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+            <li class="flex flex-col gap-3 px-5 py-4 transition hover:bg-[#FAF7F2]/60 sm:flex-row sm:items-start sm:justify-between sm:px-6">
               <div class="flex items-start gap-4">
-                <div class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl border border-zinc-200/80 bg-ivory-50 text-center shadow-2xs">
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-gold-500">
+                <div class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-stone-200/80 bg-[#FAF7F2] text-center shadow-2xs">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-copper-600">
                     {month}
                   </span>
                   <span class="text-lg font-bold leading-tight text-navy-950">{day}</span>
-                  <span class="text-[10px] font-medium text-zinc-400">{weekday}</span>
+                  <span class="text-xs font-medium text-stone-500">{weekday}</span>
                 </div>
 
                 <div class="min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="font-sans text-sm font-bold text-zinc-900 sm:text-base">
+                    <h3 class="font-sans text-base font-bold text-navy-950">
                       {ev.title}
                     </h3>
                     <span
-                      class={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${eventTypeBadgeColor(
+                      class={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${eventTypeBadgeColor(
                         ev.type
                       )}`}
                     >
                       {ev.type}
                     </span>
                     {isAbsent && (
-                      <span class="rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800">
+                      <span class="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-800">
                         Marked Absent
                       </span>
                     )}
                   </div>
-                  <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600">
-                    <span class="font-medium text-zinc-700">{ev.time}</span>
+                  <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-600">
+                    <span class="font-semibold text-navy-900">{ev.time}</span>
                     <LocationDirectionsButton client:load location={ev.location} />
                   </div>
                   {ev.notes && (
-                    <div class="mt-2 whitespace-pre-line rounded-xl border border-zinc-200/70 bg-zinc-50/70 px-3 py-2 text-xs leading-relaxed text-zinc-600">
+                    <div class="mt-2 whitespace-pre-line rounded-lg border border-stone-200/70 bg-[#FAF7F2] px-3.5 py-2 text-sm leading-relaxed text-stone-700">
                       {ev.notes}
                     </div>
                   )}
@@ -454,11 +454,11 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
 
               <div class="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
                 {(ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name) && (
-                  <div class="shrink-0 rounded-xl bg-zinc-50 px-3 py-1.5 text-xs text-zinc-600 sm:text-right">
-                    <span class="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                  <div class="shrink-0 rounded-lg bg-[#FAF7F2] border border-stone-200/60 px-3 py-1.5 text-xs text-stone-600 sm:text-right">
+                    <span class="block text-xs font-semibold uppercase tracking-wider text-copper-600">
                       {ev.type === 'Concert' || ev.type === 'Dress' ? 'Volunteer Crew' : 'Hospitality'}
                     </span>
-                    <span class="font-medium text-zinc-700">
+                    <span class="font-medium text-navy-950">
                       {[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name]
                         .filter(Boolean)
                         .map((s) => parseSnackEntry(s).name)

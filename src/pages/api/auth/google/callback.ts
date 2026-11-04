@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ url, cookies, locals, redirect }) => {
   }
 
   try {
-    const { email, emailVerified } = await exchangeGoogleCodeForVerifiedEmail({
+    const { email, emailVerified, picture } = await exchangeGoogleCodeForVerifiedEmail({
       code,
       codeVerifier,
       clientId: config.clientId,
@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ url, cookies, locals, redirect }) => {
       return redirect('/login?error=not_on_roster');
     }
 
-    const sessionJwt = await createSessionToken(singer.email, locals);
+    const sessionJwt = await createSessionToken(singer.email, locals, picture);
     setSessionCookie(cookies, sessionJwt, url);
 
     return redirect('/portal');

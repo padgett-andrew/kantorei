@@ -1,7 +1,6 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import MusicLibrary, { type LoadedDocPayload } from '../../components/portal/MusicLibrary';
-import WorkspaceLinksBar from '../../components/portal/WorkspaceLinksBar.astro';
 import {
   getPortalConfig,
   getRepertoire,
@@ -35,74 +34,14 @@ const initialDocs: Record<string, LoadedDocPayload> = Object.fromEntries(
 );
 ---
 
-<PortalLayout title="Scores & Audio">
-  <div class="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-    <div>
-      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
-        Digital Music Folder · iPad &amp; Tablet Ready
-      </span>
-      <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
-        Concert Scores &amp; Rehearsal Tracks
-      </h1>
-      <p class="mt-1 max-w-2xl text-sm text-zinc-600">
-        Grouped by concert program with inline <strong>Director&apos;s Markings</strong>, concert order, part callouts, and YouTube reference recordings. On iPad, open any PDF and tap Share &rarr; <em>Copy to forScore</em> to import.
-      </p>
-    </div>
-
-    {isAdmin && (
-      <details class="rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-xs text-zinc-600 shadow-2xs sm:max-w-sm">
-        <summary class="cursor-pointer font-semibold text-navy-950">
-          Librarian Tip: Concerts & Director Markings
-        </summary>
-        <div class="mt-2 space-y-2 leading-relaxed">
-          <p>
-            <strong>Markings & YouTube Links:</strong> Drop any <strong>Google Doc</strong> or <strong>Word (<code>.docx</code>)</strong> file into a concert&apos;s Drive folder—it automatically appears at the top of that concert&apos;s section with clickable YouTube reference players!
-          </p>
-          <p>
-            <strong>Overlapping Concerts:</strong> Paste comma-separated Drive folder links in <code class="rounded bg-zinc-100 px-1 py-0.5">Config → Repertoire_Drive_Folder_ID</code> (e.g. <code class="rounded bg-zinc-100 px-1 py-0.5">Día de los Muertos: https://..., Advent: https://...</code>).
-          </p>
-          <div class="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px]">
-            <a
-              href={workspace.masterSheetUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="font-semibold text-emerald-700 hover:text-emerald-900 underline inline-flex items-center gap-1"
-            >
-              <span>Edit Master Sheet</span>
-              <span>↗</span>
-            </a>
-            <a
-              href={workspace.repertoireDriveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="font-semibold text-amber-700 hover:text-amber-900 underline inline-flex items-center gap-1"
-            >
-              <span>Music Drive Folder</span>
-              <span>↗</span>
-            </a>
-          </div>
-        </div>
-      </details>
-    )}
-  </div>
-
-  <!-- Prominent Google Drive & Master Sheet Action Bar -->
+<PortalLayout title="Music & Rehearsal Tracks">
   <div class="mb-6">
-    <WorkspaceLinksBar
-      variant="banner"
-      isAdmin={isAdmin}
-      repertoireDriveUrl={workspace.repertoireDriveUrl}
-      masterSheetUrl={workspace.masterSheetUrl}
-      masterSheetMode={workspace.masterSheetMode}
-      masterSheetLabel={workspace.masterSheetLabel}
-      concertDriveFolders={workspace.concertDriveFolders}
-      title="Music Google Drive & Master Sheet"
-      subtitle={
-        isAdmin
-          ? 'Admins have Edit Access to the Master Sheet; singers have View Access.'
-          : 'Direct links to the Google Drive music folders and view-only Master Sheet.'
-      }
-    />
+    <h1 class="font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+      Concert Scores &amp; Rehearsal Tracks
+    </h1>
+    <p class="mt-1 text-sm text-stone-600">
+      Concert scores, part rehearsal tracks, and director&apos;s markings.
+    </p>
   </div>
 
   <MusicLibrary
@@ -111,7 +50,5 @@ const initialDocs: Record<string, LoadedDocPayload> = Object.fromEntries(
     pieces={pieces}
     initialDocs={initialDocs}
     repertoireDriveUrl={workspace.repertoireDriveUrl}
-    masterSheetUrl={workspace.masterSheetUrl}
-    masterSheetMode={workspace.masterSheetMode}
   />
 </PortalLayout>

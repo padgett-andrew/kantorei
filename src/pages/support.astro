@@ -76,21 +76,21 @@ const lglFormUrl =
           <ul class="mt-4 divide-y divide-zinc-100">
             {givingTiers.map((tier) => (
               <li class="py-3.5">
-                <div class="flex items-baseline justify-between">
-                  <span class="font-semibold text-navy-950">{tier.name}</span>
-                  <span class="text-xs font-bold text-gold-500">{tier.range}</span>
+                <div class="flex items-baseline justify-between gap-2">
+                  <span class="font-serif font-semibold text-navy-950 text-sm sm:text-base">{tier.name}</span>
+                  <span class="text-sm font-semibold text-copper-600">{tier.range}</span>
                 </div>
-                <p class="mt-1 text-xs text-zinc-600">{tier.description}</p>
+                <p class="mt-1 text-sm text-stone-600 leading-relaxed">{tier.description}</p>
               </li>
             ))}
           </ul>
         </div>
 
-        <div class="rounded-2xl border border-zinc-200 bg-ivory-100 p-6">
+        <div class="rounded-2xl border border-stone-200/80 bg-[#FAF7F2] p-6 shadow-xs">
           <h3 class="font-editorial text-xl font-bold text-navy-950">
             Annual Kantorei Gala & Friendraisers
           </h3>
-          <p class="mt-2 text-xs leading-relaxed text-zinc-700">
+          <p class="mt-2 text-sm sm:text-base leading-relaxed text-stone-700">
             {supportGalaBlurb}
           </p>
         </div>

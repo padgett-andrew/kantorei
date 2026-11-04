@@ -13,7 +13,7 @@ import {
   parseYouTubeUrl,
   stripTagsToText,
   type ReferenceRecordingLink,
-} from './youtube';
+} from './youtube.ts';
 
 export interface LoadedConcertDoc {
   title: string;
@@ -135,7 +135,18 @@ interface KeyMatch {
 function findKey(hay: string[], key: string[]): KeyMatch | null {
   if (key.length === 0 || hay.length === 0) return null;
 
-  // 1. Leading phrase of the title (longest first)
+  // Single word key (e.g. "Veni", "Refugee", "Gaudete", or composer surname like "Deignan", "Sandström")
+  if (key.length === 1) {
+    const word = key[0];
+    if (word.length >= 4 && !STOP.has(word) && !NOISE.has(word)) {
+      const i = findPhrase(hay, [word]);
+      if (i >= 0) return { pos: i, score: 3 };
+    }
+    return null;
+  }
+
+  // Multi-word key (e.g. "Silent Night", "People Look East", "Love Came Down at Christmas"):
+  // 1. Leading phrase of the title (longest first, >= 2 words)
   for (let n = Math.min(4, key.length); n >= 2; n--) {
     const phrase = key.slice(0, n);
     if (!phrase.some((t) => t.length >= 4 && !STOP.has(t))) continue;
@@ -150,13 +161,6 @@ function findKey(hay: string[], key: string[]): KeyMatch | null {
       const i = findPhrase(hay, pair);
       if (i >= 0) return { pos: i, score: 2 };
     }
-  }
-
-  // 3. Any single distinctive word (>= 5 letters or rare 4 letters, not in STOP or NOISE)
-  const distinctive = key.filter((t) => t.length >= 4 && !STOP.has(t) && !NOISE.has(t));
-  for (const word of distinctive) {
-    const i = findPhrase(hay, [word]);
-    if (i >= 0) return { pos: i, score: 1 };
   }
 
   return null;
@@ -197,7 +201,7 @@ function cleanNameForKey(name: string): string {
   let s = name
     .replace(EXT_RE, '')
     .replace(/^\s*\d{1,3}\s*[.)\-_:—–]+\s*/, '')
-    .replace(/_+/g, ' ')
+    .replace(/[-_]+/g, ' ')
     .replace(/\([^)]*\)/g, ' ');
   const withoutComposer = s.replace(/\s+[-–—]\s+.*$/, '');
   if (withoutComposer.trim().length >= 3) s = withoutComposer;
@@ -654,6 +658,9 @@ function buildSingleProgram(
           const synthGroup = newGroup(`doc-entry:${concertId}:${e.order}`, e.title, e.order);
           synthGroup.matchPos = e.order;
           titleOverrides.set(synthGroup.id, { title: e.title, rest: e.subtitle });
+          for (const variant of extractNameVariants(e.title)) {
+            addKey(synthGroup, keyTokens(variant));
+          }
           orderedGroups.push(synthGroup);
         }
       }
@@ -713,8 +720,16 @@ function buildSingleProgram(
   const unassignedKeys = new Set<string>();
 
   for (const d of docs) {
-    let contextGroup: PieceGroup | null = null;
+    let activePiece: PieceGroup | null = null;
+    let linesSincePiece = 999;
+
     for (const unit of d.index.units) {
+      linesSincePiece++;
+
+      const own = ownText(unit.html);
+      const hasOwnText = own.replace(/[^a-z0-9]/gi, '').length >= 3;
+      const ownGroup = hasOwnText && own.length <= 220 ? bestGroupInTokens(toks(own), groups) : null;
+
       const anchors = new Map<string, string[]>();
       let firstAnchorIndex = -1;
       for (const m of unit.html.matchAll(ANCHOR_RE)) {
@@ -731,12 +746,35 @@ function buildSingleProgram(
         if (!anchors.has(m[0])) anchors.set(m[0], []);
       }
 
-      const own = ownText(unit.html);
-      const hasOwnText = own.replace(/[^a-z0-9]/gi, '').length >= 3;
-      const ownGroup = hasOwnText && own.length <= 220 ? bestGroupInTokens(toks(own), groups) : null;
       const beforeText =
         firstAnchorIndex > 0 ? plainWithoutUrls(unit.html.slice(0, firstAnchorIndex)) : '';
       const beforeGroup = beforeText ? bestGroupInTokens(toks(beforeText), groups) : null;
+
+      // A line that looks like a piece title / musical work line (even if not in this concert)
+      const isPossiblePieceHeader =
+        hasOwnText &&
+        own.length <= 160 &&
+        (/\s+[-–—]\s+/.test(own) || DURATION_RE.test(own));
+
+      // Update active piece tracking (only valid on same line or immediate next line)
+      if (ownGroup) {
+        activePiece = ownGroup;
+        linesSincePiece = 0;
+      } else if (beforeGroup) {
+        activePiece = beforeGroup;
+        linesSincePiece = 0;
+      } else if (
+        isPossiblePieceHeader ||
+        STOP_RE.test(own) ||
+        TOTAL_TIME_RE.test(own) ||
+        /^[—–\-\s_*]{3,}$/.test(own) ||
+        linesSincePiece > 1 ||
+        /^(the verse theme|narrator|part\s+[ivx\d]+|[ivx\d]+\s*[:.]|musical mood|congregation|carol\b|brainstorm)/i.test(
+          own
+        )
+      ) {
+        activePiece = null;
+      }
 
       for (const [href, parts] of anchors) {
         const yt = parseYouTubeUrl(href);
@@ -745,8 +783,18 @@ function buildSingleProgram(
 
         const anchorText = parts.join(' ').replace(/\s+/g, ' ').trim();
         const anchorGroup = anchorText ? bestGroupInTokens(toks(anchorText), groups) : null;
+
+        // Skip article footnote citations like "[1]", "[2]", "1", "2" inside long prose (> 80 chars)
+        const isCitationNumber = /^(?:\[\d+\]|\d+)$/.test(anchorText);
+        if (isCitationNumber && own.length > 80) continue;
+
+        // Target: explicit anchor/before/own match, OR immediate activePiece (same line or immediate next line)
+        const isBareUrl = !anchorText || looksLikeUrlText(anchorText);
         const target =
-          anchorGroup ?? beforeGroup ?? ownGroup ?? (hasOwnText ? null : contextGroup);
+          anchorGroup ??
+          beforeGroup ??
+          ownGroup ??
+          (isBareUrl && linesSincePiece <= 1 ? activePiece : null);
         const dedupeKey = yt.embedUrl ?? href;
 
         if (!target) {
@@ -767,23 +815,29 @@ function buildSingleProgram(
         if (target.recordingKeys.has(dedupeKey)) continue;
         target.recordingKeys.add(dedupeKey);
 
-        const descriptive =
-          anchorText &&
-          anchorGroup !== target &&
-          !/^(youtube|watch|listen|recording|reference|video|audio|link|here|click here|\d+)$/i.test(
+        const isGeneric =
+          !anchorText ||
+          looksLikeUrlText(anchorText) ||
+          /^(youtube|watch|listen|recording|reference|reference video|video|audio|link|here|click here|\d+)$/i.test(
             anchorText
           );
+        const descriptive = anchorText && anchorGroup !== target && !isGeneric;
+        const recIndex = target.recordings.length + 1;
+        const finalLabel = descriptive
+          ? anchorText.slice(0, 80)
+          : target.recordings.length === 0
+            ? 'Reference Track'
+            : `Reference ${recIndex}`;
+
         target.recordings.push({
           url: href,
-          label: descriptive ? anchorText.slice(0, 80) : '',
+          label: finalLabel,
           embedUrl: yt.embedUrl,
           videoId: yt.videoId,
           isYouTube: yt.isYouTube,
           host: hostLabel(href),
         });
       }
-
-      if (hasOwnText) contextGroup = ownGroup;
     }
   }
 

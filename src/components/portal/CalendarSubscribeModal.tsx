@@ -39,11 +39,11 @@ export default function CalendarSubscribeModal({ httpsFeedUrl, webcalFeedUrl }: 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-gold-500 hover:bg-ivory-50"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-sm border border-stone-200/80 bg-white px-4 py-2 text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-navy-950 shadow-xs transition hover:border-copper-500/60 hover:bg-stone-50"
       >
-        <Calendar className="h-4 w-4 text-gold-500" />
+        <Calendar className="h-4 w-4 text-copper-600" />
         <span>Sync Calendar</span>
-        <span className="hidden rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 sm:inline">
+        <span className="hidden rounded-sm bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600 sm:inline">
           Google · Apple · Outlook
         </span>
       </button>

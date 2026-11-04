@@ -29,6 +29,12 @@ export const voicePartSchema = z.preprocess((v) => {
   return norm ?? (typeof v === 'string' ? v.trim().toUpperCase() : v);
 }, z.enum(VOICE_PARTS));
 
+export const optionalVoicePartSchema = z.preprocess((v) => {
+  if (v === '' || v === null || v === undefined) return undefined;
+  const norm = normalizeVoicePart(v);
+  return norm ?? (typeof v === 'string' ? v.trim().toUpperCase() : v);
+}, z.enum(VOICE_PARTS).optional());
+
 export const SingerRowSchema = z
   .tuple([
     trimmedString.pipe(z.string().email('Invalid email address')).transform((e) => e.toLowerCase()),
@@ -215,12 +221,21 @@ export const MediaRowSchema = z
   }));
 
 export const SeatingSeatSchema = z.object({
-  seatIndex: z.number().int().min(1),
-  singerEmail: z.string().trim().email().optional().or(z.literal('')),
-  singerName: z.string().trim().optional(),
-  voicePart: voicePartSchema.optional(),
+  seatIndex: z.number().int().min(0),
+  singerEmail: z.preprocess(
+    (v) => (v === null || v === '' ? undefined : v),
+    z.string().trim().email().optional()
+  ),
+  singerName: z.preprocess(
+    (v) => (v === null || v === '' ? undefined : v),
+    z.string().trim().optional()
+  ),
+  voicePart: optionalVoicePartSchema,
   isAisle: z.boolean().optional(),
-  customLabel: z.string().trim().optional(),
+  customLabel: z.preprocess(
+    (v) => (v === null || v === '' ? undefined : v),
+    z.string().trim().optional()
+  ),
 });
 
 export const SeatingRowSchema = z.object({

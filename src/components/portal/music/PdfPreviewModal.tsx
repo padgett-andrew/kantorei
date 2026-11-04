@@ -33,7 +33,7 @@ export default function PdfPreviewModal({ previewPdf, onClose }: Props) {
           </div>
           <div className="flex items-center gap-2">
             <span className="hidden text-[11px] text-zinc-400 sm:inline">
-              iPad: tap Share (⎋) in Safari &rarr; Copy to forScore
+              iPad: tap Share (⎋) in Safari &rarr; Open in score reader
             </span>
             <a
               href={streamUrl(previewPdf.file, false)}

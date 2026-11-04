@@ -7,9 +7,7 @@ import {
   ExternalLink,
   FolderOpen,
   Maximize2,
-  Play,
   Sparkles,
-  Video,
 } from 'lucide-react';
 import type { DriveMusicFile, Singer } from '../../../types/choir';
 import type { ConcertProgram, ProgramRecording } from '../../../lib/program';
@@ -63,6 +61,7 @@ export default function ProgramSection({
   onProseClick,
 }: Props) {
   const concertDriveUrl = driveFolderUrl(prog.id, repertoireDriveUrl);
+
   return (
     <div className="space-y-4">
       {/* Concert Program Header */}
@@ -71,17 +70,9 @@ export default function ProgramSection({
           <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-navy-900 text-sm font-bold text-gold-300 shadow-2xs">
             ♫
           </span>
-          <div>
-            <h2 className="font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
-              {prog.title}
-            </h2>
-            {prog.orderDocTitle && (
-              <p className="text-xs text-zinc-500">
-                Running concert order from{' '}
-                <strong className="text-zinc-700">{prog.orderDocTitle}</strong>
-              </p>
-            )}
-          </div>
+          <h2 className="font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
+            {prog.title}
+          </h2>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -223,47 +214,6 @@ export default function ProgramSection({
           </div>
         );
       })}
-
-      {/* General Reference Recordings (Unassigned to any single piece) */}
-      {prog.unassignedRecordings && prog.unassignedRecordings.length > 0 && (
-        <div className="rounded-2xl border border-zinc-200/80 bg-ivory-50/70 p-3.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="mr-1 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-navy-900">
-              <Video className="h-3.5 w-3.5 text-gold-500" />
-              General Reference Recordings:
-            </span>
-            {prog.unassignedRecordings.map((link) => {
-              const isCurrentVideo = activeVideo?.link.url === link.url;
-              return link.embedUrl ? (
-                <button
-                  key={link.url}
-                  type="button"
-                  onClick={() => onPlayVideo(prog.title, link)}
-                  className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition ${
-                    isCurrentVideo
-                      ? 'bg-gold-500 text-white shadow-2xs'
-                      : 'border border-zinc-200 bg-white text-navy-950 hover:border-gold-400 hover:bg-ivory-50'
-                  }`}
-                >
-                  <Play className="h-3 w-3 fill-current text-gold-500" />
-                  <span className="max-w-[220px] truncate">{link.label || 'Reference Video'}</span>
-                </button>
-              ) : (
-                <a
-                  key={link.url}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-navy-950 transition hover:border-gold-400"
-                >
-                  <span className="max-w-[220px] truncate">{link.label || link.host}</span>
-                  <ExternalLink className="h-3 w-3 text-gold-500" />
-                </a>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Ordered Pieces List */}
       <div className="space-y-4">

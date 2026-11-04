@@ -117,9 +117,9 @@ export default function LoginCard({
   }
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-7 shadow-sm sm:p-8">
+    <div className="w-full rounded-2xl border border-stone-200/80 bg-white p-5 sm:p-6 shadow-xs">
       {error && (
-        <div className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50/90 px-3.5 py-2.5 text-xs sm:text-sm text-rose-800">
           {error}
         </div>
       )}
@@ -127,7 +127,7 @@ export default function LoginCard({
       {/* Option 1: Google OAuth */}
       <a
         href="/api/auth/google"
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-800 shadow-2xs transition hover:bg-zinc-50"
+        className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 shadow-2xs transition hover:border-stone-400 hover:bg-stone-50/80 focus:outline-none focus:ring-2 focus:ring-copper-500/20"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <path
@@ -150,34 +150,34 @@ export default function LoginCard({
         Continue with Google
       </a>
 
-      <div className="my-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-zinc-200" />
-        <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+      <div className="my-4 flex items-center gap-3">
+        <div className="h-px flex-1 bg-stone-200" />
+        <span className="text-xs font-medium uppercase tracking-wider text-stone-500">
           Or any roster email (iCloud, Outlook, Yahoo)
         </span>
-        <div className="h-px flex-1 bg-zinc-200" />
+        <div className="h-px flex-1 bg-stone-200" />
       </div>
 
       {/* Option 2: Stateless 6-Digit Email OTP */}
       {step === 'email' ? (
-        <form onSubmit={handleSendOtp} className="space-y-4">
+        <form onSubmit={handleSendOtp} className="space-y-3.5">
           <div>
             <label
               htmlFor="singer-email"
-              className="block text-xs font-semibold uppercase tracking-wider text-zinc-600"
+              className="block text-xs font-semibold uppercase tracking-wider text-stone-600"
             >
               Roster Email Address
             </label>
-            <div className="relative mt-1.5">
-              <Mail className="pointer-events-none absolute top-3 left-3.5 h-4 w-4 text-zinc-400" />
+            <div className="relative mt-1">
+              <Mail className="pointer-events-none absolute top-3 left-3.5 h-4 w-4 text-stone-400" />
               <input
                 id="singer-email"
                 type="email"
                 required
-                placeholder="claire.lindqvist@icloud.com"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-zinc-300 py-2.5 pr-4 pl-10 text-sm text-zinc-900 focus:border-navy-900 focus:outline-none"
+                className="w-full rounded-xl border border-stone-300 bg-stone-50/40 py-2.5 pr-4 pl-10 text-sm text-stone-900 placeholder:text-stone-400 transition focus:border-copper-500 focus:bg-white focus:ring-2 focus:ring-copper-500/20 focus:outline-none"
               />
             </div>
           </div>
@@ -185,29 +185,29 @@ export default function LoginCard({
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-navy-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-copper-500 px-4 py-2.5 sm:py-3 text-sm font-semibold text-white shadow-xs transition duration-200 hover:bg-copper-600 focus:outline-none focus:ring-2 focus:ring-copper-400 focus:ring-offset-2 disabled:opacity-60"
           >
             {loading ? 'Sending 6-Digit Code…' : 'Email Me a 6-Digit Login Code'}
             <ArrowRight className="h-4 w-4" />
           </button>
         </form>
       ) : (
-        <form onSubmit={handleVerifyOtp} className="space-y-4">
+        <form onSubmit={handleVerifyOtp} className="space-y-3.5">
           {statusMessage && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-900">
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                 <span>{statusMessage}</span>
               </div>
               {devPreviewCode && (
-                <div className="mt-2.5 flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-emerald-200">
-                  <span className="font-medium text-zinc-700">
-                    Sandbox Code: <strong className="font-mono text-sm">{devPreviewCode}</strong>
+                <div className="mt-2 flex items-center justify-between rounded-lg border border-emerald-200 bg-white px-3 py-1.5">
+                  <span className="font-medium text-stone-700">
+                    Sandbox Code: <strong className="font-mono text-sm text-emerald-950">{devPreviewCode}</strong>
                   </span>
                   <button
                     type="button"
                     onClick={() => setCode(devPreviewCode)}
-                    className="cursor-pointer rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-200"
+                    className="cursor-pointer rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-200"
                   >
                     Auto-fill
                   </button>
@@ -219,12 +219,12 @@ export default function LoginCard({
           <div>
             <label
               htmlFor="otp-code"
-              className="block text-xs font-semibold uppercase tracking-wider text-zinc-600"
+              className="block text-xs font-semibold uppercase tracking-wider text-stone-600"
             >
               6-Digit Code for {email}
             </label>
-            <div className="relative mt-1.5">
-              <KeyRound className="pointer-events-none absolute top-3 left-3.5 h-4 w-4 text-zinc-400" />
+            <div className="relative mt-1">
+              <KeyRound className="pointer-events-none absolute top-3 left-3.5 h-4 w-4 text-stone-400" />
               <input
                 id="otp-code"
                 type="text"
@@ -235,7 +235,7 @@ export default function LoginCard({
                 placeholder="123456"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                className="w-full rounded-xl border border-zinc-300 py-2.5 pr-4 pl-10 font-mono text-base tracking-[0.3em] text-zinc-900 focus:border-navy-900 focus:outline-none"
+                className="w-full rounded-xl border border-stone-300 bg-stone-50/40 py-2.5 pr-4 pl-10 font-mono text-base tracking-[0.3em] text-stone-900 placeholder:text-stone-400 transition focus:border-copper-500 focus:bg-white focus:ring-2 focus:ring-copper-500/20 focus:outline-none"
               />
             </div>
           </div>
@@ -243,7 +243,7 @@ export default function LoginCard({
           <button
             type="submit"
             disabled={loading || code.length !== 6}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-navy-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-copper-500 px-4 py-2.5 sm:py-3 text-sm font-semibold text-white shadow-xs transition duration-200 hover:bg-copper-600 focus:outline-none focus:ring-2 focus:ring-copper-400 focus:ring-offset-2 disabled:opacity-60"
           >
             {loading ? 'Verifying…' : 'Verify & Open Singer Portal'}
           </button>
@@ -255,7 +255,7 @@ export default function LoginCard({
               setCode('');
               setDevPreviewCode(null);
             }}
-            className="w-full cursor-pointer text-center text-xs font-medium text-zinc-500 hover:text-zinc-800"
+            className="w-full cursor-pointer text-center text-xs font-medium text-stone-500 transition hover:text-copper-600"
           >
             ← Use a different email address
           </button>
@@ -263,21 +263,21 @@ export default function LoginCard({
       )}
 
       {isDevPreviewAvailable && (
-        <div className="mt-7 rounded-xl border border-amber-200 bg-amber-50/80 p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-900">
-            <Sparkles className="h-3.5 w-3.5 text-amber-700" />
+        <div className="mt-5 rounded-xl border border-gold-300/60 bg-amber-50/50 p-3.5">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-navy-950">
+            <Sparkles className="h-3.5 w-3.5 text-copper-600" />
             <span>Local Dev Quick Entry</span>
           </div>
-          <p className="mt-1 text-xs text-amber-800">
+          <p className="mt-1 text-xs text-stone-600">
             Jump straight into the portal as any sample Kantorei roster role:
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-2">
             {quickEntryPersonas.map((p) => (
               <button
                 key={p.email}
                 type="button"
                 onClick={() => enterDevPreview(p.email)}
-                className="flex-1 cursor-pointer rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-amber-100"
+                className="flex-1 cursor-pointer rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-800 transition hover:border-copper-400 hover:bg-copper-50/30 hover:text-copper-700"
               >
                 {p.shortLabel}
               </button>

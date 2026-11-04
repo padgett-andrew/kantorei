@@ -41,10 +41,10 @@ const subtitle =
 <PortalLayout title={pageTitle}>
   <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
     <div>
-      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
+      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
         {subtitle}
       </span>
-      <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+      <h1 class="mt-1 font-editorial text-3xl font-medium text-navy-950 sm:text-4xl">
         {pageTitle}
       </h1>
     </div>
@@ -102,9 +102,9 @@ const subtitle =
       <span>2026–2036 Strategic Plan</span>
       <span
         class:list={[
-          'rounded-full px-2 py-0.5 text-[10px] font-bold',
+          'rounded-sm px-2 py-0.5 text-xs font-semibold',
           activeDoc === 'strategic-plan'
-            ? 'bg-gold-500 text-white'
+            ? 'bg-copper-500 text-white'
             : 'bg-amber-100 text-amber-900',
         ]}
       >
@@ -127,7 +127,7 @@ const subtitle =
         <span>Admin &amp; Board Guide</span>
         <span
           class:list={[
-            'rounded-full px-2 py-0.5 text-[10px] font-bold',
+            'rounded-sm px-2 py-0.5 text-xs font-semibold',
             activeDoc === 'admin-guide'
               ? 'bg-gold-400 text-navy-950'
               : 'bg-navy-100 text-navy-800',

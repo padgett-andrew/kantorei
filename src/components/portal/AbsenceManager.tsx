@@ -22,7 +22,6 @@ const ABSENCE_OPTIONS = [
   { label: '✈️ Travel / Out of town', text: 'Out of town / travel conflict' },
   { label: '💼 Work / Family conflict', text: 'Work or family emergency' },
   { label: '🩺 Medical appointment', text: 'Medical appointment conflict' },
-  { label: '😷 COVID / Quarantine', text: 'COVID-19 symptoms or quarantine' },
 ];
 
 export default function AbsenceManager({

@@ -71,11 +71,11 @@ if (isDevPreview) {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
-  <body class="min-h-screen bg-ivory-50/60 text-zinc-900 antialiased flex flex-col justify-between">
+  <body class="min-h-screen bg-[#FAF7F2] text-stone-900 antialiased flex flex-col justify-between selection:bg-copper-500 selection:text-white">
     <div>
       {isDevPreview && (
         <DevPersonaSwitcher client:load currentSinger={singer} personas={devPersonas} />
@@ -85,6 +85,8 @@ if (isDevPreview) {
         choirName={choirName}
         currentPath={Astro.url.pathname}
         masterSheetUrl={workspace.masterSheetUrl}
+        repertoireDriveUrl={workspace.repertoireDriveUrl}
+        calendarUrl={calendarUrl}
         isSheetAdmin={isAdmin}
       />
       <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
@@ -93,17 +95,17 @@ if (isDevPreview) {
     </div>
 
     <!-- Ensemble Google Workspace Cloud Footer -->
-    <footer class="border-t border-zinc-200/80 bg-white/70 py-6 text-xs text-zinc-500 backdrop-blur-xs pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6">
+    <footer class="border-t border-stone-200/80 bg-white/80 py-6 text-xs text-stone-500 backdrop-blur-xs pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6">
       <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6">
         <div class="flex flex-wrap items-center justify-center gap-2 text-center sm:text-left">
           <span class="font-semibold text-navy-950">{choirName} Singer Portal</span>
-          <span class="text-zinc-300">·</span>
+          <span class="text-stone-300">·</span>
           <span>Google Workspace Connected</span>
-          <span class="text-zinc-300">·</span>
+          <span class="text-stone-300">·</span>
           <span
             class:list={[
-              'rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-              isAdmin ? 'bg-emerald-100 text-emerald-900' : 'bg-zinc-100 text-zinc-700',
+              'rounded-sm px-2 py-0.5 text-xs font-semibold uppercase tracking-wider',
+              isAdmin ? 'bg-emerald-100 text-emerald-900' : 'bg-stone-100 text-stone-700',
             ]}
           >
             {isAdmin ? 'Admin Edit Access' : 'Singer View Access'}
@@ -111,16 +113,23 @@ if (isDevPreview) {
         </div>
 
         <div class="flex flex-wrap items-center justify-center gap-4">
+          <a
+            href="/"
+            class="inline-flex items-center gap-1 font-medium text-stone-700 transition hover:text-navy-950"
+            title="Return to Kantorei Public Website"
+          >
+            <span>← Public Website</span>
+          </a>
           {isAdmin && (
             <a
               href={workspace.masterSheetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 font-medium text-zinc-700 transition hover:text-navy-950"
+              class="inline-flex items-center gap-1.5 font-medium text-stone-700 transition hover:text-navy-950"
               title="Open Master Google Sheet with Edit Access"
             >
               <span>📊 Master Google Sheet (Edit)</span>
-              <span class="text-zinc-400">↗</span>
+              <span class="text-stone-400">↗</span>
             </a>
           )}
         </div>

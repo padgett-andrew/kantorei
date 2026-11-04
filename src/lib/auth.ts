@@ -90,7 +90,7 @@ export async function exchangeGoogleCodeForVerifiedEmail(params: {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
-}): Promise<{ email?: string; emailVerified?: boolean }> {
+}): Promise<{ email?: string; emailVerified?: boolean; picture?: string }> {
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -122,13 +122,21 @@ export async function exchangeGoogleCodeForVerifiedEmail(params: {
   return {
     email: typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : undefined,
     emailVerified: Boolean(payload.email_verified),
+    picture: typeof payload.picture === 'string' ? payload.picture : undefined,
   };
 }
 
-export async function createSessionToken(email: string, locals?: App.Locals): Promise<string> {
+export async function createSessionToken(
+  email: string,
+  locals?: App.Locals,
+  picture?: string
+): Promise<string> {
   const normalized = email.trim().toLowerCase();
   const now = Math.floor(Date.now() / 1000);
-  return new SignJWT({ typ: 'session' })
+  return new SignJWT({
+    typ: 'session',
+    ...(picture ? { picture } : {}),
+  })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(normalized)
     .setIssuedAt(now)
@@ -139,11 +147,14 @@ export async function createSessionToken(email: string, locals?: App.Locals): Pr
 export async function verifySessionToken(
   token: string,
   locals?: App.Locals
-): Promise<string | null> {
+): Promise<{ email: string; picture?: string } | null> {
   try {
     const { payload } = await jwtVerify(token, getSecretKey(locals));
     if (payload.typ !== 'session' || typeof payload.sub !== 'string') return null;
-    return payload.sub.trim().toLowerCase();
+    return {
+      email: payload.sub.trim().toLowerCase(),
+      picture: typeof payload.picture === 'string' ? payload.picture : undefined,
+    };
   } catch {
     return null;
   }
@@ -241,11 +252,17 @@ export async function resolveAuthenticatedSinger(
 
   const sessionToken = cookies.get(SESSION_COOKIE)?.value;
   if (sessionToken) {
-    const email = await verifySessionToken(sessionToken, locals);
-    if (email) {
-      const match = roster.find((s) => matchRosterEmail(s.email, email) && canAccessPortal(s));
+    const session = await verifySessionToken(sessionToken, locals);
+    if (session) {
+      const match = roster.find((s) => matchRosterEmail(s.email, session.email) && canAccessPortal(s));
       if (match) {
-        return { singer: match, isDevPreview: false };
+        return {
+          singer: {
+            ...match,
+            ...(session.picture ? { picture: session.picture, photoUrl: session.picture } : {}),
+          },
+          isDevPreview: false,
+        };
       }
     }
   }

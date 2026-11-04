@@ -30,6 +30,9 @@ export interface Singer {
   active: boolean;
   /** 'Active' = singing this season; 'On_Leave' = skipping season (asleep: no roll call or season alerts); 'Inactive' = former member */
   status: SingerStatus;
+  /** Optional Google profile picture or avatar URL */
+  picture?: string;
+  photoUrl?: string;
 }
 
 export function canAccessPortal(singer?: Pick<Singer, 'status' | 'active'> | null): boolean {
