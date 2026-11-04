@@ -252,21 +252,21 @@ export default function NewsletterForm({
   // ---------------------------------------------------------------------------
   return (
     <div
-      className={`rounded-3xl border border-zinc-200 bg-white p-7 sm:p-9 shadow-sm ${className}`}
+      className={`rounded-2xl sm:rounded-3xl border border-stone-200 bg-white p-5 sm:p-9 shadow-sm ${className}`}
     >
-      <div className="inline-flex items-center gap-2 rounded-full bg-gold-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-gold-600">
-        <Sparkles className="h-3 w-3" />
+      <div className="inline-flex items-center gap-2 rounded-full bg-copper-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-copper-700">
+        <Sparkles className="h-3.5 w-3.5" />
         <span>Friends of Kantorei</span>
       </div>
       <h3 className="mt-3 font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
         {title || 'Never Miss a Concert Announcement'}
       </h3>
-      <p className="mt-2 text-xs leading-relaxed text-zinc-600 sm:text-sm">
+      <p className="mt-2 text-sm sm:text-base leading-relaxed text-stone-700">
         {description ||
           'Be the first to hear about upcoming season programs, early-access ticket sales, and guest artist appearances.'}
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+      <form onSubmit={handleSubmit} className="mt-6 space-y-3.5">
         {/* Anti-spam honeypot */}
         <div className="hidden" aria-hidden="true">
           <input
@@ -278,7 +278,7 @@ export default function NewsletterForm({
           />
         </div>
 
-        <div className="grid gap-2.5 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           <input
             type="text"
             value={name}
@@ -286,10 +286,10 @@ export default function NewsletterForm({
             placeholder="Your Name (optional)"
             aria-label="Your Name"
             disabled={status === 'submitting'}
-            className="w-full rounded-xl border border-zinc-300 bg-zinc-50/50 px-4 py-2.5 text-xs text-navy-950 placeholder-zinc-400 outline-hidden transition focus:border-gold-500 focus:bg-white focus:ring-1 focus:ring-gold-500 disabled:opacity-50"
+            className="w-full rounded-xl border border-stone-300 bg-stone-50/50 px-4 py-3 text-base sm:text-sm text-navy-950 placeholder-stone-400 outline-hidden transition focus:border-copper-500 focus:bg-white focus:ring-1 focus:ring-copper-500 disabled:opacity-50"
           />
           <div className="relative">
-            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400" />
             <input
               type="email"
               required
@@ -298,7 +298,7 @@ export default function NewsletterForm({
               placeholder="Your Email address"
               aria-label="Email address"
               disabled={status === 'submitting'}
-              className="w-full rounded-xl border border-zinc-300 bg-zinc-50/50 py-2.5 pl-10 pr-4 text-xs text-navy-950 placeholder-zinc-400 outline-hidden transition focus:border-gold-500 focus:bg-white focus:ring-1 focus:ring-gold-500 disabled:opacity-50"
+              className="w-full rounded-xl border border-stone-300 bg-stone-50/50 py-3 pl-11 pr-4 text-base sm:text-sm text-navy-950 placeholder-stone-400 outline-hidden transition focus:border-copper-500 focus:bg-white focus:ring-1 focus:ring-copper-500 disabled:opacity-50"
             />
           </div>
         </div>
@@ -306,7 +306,7 @@ export default function NewsletterForm({
         <button
           type="submit"
           disabled={status === 'submitting'}
-          className="w-full rounded-xl bg-navy-950 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-md transition hover:bg-gold-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full cursor-pointer rounded-xl bg-navy-950 py-3.5 px-6 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-md transition hover:bg-copper-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {status === 'submitting' ? (
             <span className="inline-flex items-center gap-2">
@@ -319,13 +319,13 @@ export default function NewsletterForm({
         </button>
 
         {status === 'error' && (
-          <p className="flex items-center gap-1.5 text-xs text-rose-600">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <p className="flex items-center gap-1.5 text-xs sm:text-sm text-rose-600">
+            <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{errorMessage}</span>
           </p>
         )}
 
-        <p className="text-center text-[11px] text-zinc-500">
+        <p className="text-center text-xs text-stone-600">
           We respect your privacy. Instant 1-click unsubscribe anytime.
         </p>
       </form>

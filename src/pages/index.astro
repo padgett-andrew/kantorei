@@ -126,10 +126,10 @@ const featuredConcertImage =
 
   <!-- Next Concert Spotlight (Bespoke Compact Editorial Card) -->
   {featuredConcert && (
-    <section class="mx-auto -mt-6 sm:-mt-10 relative z-20 max-w-4xl px-4 sm:px-6">
-      <div class="rounded-xl sm:rounded-2xl border border-stone-200/80 bg-[#FAF7F2] shadow-sm flex flex-col md:flex-row items-stretch">
+    <section class="mx-auto -mt-6 sm:-mt-10 relative z-10 max-w-4xl px-3.5 sm:px-6">
+      <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-[#FAF7F2] shadow-sm flex flex-col md:flex-row items-stretch">
         {featuredConcertImage && (
-          <div class="relative w-full md:w-64 lg:w-72 shrink-0 h-48 md:h-auto overflow-hidden rounded-t-xl sm:rounded-t-2xl md:rounded-tr-none md:rounded-l-xl lg:rounded-l-2xl bg-navy-950">
+          <div class="relative w-full md:w-64 lg:w-72 shrink-0 h-48 md:h-auto overflow-hidden bg-navy-950">
             <img
               src={featuredConcertImage}
               alt={featuredConcert.title}
@@ -139,44 +139,46 @@ const featuredConcertImage =
           </div>
         )}
 
-        <div class="p-6 sm:p-7 flex-1 flex flex-col justify-between">
+        <div class="p-4 sm:p-7 flex-1 flex flex-col justify-between">
           <div>
             <!-- Single clean line of small uppercase text in warm copper accent color -->
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-copper-600">
+            <p class="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-copper-600">
               Next Performance &bull; {featuredConcert.status === 'On_Sale' ? 'Tickets Available' : 'Upcoming Season'}
             </p>
 
-            <h2 class="mt-1.5 font-editorial text-2xl sm:text-3xl font-medium leading-snug tracking-tight text-navy-950">
+            <h2 class="mt-1.5 font-editorial text-2xl sm:text-3xl lg:text-4xl font-medium leading-snug tracking-tight text-navy-950">
               {featuredConcert.title}
             </h2>
 
-            <p class="mt-2.5 text-sm sm:text-base leading-relaxed text-stone-600 line-clamp-3">
+            <p class="mt-2.5 text-sm sm:text-base leading-relaxed text-stone-700 line-clamp-3">
               {featuredConcert.description}
             </p>
 
             <!-- Vertical Performance Itinerary -->
             {featuredConcert.performances && featuredConcert.performances.length > 1 ? (
-              <div class="mt-4 space-y-3 border-t border-b border-stone-200/70 py-3.5 text-sm">
+              <div class="mt-4 space-y-3.5 border-t border-b border-stone-200/70 py-3.5">
                 {featuredConcert.performances.map((perf, pIdx) => (
-                  <div class={pIdx > 0 ? 'border-t border-stone-200/50 pt-3' : ''}>
-                    <div class="flex flex-wrap items-baseline justify-between gap-2">
-                      <p class="font-serif font-semibold text-navy-950 text-sm sm:text-base leading-snug">
+                  <div class={pIdx > 0 ? 'border-t border-stone-200/50 pt-3.5' : ''}>
+                    <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5 sm:gap-2">
+                      <h3 class="font-serif font-semibold text-navy-950 text-base sm:text-lg leading-snug">
                         {perf.dateDisplay}
-                      </p>
-                      <AddToCalendarButton
-                        client:load
-                        title={featuredConcert.title}
-                        description={featuredConcert.description}
-                        dateStr={perf.dateDisplay}
-                        location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
-                        venueName={perf.venueName}
-                        venueAddress={perf.venueAddress}
-                        label="+ Calendar"
-                        variant="inline"
-                        align="right"
-                      />
+                      </h3>
+                      <div class="shrink-0">
+                        <AddToCalendarButton
+                          client:load
+                          title={featuredConcert.title}
+                          description={featuredConcert.description}
+                          dateStr={perf.dateDisplay}
+                          location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
+                          venueName={perf.venueName}
+                          venueAddress={perf.venueAddress}
+                          label="+ Calendar"
+                          variant="inline"
+                          align="right"
+                        />
+                      </div>
                     </div>
-                    <div class="mt-0.5">
+                    <div class="mt-1">
                       <LocationDirectionsButton
                         client:load
                         location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
@@ -188,26 +190,28 @@ const featuredConcertImage =
                 ))}
               </div>
             ) : (
-              <div class="mt-3.5 border-t border-b border-stone-200/70 py-3 space-y-1.5">
-                <div class="flex flex-wrap items-baseline justify-between gap-2">
-                  <p class="font-serif font-semibold text-navy-950 text-sm sm:text-base leading-snug">
+              <div class="mt-4 border-t border-b border-stone-200/70 py-3.5 space-y-2">
+                <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5 sm:gap-2">
+                  <h3 class="font-serif font-semibold text-navy-950 text-base sm:text-lg leading-snug">
                     {featuredConcert.datesDisplay}
-                  </p>
-                  <AddToCalendarButton
-                    client:load
-                    title={featuredConcert.title}
-                    description={featuredConcert.description}
-                    dateStr={featuredConcert.datesDisplay}
-                    location={buildCleanLocationQuery(featuredConcert.venueName, featuredConcert.venueAddress)}
-                    venueName={featuredConcert.venueName}
-                    venueAddress={featuredConcert.venueAddress}
-                    label="+ Calendar"
-                    variant="inline"
-                    align="right"
-                  />
+                  </h3>
+                  <div class="shrink-0">
+                    <AddToCalendarButton
+                      client:load
+                      title={featuredConcert.title}
+                      description={featuredConcert.description}
+                      dateStr={featuredConcert.datesDisplay}
+                      location={buildCleanLocationQuery(featuredConcert.venueName, featuredConcert.venueAddress)}
+                      venueName={featuredConcert.venueName}
+                      venueAddress={featuredConcert.venueAddress}
+                      label="+ Calendar"
+                      variant="inline"
+                      align="right"
+                    />
+                  </div>
                 </div>
                 {featuredConcert.venueName && (
-                  <div class="mt-0.5">
+                  <div class="mt-1">
                     <LocationDirectionsButton
                       client:load
                       location={buildCleanLocationQuery(featuredConcert.venueName, featuredConcert.venueAddress)}
@@ -220,7 +224,7 @@ const featuredConcertImage =
             )}
           </div>
 
-          <div class="mt-6 flex flex-wrap items-center gap-5">
+          <div class="mt-6 flex flex-wrap items-center gap-4 sm:gap-5">
             <a
               href={`/concerts#${featuredConcert.slug}`}
               class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"

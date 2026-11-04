@@ -186,12 +186,12 @@ export default function AddToCalendarButton({
   }
 
   const triggerClasses = {
-    pill: 'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-zinc-700 shadow-2xs transition hover:border-gold-400 hover:text-navy-950',
+    pill: 'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-semibold text-stone-700 shadow-2xs transition hover:border-gold-400 hover:text-navy-950',
     badge:
-      'inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 hover:text-navy-950',
+      'inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1 text-xs sm:text-sm font-medium text-stone-700 transition hover:bg-stone-100 hover:text-navy-950',
     inline:
-      'group inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-stone-500 transition hover:text-navy-950 focus:outline-none focus:ring-1 focus:ring-copper-400 rounded-sm',
-    dark: 'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-white/20 bg-navy-900/80 px-3 py-1 text-xs font-semibold text-ivory-50 shadow-2xs transition hover:border-gold-400 hover:text-gold-300',
+      'group inline-flex cursor-pointer items-center gap-1.5 text-xs sm:text-sm font-semibold text-stone-700 transition hover:text-navy-950 focus:outline-none focus:ring-1 focus:ring-copper-400 rounded-md py-0.5 px-1 -mx-1',
+    dark: 'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-white/20 bg-navy-900/80 px-3 py-1 text-xs sm:text-sm font-semibold text-ivory-50 shadow-2xs transition hover:border-gold-400 hover:text-gold-300',
   }[variant];
 
   return (
@@ -205,7 +205,7 @@ export default function AddToCalendarButton({
         className={triggerClasses}
       >
         <CalendarPlus
-          className={`h-3.5 w-3.5 shrink-0 transition-colors ${
+          className={`h-4 w-4 shrink-0 transition-colors ${
             variant === 'inline'
               ? 'text-copper-600 group-hover:text-copper-700'
               : 'text-gold-500'
@@ -214,7 +214,7 @@ export default function AddToCalendarButton({
         <span
           className={
             variant === 'inline'
-              ? 'underline decoration-stone-300 underline-offset-4 transition-colors group-hover:decoration-copper-500'
+              ? 'underline decoration-stone-300 underline-offset-4 transition-colors group-hover:decoration-copper-500 font-medium'
               : ''
           }
         >
@@ -237,32 +237,32 @@ export default function AddToCalendarButton({
           } z-50 w-64 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100`}
         >
           <div className="border-b border-zinc-100 px-3 py-2">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-600">
               Add to Calendar
             </p>
-            <p className="line-clamp-1 text-xs font-semibold text-navy-950">
+            <p className="line-clamp-1 text-sm font-semibold text-navy-950">
               {fullTitle}
             </p>
           </div>
 
-          <div className="py-1">
+          <div className="py-1 space-y-1">
             {/* Apple Calendar & iCal Download */}
             <button
               type="button"
               onClick={handleDownloadIcs}
               role="menuitem"
-              className="flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-semibold text-zinc-700 transition hover:bg-ivory-100 hover:text-navy-950"
+              className="flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-stone-800 transition hover:bg-stone-100 hover:text-navy-950"
             >
               <div className="flex items-center gap-2.5">
-                <Calendar className="h-3.5 w-3.5 text-zinc-500" />
+                <Calendar className="h-4 w-4 text-stone-500" />
                 <span>Apple Calendar / iCal</span>
               </div>
               {downloaded ? (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                  <Check className="h-3 w-3" /> Added
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
+                  <Check className="h-3.5 w-3.5" /> Added
                 </span>
               ) : (
-                <Download className="h-3 w-3 text-zinc-400" />
+                <Download className="h-4 w-4 text-stone-400" />
               )}
             </button>
 
@@ -273,13 +273,13 @@ export default function AddToCalendarButton({
               rel="noopener noreferrer"
               onClick={() => setIsOpen(false)}
               role="menuitem"
-              className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-ivory-100 hover:text-navy-950"
+              className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-stone-800 transition hover:bg-stone-100 hover:text-navy-950"
             >
               <div className="flex items-center gap-2.5">
-                <span className="font-bold text-red-500 text-xs">G</span>
+                <Calendar className="h-4 w-4 text-emerald-600" />
                 <span>Google Calendar</span>
               </div>
-              <ExternalLink className="h-3 w-3 text-zinc-400" />
+              <ExternalLink className="h-4 w-4 text-stone-400" />
             </a>
 
             {/* Outlook.com Web */}
@@ -289,13 +289,13 @@ export default function AddToCalendarButton({
               rel="noopener noreferrer"
               onClick={() => setIsOpen(false)}
               role="menuitem"
-              className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-ivory-100 hover:text-navy-950"
+              className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-stone-800 transition hover:bg-stone-100 hover:text-navy-950"
             >
               <div className="flex items-center gap-2.5">
-                <span className="font-bold text-blue-600 text-xs">O</span>
+                <Calendar className="h-4 w-4 text-blue-600" />
                 <span>Outlook.com</span>
               </div>
-              <ExternalLink className="h-3 w-3 text-zinc-400" />
+              <ExternalLink className="h-4 w-4 text-stone-400" />
             </a>
 
             {/* Microsoft 365 Web */}
@@ -305,17 +305,17 @@ export default function AddToCalendarButton({
               rel="noopener noreferrer"
               onClick={() => setIsOpen(false)}
               role="menuitem"
-              className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-ivory-100 hover:text-navy-950"
+              className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-stone-800 transition hover:bg-stone-100 hover:text-navy-950"
             >
               <div className="flex items-center gap-2.5">
-                <span className="font-bold text-blue-500 text-xs">M</span>
+                <Calendar className="h-4 w-4 text-sky-600" />
                 <span>Microsoft 365</span>
               </div>
-              <ExternalLink className="h-3 w-3 text-zinc-400" />
+              <ExternalLink className="h-4 w-4 text-stone-400" />
             </a>
           </div>
 
-          <div className="border-t border-zinc-100 px-3 py-1.5 text-[10px] text-zinc-400">
+          <div className="border-t border-zinc-100 px-3 py-2 text-xs font-medium text-stone-600">
             Includes venue location &amp; call time
           </div>
         </div>
