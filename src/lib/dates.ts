@@ -1,7 +1,7 @@
 import type { ConcertPerformance, ConcertStatus } from '../types/choir';
 import { getTodayIso } from './utils';
 
-const MONTHS: Record<string, number> = {
+export const MONTHS: Record<string, number> = {
   jan: 0,
   january: 0,
   feb: 1,
@@ -27,6 +27,8 @@ const MONTHS: Record<string, number> = {
   dec: 11,
   december: 11,
 };
+
+export const MONTH_MAP = MONTHS;
 
 export interface ParsedNaturalDate {
   date: Date;

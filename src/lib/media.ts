@@ -124,69 +124,10 @@ export async function fetchYouTubeChannelMedia(
   });
 }
 
-export function extractYouTubeEmbedUrl(rawUrl: string): {
-  embedUrl: string | null;
-  videoId: string | null;
-} {
-  try {
-    const parsed = new URL(rawUrl);
-    if (parsed.hostname.includes('youtu.be')) {
-      const id = parsed.pathname.slice(1).split('/')[0];
-      if (id && /^[\w-]{11}$/.test(id)) {
-        return {
-          videoId: id,
-          embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
-        };
-      }
-    }
-    if (parsed.hostname.includes('youtube.com')) {
-      const v = parsed.searchParams.get('v');
-      if (v && /^[\w-]{11}$/.test(v)) {
-        return {
-          videoId: v,
-          embedUrl: `https://www.youtube-nocookie.com/embed/${v}?rel=0`,
-        };
-      }
-      if (parsed.pathname.startsWith('/embed/')) {
-        const id = parsed.pathname.replace('/embed/', '').split('/')[0];
-        if (id && /^[\w-]{11}$/.test(id)) {
-          return {
-            videoId: id,
-            embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
-          };
-        }
-      }
-      if (parsed.pathname.startsWith('/shorts/')) {
-        const id = parsed.pathname.replace('/shorts/', '').split('/')[0];
-        if (id && /^[\w-]{11}$/.test(id)) {
-          return {
-            videoId: id,
-            embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
-          };
-        }
-      }
-      if (parsed.pathname.startsWith('/live/')) {
-        const id = parsed.pathname.replace('/live/', '').split('/')[0];
-        if (id && /^[\w-]{11}$/.test(id)) {
-          return {
-            videoId: id,
-            embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
-          };
-        }
-      }
-      const list = parsed.searchParams.get('list');
-      if (list) {
-        return {
-          videoId: null,
-          embedUrl: `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(list)}`,
-        };
-      }
-    }
-  } catch {
-    // Ignore invalid URL
-  }
-  return { embedUrl: null, videoId: null };
-}
+export {
+  extractYouTubeEmbedUrl,
+  type YouTubeEmbedResult,
+} from './youtube';
 
 export function extractInstagramEmbedUrl(rawUrl: string): {
   embedUrl: string | null;

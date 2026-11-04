@@ -1,4 +1,4 @@
-import { sanitizeHandbookHtml } from './sanitize.ts';
+import { sanitizeHandbookHtml } from './sanitize';
 
 interface ZipEntry {
   name: string;

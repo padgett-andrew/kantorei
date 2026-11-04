@@ -1,0 +1,72 @@
+---
+import type { InstagramShowcase, InstagramPostCard } from '../../lib/media';
+
+interface Props {
+  choirName: string;
+  instagramShowcase: InstagramShowcase;
+  featuredInstagram: InstagramPostCard[];
+}
+
+const { choirName, instagramShowcase, featuredInstagram } = Astro.props;
+---
+
+<section class="border-t border-zinc-200 bg-ivory-50/50 py-20">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6">
+    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <div>
+        <span
+          class="text-xs font-semibold uppercase tracking-[0.18em] text-pink-600"
+        >
+          Instagram Feed · {instagramShowcase.handle}
+        </span>
+        <h2
+          class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl"
+        >
+          Behind the Scenes with {choirName}
+        </h2>
+        <p class="mt-1.5 text-xs text-zinc-600 sm:text-sm">
+          Recent rehearsal blends, singer spotlights, and community concert
+          updates.
+        </p>
+      </div>
+      <a
+        href={instagramShowcase.profileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-pink-300 bg-pink-50/70 px-4 py-2 text-xs font-bold uppercase tracking-wider text-pink-700 transition hover:bg-pink-100"
+      >
+        Follow on Instagram →
+      </a>
+    </div>
+
+    <!-- Captioned Instagram Posts Grid -->
+    <div class="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3 items-start">
+      {
+        featuredInstagram.map((post) => (
+          <div class="w-full flex justify-center">
+            <blockquote
+              class="instagram-media w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs"
+              data-instgrm-captioned
+              data-instgrm-permalink={`https://www.instagram.com/p/${post.shortcode}/?utm_source=ig_embed&amp;utm_campaign=loading`}
+              data-instgrm-version="14"
+              style="margin: 0; min-width: 280px; max-width: 100%; width: 100%;"
+            >
+              <iframe
+                src={`https://www.instagram.com/p/${post.shortcode}/embed/captioned/`}
+                title={`Instagram post from ${instagramShowcase.handle}`}
+                loading="lazy"
+                allowtransparency="true"
+                allow="encrypted-media"
+                class="w-full border-0 overflow-hidden rounded-2xl"
+                style="min-height: 640px; height: 680px;"
+              />
+            </blockquote>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Instagram native script -->
+<script is:inline async src="//www.instagram.com/embed.js"></script>

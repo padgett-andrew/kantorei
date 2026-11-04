@@ -1,0 +1,106 @@
+---
+interface Props {
+  choirName: string;
+  visionStatement: string;
+  missionStatement: string;
+  aboutBlurb: string;
+}
+
+const { choirName, visionStatement, missionStatement, aboutBlurb } = Astro.props;
+---
+
+<section class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+  <div class="grid gap-12 lg:grid-cols-12 lg:items-center">
+    <div class="lg:col-span-7 space-y-4">
+      <span
+        class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500"
+      >
+        Who We Are
+      </span>
+      <h2 class="font-editorial text-4xl font-bold text-navy-950 sm:text-5xl">
+        {visionStatement}
+      </h2>
+      <p class="text-base leading-relaxed text-zinc-700 sm:text-lg">
+        {aboutBlurb}
+      </p>
+
+      <!-- Official Mission & Vision Statements -->
+      <div class="mt-6 grid gap-4 pt-2 sm:grid-cols-2">
+        <div
+          class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6"
+        >
+          <span
+            class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500"
+          >
+            Our Vision
+          </span>
+          <p
+            class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950"
+          >
+            {visionStatement}
+          </p>
+        </div>
+        <div
+          class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6"
+        >
+          <span
+            class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500"
+          >
+            Our Mission
+          </span>
+          <p
+            class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950"
+          >
+            {missionStatement}
+          </p>
+        </div>
+      </div>
+
+      <div class="pt-2 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <a
+          href="/about"
+          class="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-900 underline decoration-gold-500 decoration-2 underline-offset-4"
+        >
+          Learn more about our artistic leadership & history →
+        </a>
+        <a
+          href="/auditions"
+          class="inline-flex items-center gap-1.5 text-sm font-semibold text-gold-600 hover:text-navy-950 underline decoration-gold-400 decoration-2 underline-offset-4"
+        >
+          Audition for {choirName} →
+        </a>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4 lg:col-span-5">
+      <div class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6">
+        <span
+          class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500"
+        >
+          Global Repertoire
+        </span>
+        <p
+          class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950"
+        >
+          Signature choral works paired with music from well-known and
+          emerging composers.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6">
+        <span
+          class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500"
+        >
+          Vocal Health & Outreach
+        </span>
+        <p
+          class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950"
+        >
+          Inviting singers and audiences of all ages to share the pursuit of
+          singing for a lifetime.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+

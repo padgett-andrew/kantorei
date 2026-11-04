@@ -50,8 +50,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Edge CSRF Defense: Block cross-origin mutations to API endpoints
+  // Webhooks verify signatures rather than browser CSRF headers; auth routes handle OAuth/OTP
   const isMutatingMethod = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(context.request.method);
-  const isExcludedFromCsrf = pathname.startsWith('/api/auth/');
+  const isExcludedFromCsrf =
+    pathname.startsWith('/api/auth/') || pathname.startsWith('/api/webhooks/');
 
   if (isMutatingMethod && pathname.startsWith('/api/') && !isExcludedFromCsrf) {
     const secFetchSite = context.request.headers.get('sec-fetch-site');
@@ -85,12 +87,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // Gate protected /api routes (excluding /api/auth/* and HMAC-verified /api/calendar.ics)
-  if (
-    pathname.startsWith('/api/') &&
-    !pathname.startsWith('/api/auth/') &&
-    pathname !== '/api/calendar.ics'
-  ) {
+  // Public API endpoints that do not require an authenticated singer session
+  const PUBLIC_API_PREFIXES = ['/api/auth/', '/api/webhooks/'];
+  const PUBLIC_API_EXACT = new Set([
+    '/api/health',
+    '/api/calendar.ics',
+    '/api/auditions/submit',
+    '/api/subscribe',
+  ]);
+
+  const isPublicApiRoute =
+    PUBLIC_API_EXACT.has(pathname) ||
+    PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+
+  // Gate protected /api routes
+  if (pathname.startsWith('/api/') && !isPublicApiRoute) {
     if (!context.locals.singer) {
       return new Response(JSON.stringify({ error: 'Authentication required.' }), {
         status: 401,

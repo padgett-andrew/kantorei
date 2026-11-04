@@ -33,7 +33,7 @@ Non-technical choir board members, music librarians, and section leaders MUST be
 
 ```bash
 npm create astro@latest . -- --template minimal --no-install --no-git --typescript strict
-npm install @astrojs/cloudflare @astrojs/react react react-dom @tailwindcss/vite tailwindcss jose arctic zod lucide-react clsx tailwind-merge
+npm install @astrojs/cloudflare @astrojs/react react react-dom @tailwindcss/vite tailwindcss jose zod lucide-react clsx tailwind-merge
 npm install -D @types/react @types/react-dom wrangler
 ```
 
@@ -466,7 +466,7 @@ src/
 │   ├── env.ts                      # Unified env reader (Cloudflare runtime.env + import.meta.env)
 │   ├── cache.ts                    # Cloudflare Cache API (caches.default) + dev memory fallback + tag invalidation
 │   ├── google.ts                   # jose Service Account JWT + Sheets v4 & Drive v3 REST + Shared Drive & mock fallbacks
-│   ├── auth.ts                     # arctic Google OAuth + jose session JWT + stateless HMAC 6-digit Email OTP
+│   ├── auth.ts                     # Web Crypto PKCE Google OAuth + jose session JWT + stateless HMAC 6-digit Email OTP
 │   ├── email.ts                    # Resend REST client for OTP codes & dynamic Section Leader absence alerts
 │   ├── sanitize.ts                 # Edge-safe HTML sanitizer for Google Doc Choir Handbook export
 │   ├── calendar.ts                 # RFC 5545 .ics feed builder + HMAC feed token helper
@@ -506,7 +506,7 @@ src/
     │   └── admin.astro             # Clean redirector for legacy links (routes to /portal/seating or /portal/directory)
     └── api/
         ├── auth/
-        │   ├── google.ts           # Initiates Google OAuth PKCE redirect via arctic
+        │   ├── google.ts           # Initiates Google OAuth PKCE redirect via Web Crypto
         │   ├── google/callback.ts  # Validates Google OAuth callback, checks Roster, issues session cookie
         │   ├── otp/send.ts         # POST: Checks Roster, sends 6-digit code via Resend + sets signed OTP challenge cookie
         │   ├── otp/verify.ts       # POST: Constant-time verifies HMAC OTP challenge, issues session cookie
@@ -545,7 +545,7 @@ src/
 
 ### B. Dual Stateless Authentication & Live Roster Re-Hydration (`src/lib/auth.ts`, `src/middleware.ts`)
 
-1. **Method 1 — Google OAuth (`arctic`):**
+1. **Method 1 — Google OAuth (Native Web Crypto PKCE):**
    - `/api/auth/google` generates state + PKCE code verifier in `httpOnly` cookies and redirects to Google.
    - `/api/auth/google/callback` exchanges the code, extracts the verified Google email, verifies the singer is `active` in `getRoster()`, and sets an `httpOnly`, `Secure`, `SameSite=Lax` JWT session cookie (`kantorei_session`, 14-day expiry).
 2. **Method 2 — Stateless 6-Digit Email Login Code (`jose` + Resend):**
@@ -593,7 +593,7 @@ src/
 ## 8. Step-by-Step Build Execution Plan
 
 1. **Phase 1 (Scaffold, Cloudflare Config, Types & Google Workspace Engine):** Initialize Astro 5 + React 19 + Tailwind CSS v4 + `@astrojs/cloudflare`, create `src/types/choir.ts` (`zod` schemas), `src/lib/cache.ts`, and `src/lib/google.ts` (Web Crypto Service Account JWT, Sheets/Drive REST API, primary-key safe mutations, and interactive in-memory Demo store).
-2. **Phase 2 (Dual Stateless Auth, Middleware & Layouts):** Build `src/lib/auth.ts` (`arctic` Google OAuth + `jose` session & 6-digit Email OTP + Dev role switcher), `src/middleware.ts`, auth API endpoints, `/login`, `PublicLayout.astro`, and `PortalLayout.astro`.
+2. **Phase 2 (Dual Stateless Auth, Middleware & Layouts):** Build `src/lib/auth.ts` (Web Crypto PKCE Google OAuth + `jose` session & 6-digit Email OTP + Dev role switcher), `src/middleware.ts`, auth API endpoints, `/login`, `PublicLayout.astro`, and `PortalLayout.astro`.
 3. **Phase 3 (Singer Portal Core Features):** Build `/portal` (Dashboard + `.ics` calendar subscription modal), `/portal/absences` + `/api/absences` + `src/lib/email.ts`, `/portal/snacks` + `/api/snacks`, `/portal/music` + `/api/music/[fileId]`, `/portal/directory`, `/portal/handbook`, and `/api/calendar.ics`.
 4. **Phase 4 (Section Leader & Admin Dashboard):** Build `/portal/admin` + `/api/roster` with the rehearsal attendance matrix by voice part, 1-click "Mark Absent / Clear at Roll Call", "Add / Edit Singer" modal, and Google Sheet `zod` data-health alerts.
 5. **Phase 5 (Public Website, Box Office & Verification):** Build `/`, `/concerts`, `/about`, `/support`, `TicketTailorEmbed.tsx`, and `GivebutterEmbed.tsx`, then run full TypeScript & Cloudflare Worker production build verification (`astro check && npm run build`).

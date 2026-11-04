@@ -12,11 +12,21 @@ const AuditionSubmissionSchema = z.object({
   voicePart: voicePartSchema,
   preparedSelection: z.string().min(1, 'Prepared selection is required'),
   experience: z.string().min(1, 'Choral experience is required'),
+  website_hp: z.string().optional(),
 });
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const rawBody = (await request.json()) as unknown;
+    const rawBody = (await request.json()) as Record<string, unknown>;
+
+    // Silent honeypot rejection for automated bot submissions
+    if (typeof rawBody.website_hp === 'string' && rawBody.website_hp.trim().length > 0) {
+      return new Response(
+        JSON.stringify({ ok: true, message: 'Thank you for your audition submission!' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const parsed = AuditionSubmissionSchema.safeParse(rawBody);
 
     if (!parsed.success) {

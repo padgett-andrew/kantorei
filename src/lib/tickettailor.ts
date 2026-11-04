@@ -1,7 +1,8 @@
 import type { ConcertEvent, ConcertPerformance, ConcertStatus } from '../types/choir';
 import { cachedFetchJson } from './cache';
-import { extractDateOnly, isConcertPastByDate } from './dates';
+import { extractDateOnly, isConcertPastByDate, MONTH_MAP } from './dates';
 import { getEnv } from './env';
+import { decodeBasicHtmlEntities, stripHtml } from './sanitize';
 import { getTodayIso, sanitizeHeroImageUrl } from './utils';
 
 export interface ResolvedTicketTailorEntry {
@@ -14,15 +15,6 @@ export interface ResolvedTicketTailorEntry {
 }
 
 const resolvedUrlCache = new Map<string, { widgetUrl: string; expiresAt: number }>();
-
-function decodeBasicHtmlEntities(raw: string): string {
-  return raw
-    .replace(/&#x2F;/gi, '/')
-    .replace(/&#x3A;/gi, ':')
-    .replace(/&#x3F;/gi, '?')
-    .replace(/&#x3D;/gi, '=')
-    .replace(/&amp;/gi, '&');
-}
 
 function normalizeBoxOfficeSlug(boxOfficeBaseUrl: string): string {
   const trimmed = (boxOfficeBaseUrl || '').trim();
@@ -369,19 +361,6 @@ interface TicketTailorRawEvent {
   occurrences?: TicketTailorRawOccurrence[];
 }
 
-function stripHtml(html?: string | null): string {
-  if (!html) return '';
-  return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .trim();
-}
-
 function formatSingleDate(isoString?: string, fallbackDate?: string, fallbackTime?: string): string {
   if (isoString) {
     try {
@@ -719,21 +698,6 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
     }
   });
 }
-
-const MONTH_MAP: Record<string, number> = {
-  jan: 0, january: 0,
-  feb: 1, february: 1,
-  mar: 2, march: 2,
-  apr: 3, april: 3,
-  may: 4,
-  jun: 5, june: 5,
-  jul: 6, july: 6,
-  aug: 7, august: 7,
-  sep: 8, sept: 8, september: 8,
-  oct: 9, october: 9,
-  nov: 10, november: 10,
-  dec: 11, december: 11,
-};
 
 export function parseConcertDateTimestamp(concert: ConcertEvent): number {
   if (concert.performances && concert.performances.length > 0) {

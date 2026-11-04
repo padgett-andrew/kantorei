@@ -71,6 +71,8 @@ npm run env:sync-dev     # Synchronizes .env -> .dev.vars for local wrangler dev
 
 # Database & Schema Management
 npm run init:sheets      # Idempotently audits & provisions all 8 Master Sheet tabs with canonical headers
+npm run sync:roster      # Idempotently appends canonical roster singer rows into Master Google Sheet
+npm run sync:board       # Idempotently appends board & leadership rows into Master Google Sheet
 npm run backup:sheets    # Creates a timestamped JSON snapshot of the entire Master Sheet in backups/
 npm run setup:key        # Imports a downloaded Google Cloud Service Account JSON key into .env
 

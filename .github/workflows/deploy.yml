@@ -32,6 +32,9 @@ jobs:
       - name: Typecheck (Astro & TypeScript)
         run: npm run check
 
+      - name: Run unit test suite
+        run: npm test
+
       - name: Build production bundle
         run: npm run build
         env:

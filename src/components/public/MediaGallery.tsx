@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink, Play, X, Music } from 'lucide-react';
 import type { MediaItem } from '../../types/choir';
-import { extractYouTubeEmbedUrl } from '../../lib/media';
+import { extractYouTubeEmbedUrl } from '../../lib/youtube';
 
 interface Props {
   featuredVideos: MediaItem[];
@@ -56,21 +56,26 @@ export default function MediaGallery({
           return (
             <article
               key={item.id || item.youtubeUrl}
-              className="flex flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-2xs transition hover:border-copper-400 hover:shadow-md group"
+              onClick={() => setActiveVideo(item)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveVideo(item);
+                }
+              }}
+              tabIndex={0}
+              role="button"
+              aria-label={`Play ${item.title}`}
+              className="group flex flex-col text-left overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-2xs transition duration-200 hover:border-copper-400 hover:shadow-md cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-copper-500/50"
             >
-              {/* Clickable Video Poster / Lightbox Trigger */}
-              <button
-                type="button"
-                onClick={() => setActiveVideo(item)}
-                className="group/poster relative aspect-video w-full overflow-hidden bg-navy-950 text-left cursor-pointer"
-                aria-label={`Watch ${item.title}`}
-              >
+              {/* Video Poster Thumbnail */}
+              <div className="relative aspect-video w-full overflow-hidden bg-navy-950">
                 {thumbUrl ? (
                   <img
                     src={thumbUrl}
                     alt={item.title}
                     loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover/poster:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
                   <div
@@ -83,11 +88,11 @@ export default function MediaGallery({
                 )}
 
                 {/* Scrim Overlay */}
-                <div className="absolute inset-0 bg-navy-950/25 transition-colors group-hover/poster:bg-navy-950/40" />
+                <div className="absolute inset-0 bg-navy-950/25 transition-colors group-hover:bg-navy-950/40" />
 
                 {/* Play Button Icon */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-copper-500 text-white shadow-lg transition-transform duration-200 group-hover/poster:scale-110">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-copper-500 text-white shadow-lg transition-all duration-200 group-hover:scale-110 group-hover:bg-copper-600">
                     <Play className="h-6 w-6 fill-current ml-0.5" />
                   </span>
                 </div>
@@ -96,53 +101,23 @@ export default function MediaGallery({
                 <span className="absolute top-3 left-3 rounded-md bg-navy-950/80 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-gold-300 backdrop-blur-xs">
                   {item.category || 'Concert Video'}
                 </span>
-              </button>
+              </div>
 
               {/* Card Meta Content */}
-              <div className="flex flex-1 flex-col justify-between p-5 sm:p-6">
-                <div>
-                  <h3 className="font-editorial text-xl sm:text-2xl font-bold text-navy-950 leading-snug">
-                    <button
-                      type="button"
-                      onClick={() => setActiveVideo(item)}
-                      className="cursor-pointer text-left hover:text-copper-600 transition-colors"
-                    >
-                      {item.title}
-                    </button>
-                  </h3>
-                  {item.subtitle && (
-                    <p className="mt-1 text-xs sm:text-sm font-medium text-stone-600">
-                      {item.subtitle}
-                    </p>
-                  )}
-                  {item.description && (
-                    <p className="mt-2.5 text-xs sm:text-sm leading-relaxed text-stone-600 line-clamp-2">
-                      {item.description}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setActiveVideo(item)}
-                    className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-copper-600 hover:text-navy-950 transition"
-                  >
-                    <Play className="h-3.5 w-3.5 fill-current" />
-                    <span>Watch Video</span>
-                  </button>
-
-                  <a
-                    href={item.youtubeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] text-stone-400 hover:text-stone-700 transition"
-                    title="Open on YouTube"
-                  >
-                    <span>YouTube</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
+              <div className="flex flex-1 flex-col p-5 sm:p-6">
+                <h3 className="font-editorial text-xl sm:text-2xl font-bold text-navy-950 leading-snug group-hover:text-copper-600 transition-colors">
+                  {item.title}
+                </h3>
+                {item.subtitle && (
+                  <p className="mt-1 text-xs sm:text-sm font-medium text-stone-600">
+                    {item.subtitle}
+                  </p>
+                )}
+                {item.description && (
+                  <p className="mt-2.5 text-xs sm:text-sm leading-relaxed text-stone-600 line-clamp-2">
+                    {item.description}
+                  </p>
+                )}
               </div>
             </article>
           );

@@ -12,6 +12,7 @@ export default defineConfig({
     port: 4321,
   },
   output: 'server',
+  // Zero-database stateless auth uses jose JWT cookies; driver: 'memory' prevents @astrojs/cloudflare from demanding a KV 'SESSION' binding
   session: {
     driver: 'memory',
   },

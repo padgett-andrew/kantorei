@@ -8,6 +8,8 @@
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
     "preview": "wrangler dev",
     "check": "ASTRO_TELEMETRY_DISABLED=1 astro check",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "doctor:env": "node scripts/doctor-env.mjs",
     "doctor:env:prod": "node scripts/doctor-env.mjs --mode=production",
     "env:sync-dev": "node scripts/sync-dev-vars.mjs",
@@ -41,6 +43,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "typescript": "^5.8.2",
+    "vitest": "^5.1.0",
     "wrangler": "^4.14.0"
   }
 }

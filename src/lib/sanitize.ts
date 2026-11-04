@@ -146,3 +146,35 @@ function escapeAttr(value: string): string {
     .replace(/>/g, '&gt;');
 }
 
+/**
+ * Decodes basic HTML entities commonly returned in API payloads or Google Docs exports.
+ */
+export function decodeBasicHtmlEntities(raw: string): string {
+  return raw
+    .replace(/&#x2F;/gi, '/')
+    .replace(/&#x3A;/gi, ':')
+    .replace(/&#x3F;/gi, '?')
+    .replace(/&#x3D;/gi, '=')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+/**
+ * Strips HTML tags and entities, converting <p> and <br> into newlines.
+ */
+export function stripHtml(html?: string | null): string {
+  if (!html) return '';
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+}
+

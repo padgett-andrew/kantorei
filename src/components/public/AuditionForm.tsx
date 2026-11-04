@@ -35,6 +35,7 @@ export default function AuditionForm({
   const [voicePart, setVoicePart] = useState<VoicePart>('S');
   const [preparedSelection, setPreparedSelection] = useState('');
   const [experience, setExperience] = useState('');
+  const [honeypot, setHoneypot] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -74,6 +75,7 @@ export default function AuditionForm({
           voicePart,
           preparedSelection,
           experience,
+          website_hp: honeypot,
         }),
       });
 
@@ -264,6 +266,16 @@ export default function AuditionForm({
                   )}
 
                   <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Anti-spam honeypot */}
+                    <div className="hidden" aria-hidden="true">
+                      <input
+                        type="text"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={honeypot}
+                        onChange={(e) => setHoneypot(e.target.value)}
+                      />
+                    </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <label htmlFor="modal-audition-name" className="block text-xs font-bold uppercase tracking-wider text-navy-950">

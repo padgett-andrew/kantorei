@@ -18,4 +18,5 @@ backups/
 # OS & editor files
 .DS_Store
 *.log
+scratch/
 

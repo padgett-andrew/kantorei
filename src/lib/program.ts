@@ -13,7 +13,7 @@ import {
   parseYouTubeUrl,
   stripTagsToText,
   type ReferenceRecordingLink,
-} from './youtube.ts';
+} from './youtube';
 
 export interface LoadedConcertDoc {
   title: string;

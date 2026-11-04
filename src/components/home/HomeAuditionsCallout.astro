@@ -1,0 +1,50 @@
+---
+interface Props {
+  choirName: string;
+}
+
+const { choirName } = Astro.props;
+---
+
+<section class="border-t border-stone-200/80 bg-white py-14 sm:py-16">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6">
+    <div
+      class="flex flex-col items-start justify-between gap-6 rounded-2xl border border-stone-200/80 bg-[#FAF7F2] p-7 sm:flex-row sm:items-center sm:p-10"
+    >
+      <div class="max-w-2xl">
+        <span
+          class="text-xs font-semibold uppercase tracking-[0.18em] text-copper-600"
+        >
+          Sing With Us
+        </span>
+        <h2
+          class="mt-1 font-editorial text-2xl font-bold text-navy-950 sm:text-3xl"
+        >
+          Interested in auditioning for {choirName}?
+        </h2>
+        <p class="mt-2 text-sm sm:text-base leading-relaxed text-stone-600">
+          We hold auditions in the Spring (usually mid-May) and the Fall
+          (mid-August) to fill out a roster of singers for the coming season.
+          Kantorei rehearses Sunday evenings at rotating venues across the
+          Twin Cities metro area. Inquiries and submissions are warmly
+          welcomed year-round. Come sing with us!
+        </p>
+      </div>
+      <div class="flex shrink-0 flex-wrap items-center gap-4">
+        <a
+          href="/auditions"
+          class="rounded-sm bg-copper-500 px-6 py-3 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"
+        >
+          Audition Information &rarr;
+        </a>
+        <a
+          href="/login"
+          class="rounded-sm border border-stone-300 bg-white px-5 py-3 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-stone-700 transition hover:bg-stone-50 hover:text-navy-950"
+        >
+          Singer Portal
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+

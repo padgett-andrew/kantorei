@@ -6,6 +6,19 @@ export interface ReferenceRecordingLink {
   isYouTube: boolean;
 }
 
+export interface YouTubeEmbedResult {
+  embedUrl: string | null;
+  videoId: string | null;
+}
+
+export function extractYouTubeEmbedUrl(rawUrl: string): YouTubeEmbedResult {
+  const result = parseYouTubeUrl(rawUrl);
+  return {
+    videoId: result.videoId,
+    embedUrl: result.embedUrl,
+  };
+}
+
 function parseStartSeconds(raw: string | null): number | null {
   if (!raw) return null;
   if (/^\d+$/.test(raw)) return Number(raw);

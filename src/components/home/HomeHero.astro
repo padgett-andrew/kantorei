@@ -1,0 +1,125 @@
+---
+import type { YouTubeEmbedResult } from '../../lib/media';
+
+interface Props {
+  choirName: string;
+  heroTagline: string;
+  heroSubtitle: string;
+  heroVideo?: YouTubeEmbedResult | null;
+  heroBgImage?: string;
+  hasActiveConcerts: boolean;
+}
+
+const {
+  choirName,
+  heroTagline,
+  heroSubtitle,
+  heroVideo,
+  heroBgImage,
+  hasActiveConcerts,
+} = Astro.props;
+---
+
+<section
+  class="relative flex min-h-[500px] items-center overflow-hidden bg-[#0B131E] pt-28 pb-14 text-ivory-50 sm:min-h-[560px] sm:pt-36 sm:pb-20 lg:min-h-[620px]"
+>
+  {
+    heroVideo?.videoId ? (
+      <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${heroVideo.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${heroVideo.videoId}&playsinline=1&rel=0&modestbranding=1&disablekb=1&iv_load_policy=3`}
+          title={`${choirName} performance`}
+          allow="autoplay; encrypted-media"
+          class="pointer-events-none select-none absolute top-1/2 left-1/2 aspect-video h-[300%] w-[300%] min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover opacity-65 filter contrast-105 saturate-100"
+          tabindex="-1"
+          aria-hidden="true"
+        />
+      </div>
+    ) : heroBgImage ? (
+      <div class="absolute inset-0 z-0">
+        <img
+          src={heroBgImage}
+          alt={`${choirName} concert`}
+          class="h-full w-full object-cover object-center"
+        />
+      </div>
+    ) : null
+  }
+
+  <!-- Subtle Editorial Overlays -->
+  <div
+    class="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-[#0B131E]/80 via-[#0B131E]/40 to-[#0B131E]/15"
+  >
+  </div>
+  <div
+    class="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-[#0B131E] via-transparent to-[#0B131E]/30"
+  >
+  </div>
+
+  <!-- Soft Ambient Warmth -->
+  <div
+    class="pointer-events-none absolute inset-0 z-0 opacity-20"
+    style="background: radial-gradient(circle at 18% 30%, #b16437 0%, transparent 45%), radial-gradient(circle at 82% 70%, #2a4365 0%, transparent 55%);"
+  >
+  </div>
+
+  <div class="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
+    <div class="max-w-3xl drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
+      <h1
+        class="font-editorial text-4xl sm:text-6xl md:text-7xl lg:text-[5.25rem] font-medium leading-[1.08] tracking-[-0.02em] text-white"
+      >
+        {
+          heroTagline.includes("Be Real") ? (
+            <>
+              <span class="italic font-light">Sing, Laugh, Cry.</span>
+              <br />
+              <span class="text-gold-300 italic font-normal">Be Real</span>
+              <span class="text-ivory-100 font-normal">…Together.</span>
+            </>
+          ) : (
+            heroTagline
+          )
+        }
+      </h1>
+
+      <p
+        class="mt-5 max-w-xl text-base sm:text-lg font-normal leading-relaxed text-[#E6E1DA]"
+      >
+        {heroSubtitle}
+      </p>
+
+      <!-- Editorial CTAs -->
+      <div class="mt-8 flex flex-row flex-wrap items-center gap-6 sm:gap-8">
+        <a
+          href="/concerts"
+          class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-6 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-xs transition duration-200 hover:bg-copper-600 focus:outline-none focus:ring-2 focus:ring-copper-400 focus:ring-offset-2 focus:ring-offset-[#0B131E]"
+        >
+          {hasActiveConcerts ? "Concerts & Tickets" : "Concert Season"}
+        </a>
+
+        <a
+          href="/media"
+          class="group inline-flex items-center gap-2.5 text-xs sm:text-sm font-medium tracking-wide text-[#E6E1DA] transition-colors duration-200 hover:text-white"
+        >
+          <span
+            class="flex h-7 w-7 items-center justify-center rounded-full border border-white/25 text-white transition-all duration-200 group-hover:border-gold-300 group-hover:bg-gold-500/20 group-hover:text-gold-200"
+          >
+            <svg
+              class="h-3 w-3 fill-current translate-x-0.5"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M8 5v14l11-7z"></path>
+            </svg>
+          </span>
+          <span
+            class="underline decoration-white/30 underline-offset-4 transition-colors group-hover:decoration-gold-300"
+          >
+            Watch & listen &rarr;
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
