@@ -3,6 +3,7 @@ import PublicLayout from '../layouts/PublicLayout.astro';
 import GivebutterEmbed from '../components/public/GivebutterEmbed';
 import { getEnv } from '../lib/env';
 import { getGivingTiers, getPortalConfig } from '../lib/google';
+import { formatRichText } from '../lib/config-interpolate';
 
 const [config, givingTiers] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -18,9 +19,19 @@ const supportHeroTitle =
 const supportHeroSubtitle =
   config.Support_Hero_Subtitle ||
   `Every contribution to ${choirName} funds performances, composer commissions, recordings shared worldwide, Friends of Kantorei community programming, and keeps ensemble membership free of mandatory singer dues.`;
+const supportGalaTitle = config.Support_Gala_Title || `Annual ${choirName} Gala & Friendraisers`;
 const supportGalaBlurb =
   config.Support_Gala_Blurb ||
   `Our annual Gala is ${choirName}’s signature fundraising celebration—bringing singers, alumni, and patrons together for live music, hospitality, and community support. Follow us on Instagram and Facebook for upcoming Gala dates and sponsorship opportunities.`;
+
+const supportMatchingTitle = config.Support_Matching_Title || 'Employer Matching, DAFs & Checks';
+const defaultMatchingBlurb = `${choirName} welcomes corporate matching gifts (Benevity, CyberGrants, YourCause), Donor-Advised Fund grants, and gifts of appreciated securities. Contact [${publicContactEmail}](mailto:${publicContactEmail}) or call [${publicContactPhone}](tel:${publicContactPhone.replace(/[^0-9+]/g, '')}) for our EIN and delivery instructions. Checks may be mailed to ${publicContactAddress}.`;
+const rawMatchingBlurb = (config.Support_Matching_Blurb || defaultMatchingBlurb).trim();
+
+const supportAuditionsTitle = config.Support_Auditions_Title || `Audition for ${choirName}`;
+const supportAuditionsBlurb =
+  config.Support_Auditions_Blurb ||
+  `Beyond financial contributions, ${choirName} is sustained by the dedication and artistry of our singers. We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out our roster of singers for the coming season, rehearsing at rotating venues across the Twin Cities. Inquiries and submissions are warmly welcomed year-round. Come sing with us!`;
 
 const accountId =
   config.Givebutter_Account_ID ||
@@ -56,39 +67,23 @@ const lglFormUrl =
   </section>
 
   <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-    <div class="grid gap-12 lg:grid-cols-12">
-      <!-- Givebutter Interactive Donation Embed -->
+    <div class="grid gap-8 lg:gap-12 lg:grid-cols-12 lg:items-start">
+      <!-- Givebutter Interactive Donation & Giving Circles -->
       <div class="lg:col-span-7">
         <GivebutterEmbed
           client:load
           accountId={accountId}
           campaignId={campaignId}
           choirName={choirName}
+          givingTiers={givingTiers}
         />
       </div>
 
-      <!-- Giving Circles, Gala & Employer Matching -->
+      <!-- Gala, Employer Matching & Auditions Callout -->
       <div class="space-y-6 lg:col-span-5">
-        <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs">
-          <h2 class="font-editorial text-2xl font-bold text-navy-950">
-            Annual Giving Circles
-          </h2>
-          <ul class="mt-4 divide-y divide-zinc-100">
-            {givingTiers.map((tier) => (
-              <li class="py-3.5">
-                <div class="flex items-baseline justify-between gap-2">
-                  <span class="font-serif font-semibold text-navy-950 text-sm sm:text-base">{tier.name}</span>
-                  <span class="text-sm font-semibold text-copper-600">{tier.range}</span>
-                </div>
-                <p class="mt-1 text-sm text-stone-600 leading-relaxed">{tier.description}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         <div class="rounded-2xl border border-stone-200/80 bg-[#FAF7F2] p-6 shadow-xs">
           <h3 class="font-editorial text-xl font-bold text-navy-950">
-            Annual Kantorei Gala & Friendraisers
+            {supportGalaTitle}
           </h3>
           <p class="mt-2 text-sm sm:text-base leading-relaxed text-stone-700">
             {supportGalaBlurb}
@@ -97,25 +92,12 @@ const lglFormUrl =
 
         <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs">
           <h3 class="font-editorial text-xl font-bold text-navy-950">
-            Employer Matching, DAFs & Checks
+            {supportMatchingTitle}
           </h3>
-          <p class="mt-2 text-xs leading-relaxed text-zinc-700">
-            {choirName} welcomes corporate matching gifts (Benevity, CyberGrants, YourCause), Donor-Advised Fund grants, and gifts of appreciated securities. Contact{' '}
-            <a
-              href={`mailto:${publicContactEmail}`}
-              class="font-semibold text-navy-900 underline decoration-gold-500 underline-offset-4"
-            >
-              {publicContactEmail}
-            </a>{' '}
-            or call{' '}
-            <a
-              href="tel:+16122174647"
-              class="font-semibold text-navy-900 underline decoration-gold-500 underline-offset-4"
-            >
-              {publicContactPhone}
-            </a>{' '}
-            for our EIN and delivery instructions. Checks may be mailed to {publicContactAddress}.
-          </p>
+          <p
+            class="mt-2 text-xs leading-relaxed text-zinc-700"
+            set:html={formatRichText(rawMatchingBlurb)}
+          />
           {lglFormUrl && (
             <p class="mt-3 border-t border-zinc-100 pt-3 text-xs text-zinc-500">
               Prefer giving through our Little Green Light constituent form?{' '}
@@ -137,11 +119,12 @@ const lglFormUrl =
             Support with Your Voice
           </span>
           <h3 class="mt-1 font-editorial text-xl font-bold text-navy-950">
-            Audition for {choirName}
+            {supportAuditionsTitle}
           </h3>
-          <p class="mt-2 text-xs leading-relaxed text-zinc-700">
-            Beyond financial contributions, {choirName} is sustained by the dedication and artistry of our singers. We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out our roster of singers for the coming season, rehearsing at rotating venues across the Twin Cities. Inquiries and submissions are warmly welcomed year-round. Come sing with us!
-          </p>
+          <p
+            class="mt-2 text-xs leading-relaxed text-zinc-700"
+            set:html={formatRichText(supportAuditionsBlurb)}
+          />
           <div class="mt-4">
             <a
               href="/auditions"

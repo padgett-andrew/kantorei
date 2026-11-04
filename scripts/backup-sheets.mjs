@@ -108,7 +108,7 @@ async function run() {
       'Roster!A1:G',
       'Schedule!A1:K',
       'Absences!A1:I',
-      'Concerts!A1:I',
+      'Concerts!A1:K',
       'Config!A1:B',
       'Board!A1:E',
       'Leadership!A1:G',

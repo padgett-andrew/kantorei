@@ -1,10 +1,8 @@
 ---
 import PublicLayout from '../layouts/PublicLayout.astro';
+import MediaGallery from '../components/public/MediaGallery';
 import { getMedia, getPortalConfig } from '../lib/google';
-import {
-  extractYouTubeEmbedUrl,
-  getInstagramShowcase,
-} from '../lib/media';
+import { getInstagramShowcase } from '../lib/media';
 
 const [config, mediaItems] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -129,168 +127,13 @@ const remainingVideos = mediaItems.slice(FEATURED_LIMIT);
       </a>
     </div>
 
-    <!-- Top Featured Videos Grid -->
-    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {featuredVideos.map((item) => {
-        const { embedUrl } = extractYouTubeEmbedUrl(item.youtubeUrl);
-
-        return (
-          <article class="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs transition hover:border-gold-400/60 hover:shadow-md">
-            {embedUrl ? (
-              <div class="aspect-video w-full bg-navy-950">
-                <iframe
-                  src={embedUrl}
-                  title={item.title}
-                  loading="lazy"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowfullscreen
-                  class="h-full w-full border-0"
-                />
-              </div>
-            ) : (
-              <a
-                href={item.youtubeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="group relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden bg-navy-950 p-6 text-center text-white"
-              >
-                <div
-                  class="pointer-events-none absolute inset-0 opacity-35 transition duration-300 group-hover:opacity-55"
-                  style="background: radial-gradient(circle at 30% 25%, #b16437 0%, transparent 55%), radial-gradient(circle at 80% 80%, #1f3652 0%, transparent 60%);"
-                />
-                <span class="relative flex h-14 w-14 items-center justify-center rounded-full bg-gold-500 text-white shadow-lg transition-transform duration-200 group-hover:scale-110">
-                  <svg class="ml-0.5 h-6 w-6 fill-current" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </span>
-                <span class="relative mt-3 text-xs font-semibold uppercase tracking-widest text-gold-300">
-                  Watch on YouTube ↗
-                </span>
-              </a>
-            )}
-
-            <div class="flex flex-1 flex-col justify-between p-6 sm:p-7">
-              <div>
-                <span class="inline-block rounded-sm bg-copper-100/80 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.16em] text-copper-700">
-                  {item.category}
-                </span>
-                <h3 class="mt-2.5 font-editorial text-2xl font-bold text-navy-950 leading-snug">
-                  {item.title}
-                </h3>
-                {item.subtitle && (
-                  <p class="mt-1 text-sm font-medium text-stone-600">{item.subtitle}</p>
-                )}
-                {item.description && (
-                  <p class="mt-3 text-sm sm:text-base leading-relaxed text-stone-600">
-                    {item.description}
-                  </p>
-                )}
-              </div>
-
-              <div class="mt-5 border-t border-stone-200/70 pt-3.5">
-                <a
-                  href={item.youtubeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-copper-600 hover:text-navy-950 transition-colors"
-                >
-                  Open on YouTube ↗
-                </a>
-              </div>
-            </div>
-          </article>
-        );
-      })}
-    </div>
-
-    <!-- Optional Expander for remaining videos if catalog is larger -->
-    {remainingVideos.length > 0 && (
-      <details class="group mt-10 rounded-2xl border border-zinc-200 bg-ivory-50/70 p-6 transition">
-        <summary class="flex cursor-pointer list-none items-center justify-between text-sm font-bold text-navy-950 focus:outline-hidden">
-          <span class="flex items-center gap-2">
-            <svg class="h-4 w-4 text-gold-500 transition duration-200 group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-            <span>Show more YouTube recordings ({remainingVideos.length} additional videos)</span>
-          </span>
-          <span class="text-xs font-semibold uppercase tracking-wider text-gold-600 group-open:hidden">
-            Expand Catalog ↓
-          </span>
-          <span class="hidden text-xs font-semibold uppercase tracking-wider text-gold-600 group-open:inline">
-            Collapse ↑
-          </span>
-        </summary>
-
-        <div class="mt-6 grid gap-8 md:grid-cols-2 lg:grid-cols-3 border-t border-zinc-200/80 pt-6">
-          {remainingVideos.map((item) => {
-            const { embedUrl } = extractYouTubeEmbedUrl(item.youtubeUrl);
-
-            return (
-              <article class="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs transition hover:border-gold-400/60 hover:shadow-md">
-                {embedUrl ? (
-                  <div class="aspect-video w-full bg-navy-950">
-                    <iframe
-                      src={embedUrl}
-                      title={item.title}
-                      loading="lazy"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowfullscreen
-                      class="h-full w-full border-0"
-                    />
-                  </div>
-                ) : (
-                  <a
-                    href={item.youtubeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="group relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden bg-navy-950 p-6 text-center text-white"
-                  >
-                    <span class="relative flex h-12 w-12 items-center justify-center rounded-full bg-gold-500 text-white shadow-lg">
-                      <svg class="ml-0.5 h-5 w-5 fill-current" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </span>
-                    <span class="relative mt-2 text-xs font-semibold uppercase tracking-widest text-gold-300">
-                      Watch on YouTube ↗
-                    </span>
-                  </a>
-                )}
-
-                <div class="flex flex-1 flex-col justify-between p-6">
-                  <div>
-                    <span class="inline-block rounded-sm bg-copper-100/80 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.16em] text-copper-700">
-                      {item.category}
-                    </span>
-                    <h3 class="mt-2.5 font-editorial text-xl font-bold text-navy-950 leading-snug">
-                      {item.title}
-                    </h3>
-                    {item.subtitle && (
-                      <p class="mt-1 text-sm font-medium text-stone-600">{item.subtitle}</p>
-                    )}
-                    {item.description && (
-                      <p class="mt-2.5 text-sm leading-relaxed text-stone-600">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div class="mt-4 border-t border-stone-200/70 pt-3">
-                    <a
-                      href={item.youtubeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-copper-600 hover:text-navy-950 transition-colors"
-                    >
-                      Open on YouTube ↗
-                    </a>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </details>
-    )}
+    <!-- Interactive Media Gallery with Concert Hall Lightbox Theater -->
+    <MediaGallery
+      client:load
+      featuredVideos={featuredVideos}
+      remainingVideos={remainingVideos}
+      youtubeChannelUrl={youtubeChannel}
+    />
 
     <!-- Instagram Section (Directly Embedded with Captions) -->
     <div id="instagram" class="scroll-mt-8 mt-20">

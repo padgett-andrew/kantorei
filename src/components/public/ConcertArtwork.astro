@@ -1,0 +1,76 @@
+---
+interface Props {
+  heroImageUrl?: string;
+  posterImageUrl?: string;
+  title: string;
+  aspectRatio?: string;
+  class?: string;
+  loading?: "lazy" | "eager";
+}
+
+const {
+  heroImageUrl,
+  posterImageUrl,
+  title,
+  aspectRatio = "aspect-video w-full",
+  class: className = "",
+  loading = "lazy",
+} = Astro.props;
+
+// Gracefully resolve image source
+const displayImage = heroImageUrl || posterImageUrl;
+---
+
+{
+  displayImage && (
+    <div
+      class:list={[
+        "relative overflow-hidden rounded-xl bg-navy-950 flex items-center justify-center shadow-xs group",
+        aspectRatio,
+        className,
+      ]}
+    >
+      {/* Ambient Blur Backdrop: Hidden by default; displayed ONLY when artwork is non-16:9 */}
+      <div
+        class="artwork-backdrop pointer-events-none absolute inset-0 overflow-hidden select-none"
+        style="display: none;"
+        aria-hidden="true"
+      >
+        <img
+          src={displayImage}
+          alt=""
+          class="h-full w-full object-cover blur-2xl opacity-40 scale-110 filter saturate-125"
+          loading="lazy"
+        />
+        <div class="absolute inset-0 bg-navy-950/20" />
+      </div>
+
+      {/* Crisp Main Artwork: Starts as full-bleed object-cover with 0px padding.
+        If natural aspect ratio differs from 16:9 (e.g. portrait poster),
+        switches to object-contain so zero artwork or text is cut off. */}
+      <img
+        src={displayImage}
+        alt={title}
+        class="artwork-img relative z-10 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.01]"
+        loading={loading}
+        onload={`
+        try {
+          const r = this.naturalWidth / (this.naturalHeight || 1);
+          const backdrop = this.parentElement ? this.parentElement.querySelector('.artwork-backdrop') : null;
+          if (r < 1.55 || r > 2.05) {
+            // Artwork is non-16:9 (e.g. vertical poster or square) -> preserve uncropped with ambient fill
+            this.classList.remove('object-cover');
+            this.classList.add('object-contain');
+            if (backdrop) backdrop.style.display = 'block';
+          } else {
+            // Standard 16:9 landscape -> full-bleed edge-to-edge, hide backdrop completely
+            this.classList.remove('object-contain');
+            this.classList.add('object-cover');
+            if (backdrop) backdrop.style.display = 'none';
+          }
+        } catch (e) {}
+      `}
+      />
+    </div>
+  )
+}

@@ -1,7 +1,8 @@
 import type { ConcertEvent, ConcertPerformance, ConcertStatus } from '../types/choir';
 import { cachedFetchJson } from './cache';
+import { extractDateOnly, isConcertPastByDate } from './dates';
 import { getEnv } from './env';
-import { sanitizeHeroImageUrl } from './utils';
+import { getTodayIso, sanitizeHeroImageUrl } from './utils';
 
 export interface ResolvedTicketTailorEntry {
   label: string;
@@ -487,8 +488,6 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
         return aIso.localeCompare(bIso);
       });
 
-      const nowIso = new Date().toISOString();
-
       // Group multi-night performances sharing the same base title (e.g. Night 1 & Night 2)
       const programMap = new Map<string, Array<{ ev: TicketTailorRawEvent; subLabel: string }>>();
       for (const ev of rawEvents) {
@@ -538,12 +537,33 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
             })
             .join(' | ');
 
-          const isAnyOnSale = items.some((it) => it.ev.status === 'published');
-          const latestIso =
-            items[items.length - 1].ev.end?.iso || items[items.length - 1].ev.start?.iso;
-          let status: ConcertStatus = 'Upcoming';
-          if (isAnyOnSale) {
-            status = latestIso && latestIso < nowIso ? 'Past' : 'On_Sale';
+          const today = getTodayIso('America/Chicago');
+          const itemDates: string[] = [];
+          for (const it of items) {
+            const d =
+              extractDateOnly(it.ev.end?.iso) ||
+              extractDateOnly(it.ev.end?.date) ||
+              extractDateOnly(it.ev.start?.iso) ||
+              extractDateOnly(it.ev.start?.date);
+            if (d) itemDates.push(d);
+          }
+          itemDates.sort();
+          const latestDate = itemDates.length > 0 ? itemDates[itemDates.length - 1] : null;
+
+          const isAllDraft = items.every((it) => it.ev.status === 'draft');
+          const isAnyPublished = items.some((it) => it.ev.status === 'published');
+          const isAnyClosed = items.some((it) => it.ev.status === 'closed');
+
+          let status: ConcertStatus = 'Draft';
+          if (isAllDraft || (!isAnyPublished && !isAnyClosed)) {
+            status = 'Draft';
+          } else if (latestDate && latestDate < today) {
+            // Automatically marked as in the past by calendar date (ignoring time)
+            status = 'Past';
+          } else if (isAnyPublished) {
+            status = 'On_Sale';
+          } else if (isAnyClosed) {
+            status = 'Past';
           }
 
           const slug = baseTitle
@@ -553,6 +573,7 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
 
           const performances: ConcertPerformance[] = items.map((it) => {
             const dateDisplay = formatPerformanceDate(it.ev.start?.iso, it.ev.start?.formatted);
+            const isoDate = extractDateOnly(it.ev.start?.iso || it.ev.start?.date);
             const vName = it.ev.venue?.name?.trim() || 'Twin Cities Sanctuary';
             const vAddress = it.ev.venue?.postal_address?.trim() || '';
 
@@ -572,6 +593,7 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
               venueName: vName,
               venueAddress: vAddress,
               label,
+              isoDate: isoDate || undefined,
             };
           });
 
@@ -587,6 +609,7 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
             ttEventSeriesId,
             status,
             heroImageUrl: sanitizeHeroImageUrl(firstEv.images?.header || firstEv.images?.thumbnail),
+            posterImageUrl: sanitizeHeroImageUrl(firstEv.images?.thumbnail || firstEv.images?.header),
             performances,
           });
         } else {
@@ -614,24 +637,44 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
                 venueName: occ.venue?.name?.trim() || venueName,
                 venueAddress: occ.venue?.postal_address?.trim() || venueAddress,
                 label: `Performance ${idx + 1}`,
+                isoDate: extractDateOnly(occ.start?.iso || occ.start?.date) || undefined,
               }))
               : [
                 {
                   dateDisplay: formatPerformanceDate(ev.start?.iso, ev.start?.formatted),
                   venueName,
                   venueAddress,
+                  isoDate: extractDateOnly(ev.start?.iso || ev.start?.date) || undefined,
                 },
               ];
 
-          let status: ConcertStatus = 'Upcoming';
-          const latestIso =
-            occurrences.length > 0
-              ? occurrences[occurrences.length - 1]?.end?.iso ||
-              occurrences[occurrences.length - 1]?.start?.iso
-              : ev.end?.iso || ev.start?.iso;
+          const dates: string[] = [];
+          const addDate = (raw?: string) => {
+            const d = extractDateOnly(raw);
+            if (d) dates.push(d);
+          };
+          addDate(ev.start?.date);
+          addDate(ev.start?.iso);
+          addDate(ev.end?.date);
+          addDate(ev.end?.iso);
+          for (const occ of occurrences) {
+            addDate(occ.start?.date);
+            addDate(occ.start?.iso);
+            addDate(occ.end?.date);
+            addDate(occ.end?.iso);
+          }
+          dates.sort();
+          const latestDate = dates.length > 0 ? dates[dates.length - 1] : null;
+          const today = getTodayIso('America/Chicago');
 
-          if (ev.status === 'published') {
-            status = latestIso && latestIso < nowIso ? 'Past' : 'On_Sale';
+          let status: ConcertStatus = 'Draft';
+          if (ev.status === 'draft' || !ev.status) {
+            status = 'Draft';
+          } else if (latestDate && latestDate < today) {
+            // Automatically marked as in the past by calendar date (ignoring time)
+            status = 'Past';
+          } else if (ev.status === 'published') {
+            status = 'On_Sale';
           } else if (ev.status === 'closed') {
             status = 'Past';
           }
@@ -663,6 +706,7 @@ export async function fetchTicketTailorEvents(locals?: App.Locals): Promise<Conc
             ttEventSeriesId,
             status,
             heroImageUrl: sanitizeHeroImageUrl(ev.images?.header || ev.images?.thumbnail),
+            posterImageUrl: sanitizeHeroImageUrl(ev.images?.thumbnail || ev.images?.header),
             performances,
           });
         }
@@ -694,6 +738,10 @@ const MONTH_MAP: Record<string, number> = {
 export function parseConcertDateTimestamp(concert: ConcertEvent): number {
   if (concert.performances && concert.performances.length > 0) {
     for (const perf of concert.performances) {
+      if (perf.isoDate) {
+        const d = new Date(`${perf.isoDate}T12:00:00Z`);
+        if (!isNaN(d.getTime())) return d.getTime();
+      }
       if (perf.dateDisplay) {
         const d = new Date(perf.dateDisplay);
         if (!isNaN(d.getTime())) return d.getTime();
@@ -878,6 +926,22 @@ export function mergeAndSortConcerts(
       // Prefer Google Sheet's curated human titles, descriptions, hero posters, and venues.
       // Prefer Ticket Tailor's live checkout widget URLs and occurrences.
       const existing = merged[matchIdx];
+
+      // Status resolution during merge:
+      // If Sheet explicitly marked Draft, keep Draft so admin can edit privately
+      let resolvedStatus: ConcertStatus = existing.status;
+      if (sc.status === 'Draft') {
+        resolvedStatus = 'Draft';
+      } else if (existing.status === 'Draft' && sc.status !== 'On_Sale' && sc.status !== 'Upcoming') {
+        resolvedStatus = 'Draft';
+      } else if (sc.status === 'Past' || existing.status === 'Past') {
+        resolvedStatus = 'Past';
+      } else if (sc.status === 'On_Sale' || existing.status === 'On_Sale') {
+        resolvedStatus = 'On_Sale';
+      } else {
+        resolvedStatus = sc.status || existing.status;
+      }
+
       merged[matchIdx] = {
         slug: sc.slug || existing.slug,
         title: sc.title || existing.title, // Fixes any typo in Ticket Tailor (e.g. "Avent")
@@ -886,13 +950,23 @@ export function mergeAndSortConcerts(
         venueAddress: sc.venueAddress || existing.venueAddress,
         description: sc.description || existing.description,
         heroImageUrl: sc.heroImageUrl || existing.heroImageUrl,
+        posterImageUrl: sc.posterImageUrl || existing.posterImageUrl,
         ttEventSeriesId: existing.ttEventSeriesId || sc.ttEventSeriesId,
-        status: existing.status || sc.status,
+        status: resolvedStatus,
+        boxOfficeNote: sc.boxOfficeNote || existing.boxOfficeNote,
         performances:
           existing.performances && existing.performances.length > 0
             ? existing.performances
             : sc.performances,
       };
+    }
+  }
+
+  // Ensure any concert whose performance date has passed is automatically marked Past (unless Draft)
+  const today = getTodayIso('America/Chicago');
+  for (const c of merged) {
+    if (c.status !== 'Draft' && isConcertPastByDate(c, today)) {
+      c.status = 'Past';
     }
   }
 

@@ -201,6 +201,7 @@ const SCHEMA_SPEC = {
       'Status',
       'Hero_Image_URL',
       'Box_Office_Note',
+      'Poster_Image_URL',
     ],
     sampleRows: [
       [
@@ -214,83 +215,189 @@ const SCHEMA_SPEC = {
         'On_Sale',
         '',
         '',
+        '',
       ],
     ],
     validations: [
       {
         column: 'Status',
-        options: ['Upcoming', 'On_Sale', 'Past'],
-        message: 'Select concert status (Upcoming, On_Sale, Past)',
+        options: ['Draft', 'Upcoming', 'On_Sale', 'Past'],
+        message: 'Select concert status (Draft, Upcoming, On_Sale, Past)',
       },
     ],
   },
   Config: {
-    headers: ['Key', 'Value'],
+    headers: ['Key', 'Value', 'Description / Where It Appears'],
     sampleRows: [
-      ['Choir_Name', 'Kantorei'],
-      ['Conductor_Email', 'adam.reinwald@kantorei.net'],
-      ['Manager_Email', 'maggieakhavan@gmail.com'],
-      ['Repertoire_Drive_Folder_ID', '1tIPYJBkibVLjQOaGSzZ2y7L9UOTNOyJc'],
-      ['Handbook_Google_Doc_ID', ''],
-      ['Strategic_Plan_Google_Doc_ID', ''],
-      ['Season_Pass_TT_Widget_URL', 'DEMO'],
-      ['Portal_Announcement', 'Welcome to the Kantorei Singer Portal.'],
-      ['Calendar_Timezone', 'America/Chicago'],
-      ['YouTube_URL', 'https://www.youtube.com/@kantoreiMN'],
-      ['Instagram_URL', 'https://www.instagram.com/kantorei_mn'],
-      ['Facebook_URL', 'https://www.facebook.com/kantoreimn'],
-      ['Contact_Email', 'info@kantorei.net'],
-      ['Contact_Phone', '612-21-SINGS (612-217-4647)'],
-      ['Contact_Address', '660 23rd Ave NW, Saint Paul, MN 55112'],
+      ['Choir_Name', 'Kantorei', 'Public ensemble name displayed across navbar, footer, metadata, and page titles'],
+      ['Conductor_Name', 'Adam Reinwald', 'Full display name of Artistic Director / Conductor (cascades into all blurbs via {Conductor_Name})'],
+      ['Conductor_Email', 'adam.reinwald@kantorei.net', 'Artistic Director email for singer absence alerts and portal routing'],
+      ['Manager_Email', 'maggieakhavan@gmail.com', 'Choir operations manager email for portal and attendance notices'],
+      ['Repertoire_Drive_Folder_ID', '1tIPYJBkibVLjQOaGSzZ2y7L9UOTNOyJc', 'Google Drive folder ID containing score PDFs and rehearsal tracks'],
+      ['Handbook_Google_Doc_ID', '', 'Google Doc ID for live Singer Handbook rendered inside /portal/handbook'],
+      ['Strategic_Plan_Google_Doc_ID', '', 'Google Doc ID for Kantorei 2026-2036 Strategic Plan'],
+      ['Season_Pass_TT_Widget_URL', 'DEMO', 'Ticket Tailor flex season pass embed URL'],
+      ['Portal_Announcement', 'Welcome to the Kantorei Singer Portal.', 'Banner alert pinned to the top of the Singer Portal (/portal)'],
+      ['Calendar_Timezone', 'America/Chicago', 'Timezone used to generate calendar feeds (.ics)'],
+      ['YouTube_URL', 'https://www.youtube.com/@kantoreiMN', 'Official Kantorei YouTube channel URL'],
+      ['Instagram_URL', 'https://www.instagram.com/kantorei_mn', 'Official Kantorei Instagram URL'],
+      ['Facebook_URL', 'https://www.facebook.com/kantoreimn', 'Official Kantorei Facebook URL'],
+      ['Contact_Email', 'info@kantorei.net', 'Official public contact & auditions email shown in footer and contact cards'],
+      ['Contact_Phone', '612-21-SINGS (612-217-4647)', 'Official public telephone number shown in footer'],
+      ['Contact_Address', '660 23rd Ave NW, Saint Paul, MN 55112', 'Official postal mailing address shown in footer'],
       [
         'Mission_Statement',
         'Expanding the worldview of artists and audiences through passionate and crafted artistic performances, partnerships, and projects.',
+        'Official Mission Statement displayed on homepage and /about',
       ],
       [
         'Vision_Statement',
         'Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.',
+        'Official Vision Statement displayed on homepage and /about',
       ],
-      ['Hero_Tagline', 'Sing, Laugh, Cry. Be Real…Together.'],
+      ['Hero_Tagline', 'Sing, Laugh, Cry. Be Real…Together.', 'Main headline on homepage hero'],
       [
         'Hero_Subtitle',
         'Kantorei is an a cappella chamber choir based in the Minnesota Twin Cities. Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.',
+        'Lead introductory paragraph on homepage hero',
       ],
-      ['Hero_Video_URL', 'https://www.youtube.com/watch?v=GIvF19VzNPE'],
-      ['Hero_Image_URL', ''],
-      ['About_Header_Title', 'Vocal health, effortless sound, and singing for a lifetime.'],
+      ['Hero_Video_URL', 'https://www.youtube.com/watch?v=GIvF19VzNPE', 'YouTube video URL looped softly in homepage hero background'],
+      ['Hero_Image_URL', '', 'Optional fallback background image for homepage hero'],
+      ['About_Header_Title', 'Vocal health, effortless sound, and singing for a lifetime.', 'Hero title on /about page'],
+      [
+        'About_History_P1',
+        'Founded in 1988 by Dr. Axel Theimer, and now led by {Conductor_Name}, {Choir_Name} is one of the premier choral ensembles in Minnesota. With an integral focus on vocal health, {Choir_Name}’s singers have set a standard in Minnesota for rich and effortless choral sound. {Choir_Name} performs a wide range of mostly a cappella music from around the world. Most concerts include signature pieces complementing pieces from both well-known and emerging composers.',
+        'First paragraph of choir history on /about page (supports {Conductor_Name}, {Choir_Name})',
+      ],
+      [
+        'About_History_P2',
+        '{Choir_Name} performs primarily in Minnesota and shares recordings worldwide. Through its outreach programming, {Choir_Name} invites audiences of all ages to share its pursuit of singing for a lifetime.',
+        'Second paragraph of choir history on /about page (supports {Choir_Name})',
+      ],
       [
         'Auditions_Blurb',
         'We welcome inquiries from experienced Twin Cities choral singers across all voice parts (S1, S2, A1, A2, T1, T2, B1, B2) who share our commitment to vocal health, independent preparation, and expressive a cappella ensemble singing.',
+        'Introduction paragraph on /auditions and singer intake forms',
       ],
       [
         'Auditions_Timing_Note',
-        'We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out a roster of singers for the coming season. Auditions are heard by Artistic Director Adam Reinwald and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview. Inquiries and submissions are warmly welcomed year-round. Come sing with us!',
+        'We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out a roster of singers for the coming season. Auditions are heard by Artistic Director {Conductor_Name} and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview. Inquiries and submissions are warmly welcomed year-round. Come sing with us!',
+        'Audition cycle schedule and dates on /auditions (supports {Conductor_Name})',
       ],
       [
         'Auditions_Rehearsal_Cadence',
-        'Kantorei rehearses Sunday evenings at rotating venues across the Twin Cities metro area (typically 6–8 rehearsals per concert cycle), beginning each season with a community retreat.',
+        '{Choir_Name} rehearses Sunday evenings at rotating venues across the Twin Cities metro area (typically 6–8 rehearsals per concert cycle), beginning each season with a community retreat.',
+        'Weekly rehearsal time commitment blurb on /auditions (supports {Choir_Name})',
       ],
       [
         'Auditions_Process_Note',
-        'Auditions are heard by Artistic Director Adam Reinwald and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview.',
+        'Auditions are heard by Artistic Director {Conductor_Name} and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview.',
+        'Audition format and requirements note on /auditions (supports {Conductor_Name})',
       ],
-      ['Auditions_Form_URL', ''],
-      ['Support_Hero_Title', 'Sustain choral artistry and lifelong singing in Minnesota.'],
+      ['Auditions_Form_URL', '', 'Optional Google Form URL to embed on /auditions (leave blank to use native form)'],
+      ['Support_Hero_Title', 'Sustain choral artistry and lifelong singing in Minnesota.', 'Hero headline on /support page'],
       [
         'Support_Hero_Subtitle',
-        'Every contribution to Kantorei funds performances, composer commissions, recordings shared worldwide, Friends of Kantorei community programming, and keeps ensemble membership free of mandatory singer dues.',
+        'Every contribution to {Choir_Name} funds performances, composer commissions, recordings shared worldwide, Friends of Kantorei community programming, and keeps ensemble membership free of mandatory singer dues.',
+        'Subtitle on /support page explaining impact of giving (supports {Choir_Name})',
       ],
+      ['Support_Gala_Title', 'Annual Kantorei Gala & Friendraisers', 'Title for annual gala card on /support'],
       [
         'Support_Gala_Blurb',
-        'Our annual Gala is Kantorei’s signature fundraising celebration—bringing singers, alumni, and patrons together for live music, hospitality, and community support. Follow us on Instagram and Facebook for upcoming Gala dates and sponsorship opportunities.',
+        'Our annual Gala is {Choir_Name}’s signature fundraising celebration—bringing singers, alumni, and patrons together for live music, hospitality, and community support. Follow us on Instagram and Facebook for upcoming Gala dates and sponsorship opportunities.',
+        'Annual Gala event blurb on /support page (supports {Choir_Name})',
+      ],
+      [
+        'Support_Matching_Title',
+        'Employer Matching, DAFs & Checks',
+        'Title for employer matching, DAFs, and check mailing instructions card on /support',
+      ],
+      [
+        'Support_Matching_Blurb',
+        '{Choir_Name} welcomes corporate matching gifts (Benevity, CyberGrants, YourCause), Donor-Advised Fund grants, and gifts of appreciated securities. Contact [{Contact_Email}](mailto:{Contact_Email}) or call [{Contact_Phone}](tel:{Contact_Phone}) for our EIN and delivery instructions. Checks may be mailed to {Contact_Address}.',
+        'Full body text for employer matching, DAFs & checks on /support. Dynamic tokens: {Contact_Email}, {Contact_Phone}, {Contact_Address}, {Choir_Name}',
+      ],
+      [
+        'Support_Auditions_Title',
+        'Audition for Kantorei',
+        'Title for singer audition callout card on /support',
+      ],
+      [
+        'Support_Auditions_Blurb',
+        'Beyond financial contributions, {Choir_Name} is sustained by the dedication and artistry of our singers. We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out our roster of singers for the coming season, rehearsing at rotating venues across the Twin Cities. Inquiries and submissions are warmly welcomed year-round. Come sing with us!',
+        'Auditions callout blurb on /support (supports {Choir_Name})',
       ],
       [
         'Tax_Exempt_Disclaimer',
-        'Kantorei is a registered 501(c)(3) nonprofit arts organization in Minnesota. Contributions are tax-deductible to the fullest extent permitted by law.',
+        '{Choir_Name} is a registered 501(c)(3) nonprofit arts organization in Minnesota. Contributions are tax-deductible to the fullest extent permitted by law.',
+        'Legal 501(c)(3) notice displayed in site-wide footer and /support (supports {Choir_Name})',
       ],
-      ['Givebutter_Account_ID', 'DEMO'],
-      ['Givebutter_Campaign_ID', 'DEMO'],
-      ['LGL_Form_URL', 'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA'],
+      ['Newsletter_Category', 'Friends of Kantorei', 'Small uppercase badge above newsletter signup in footer'],
+      ['Newsletter_Headline', 'Stay in tune with our season.', 'Main heading for newsletter signup in site-wide footer'],
+      [
+        'Newsletter_Description',
+        'Receive concert announcements, early-access ticket alerts, and artistic listening guides from conductor {Conductor_Name}.',
+        'Callout blurb in site-wide footer describing the Friends of Kantorei newsletter (supports {Conductor_Name})',
+      ],
+      ['Newsletter_Button_Text', 'Join Free', 'Submit button label on newsletter form in site-wide footer'],
+      [
+        'Footer_About_Blurb',
+        'Founded in 1988 by Axel Theimer and led by Artistic Director {Conductor_Name}, {Choir_Name} is one of Minnesota’s premier choral ensembles—sharing rich, effortless a cappella sound and singing for a lifetime.',
+        'Short organization bio displayed in site-wide footer below the logo (supports {Conductor_Name}, {Choir_Name})',
+      ],
+      [
+        'Home_Newsletter_Title',
+        'Stay in Tune with Friends of Kantorei',
+        'Newsletter headline on the homepage patron community banner',
+      ],
+      [
+        'Home_Newsletter_Description',
+        'Join our circle of patrons, alumni, and choral lovers. Get first access to concert tickets, conductor {Conductor_Name}’s listening guides, and unreleased choral recordings.',
+        'Newsletter description on the homepage banner (supports {Conductor_Name})',
+      ],
+      [
+        'Concerts_Newsletter_Title',
+        'Never Miss a Concert Announcement',
+        'Newsletter headline on the /concerts box office page',
+      ],
+      [
+        'Concerts_Newsletter_Description',
+        'Be the first to hear about upcoming season programs, early-access ticket sales, and guest artist appearances across the Twin Cities.',
+        'Newsletter description on the /concerts page',
+      ],
+      [
+        'No_Concerts_Title',
+        'No Upcoming Concerts',
+        'Headline shown on the /concerts page when there are no upcoming or active performances on the schedule',
+      ],
+      [
+        'No_Concerts_Blurb',
+        "We don't have any upcoming concerts scheduled at this time. Join our email list below to be notified as soon as new concert dates, programs, and tickets are announced.",
+        'Message displayed on /concerts when no upcoming performances are scheduled',
+      ],
+      [
+        'Home_Spotlight_Type',
+        '',
+        'Optional homepage spotlight content: "concert", "recording", or "friends". Leave blank for auto (active concert, or Friends of Kantorei fallback if no concerts scheduled).',
+      ],
+      [
+        'Home_Spotlight_Media_ID',
+        '',
+        'Optional Media_ID from Media tab to spotlight on the homepage (e.g. yt-dickinson). Defaults to latest recording if Home_Spotlight_Type is recording.',
+      ],
+      [
+        'Home_Spotlight_Title',
+        'Stay in Touch with Kantorei',
+        'Headline for the homepage spotlight card when showing the Friends of Kantorei fallback state',
+      ],
+      [
+        'Home_Spotlight_Description',
+        "We don't have any upcoming concerts scheduled right now. Join Friends of Kantorei to receive season announcements, recording releases, and priority ticket access.",
+        'Callout description for the homepage spotlight card when showing the Friends of Kantorei fallback state',
+      ],
+      ['Givebutter_Account_ID', 'DEMO', 'Givebutter nonprofit account identifier for donation embeds'],
+      ['Givebutter_Campaign_ID', 'DEMO', 'Givebutter fundraising campaign identifier'],
+      ['LGL_Form_URL', 'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA', 'Little Green Light external donor form link'],
     ],
   },
   Board: {
@@ -774,6 +881,178 @@ async function run() {
       }
     } catch (harmonizeErr) {
       console.warn('   ⚠️ Could not harmonize existing Roster rows:', harmonizeErr.message);
+    }
+
+    // Non-destructively harmonize Config tab with Column C (Description) and any missing canonical keys
+    try {
+      const configRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
+          'Config!A1:C'
+        )}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (configRes.ok) {
+        const configData = await configRes.json();
+        const configValues = configData.values || [];
+        const currentHeaders = configValues[0] || [];
+        const dataRows = configValues.slice(1);
+
+        // 1. Ensure Header row has Column C: 'Description / Where It Appears'
+        if (currentHeaders.length < 3 || !currentHeaders[2]?.toLowerCase().includes('description')) {
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
+              'Config!C1'
+            )}?valueInputOption=USER_ENTERED`,
+            {
+              method: 'PUT',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                range: 'Config!C1',
+                majorDimension: 'ROWS',
+                values: [['Description / Where It Appears']],
+              }),
+            }
+          );
+          console.log('   ✅ Added "Description / Where It Appears" column header to [Config].');
+        }
+
+        // 2. Build map of existing keys and their row indices
+        const existingKeyMap = new Map();
+        dataRows.forEach((row, idx) => {
+          const key = (row[0] || '').trim();
+          if (key) {
+            existingKeyMap.set(key.toLowerCase(), { rowIndex: idx + 2, row });
+          }
+        });
+
+        // 3. For existing keys, fill in missing descriptions; for missing keys, collect to append
+        const updateBatch = [];
+        const rowsToAppend = [];
+
+        for (const [key, defVal, desc] of SCHEMA_SPEC.Config.sampleRows) {
+          const existing = existingKeyMap.get(key.toLowerCase());
+          if (!existing) {
+            rowsToAppend.push([key, defVal, desc]);
+          } else {
+            // If Support_Matching_Blurb doesn't have dynamic tokens yet, upgrade it
+            if (key === 'Support_Matching_Blurb' && existing.row[1] && !existing.row[1].includes('{')) {
+              updateBatch.push({
+                range: `Config!B${existing.rowIndex}:C${existing.rowIndex}`,
+                values: [[defVal, desc]],
+              });
+            } else if (!existing.row[2] || existing.row[2].trim() === '' || existing.row[2] !== desc) {
+              // Update description to keep admin notes fresh
+              updateBatch.push({
+                range: `Config!C${existing.rowIndex}`,
+                values: [[desc]],
+              });
+            }
+          }
+        }
+
+        if (updateBatch.length > 0) {
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                valueInputOption: 'USER_ENTERED',
+                data: updateBatch,
+              }),
+            }
+          );
+          console.log(`\n✨ Annotated ${updateBatch.length} existing [Config] keys with admin location descriptions.`);
+        }
+
+        if (rowsToAppend.length > 0) {
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
+              'Config!A:C'
+            )}:append?valueInputOption=USER_ENTERED`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                majorDimension: 'ROWS',
+                values: rowsToAppend,
+              }),
+            }
+          );
+          console.log(`✨ Added ${rowsToAppend.length} missing canonical keys (newsletter, blurbs, copy) to [Config].`);
+        }
+
+        // 4. Format Config column widths and enable text wrapping for readability
+        const configSheetId = updatedSheetMap.get('Config');
+        if (configSheetId !== undefined) {
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                requests: [
+                  {
+                    updateDimensionProperties: {
+                      range: {
+                        sheetId: configSheetId,
+                        dimension: 'COLUMNS',
+                        startIndex: 0,
+                        endIndex: 1,
+                      },
+                      properties: { pixelSize: 240 },
+                      fields: 'pixelSize',
+                    },
+                  },
+                  {
+                    updateDimensionProperties: {
+                      range: {
+                        sheetId: configSheetId,
+                        dimension: 'COLUMNS',
+                        startIndex: 1,
+                        endIndex: 3,
+                      },
+                      properties: { pixelSize: 460 },
+                      fields: 'pixelSize',
+                    },
+                  },
+                  {
+                    repeatCell: {
+                      range: {
+                        sheetId: configSheetId,
+                        startRowIndex: 1,
+                        startColumnIndex: 1,
+                        endColumnIndex: 3,
+                      },
+                      cell: {
+                        userEnteredFormat: {
+                          wrapStrategy: 'WRAP',
+                        },
+                      },
+                      fields: 'userEnteredFormat.wrapStrategy',
+                    },
+                  },
+                ],
+              }),
+            }
+          );
+          console.log('✨ Configured [Config] column widths (240px key, 460px value & notes) and word wrapping.');
+        }
+      }
+    } catch (configHarmonizeErr) {
+      console.warn('   ⚠️ Could not harmonize Config tab:', configHarmonizeErr.message);
     }
 
     // Optionally synchronize full canonical Roster rows to Master Sheet (--sync-roster)

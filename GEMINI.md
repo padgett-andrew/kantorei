@@ -1,20 +1,24 @@
 # GEMINI.md — Choir Website & Singer Portal Architecture Blueprint
 
 ## 1. Project Overview & Core Philosophy
+
 You are an expert full-stack Astro, React, and Cloudflare Edge engineer building a unified, zero-maintenance **Public Website + Authenticated Singer Portal** for a 501(c)(3) choral ensemble (**Kantorei**), hosted on **Cloudflare Workers** (`Astro 5 + React Islands`) at our `.net` domain.
 
 ### The Golden Rule: "Bus-Factor Maintainability"
+
 Non-technical choir board members, music librarians, and section leaders MUST be able to operate the entire site day-to-day without touching code, GitHub, or database dashboards.
+
 1. **Zero Database Maintenance:** A single **Master Google Sheet** and a **Google Drive / Shared Drive folder** (accessed via a Google Cloud Service Account over lightweight REST + `jose` Web Crypto JWTs) serve as our entire CMS and database. There is no SQL/NoSQL database to pay for, migrate, or unpause after summer hiatus.
 2. **Zero Hosting Seat Tax & Zero Bandwidth Fees:** Hosted on **Cloudflare Workers** (`$0/month` free tier, `$0` per-seat multi-admin access for board members, `0ms` cold starts, and `$0` egress fees for streaming rehearsal MP3s and score PDFs).
 3. **Zero Custom Payment Math:** All concert ticketing and Flex Season Passes use embedded **Ticket Tailor** widgets (`0%` fee on `$0` pass redemptions, `50%` charity discount on paid tickets, plus in-cart add-on donations). Standalone fundraising uses an embedded **Givebutter** widget.
-4. **Universal Singer Login (Gmail & Non-Gmail):** Supports **both** 1-click **"Continue with Google"** OAuth *and* a **stateless 6-digit Email Login Code (OTP)** via Resend + HMAC-signed `httpOnly` cookies (`jose`), so singers using `@icloud.com`, `@yahoo.com`, `@outlook.com`, or work/university emails can sign in seamlessly with zero database.
+4. **Universal Singer Login (Gmail & Non-Gmail):** Supports **both** 1-click **"Continue with Google"** OAuth _and_ a **stateless 6-digit Email Login Code (OTP)** via Resend + HMAC-signed `httpOnly` cookies (`jose`), so singers using `@icloud.com`, `@yahoo.com`, `@outlook.com`, or work/university emails can sign in seamlessly with zero database.
 5. **Sandbox / Prototype Resilience:** The codebase MUST gracefully handle missing or placeholder credentials during local/sandbox development (rendering realistic mock repertoire/schedule/roster data, interactive preview cards when `DEMO` / `DEMO_SERIES_ID` is configured, and supporting Resend's `onboarding@resend.dev` sandbox rules).
 6. **100% Dynamic Content via Google Sheets CMS (Zero Code Deploys for Copy, Contact & Staff Changes):** ALL public site copy, statements, official contact details, board of directors, artistic leadership bios, and giving tiers MUST be manageable directly from the **Master Google Sheet** (`Config`, `Board`, `Leadership`, `Giving_Tiers`) or Google Drive. Future AI instances and engineers MUST NEVER hardcode copy, statements, emails, phone numbers, or staff rosters into `.astro` or `.tsx` templates. Always read from `getPortalConfig()` or the corresponding sheet getters with safe default fallbacks and 60-second edge caching.
 
 ---
 
 ## 2. Tech Stack & Dependencies
+
 - **Framework:** **Astro 5** (`output: 'server'` with `@astrojs/cloudflare` adapter, static/cached public HTML shells, and `@astrojs/react` interactive islands)
 - **Interactive UI & Styling:** **React 19** + **Tailwind CSS v4** (`@tailwindcss/vite`) + `lucide-react` icons + `clsx` + `tailwind-merge`
 - **Authentication:** Native Web Crypto **Google OAuth 2.0 PKCE** + **`jose`** (JWKS ID-token verification, Web Crypto JWT sessions & stateless HMAC-signed 6-digit Email OTP verification — zero database required). Access to `/portal/*` and protected `/api/*` routes is gated by `src/middleware.ts` + live `requireSinger()` / `requireAdmin()` checks against the cached `Roster` sheet.
@@ -26,6 +30,7 @@ Non-technical choir board members, music librarians, and section leaders MUST be
 - **Hosting:** **Cloudflare Workers** (`wrangler.jsonc`)
 
 ### Installation Command
+
 ```bash
 npm create astro@latest . -- --template minimal --no-install --no-git --typescript strict
 npm install @astrojs/cloudflare @astrojs/react react react-dom @tailwindcss/vite tailwindcss jose arctic zod lucide-react clsx tailwind-merge
@@ -35,6 +40,7 @@ npm install -D @types/react @types/react-dom wrangler
 ---
 
 ## 3. Environment Variables (`.dev.vars` / `.env` & Cloudflare Secrets)
+
 In local development, Astro/Wrangler reads from `.env` / `.dev.vars`. In production, store secrets via `wrangler secret put` or the Cloudflare Workers dashboard.
 
 ```env
@@ -74,15 +80,17 @@ MAILERLITE_GROUP_ID=""
 ```
 
 ### 3.1 Environment Policy, Tiers & Invariants
+
 Kantorei operates with three clear environment tiers governed by `src/lib/env.ts` and audited by `npm run doctor:env`:
 
-| Tier | Runtime & Detection | Permitted Fallbacks & Rules |
-| :--- | :--- | :--- |
-| **`development`** | `astro dev` / Vite (`import.meta.env.DEV === true`) | Permissive zero-setup: Fallback to mock data if Sheet ID is `"DEMO"`, dev fallback `AUTH_SECRET` tolerated with warning, OTP code printed on-screen if Resend is unset, `DEV_PREVIEW_BYPASS="true"` allows 1-click role switcher. |
-| **`preview`** | `wrangler dev` (`npm run preview`) / PR previews | Edge parity: Cloudflare Workers runtime, reads `.dev.vars` (synced via `npm run env:sync-dev`), `DEV_PREVIEW_BYPASS` disabled, Resend sandboxing (`SANDBOX_OVERRIDE_EMAIL` or `onboarding@resend.dev`) required to protect real singers. |
-| **`production`** | Cloudflare Workers (`kantorei-web`) | Strict invariant enforcement: `AUTH_SECRET` must be high entropy (>= 32 chars, never default fallback), `DEV_PREVIEW_BYPASS` strictly prohibited, valid Google Service Account credentials & Sheet ID required, `PUBLIC_SITE_URL` must use `https://`, real email routing. |
+| Tier              | Runtime & Detection                                 | Permitted Fallbacks & Rules                                                                                                                                                                                                                                                |
+| :---------------- | :-------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`development`** | `astro dev` / Vite (`import.meta.env.DEV === true`) | Permissive zero-setup: Fallback to mock data if Sheet ID is `"DEMO"`, dev fallback `AUTH_SECRET` tolerated with warning, OTP code printed on-screen if Resend is unset, `DEV_PREVIEW_BYPASS="true"` allows 1-click role switcher.                                          |
+| **`preview`**     | `wrangler dev` (`npm run preview`) / PR previews    | Edge parity: Cloudflare Workers runtime, reads `.dev.vars` (synced via `npm run env:sync-dev`), `DEV_PREVIEW_BYPASS` disabled, Resend sandboxing (`SANDBOX_OVERRIDE_EMAIL` or `onboarding@resend.dev`) required to protect real singers.                                   |
+| **`production`**  | Cloudflare Workers (`kantorei-web`)                 | Strict invariant enforcement: `AUTH_SECRET` must be high entropy (>= 32 chars, never default fallback), `DEV_PREVIEW_BYPASS` strictly prohibited, valid Google Service Account credentials & Sheet ID required, `PUBLIC_SITE_URL` must use `https://`, real email routing. |
 
 #### Environment CLI Tooling
+
 - `npm run doctor:env`: Audits current environment against local development rules.
 - `npm run doctor:env:prod`: Audits environment against strict production invariants prior to deployment.
 - `npm run env:sync-dev`: Synchronizes `.env` into `.dev.vars` for Cloudflare Workers local preview (`wrangler dev`).
@@ -91,6 +99,7 @@ Kantorei operates with three clear environment tiers governed by `src/lib/env.ts
 - `npm run deploy:secrets`: Verifies production `AUTH_SECRET` entropy before uploading secrets via `wrangler secret bulk`.
 
 #### CI/CD & Deployment Pipeline (`.github/workflows/deploy.yml`)
+
 - **Pull Requests & Non-Main Branches:** Automatically verifies `npm ci`, `npm run check` (TypeScript), and `npm run build` on Node 22.
 - **Push / Merge to `main`:** Runs full verification and deploys worker to Cloudflare using `cloudflare/wrangler-action@v3`.
 - **Required GitHub Secrets:**
@@ -100,80 +109,115 @@ Kantorei operates with three clear environment tiers governed by `src/lib/env.ts
 ---
 
 ## 4. Master Google Sheet Schema (`GOOGLE_MASTER_SHEET_ID`)
+
 Recommend placing the Master Google Sheet, Repertoire folder, and Choir Handbook inside a **Google Workspace for Nonprofits Shared Drive**. Share `GOOGLE_SERVICE_ACCOUNT_EMAIL` as **Content Manager / Editor** on the Master Google Sheet and **Viewer** on the Repertoire folder and Choir Handbook Doc.
 
 ### Tab 1: `Roster` (Range: `Roster!A2:G`)
+
 Controls portal login access (both Google OAuth and Email OTP), section filtering, and absence routing.
-| Col | Header | Example Value | Specification & Data Validation |
-| :-- | :--- | :--- | :--- |
-| `A` | `Email` | `singer@example.com` | Primary key (normalize with `.trim().toLowerCase()`) |
-| `B` | `Name` | `Andrew Padgett` | Full display name |
-| `C` | `Voice_Part` | `B2` | Dropdown: `S`, `S1`, `S2`, `A`, `A1`, `A2`, `T`, `T1`, `T2`, `B`, `B1`, `B2` |
-| `D` | `Section_Group` | `Bass` | Dropdown: `Soprano`, `Alto`, `Tenor`, `Bass` (Used for routing to Section Leaders) |
-| `E` | `Role` | `Admin` | Dropdown: `Singer`, `Section_Leader`, `Admin` |
-| `F` | `Phone` | `612-555-0100` | Display string for member directory |
-| `G` | `Active` | `Active` | Dropdown: `Active`, `On_Leave`, `Inactive` (or legacy `TRUE`/`FALSE`) |
+
+| Col | Header          | Example Value        | Specification & Data Validation                                                    |
+| :-- | :-------------- | :------------------- | :--------------------------------------------------------------------------------- |
+| `A` | `Email`         | `singer@example.com` | Primary key (normalize with `.trim().toLowerCase()`)                               |
+| `B` | `Name`          | `Andrew Padgett`     | Full display name                                                                  |
+| `C` | `Voice_Part`    | `B2`                 | Dropdown: `S`, `S1`, `S2`, `A`, `A1`, `A2`, `T`, `T1`, `T2`, `B`, `B1`, `B2`       |
+| `D` | `Section_Group` | `Bass`               | Dropdown: `Soprano`, `Alto`, `Tenor`, `Bass` (Used for routing to Section Leaders) |
+| `E` | `Role`          | `Admin`              | Dropdown: `Singer`, `Section_Leader`, `Admin`                                      |
+| `F` | `Phone`         | `612-555-0100`       | Display string for member directory                                                |
+| `G` | `Active`        | `Active`             | Dropdown: `Active`, `On_Leave`, `Inactive` (or legacy `TRUE`/`FALSE`)              |
 
 ### Tab 2: `Schedule` (Google Calendar API v3 or Master Sheet `Schedule!A2:K`)
+
 Powers the Singer Portal rehearsal calendar, subscribable `/api/calendar.ics` feed, Absence form date selector, and 1-tap Snack Signup.
+
 - **Google Calendar Primary Source (Zero-Friction Admin)**: Set `GOOGLE_CALENDAR_ID` in `.env` / `Config`. The Artistic Director and choir admins manage recurring calls, concerts, dress rehearsals, call times, and locations directly in Google Calendar (web or mobile). The portal syncs calls via Google Calendar API v3 every 60s (with instant edge invalidation on demand).
 - **Hospitality & Snack Decoupling**: Snack claims are merged seamlessly by `Event_ID`, stored either in a dedicated `Snacks` sheet tab (`Event_ID`, `Slot`, `Singer_Name`, `Item`, `Updated_At`) or `Schedule!G:J`.
 - **Sheet Fallback Table (Legacy or Demo Mode)**:
-| Col | Header | Example Value | Specification |
-| :-- | :--- | :--- | :--- |
-| `A` | `Event_ID` | `reh-2026-11-10` | Unique primary key (resolved dynamically before any cell write) |
-| `B` | `Date` | `2026-11-10` | `YYYY-MM-DD` (Sort ascending; filter `>= today` for upcoming views) |
-| `C` | `Time` | `7:00 PM - 9:30 PM` | Display time string (parsed for `.ics` start/end times with sensible fallback) |
-| `D` | `Type` | `Rehearsal` | `Rehearsal`, `Sectional`, `Retreat`, `Dress`, `Concert` |
-| `E` | `Title` | `Tuesday Rehearsal` | Event title |
-| `F` | `Location` | `Main Sanctuary` | Venue / room |
-| `G` | `Snack_1_Name` | `Elena Rostova` | Claimed via `/portal/snacks` |
-| `H` | `Snack_2_Name` | `Marcus Vance` | Claimed via `/portal/snacks` |
-| `I` | `Snack_3_Name` | `` | Claimed via `/portal/snacks` |
-| `J` | `Snack_4_Name` | `` | Claimed via `/portal/snacks` |
-| `K` | `Notes` | `Focus on movements 1-3` | Rehearsal call notes or repertoire focus |
+  | Col | Header | Example Value | Specification |
+  | :-- | :--- | :--- | :--- |
+  | `A` | `Event_ID` | `reh-2026-11-10` | Unique primary key (resolved dynamically before any cell write) |
+  | `B` | `Date` | `2026-11-10` | `YYYY-MM-DD` (Sort ascending; filter `>= today` for upcoming views) |
+  | `C` | `Time` | `7:00 PM - 9:30 PM` | Display time string (parsed for `.ics` start/end times with sensible fallback) |
+  | `D` | `Type` | `Rehearsal` | `Rehearsal`, `Sectional`, `Retreat`, `Dress`, `Concert` |
+  | `E` | `Title` | `Tuesday Rehearsal` | Event title |
+  | `F` | `Location` | `Main Sanctuary` | Venue / room |
+  | `G` | `Snack_1_Name` | `Elena Rostova` | Claimed via `/portal/snacks` |
+  | `H` | `Snack_2_Name` | `Marcus Vance` | Claimed via `/portal/snacks` |
+  | `I` | `Snack_3_Name` | ``| Claimed via `/portal/snacks` |
+| `J` | `Snack_4_Name` |`` | Claimed via `/portal/snacks` |
+  | `K` | `Notes` | `Focus on movements 1-3` | Rehearsal call notes or repertoire focus |
 
 ### Tab 3: `Absences` (Range: `Absences!A2:I`)
-Upserted/updated via `POST` and `DELETE /api/absences` (deduplicated by `Event_ID` + `Singer_Email`).
-| Col | Header | Example Value | Specification |
-| :-- | :--- | :--- | :--- |
-| `A` | `Timestamp` | `2026-11-01T19:30:00Z` | ISO timestamp of latest submission/update |
-| `B` | `Event_ID` | `reh-2026-11-10` | Foreign key to `Schedule.Event_ID` |
-| `C` | `Date` | `2026-11-10` | Event date (`YYYY-MM-DD`) |
-| `D` | `Singer_Name` | `Andrew Padgett` | Singer's full name |
-| `E` | `Singer_Email` | `singer@example.com` | Normalized email |
-| `F` | `Voice_Part` | `B2` | Voice part at time of submission |
-| `G` | `Reason` | `Out of town for work` | User-submitted note |
-| `H` | `Submitted_By` | `Self` | `"Self"` or Section Leader/Admin name if marked during roll call |
-| `I` | `Status` | `Absent` | `"Absent"` or `"Cleared"` (allows singers/admins to withdraw an absence cleanly) |
 
-### Tab 4: `Concerts` (Range: `Concerts!A2:I` or Ticket Tailor REST API)
+Upserted/updated via `POST` and `DELETE /api/absences` (deduplicated by `Event_ID` + `Singer_Email`).
+
+| Col | Header         | Example Value          | Specification                                                                    |
+| :-- | :------------- | :--------------------- | :------------------------------------------------------------------------------- |
+| `A` | `Timestamp`    | `2026-11-01T19:30:00Z` | ISO timestamp of latest submission/update                                        |
+| `B` | `Event_ID`     | `reh-2026-11-10`       | Foreign key to `Schedule.Event_ID`                                               |
+| `C` | `Date`         | `2026-11-10`           | Event date (`YYYY-MM-DD`)                                                        |
+| `D` | `Singer_Name`  | `Andrew Padgett`       | Singer's full name                                                               |
+| `E` | `Singer_Email` | `singer@example.com`   | Normalized email                                                                 |
+| `F` | `Voice_Part`   | `B2`                   | Voice part at time of submission                                                 |
+| `G` | `Reason`       | `Out of town for work` | User-submitted note                                                              |
+| `H` | `Submitted_By` | `Self`                 | `"Self"` or Section Leader/Admin name if marked during roll call                 |
+| `I` | `Status`       | `Absent`               | `"Absent"` or `"Cleared"` (allows singers/admins to withdraw an absence cleanly) |
+
+### Tab 4: `Concerts` (Range: `Concerts!A2:K` or Ticket Tailor REST API)
+
 Powers the public `/` home spotlight and `/concerts` box-office page.
+
 - **Ticket Tailor Primary Source (Zero Double-Entry)**: When `TICKET_TAILOR_API_KEY` is configured in `.env`, `/concerts` and the home page auto-fetch published events directly from Ticket Tailor REST API (`/v1/events`). Event titles, dates, venues, blurbs, posters, and embedded checkout widgets are populated automatically with edge caching.
+- **Dual Artwork Support (Landscape Banner & Portrait Poster)**: Column I (`Hero_Image_URL`) holds wide 16:9 landscape headers, while Column K (`Poster_Image_URL`) holds vertical flyers/key art posters. If only 1 image is provided, the website automatically falls back to it in both slots and elegantly presents it with safe ambient-blur framing so zero admin double-entry is required.
 - **Natural Date & Multi-Performance Input**: Column C (`Dates_Display`) accepts natural date & time inputs without manual day-of-week formatting. Examples:
   - Multi-line in cell: `12/19/2026 3:00 PM (Shoreview)\n12/20/2026 3:00 PM (Edina)`
   - Delimited: `12/19/26 3pm & 12/20/26 3pm` or `March 20, 2027 7:30 PM | March 21, 2027 3:00 PM`
   - Single performance: `3/20/2027 7:30pm` or `May 14 at 8:00 PM`
   - The site automatically computes the weekday, standardizes times (`3:00 PM`), formats editorial headlines, and constructs structured multi-performance cards with venue directions. Existing editorial strings (e.g. `Sat, Dec 12...`) continue to be supported seamlessly.
+- **Draft / Unpublished Concerts & Automatic Past Date Expiration**:
+  - **Draft / Unpublished State**: To prepare new concerts or edit upcoming programs privately without displaying half-finished cards to the public, set Column H (`Status`) to `Draft` (or `Unpublished`). Draft concerts are completely suppressed from public pages (`/` home spotlight and `/concerts` active and past listings). Logged-in Admins see an interactive **Admin Preview** banner on `/concerts` to inspect artwork, dates, and ticket embeds before going live.
+  - **Publishing**: When ready to announce or sell tickets, update `Status` to `Upcoming` or `On_Sale`.
+  - **Automatic Expiration by Date (Zero Double-Entry)**: Any concert whose performance date has passed is automatically marked as `Past` and moved to "Past Programs" based strictly on calendar date (ignoring time so patrons purchasing same-day tickets even 5 minutes after start time are never blocked). Same-day concerts remain active until midnight Central Time.
 - **Partner Presenters & External Box Offices (e.g., Minnesota Orchestra, SPCO, The Ordway, Schubert Club)**: For guest appearances or co-productions where Kantorei is not managing tickets, enter the partner's box office URL in Column G (`TT_Event_Series_ID`). The website automatically detects external ticketing domains, suppresses the Ticket Tailor embed, and renders a high-trust **Partner Presenter Box Office Card** with direct links to the host presenter's ticketing portal.
 - **Free / Non-Ticketed Concerts**: Enter `FREE`, `DOOR`, or `FREE_ADMISSION` in Column G to render an **Open Seating · Goodwill Offering** card.
 - **Sheet Fallback / Manual Override Table**:
-| Col | Header | Example Value | Specification |
-| :-- | :--- | :--- | :--- |
-| `A` | `Concert_Slug` | `winter-2026` | URL-safe slug |
-| `B` | `Title` | `Light in the Winter Dark` | Public concert title |
-| `C` | `Dates_Display` | `Sat Dec 12 (7:30 PM) & Sun Dec 13 (3:00 PM)` | Human-readable dates |
-| `D` | `Venue_Name` | `Cathedral Sanctuary` | Venue name |
-| `E` | `Venue_Address` | `Minneapolis, MN` | Address for Google Maps link |
-| `F` | `Description` | `Join us for an evening of...` | Concert program blurb |
-| `G` | `TT_Event_Series_ID` | `https://www.minnesotaorchestra.org/...` | Ticket Tailor series ID/URL, external partner URL (e.g. `https://www.minnesotaorchestra.org/...`), `FREE`, or `DEMO_SERIES_ID` |
-| `H` | `Status` | `On_Sale` | `Upcoming`, `On_Sale`, `Past` |
-| `I` | `Hero_Image_URL` | `https://...` | Optional banner image URL |
-| `J` | `Box_Office_Note` | `Kantorei joins the Minnesota Orchestra for this special presentation...` | Optional custom box office notice or partner relationship blurb (overrides the default guest ensemble blurb) |
+  | Col | Header | Example Value | Specification |
+  | :-- | :--- | :--- | :--- |
+  | `A` | `Concert_Slug` | `winter-2026` | URL-safe slug |
+  | `B` | `Title` | `Light in the Winter Dark` | Public concert title |
+  | `C` | `Dates_Display` | `Sat Dec 12 (7:30 PM) & Sun Dec 13 (3:00 PM)` | Human-readable dates |
+  | `D` | `Venue_Name` | `Cathedral Sanctuary` | Venue name |
+  | `E` | `Venue_Address` | `Minneapolis, MN` | Address for Google Maps link |
+  | `F` | `Description` | `Join us for an evening of...` | Concert program blurb |
+  | `G` | `TT_Event_Series_ID` | `https://www.minnesotaorchestra.org/...` | Ticket Tailor series ID/URL, external partner URL (e.g. `https://www.minnesotaorchestra.org/...`), `FREE`, or `DEMO_SERIES_ID` |
+  | `H` | `Status` | `On_Sale` | Dropdown: `Draft`, `Upcoming`, `On_Sale`, `Past` (Leaving blank assumes `Draft`; unpublished `Draft` concerts are hidden from public view; active concerts past their performance date automatically become `Past`) |
+  | `I` | `Hero_Image_URL` | `https://...` | Optional wide/landscape banner image URL (16:9) |
+  | `J` | `Box_Office_Note` | `Kantorei joins the Minnesota Orchestra for this special presentation...` | Optional custom box office notice or partner relationship blurb (overrides the default guest ensemble blurb) |
+  | `K` | `Poster_Image_URL` | `https://...` | Optional portrait flyer / key art poster image URL (3:4 or 4:5 vertical) |
 
-### Tab 5: `Config` (Range: `Config!A2:B`)
-Key-value settings editable by the board without redeploying code.
+### Tab 5: `Config` (Range: `Config!A2:C`)
+
+Key-value settings editable by the board without redeploying code. Structured as a 3-column table so non-technical choir administrators can immediately see what each key controls:
+
+- **Col A (`Key`)**: Canonical configuration identifier (e.g. `Newsletter_Description`)
+- **Col B (`Value`)**: Live value or copy text displayed on the site
+- **Col C (`Description / Where It Appears`)**: Plain-English explanation of where this text appears across the public website and singer portal
+
+#### Dynamic Variable Tokens in CMS Blurbs (Automatic Cascade)
+Any blurb in the Master Sheet (or in site copy) can include dynamic tokens that automatically resolve to the latest master settings in `Config` at runtime (via `src/lib/config-interpolate.ts`). When an administrator updates `Contact_Email`, `Contact_Phone`, `Contact_Address`, `Choir_Name`, or `Conductor_Name`, the change immediately cascades across every blurb on the website without needing to edit each text block individually:
+- `{Choir_Name}` / `{choir}`: Organization name
+- `{Contact_Email}` / `{email}`: Primary inquiries and contact email
+- `{Contact_Phone}` / `{phone}`: Primary telephone string
+- `{Contact_Phone_Clean}` / `{phone_clean}`: E.164 digits for `tel:` links (e.g. `+16122174647`)
+- `{Contact_Address}` / `{address}`: Official mailing address
+- `{Conductor_Name}` / `{conductor}` / `{artistic_director}`: Artistic Director name
+- `{Conductor_Email}` / `{conductor_email}`: Artistic Director email
+- `{Manager_Email}` / `{manager_email}`: Operations Manager email
+
+Standard Config Keys:
+
 - `Choir_Name`: `Kantorei`
+- `Conductor_Name`: `Adam Reinwald` (Full display name of Artistic Director; cascades into all blurbs via `{Conductor_Name}`)
 - `Conductor_Email`: `adam.reinwald@kantorei.net`
 - `Manager_Email`: `maggieakhavan@gmail.com`
 - `Repertoire_Drive_Folder_ID`: Google Drive Folder ID containing piece subfolders
@@ -195,6 +239,8 @@ Key-value settings editable by the board without redeploying code.
 - `Hero_Video_URL`: `https://www.youtube.com/watch?v=GIvF19VzNPE` (YouTube video URL looped softly in the hero background)
 - `Hero_Image_URL`: Optional static fallback or override banner image URL
 - `About_Header_Title`: `Vocal health, effortless sound, and singing for a lifetime.`
+- `About_History_P1`: First paragraph of choir history and vocal health philosophy on `/about`
+- `About_History_P2`: Second paragraph of choir history and outreach mission on `/about`
 - `Auditions_Blurb`: `We welcome inquiries from experienced Twin Cities choral singers across all voice parts...`
 - `Auditions_Timing_Note`: `We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out a roster of singers for the coming season. Auditions are heard by Artistic Director Adam Reinwald and section leaders, and consist of singing a prepared selection a cappella, some basic musicianship checks, and a brief interview. Come sing with us!`
 - `Auditions_Rehearsal_Cadence`: `Kantorei rehearses Sunday evenings at rotating venues across the Twin Cities metro area (typically 6–8 rehearsals per concert cycle), beginning each season with a community retreat.`
@@ -202,93 +248,120 @@ Key-value settings editable by the board without redeploying code.
 - `Auditions_Form_URL`: `Full Google Form URL (embedded iframe on /auditions; empty fallback renders direct mailto submission)`
 - `Support_Hero_Title`: `Sustain choral artistry and lifelong singing in Minnesota.`
 - `Support_Hero_Subtitle`: `Every contribution to Kantorei funds performances...`
+- `Support_Gala_Title`: `Annual Kantorei Gala & Friendraisers` (Title for annual gala card on `/support`)
 - `Support_Gala_Blurb`: `Our annual Gala is Kantorei’s signature fundraising celebration...`
+- `Support_Matching_Title`: `Employer Matching, DAFs & Checks` (Card title on `/support`)
+- `Support_Matching_Blurb`: `Kantorei welcomes corporate matching gifts (Benevity, CyberGrants, YourCause), Donor-Advised Fund grants, and gifts of appreciated securities. Contact [info@kantorei.net](mailto:info@kantorei.net) or call [612-21-SINGS (612-217-4647)](tel:+16122174647) for our EIN and delivery instructions. Checks may be mailed to 660 23rd Ave NW, Saint Paul, MN 55112.` (Full body text for employer matching, DAFs, securities, and check mailing instructions on `/support`; supports markdown links `[label](url)`)
+- `Support_Auditions_Title`: `Audition for Kantorei` (Audition callout card title on `/support`)
+- `Support_Auditions_Blurb`: `Beyond financial contributions, Kantorei is sustained by the dedication and artistry of our singers...` (Audition callout card text on `/support`)
 - `Tax_Exempt_Disclaimer`: `Kantorei is a registered 501(c)(3) nonprofit arts organization in Minnesota...`
+- `Newsletter_Category`: Badge label above email signup (e.g. `Friends of Kantorei`)
+- `Newsletter_Headline`: Main headline for newsletter signup in site-wide footer (`Stay in tune with our season.`)
+- `Newsletter_Description`: Callout blurb for newsletter signup in footer (`Receive concert announcements, early-access ticket alerts, and artistic listening guides from conductor Adam Reinwald.`)
+- `Newsletter_Button_Text`: Button label on newsletter signup (`Join Free` or `Join Friends of Kantorei`)
+- `Footer_About_Blurb`: Short organization bio displayed in site-wide footer below the logo
+- `Home_Newsletter_Title` / `Home_Newsletter_Description`: Headline and blurb for homepage patron community banner
+- `Concerts_Newsletter_Title` / `Concerts_Newsletter_Description`: Headline and blurb for /concerts box office page callout
+- `No_Concerts_Title`: Headline shown on `/concerts` when there are no upcoming concerts scheduled (`No Upcoming Concerts`)
+- `No_Concerts_Blurb`: Explanatory text shown on `/concerts` when no performances are scheduled
+- `Home_Spotlight_Type`: Homepage hero spotlight mode (`concert`, `recording`, or `friends`; leave empty for auto)
+- `Home_Spotlight_Media_ID`: Optional specific Media ID to spotlight on the homepage (e.g. `yt-dickinson`)
+- `Home_Spotlight_Title` / `Home_Spotlight_Description`: Headline and blurb for the homepage spotlight card when showing the Friends of Kantorei fallback state
 
 ### Tab 6: `Media` (Range: `Media!A2:F` or Live YouTube RSS Feed)
+
 Powers the public `/media` YouTube & recordings showcase (plus featured recordings on `/` and Instagram behind-the-scenes).
+
 - **YouTube RSS Primary Source**: Auto-fetches Kantorei's latest videos from `@kantoreiMN` public XML feed (`/feeds/videos.xml?channel_id=...`) with 5-minute Cloudflare edge caching ($0 quota, zero maintenance).
 - **Instagram Showcase**: Displays `@kantorei_mn` behind-the-scenes stories, rehearsal blends, and singer spotlights on `/media`.
 - **Sheet Fallback / Manual Featured Curation**:
-| Col | Header | Example Value | Specification |
-| :-- | :--- | :--- | :--- |
-| `A` | `Media_ID` | `yt-dickinson` | Unique slug/ID |
-| `B` | `Title` | `Two Dickinson Poems ("Look Back on Time")` | Recording / video title |
-| `C` | `Subtitle` | `Jonathan Posthuma · Look Back on Time Album` | Composer, album, or concert credit |
-| `D` | `YouTube_URL` | `https://www.youtube.com/watch?v=...` | Any `youtube.com/watch`, `youtu.be`, playlist, or channel URL |
-| `E` | `Category` | `Album & Lyric Video` | Badge label (`Concert Video`, `Featured Recording`, etc.) |
-| `F` | `Description` | `Performed by Kantorei...` | Optional program note |
+  | Col | Header | Example Value | Specification |
+  | :-- | :--- | :--- | :--- |
+  | `A` | `Media_ID` | `yt-dickinson` | Unique slug/ID |
+  | `B` | `Title` | `Two Dickinson Poems ("Look Back on Time")` | Recording / video title |
+  | `C` | `Subtitle` | `Jonathan Posthuma · Look Back on Time Album` | Composer, album, or concert credit |
+  | `D` | `YouTube_URL` | `https://www.youtube.com/watch?v=...` | Any `youtube.com/watch`, `youtu.be`, playlist, or channel URL |
+  | `E` | `Category` | `Album & Lyric Video` | Badge label (`Concert Video`, `Featured Recording`, etc.) |
+  | `F` | `Description` | `Performed by Kantorei...` | Optional program note |
 
 ### Tab 7: `Seating_Charts` (Range: `Seating_Charts!A2:I`)
+
 Powers visual choir formations, physical riser positions, draft/published status, and visual roll call attendance.
-| Col | Header | Example Value | Specification |
-| :-- | :--- | :--- | :--- |
-| `A` | `Chart_ID` | `chart-2026-advent-shoreview` | Unique slug/ID |
-| `B` | `Season` | `2026–2027` | Concert season identifier |
-| `C` | `Concert_Slug` | `advent-with-kantorei` | Foreign key to `Concerts.Concert_Slug` (or empty) |
-| `D` | `Title` | `Advent with Kantorei — Shoreview Sanctuary` | Display title |
-| `E` | `Description` | `4 rows on risers; Soprano/Alto stage right...` | Venue & riser layout notes |
-| `F` | `Status` | `Published` | `"Draft"` (admins/leaders only) or `"Published"` (all singers) |
-| `G` | `Layout_JSON` | `[{"rowNumber":1,"name":"Row 1",...}]` | Serialized JSON array of rows, seats, and aisles |
-| `H` | `Created_At` | `2026-10-15T12:00:00.000Z` | ISO timestamp |
-| `I` | `Updated_At` | `2026-11-01T15:30:00.000Z` | ISO timestamp |
+
+| Col | Header         | Example Value                                   | Specification                                                  |
+| :-- | :------------- | :---------------------------------------------- | :------------------------------------------------------------- |
+| `A` | `Chart_ID`     | `chart-2026-advent-shoreview`                   | Unique slug/ID                                                 |
+| `B` | `Season`       | `2026–2027`                                     | Concert season identifier                                      |
+| `C` | `Concert_Slug` | `advent-with-kantorei`                          | Foreign key to `Concerts.Concert_Slug` (or empty)              |
+| `D` | `Title`        | `Advent with Kantorei — Shoreview Sanctuary`    | Display title                                                  |
+| `E` | `Description`  | `4 rows on risers; Soprano/Alto stage right...` | Venue & riser layout notes                                     |
+| `F` | `Status`       | `Published`                                     | `"Draft"` (admins/leaders only) or `"Published"` (all singers) |
+| `G` | `Layout_JSON`  | `[{"rowNumber":1,"name":"Row 1",...}]`          | Serialized JSON array of rows, seats, and aisles               |
+| `H` | `Created_At`   | `2026-10-15T12:00:00.000Z`                      | ISO timestamp                                                  |
+| `I` | `Updated_At`   | `2026-11-01T15:30:00.000Z`                      | ISO timestamp                                                  |
 
 ### Tab 8: `Board` (Range: `Board!A2:E`)
+
 Powers the Board of Directors grid on the public `/about` page.
-| Col | Header | Example Value | Specification |
-| :-- | :--- | :--- | :--- |
-| `A` | `Name` | `Michael Campana` | Board member full display name |
-| `B` | `Role` | `President & Chair` | Officer title or role description |
-| `C` | `Order` | `1` | Integer sorting rank (ascending) |
-| `D` | `Bio_Notes` | `` | Optional internal or display note |
-| `E` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` |
+
+| Col | Header      | Example Value       | Specification                     |
+| :-- | :---------- | :------------------ | :-------------------------------- |
+| `A` | `Name`      | `Michael Campana`   | Board member full display name    |
+| `B` | `Role`      | `President & Chair` | Officer title or role description |
+| `C` | `Order`     | `1`                 | Integer sorting rank (ascending)  |
+| `D` | `Bio_Notes` | ``                  | Optional internal or display note |
+| `E` | `Active`    | `TRUE`              | `"TRUE"` or `"FALSE"`             |
 
 ### Tab 9: `Leadership` (Range: `Leadership!A2:G`)
+
 Powers the Artistic & Organizational Leadership profile cards on `/about`.
-| Col | Header | Example Value | Specification |
-| :-- | :--- | :--- | :--- |
-| `A` | `Name` | `Adam Reinwald` | Leader full display name |
-| `B` | `Title` | `Artistic & Executive Director` | Staff title |
-| `C` | `Bio` | `Appointed in 2021...` | Biography text (double newline separates paragraphs) |
-| `D` | `Order` | `1` | Integer sorting rank (ascending) |
-| `E` | `Email` | `adam.reinwald@kantorei.net` | Optional public contact email |
-| `F` | `Image_URL` | `` | Optional portrait headshot URL |
-| `G` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` |
+
+| Col | Header      | Example Value                   | Specification                                        |
+| :-- | :---------- | :------------------------------ | :--------------------------------------------------- |
+| `A` | `Name`      | `Adam Reinwald`                 | Leader full display name                             |
+| `B` | `Title`     | `Artistic & Executive Director` | Staff title                                          |
+| `C` | `Bio`       | `Appointed in 2021...`          | Biography text (double newline separates paragraphs) |
+| `D` | `Order`     | `1`                             | Integer sorting rank (ascending)                     |
+| `E` | `Email`     | `adam.reinwald@kantorei.net`    | Optional public contact email                        |
+| `F` | `Image_URL` | ``                              | Optional portrait headshot URL                       |
+| `G` | `Active`    | `TRUE`                          | `"TRUE"` or `"FALSE"`                                |
 
 ### Tab 10: `Giving_Tiers` (Range: `Giving_Tiers!A2:E`)
+
 Powers the Annual Giving Circles list on `/support`.
-| Col | Header | Example Value | Specification |
-| :-- | :--- | :--- | :--- |
-| `A` | `Tier_Name` | `Friends of Kantorei` | Name of giving circle |
-| `B` | `Amount_Range` | `$25 – $99` | Display price/contribution tier |
-| `C` | `Description` | `Supports music licensing...` | Circle impact / donor perks blurb |
-| `D` | `Order` | `1` | Integer sorting rank (ascending) |
-| `E` | `Active` | `TRUE` | `"TRUE"` or `"FALSE"` |
+
+| Col | Header         | Example Value                 | Specification                     |
+| :-- | :------------- | :---------------------------- | :-------------------------------- |
+| `A` | `Tier_Name`    | `Friends of Kantorei`         | Name of giving circle             |
+| `B` | `Amount_Range` | `$25 – $99`                   | Display price/contribution tier   |
+| `C` | `Description`  | `Supports music licensing...` | Circle impact / donor perks blurb |
+| `D` | `Order`        | `1`                           | Integer sorting rank (ascending)  |
+| `E` | `Active`       | `TRUE`                        | `"TRUE"` or `"FALSE"`             |
 
 ### Tab 11: `Subscribers` (Range: `Subscribers!A2:E`)
+
 Stores audience patrons and "Friends of Kantorei" subscribers collected from the website footer, home spotlight, ticket purchases, or auditions. Synchronized concurrently with MailerLite.
-| Col | Header | Example Value | Specification |
-| :-- | :--- | :--- | :--- |
-| `A` | `Timestamp` | `2026-11-03T20:00:00.000Z` | ISO timestamp of signup |
-| `B` | `Email` | `patron@example.com` | Subscriber email (normalized lowercase) |
-| `C` | `Name` | `Eleanor Vance` | Optional subscriber display name |
-| `D` | `Source` | `Website_Footer` | Source tag (`Website_Footer`, `Home_Page`, `Concerts_Page`, `Ticket_Tailor`) |
-| `E` | `Status` | `Active` | Dropdown: `Active`, `Unsubscribed` |
+
+| Col | Header      | Example Value              | Specification                                                                |
+| :-- | :---------- | :------------------------- | :--------------------------------------------------------------------------- |
+| `A` | `Timestamp` | `2026-11-03T20:00:00.000Z` | ISO timestamp of signup                                                      |
+| `B` | `Email`     | `patron@example.com`       | Subscriber email (normalized lowercase)                                      |
+| `C` | `Name`      | `Eleanor Vance`            | Optional subscriber display name                                             |
+| `D` | `Source`    | `Website_Footer`           | Source tag (`Website_Footer`, `Home_Page`, `Concerts_Page`, `Ticket_Tailor`) |
+| `E` | `Status`    | `Active`                   | Dropdown: `Active`, `Unsubscribed`                                           |
 
 ---
 
 ## 5. TypeScript Interfaces & Zod Schemas (`src/types/choir.ts`)
+
 Always use these strict types and row-level Zod validators across the application:
 
 ```typescript
 export type VoicePart =
-  | 'S' | 'S1' | 'S2'
-  | 'A' | 'A1' | 'A2'
-  | 'T' | 'T1' | 'T2'
-  | 'B' | 'B1' | 'B2';
-export type SectionGroup = 'Soprano' | 'Alto' | 'Tenor' | 'Bass';
-export type MemberRole = 'Singer' | 'Section_Leader' | 'Admin';
-export type AbsenceStatus = 'Absent' | 'Cleared';
+  "S" | "S1" | "S2" | "A" | "A1" | "A2" | "T" | "T1" | "T2" | "B" | "B1" | "B2";
+export type SectionGroup = "Soprano" | "Alto" | "Tenor" | "Bass";
+export type MemberRole = "Singer" | "Section_Leader" | "Admin";
+export type AbsenceStatus = "Absent" | "Cleared";
 
 export interface Singer {
   email: string; // Primary key (normalized lowercase)
@@ -302,9 +375,9 @@ export interface Singer {
 
 export interface ScheduleEvent {
   eventId: string; // Primary key
-  date: string;    // YYYY-MM-DD
+  date: string; // YYYY-MM-DD
   time: string;
-  type: 'Rehearsal' | 'Sectional' | 'Retreat' | 'Dress' | 'Concert';
+  type: "Rehearsal" | "Sectional" | "Retreat" | "Dress" | "Concert";
   title: string;
   location: string;
   snack1Name: string;
@@ -332,7 +405,7 @@ export interface ConcertEvent {
   venueAddress: string;
   description: string;
   ttEventSeriesId: string;
-  status: 'Upcoming' | 'On_Sale' | 'Past';
+  status: "Upcoming" | "On_Sale" | "Past";
   heroImageUrl?: string;
 }
 
@@ -349,7 +422,7 @@ export interface PortalConfig {
 }
 
 export interface SheetWarning {
-  tab: 'Roster' | 'Schedule' | 'Absences' | 'Concerts';
+  tab: "Roster" | "Schedule" | "Absences" | "Concerts";
   rowNumber: number;
   message: string;
 }
@@ -374,6 +447,7 @@ export interface RepertoirePiece {
 ---
 
 ## 6. Directory & Route Structure
+
 ```text
 wrangler.jsonc                      # Cloudflare Workers configuration
 astro.config.mjs                    # Astro 5 server output + Cloudflare & React integrations + Tailwind v4 Vite plugin
@@ -446,6 +520,7 @@ src/
 ## 7. Detailed Implementation Specifications
 
 ### A. Zero-Dependency Google Workspace REST Layer & `zod` Resilience (`src/lib/google.ts`)
+
 1. **Web Crypto Service Account Auth (`jose`):**
    - Import the PEM `GOOGLE_PRIVATE_KEY` (with `.replace(/\\n/g, '\n')`) using `importPKCS8` and sign a short-lived RS256 JWT assertion with `SignJWT` (`scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly'`).
    - Exchange at `https://oauth2.googleapis.com/token` and cache the resulting access token in memory/Edge cache for 50 minutes.
@@ -464,6 +539,7 @@ src/
    - When operating in Sandbox/Demo mode (`GOOGLE_MASTER_SHEET_ID` unset or `"DEMO"`), keep an in-memory mutable store seeded with realistic Kantorei sample data so claiming snacks, submitting absences, and editing the roster work interactively right out of the box!
 
 ### B. Dual Stateless Authentication & Live Roster Re-Hydration (`src/lib/auth.ts`, `src/middleware.ts`)
+
 1. **Method 1 — Google OAuth (`arctic`):**
    - `/api/auth/google` generates state + PKCE code verifier in `httpOnly` cookies and redirects to Google.
    - `/api/auth/google/callback` exchanges the code, extracts the verified Google email, verifies the singer is `active` in `getRoster()`, and sets an `httpOnly`, `Secure`, `SameSite=Lax` JWT session cookie (`kantorei_session`, 14-day expiry).
@@ -476,6 +552,7 @@ src/
    - Attaches the fresh `Singer` object to `context.locals.singer`. If a board member sets `Active = FALSE` or updates `Role` in Google Sheets, access/permissions update within 60 seconds without waiting for cookie expiration.
 
 ### C. Tablet & ForScore-Friendly Music Streaming (`src/pages/api/music/[fileId].ts`)
+
 - Choir members read scores on iPads (ForScore) and rehearse with MP3 part tracks.
 - `GET /api/music/[fileId]?name=O_Magnum_Mysterium.pdf`:
   1. Verify `context.locals.singer`.
@@ -484,10 +561,12 @@ src/
   4. Stream the `ReadableStream` response body directly through the Cloudflare Worker with `206 Partial Content` (or `200 OK`), `Accept-Ranges: bytes`, `Content-Range`, `Content-Length`, and `Content-Disposition: inline; filename="${sanitizedName}"`.
 
 ### D. Subscribable Rehearsal Calendar Feed (`src/pages/api/calendar.ics.ts`)
+
 - Generates a live RFC 5545 `text/calendar` `.ics` feed of all `Schedule` events (`VEVENT` items with `DTSTART`, `DTEND`, `SUMMARY`, `LOCATION`, `DESCRIPTION`).
 - Authenticated via a stateless HMAC query token (`?token=HMAC(AUTH_SECRET, "calendar-feed")`) rather than cookies so Apple Calendar, Google Calendar, and Outlook can poll `webcal://.../api/calendar.ics?token=...` in the background.
 
 ### E. Absence Upsert/Withdrawal & Dynamic Section Leader Routing (`src/pages/api/absences.ts`)
+
 1. Validate caller via `context.locals.singer` (only `Section_Leader` or `Admin` may submit on behalf of another singer during roll call).
 2. Upsert into `Absences!A:I` keyed by `(eventId, normalizedSingerEmail)` with `Status = 'Absent'`.
 3. `DELETE /api/absences` marks an existing row's `Status = 'Cleared'` and invalidates the `absences` cache.
@@ -495,6 +574,7 @@ src/
 5. **Sandbox Email Safeguard:** If `SANDBOX_OVERRIDE_EMAIL` is set or `PORTAL_FROM_EMAIL` includes `onboarding@resend.dev`, route `to:` to the sandbox address while listing intended recipients (`[Section Leaders, Conductor, Manager]`) at the top of the email body.
 
 ### F. Ticket Tailor "Flex Season Pass" + Givebutter Fundraising (`src/pages/concerts.astro`, `src/pages/support.astro`)
+
 1. **Top Section of `/concerts` — "Flex Season Pass (Buy Now, Pick Your Dates Later)":**
    - Clear 2-step visual guide:
      - **Step 1: Purchase Your Season Pass:** Receive your personal **Pass Code** (valid for 1 VIP admission per concert cycle + pass-holder perks).
@@ -506,6 +586,7 @@ src/
 ---
 
 ## 8. Step-by-Step Build Execution Plan
+
 1. **Phase 1 (Scaffold, Cloudflare Config, Types & Google Workspace Engine):** Initialize Astro 5 + React 19 + Tailwind CSS v4 + `@astrojs/cloudflare`, create `src/types/choir.ts` (`zod` schemas), `src/lib/cache.ts`, and `src/lib/google.ts` (Web Crypto Service Account JWT, Sheets/Drive REST API, primary-key safe mutations, and interactive in-memory Demo store).
 2. **Phase 2 (Dual Stateless Auth, Middleware & Layouts):** Build `src/lib/auth.ts` (`arctic` Google OAuth + `jose` session & 6-digit Email OTP + Dev role switcher), `src/middleware.ts`, auth API endpoints, `/login`, `PublicLayout.astro`, and `PortalLayout.astro`.
 3. **Phase 3 (Singer Portal Core Features):** Build `/portal` (Dashboard + `.ics` calendar subscription modal), `/portal/absences` + `/api/absences` + `src/lib/email.ts`, `/portal/snacks` + `/api/snacks`, `/portal/music` + `/api/music/[fileId]`, `/portal/directory`, `/portal/handbook`, and `/api/calendar.ics`.

@@ -72,6 +72,7 @@ export const demoStore: DemoStore = {
   ],
   config: {
     Choir_Name: 'Kantorei',
+    Conductor_Name: 'Adam Reinwald',
     Conductor_Email: 'adam.reinwald@kantorei.net',
     Associate_Director_Email: '',
     Manager_Email: 'maggieakhavan@gmail.com',
@@ -113,10 +114,42 @@ export const demoStore: DemoStore = {
       'Sustain choral artistry and lifelong singing in Minnesota.',
     Support_Hero_Subtitle:
       'Every contribution to Kantorei funds performances, composer commissions, recordings shared worldwide, Friends of Kantorei community programming, and keeps ensemble membership free of mandatory singer dues.',
+    Support_Gala_Title: 'Annual Kantorei Gala & Friendraisers',
     Support_Gala_Blurb:
       'Our annual Gala is Kantorei’s signature fundraising celebration—bringing singers, alumni, and patrons together for live music, hospitality, and community support. Follow us on Instagram and Facebook for upcoming Gala dates and sponsorship opportunities.',
+    Support_Matching_Title: 'Employer Matching, DAFs & Checks',
+    Support_Matching_Blurb:
+      'Kantorei welcomes corporate matching gifts (Benevity, CyberGrants, YourCause), Donor-Advised Fund grants, and gifts of appreciated securities. Contact [info@kantorei.net](mailto:info@kantorei.net) or call [612-21-SINGS (612-217-4647)](tel:+16122174647) for our EIN and delivery instructions. Checks may be mailed to 660 23rd Ave NW, Saint Paul, MN 55112.',
+    Support_Auditions_Title: 'Audition for Kantorei',
+    Support_Auditions_Blurb:
+      'Beyond financial contributions, Kantorei is sustained by the dedication and artistry of our singers. We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out our roster of singers for the coming season, rehearsing at rotating venues across the Twin Cities. Inquiries and submissions are warmly welcomed year-round. Come sing with us!',
     Tax_Exempt_Disclaimer:
       'Kantorei is a registered 501(c)(3) nonprofit arts organization in Minnesota. Contributions are tax-deductible to the fullest extent permitted by law.',
+    About_History_P1:
+      'Founded in 1988 by Dr. Axel Theimer, and now led by Adam Reinwald, Kantorei is one of the premier choral ensembles in Minnesota. With an integral focus on vocal health, Kantorei’s singers have set a standard in Minnesota for rich and effortless choral sound. Kantorei performs a wide range of mostly a cappella music from around the world. Most concerts include signature pieces complementing pieces from both well-known and emerging composers.',
+    About_History_P2:
+      'Kantorei performs primarily in Minnesota and shares recordings worldwide. Through its outreach programming, Kantorei invites audiences of all ages to share its pursuit of singing for a lifetime.',
+    Newsletter_Category: 'Friends of Kantorei',
+    Newsletter_Headline: 'Stay in tune with our season.',
+    Newsletter_Description:
+      'Receive concert announcements, early-access ticket alerts, and artistic listening guides from conductor Adam Reinwald.',
+    Newsletter_Button_Text: 'Join Free',
+    Footer_About_Blurb:
+      'Founded in 1988 by Axel Theimer and led by Artistic Director Adam Reinwald, Kantorei is one of Minnesota’s premier choral ensembles—sharing rich, effortless a cappella sound and singing for a lifetime.',
+    Home_Newsletter_Title: 'Stay in Tune with Friends of Kantorei',
+    Home_Newsletter_Description:
+      'Join our circle of patrons, alumni, and choral lovers. Get first access to concert tickets, conductor Adam Reinwald’s listening guides, and unreleased choral recordings.',
+    Concerts_Newsletter_Title: 'Never Miss a Concert Announcement',
+    Concerts_Newsletter_Description:
+      'Be the first to hear about upcoming season programs, early-access ticket sales, and guest artist appearances across the Twin Cities.',
+    No_Concerts_Title: 'No Upcoming Concerts',
+    No_Concerts_Blurb:
+      "We don't have any upcoming concerts scheduled at this time. Join our email list below to be notified as soon as new concert dates, programs, and tickets are announced.",
+    Home_Spotlight_Type: '',
+    Home_Spotlight_Media_ID: '',
+    Home_Spotlight_Title: 'Stay in Touch with Kantorei',
+    Home_Spotlight_Description:
+      "We don't have any upcoming concerts scheduled right now. Join Friends of Kantorei to receive season announcements, recording releases, and priority ticket access.",
   },
   board: [
     { name: 'Michael Campana', role: 'President', order: 1, active: true },
@@ -809,6 +842,17 @@ export const demoStore: DemoStore = {
   ],
   concerts: [
     {
+      slug: 'fall-2026-reflection',
+      title: 'Songs of Reflection & Light',
+      datesDisplay: 'Sat, October 17, 2026 7:30 PM',
+      venueName: 'Central Presbyterian Church',
+      venueAddress: 'St. Paul, MN',
+      description:
+        'A luminous evening of sacred and contemplative choral works opening our 2026–2027 season in Minnesota.',
+      ttEventSeriesId: 'DEMO_SERIES_ID',
+      status: 'On_Sale', // In the past by date -> automatically resolved to 'Past'
+    },
+    {
       slug: 'advent-with-kantorei',
       title: 'Advent with Kantorei',
       datesDisplay:
@@ -820,7 +864,8 @@ export const demoStore: DemoStore = {
         'Gather in candlelight and winter stillness for Kantorei’s beloved Advent tradition—weaving luminous a cappella carols from around the world, cherished signature works, and radiant music by contemporary and emerging composers.',
       ttEventSeriesId: 'DEMO_SERIES_ID',
       status: 'On_Sale',
-      heroImageUrl: '/images/advent-lantern.jpg',
+      heroImageUrl: '/images/advent-with-kantorei.webp',
+      posterImageUrl: '/images/advent-lantern.jpg',
     },
     {
       slug: 'spring-2027',
@@ -843,6 +888,17 @@ export const demoStore: DemoStore = {
         'Our season finale celebrating community outreach, intergenerational choral artistry, and the effortless, resonant sound that has defined Kantorei in Minnesota since 1988.',
       ttEventSeriesId: 'DEMO_SERIES_ID',
       status: 'Upcoming',
+    },
+    {
+      slug: 'summer-gala-2027',
+      title: 'Summer Choral Gala & Benefit',
+      datesDisplay: 'Sat, June 19, 2027 6:30 PM',
+      venueName: 'Twin Cities Acoustic Hall',
+      venueAddress: 'Minneapolis, MN',
+      description:
+        'An intimate benefit evening supporting Kantorei’s singer fellowship and lifelong singing programs. In-progress draft visible only to administrators.',
+      ttEventSeriesId: 'DEMO_SERIES_ID',
+      status: 'Draft',
     },
   ],
   media: [

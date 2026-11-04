@@ -453,6 +453,16 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
               </div>
 
               <div class="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+                <QuickLateNoticeModal
+                  client:load
+                  eventId={ev.eventId}
+                  eventTitle={ev.title}
+                  eventDate={ev.date}
+                  sectionGroup={singer.sectionGroup}
+                  buttonLabel={isAbsent ? 'Edit Notice' : 'Report Conflict / Late'}
+                  buttonVariant="ghost"
+                />
+
                 {(ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name) && (
                   <div class="shrink-0 rounded-lg bg-[#FAF7F2] border border-stone-200/60 px-3 py-1.5 text-xs text-stone-600 sm:text-right">
                     <span class="block text-xs font-semibold uppercase tracking-wider text-copper-600">

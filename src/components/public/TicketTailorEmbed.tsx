@@ -226,20 +226,8 @@ export default function TicketTailorEmbed({
   // 3. Pattern A: Unified Performance Cards
   // =========================================================================
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between border-b border-stone-200/80 pb-2.5">
-        <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-navy-950">
-          Performances &amp; Tickets
-        </h3>
-        <span className="text-xs text-stone-500">
-          {performancesList.length > 1
-            ? `${performancesList.length} Performances Available`
-            : 'Select Performance'}
-        </span>
-      </div>
-
-      <div className="space-y-3.5">
-        {performancesList.map((perf, idx) => {
+    <div className="space-y-3.5">
+      {performancesList.map((perf, idx) => {
           const entry = resolvedEntries[idx] || resolvedEntries[0];
           const isExternal = Boolean(entry?.isExternal);
           const isFree = Boolean(
@@ -360,38 +348,23 @@ export default function TicketTailorEmbed({
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveModalIdx(idx);
-                          setIframeLoading(true);
-                        }}
-                        className="cursor-pointer inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-copper-500 hover:bg-copper-600 px-5 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-xs transition active:scale-[0.99]"
-                      >
-                        <Ticket className="h-4 w-4" />
-                        Select Tickets
-                      </button>
-
-                      {entry?.publicUrl && (
-                        <a
-                          href={entry.publicUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-navy-950 transition"
-                        >
-                          Open box office in new tab
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
-                    </>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveModalIdx(idx);
+                        setIframeLoading(true);
+                      }}
+                      className="cursor-pointer inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-copper-500 hover:bg-copper-600 px-5 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-xs transition active:scale-[0.99]"
+                    >
+                      <Ticket className="h-4 w-4" />
+                      Select Tickets
+                    </button>
                   )}
                 </div>
               )}
             </div>
           );
         })}
-      </div>
 
       {/* =====================================================================
           4. High-Breathability Mobile & Desktop Checkout Modal Sheet
@@ -429,10 +402,10 @@ export default function TicketTailorEmbed({
                     href={activeEntry.publicUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-navy-950 px-2 py-1 rounded-md hover:bg-stone-200/50 transition"
-                    title="Open box office in new window"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-navy-950 px-2 py-1 rounded-md hover:bg-stone-200/50 transition"
+                    title="Open box office in new tab"
                   >
-                    <span>New Window</span>
+                    <span className="hidden sm:inline">New Tab</span>
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 )}

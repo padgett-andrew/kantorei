@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import { sanitizeHeroImageUrl } from './utils';
-import { processConcertDates } from './dates';
+import { processConcertDates, resolveConcertStatus } from './dates';
 import {
-  CONCERT_STATUSES,
   EVENT_TYPES,
   inferSectionGroup,
   MEMBER_ROLES,
@@ -174,17 +173,25 @@ export const ConcertRowSchema = z
     const rawStatus = row[7] || '';
     const heroImageUrl = row[8] || '';
     const boxOfficeNote = row[9] || undefined;
-
-    const normalizedStatus =
-      CONCERT_STATUSES.find(
-        (s) => s.toLowerCase() === rawStatus.replace(/\s+/g, '_').toLowerCase()
-      ) ?? 'Upcoming';
+    const posterImageUrl = row[10] || '';
 
     const { datesDisplay: processedDates, performances } = processConcertDates(
       datesDisplay,
       venueName,
       venueAddress
     );
+
+    const status = resolveConcertStatus(rawStatus, {
+      datesDisplay: processedDates || datesDisplay,
+      performances,
+    });
+
+    const heroImageSanitized = sanitizeHeroImageUrl(heroImageUrl);
+    const posterImageSanitized = sanitizeHeroImageUrl(posterImageUrl);
+
+    // If only one image format is provided, fall back gracefully to the other
+    const resolvedHeroImage = heroImageSanitized || posterImageSanitized;
+    const resolvedPosterImage = posterImageSanitized || heroImageSanitized;
 
     return {
       slug,
@@ -194,8 +201,9 @@ export const ConcertRowSchema = z
       venueAddress,
       description,
       ttEventSeriesId: ttEventSeriesId || 'DEMO_SERIES_ID',
-      status: normalizedStatus,
-      heroImageUrl: sanitizeHeroImageUrl(heroImageUrl),
+      status,
+      heroImageUrl: resolvedHeroImage,
+      posterImageUrl: resolvedPosterImage,
       performances: performances.length > 0 ? performances : undefined,
       boxOfficeNote: boxOfficeNote ? boxOfficeNote.trim() : undefined,
     };

@@ -1,4 +1,5 @@
-import type { ConcertPerformance } from '../types/choir';
+import type { ConcertPerformance, ConcertStatus } from '../types/choir';
+import { getTodayIso } from './utils';
 
 const MONTHS: Record<string, number> = {
   jan: 0,
@@ -29,6 +30,7 @@ const MONTHS: Record<string, number> = {
 
 export interface ParsedNaturalDate {
   date: Date;
+  isoDate: string;
   hasTime: boolean;
   venueHint: string;
   raw: string;
@@ -144,7 +146,8 @@ export function parseSingleNaturalDate(raw: string): ParsedNaturalDate | null {
 
     const d = new Date(year, month, day, hours, minutes);
     if (!isNaN(d.getTime())) {
-      return { date: d, hasTime, venueHint, raw: trimmed };
+      const isoDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return { date: d, isoDate, hasTime, venueHint, raw: trimmed };
     }
   }
 
@@ -298,6 +301,7 @@ export function processConcertDates(
       venueName: assignedVenue,
       venueAddress: assignedAddress,
       label: label || undefined,
+      isoDate: item.isoDate,
     };
   });
 
@@ -341,5 +345,183 @@ export function processConcertDates(
   }
 
   return { datesDisplay, performances };
+}
+
+/**
+ * Extracts a normalized YYYY-MM-DD date string from an ISO timestamp,
+ * YYYY-MM-DD string, or natural date expression.
+ * Does not include time.
+ */
+export function extractDateOnly(
+  dateOrIso?: string | null,
+  timeZone = 'America/Chicago'
+): string | null {
+  if (!dateOrIso) return null;
+  const trimmed = dateOrIso.trim();
+  if (!trimmed) return null;
+
+  // 1. Direct YYYY-MM-DD format
+  const directMatch = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.exec(trimmed);
+  if (directMatch) return trimmed;
+
+  // 2. ISO timestamp with or without time (e.g. "2026-12-19T19:30:00Z", "2026-12-19T19:30:00-06:00")
+  if (trimmed.includes('T')) {
+    try {
+      const d = new Date(trimmed);
+      if (!isNaN(d.getTime())) {
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).format(d);
+      }
+    } catch {
+      // Fallback regex
+      const match = /^(\d{4}-\d{2}-\d{2})/.exec(trimmed);
+      if (match) return match[1];
+    }
+  }
+
+  // 3. Try parsing natural date
+  const parsed = parseSingleNaturalDate(trimmed);
+  if (parsed?.isoDate) {
+    return parsed.isoDate;
+  }
+
+  // 4. Fallback search for YYYY-MM-DD substring
+  const subMatch = /\b(202\d)-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b/.exec(trimmed);
+  if (subMatch) return subMatch[0];
+
+  return null;
+}
+
+/**
+ * Computes the latest performance date (YYYY-MM-DD) for a concert across all performances
+ * and natural date strings.
+ */
+export function getConcertLatestDate(
+  concert: { datesDisplay?: string; performances?: ConcertPerformance[] },
+  timeZone = 'America/Chicago'
+): string | null {
+  const dates: string[] = [];
+
+  // Check structured performances first
+  if (concert.performances && concert.performances.length > 0) {
+    for (const p of concert.performances) {
+      if (p.isoDate && /^\d{4}-\d{2}-\d{2}$/.test(p.isoDate)) {
+        dates.push(p.isoDate);
+      } else if (p.dateDisplay) {
+        const d = extractDateOnly(p.dateDisplay, timeZone);
+        if (d) dates.push(d);
+      }
+    }
+  }
+
+  // Check datesDisplay
+  if (concert.datesDisplay) {
+    const segments = splitDateSegments(concert.datesDisplay);
+    for (const seg of segments) {
+      const d = extractDateOnly(seg, timeZone);
+      if (d) dates.push(d);
+    }
+    const isoMatches = concert.datesDisplay.matchAll(
+      /\b(202\d)-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b/g
+    );
+    for (const m of isoMatches) {
+      dates.push(m[0]);
+    }
+  }
+
+  if (dates.length === 0) return null;
+
+  dates.sort();
+  return dates[dates.length - 1];
+}
+
+/**
+ * Determines whether all performance dates for a concert have strictly passed today's calendar date.
+ * Does NOT include time so patrons buying tickets on the day of the concert (even after start time)
+ * can still view and purchase tickets.
+ */
+export function isConcertPastByDate(
+  concert: { datesDisplay?: string; performances?: ConcertPerformance[] },
+  todayIso?: string,
+  timeZone = 'America/Chicago'
+): boolean {
+  const today = todayIso || getTodayIso(timeZone);
+  const latestDate = getConcertLatestDate(concert, timeZone);
+  if (!latestDate) return false;
+  // Strictly before today's calendar date (ignoring time)
+  return latestDate < today;
+}
+
+/**
+ * Resolves the final concert status based on administrative preference, published state,
+ * and automatic date-based expiration.
+ *
+ * Rules:
+ * 1. "Draft" / "Unpublished" states are ALWAYS preserved so admins can create and edit
+ *    half-finished concerts without them showing publicly.
+ * 2. Any published concert ("Upcoming" or "On_Sale") whose calendar date has passed
+ *    automatically becomes "Past".
+ * 3. Same-day concerts (today) remain active/on sale regardless of start time.
+ */
+export function resolveConcertStatus(
+  rawStatus: string | undefined | null,
+  concert: { datesDisplay?: string; performances?: ConcertPerformance[] },
+  todayIso?: string,
+  timeZone = 'America/Chicago'
+): ConcertStatus {
+  const normalized = (rawStatus || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+
+  // 1. Blank status or explicit Draft/Unpublished state is treated as Draft so admins can create new concerts privately
+  if (!normalized) {
+    return 'Draft';
+  }
+
+  const isDraft = [
+    'draft',
+    'unpublished',
+    'unpub',
+    'private',
+    'hidden',
+    'wip',
+    'editing',
+    'review',
+    'not_published',
+  ].includes(normalized);
+  if (isDraft) {
+    return 'Draft';
+  }
+
+  // 2. Explicit past / archived status from editor
+  const isExplicitPast = ['past', 'archived', 'archive', 'closed', 'completed', 'done'].includes(
+    normalized
+  );
+  if (isExplicitPast) {
+    return 'Past';
+  }
+
+  // 3. Automatically mark past if the concert date has passed (strictly before today, ignoring time)
+  if (isConcertPastByDate(concert, todayIso, timeZone)) {
+    return 'Past';
+  }
+
+  // 4. On sale
+  const isOnSale = [
+    'on_sale',
+    'onsale',
+    'active',
+    'selling',
+    'tickets_available',
+    'available',
+  ].includes(normalized);
+  if (isOnSale) {
+    return 'On_Sale';
+  }
+
+  // 5. Default published status is Upcoming
+  return 'Upcoming';
 }
 

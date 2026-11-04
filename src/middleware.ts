@@ -18,7 +18,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     pathname.startsWith('/portal') ||
     pathname.startsWith('/api/') ||
     pathname === '/login' ||
-    pathname === '/';
+    pathname === '/' ||
+    pathname === '/concerts';
 
   if (needsAuthHydration) {
     try {

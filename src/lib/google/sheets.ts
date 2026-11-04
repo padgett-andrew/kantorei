@@ -35,7 +35,9 @@ import {
 import { fetchGoogleCalendarEvents } from './calendar';
 import { isBlankRow, padRow, readSheetValues } from './client';
 import { demoStore, type SnackClaim } from './demo-store';
-import { processConcertDates } from '../dates';
+import { interpolateAllConfig } from '../config-interpolate';
+import { processConcertDates, resolveConcertStatus } from '../dates';
+import { getTodayIso } from '../utils';
 import {
   fetchTicketTailorEvents,
   mergeAndSortConcerts,
@@ -223,32 +225,37 @@ export async function getConcertsWithWarnings(
   locals?: App.Locals
 ): Promise<{ concerts: ConcertEvent[]; warnings: SheetWarning[] }> {
   if (isSandboxSheetMode(locals)) {
+    const today = getTodayIso('America/Chicago');
     const enriched = demoStore.concerts.map((c) => {
-      if (!c.performances || c.performances.length === 0) {
-        const { datesDisplay, performances } = processConcertDates(
-          c.datesDisplay,
-          c.venueName,
-          c.venueAddress
-        );
-        return {
-          ...c,
-          datesDisplay: datesDisplay || c.datesDisplay,
-          performances: performances.length > 0 ? performances : undefined,
-        };
-      }
-      return c;
+      const { datesDisplay, performances } = processConcertDates(
+        c.datesDisplay,
+        c.venueName,
+        c.venueAddress
+      );
+      const perfs = performances.length > 0 ? performances : c.performances;
+      const status = resolveConcertStatus(
+        c.status,
+        { datesDisplay: datesDisplay || c.datesDisplay, performances: perfs },
+        today
+      );
+      return {
+        ...c,
+        datesDisplay: datesDisplay || c.datesDisplay,
+        performances: perfs,
+        status,
+      };
     });
     return { concerts: sortConcertsByDate(enriched), warnings: [] };
   }
 
   return cachedFetchJson('concerts', 60, async () => {
-    const rows = await readSheetValues('Concerts!A2:I', locals);
+    const rows = await readSheetValues('Concerts!A2:K', locals);
     const concerts: ConcertEvent[] = [];
     const warnings: SheetWarning[] = [];
 
     rows.forEach((rawRow, idx) => {
       if (isBlankRow(rawRow)) return;
-      const parsed = ConcertRowSchema.safeParse(padRow(rawRow, 9));
+      const parsed = ConcertRowSchema.safeParse(padRow(rawRow, 11));
       if (parsed.success) {
         concerts.push(parsed.data);
       } else {
@@ -331,16 +338,17 @@ export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig
   const envRepertoireFolder = getEnv('REPERTOIRE_DRIVE_FOLDER_ID', locals).trim();
 
   if (isSandboxSheetMode(locals)) {
-    return {
+    return interpolateAllConfig({
       ...demoStore.config,
       ...(envRepertoireFolder ? { Repertoire_Drive_Folder_ID: envRepertoireFolder } : {}),
-    };
+    });
   }
 
   return cachedFetchJson('config', 60, async () => {
-    const rows = await readSheetValues('Config!A2:B', locals);
+    const rows = await readSheetValues('Config!A2:C', locals);
     const map: PortalConfig = {
       Choir_Name: 'Kantorei',
+      Conductor_Name: 'Adam Reinwald',
       Conductor_Email: 'adam.reinwald@kantorei.net',
       Manager_Email: '',
       Repertoire_Drive_Folder_ID: envRepertoireFolder || '1tIPYJBkibVLjQOaGSzZ2y7L9UOTNOyJc',
@@ -364,6 +372,10 @@ export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig
         'Kantorei is an a cappella chamber choir based in the Minnesota Twin Cities. Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.',
       About_Header_Title:
         'Vocal health, effortless sound, and singing for a lifetime.',
+      About_History_P1:
+        'Founded in 1988 by Dr. Axel Theimer, and now led by Adam Reinwald, Kantorei is one of the premier choral ensembles in Minnesota. With an integral focus on vocal health, Kantorei’s singers have set a standard in Minnesota for rich and effortless choral sound. Kantorei performs a wide range of mostly a cappella music from around the world. Most concerts include signature pieces complementing pieces from both well-known and emerging composers.',
+      About_History_P2:
+        'Kantorei performs primarily in Minnesota and shares recordings worldwide. Through its outreach programming, Kantorei invites audiences of all ages to share its pursuit of singing for a lifetime.',
       Auditions_Blurb:
         'We welcome inquiries from experienced Twin Cities choral singers across all voice parts (SATB · general sections and split parts) who share our commitment to vocal health, independent preparation, and expressive a cappella ensemble singing.',
       Auditions_Timing_Note:
@@ -377,10 +389,38 @@ export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig
         'Sustain choral artistry and lifelong singing in Minnesota.',
       Support_Hero_Subtitle:
         'Every contribution to Kantorei funds performances, composer commissions, recordings shared worldwide, Friends of Kantorei community programming, and keeps ensemble membership free of mandatory singer dues.',
+      Support_Gala_Title: 'Annual Kantorei Gala & Friendraisers',
       Support_Gala_Blurb:
         'Our annual Gala is Kantorei’s signature fundraising celebration—bringing singers, alumni, and patrons together for live music, hospitality, and community support. Follow us on Instagram and Facebook for upcoming Gala dates and sponsorship opportunities.',
+      Support_Matching_Title: 'Employer Matching, DAFs & Checks',
+      Support_Matching_Blurb:
+        'Kantorei welcomes corporate matching gifts (Benevity, CyberGrants, YourCause), Donor-Advised Fund grants, and gifts of appreciated securities. Contact [info@kantorei.net](mailto:info@kantorei.net) or call [612-21-SINGS (612-217-4647)](tel:+16122174647) for our EIN and delivery instructions. Checks may be mailed to 660 23rd Ave NW, Saint Paul, MN 55112.',
+      Support_Auditions_Title: 'Audition for Kantorei',
+      Support_Auditions_Blurb:
+        'Beyond financial contributions, Kantorei is sustained by the dedication and artistry of our singers. We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out our roster of singers for the coming season, rehearsing at rotating venues across the Twin Cities. Inquiries and submissions are warmly welcomed year-round. Come sing with us!',
       Tax_Exempt_Disclaimer:
         'Kantorei is a registered 501(c)(3) nonprofit arts organization in Minnesota. Contributions are tax-deductible to the fullest extent permitted by law.',
+      Newsletter_Category: 'Friends of Kantorei',
+      Newsletter_Headline: 'Stay in tune with our season.',
+      Newsletter_Description:
+        'Receive concert announcements, early-access ticket alerts, and artistic listening guides from conductor Adam Reinwald.',
+      Newsletter_Button_Text: 'Join Free',
+      Footer_About_Blurb:
+        'Founded in 1988 by Axel Theimer and led by Artistic Director Adam Reinwald, Kantorei is one of Minnesota’s premier choral ensembles—sharing rich, effortless a cappella sound and singing for a lifetime.',
+      Home_Newsletter_Title: 'Stay in Tune with Friends of Kantorei',
+      Home_Newsletter_Description:
+        'Join our circle of patrons, alumni, and choral lovers. Get first access to concert tickets, conductor Adam Reinwald’s listening guides, and unreleased choral recordings.',
+      Concerts_Newsletter_Title: 'Never Miss a Concert Announcement',
+      Concerts_Newsletter_Description:
+        'Be the first to hear about upcoming season programs, early-access ticket sales, and guest artist appearances across the Twin Cities.',
+      No_Concerts_Title: 'No Upcoming Concerts',
+      No_Concerts_Blurb:
+        "We don't have any upcoming concerts scheduled at this time. Join our email list below to be notified as soon as new concert dates, programs, and tickets are announced.",
+      Home_Spotlight_Type: '',
+      Home_Spotlight_Media_ID: '',
+      Home_Spotlight_Title: 'Stay in Touch with Kantorei',
+      Home_Spotlight_Description:
+        "We don't have any upcoming concerts scheduled right now. Join Friends of Kantorei to receive season announcements, recording releases, and priority ticket access.",
     };
 
     for (const row of rows) {
@@ -390,7 +430,7 @@ export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig
         map[key] = val;
       }
     }
-    return map;
+    return interpolateAllConfig(map);
   });
 }
 

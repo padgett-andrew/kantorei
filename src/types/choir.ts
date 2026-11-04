@@ -9,7 +9,7 @@ export const MEMBER_ROLES = ['Singer', 'Section_Leader', 'Admin'] as const;
 export const SINGER_STATUSES = ['Active', 'On_Leave', 'Inactive'] as const;
 export const EVENT_TYPES = ['Rehearsal', 'Sectional', 'Retreat', 'Dress', 'Concert'] as const;
 export const ABSENCE_STATUSES = ['Absent', 'Late', 'Cleared'] as const;
-export const CONCERT_STATUSES = ['Upcoming', 'On_Sale', 'Past'] as const;
+export const CONCERT_STATUSES = ['Draft', 'Upcoming', 'On_Sale', 'Past'] as const;
 
 export type VoicePart = (typeof VOICE_PARTS)[number];
 export type SectionGroup = (typeof SECTION_GROUPS)[number];
@@ -101,6 +101,8 @@ export interface ConcertPerformance {
   venueName: string;
   venueAddress?: string;
   label?: string;
+  /** Normalized YYYY-MM-DD performance date for calendar calculations */
+  isoDate?: string;
 }
 
 export interface ConcertEvent {
@@ -113,6 +115,7 @@ export interface ConcertEvent {
   ttEventSeriesId: string;
   status: ConcertStatus;
   heroImageUrl?: string;
+  posterImageUrl?: string;
   performances?: ConcertPerformance[];
   boxOfficeNote?: string;
 }
@@ -128,6 +131,7 @@ export interface MediaItem {
 
 export interface PortalConfig {
   Choir_Name: string;
+  Conductor_Name?: string;
   Conductor_Email: string;
   Associate_Director_Email?: string;
   Manager_Email: string;
@@ -166,8 +170,33 @@ export interface PortalConfig {
   Auditions_Google_Form_URL?: string;
   Support_Hero_Title?: string;
   Support_Hero_Subtitle?: string;
+  Support_Gala_Title?: string;
   Support_Gala_Blurb?: string;
+  Support_Matching_Title?: string;
+  Support_Matching_Blurb?: string;
+  Support_Auditions_Title?: string;
+  Support_Auditions_Blurb?: string;
   Tax_Exempt_Disclaimer?: string;
+  // Newsletter, Email Signup & Footer Copy
+  Newsletter_Category?: string;
+  Newsletter_Headline?: string;
+  Newsletter_Description?: string;
+  Newsletter_Button_Text?: string;
+  Footer_About_Blurb?: string;
+  Home_Newsletter_Title?: string;
+  Home_Newsletter_Description?: string;
+  Concerts_Newsletter_Title?: string;
+  Concerts_Newsletter_Description?: string;
+  // Home Spotlight Control ('concert' | 'recording' | 'friends' or specific media ID)
+  Home_Spotlight_Type?: string;
+  Home_Spotlight_Media_ID?: string;
+  Home_Spotlight_Title?: string;
+  Home_Spotlight_Description?: string;
+  Spotlight_Type?: string;
+  Spotlight_Media_ID?: string;
+  // Empty State Copy for Concerts Page
+  No_Concerts_Title?: string;
+  No_Concerts_Blurb?: string;
   [key: string]: string | undefined;
 }
 

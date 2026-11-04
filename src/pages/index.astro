@@ -1,14 +1,12 @@
 ---
-import PublicLayout from '../layouts/PublicLayout.astro';
-import NewsletterForm from '../components/public/NewsletterForm';
-import LocationDirectionsButton from '../components/common/LocationDirectionsButton';
-import AddToCalendarButton from '../components/common/AddToCalendarButton';
-import { buildCleanLocationQuery } from '../lib/maps';
-import { getConcerts, getMedia, getPortalConfig } from '../lib/google';
-import {
-  extractYouTubeEmbedUrl,
-  getInstagramShowcase,
-} from '../lib/media';
+import PublicLayout from "../layouts/PublicLayout.astro";
+import NewsletterForm from "../components/public/NewsletterForm";
+import LocationDirectionsButton from "../components/common/LocationDirectionsButton";
+import AddToCalendarButton from "../components/common/AddToCalendarButton";
+import ConcertArtwork from "../components/public/ConcertArtwork.astro";
+import { buildCleanLocationQuery } from "../lib/maps";
+import { getConcerts, getMedia, getPortalConfig } from "../lib/google";
+import { extractYouTubeEmbedUrl, getInstagramShowcase } from "../lib/media";
 
 const [config, concerts, media] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -18,82 +16,164 @@ const [config, concerts, media] = await Promise.all([
 
 const instagramShowcase = await getInstagramShowcase(config);
 const featuredInstagram = instagramShowcase.posts.slice(0, 3);
-const choirName = config.Choir_Name || 'Kantorei';
-const activeConcerts = concerts.filter((c) => c.status === 'On_Sale' || c.status === 'Upcoming');
-const featuredConcert = activeConcerts[0] ?? concerts[0];
+const choirName = config.Choir_Name || "Kantorei";
+const activeConcerts = concerts.filter(
+  (c) => c.status === "On_Sale" || c.status === "Upcoming",
+);
+
+// Home Spotlight resolution
+// Can be explicitly configured via Sheet Config (Home_Spotlight_Type: 'concert' | 'recording' | 'friends')
+// or select a specific media ID via Home_Spotlight_Media_ID
+const requestedSpotlightType = (
+  config.Home_Spotlight_Type ||
+  config.Spotlight_Type ||
+  ""
+)
+  .trim()
+  .toLowerCase();
+const requestedMediaId = (
+  config.Home_Spotlight_Media_ID ||
+  config.Spotlight_Media_ID ||
+  ""
+).trim();
+
+let spotlightMode: "concert" | "recording" | "friends" = "friends";
+let spotlightConcert: (typeof concerts)[0] | null = null;
+let spotlightMedia: (typeof media)[0] | null = null;
+
+if (
+  requestedSpotlightType === "recording" ||
+  requestedSpotlightType === "media" ||
+  requestedMediaId
+) {
+  // Explicitly selected recording
+  spotlightMedia =
+    (requestedMediaId ? media.find((m) => m.id === requestedMediaId) : null) ||
+    media[0] ||
+    null;
+  if (spotlightMedia) {
+    spotlightMode = "recording";
+  } else if (activeConcerts.length > 0) {
+    spotlightMode = "concert";
+    spotlightConcert = activeConcerts[0];
+  } else {
+    spotlightMode = "friends";
+  }
+} else if (
+  requestedSpotlightType === "friends" ||
+  requestedSpotlightType === "newsletter"
+) {
+  spotlightMode = "friends";
+} else if (requestedSpotlightType === "concert") {
+  if (activeConcerts.length > 0) {
+    spotlightMode = "concert";
+    spotlightConcert = activeConcerts[0];
+  } else {
+    spotlightMode = "friends";
+  }
+} else {
+  // Default / Auto resolution:
+  // 1. If an upcoming concert is active, spotlight it
+  if (activeConcerts.length > 0) {
+    spotlightMode = "concert";
+    spotlightConcert = activeConcerts[0];
+  } else {
+    // 2. Otherwise if no concert and no other content selected, fallback to Friends of Kantorei CTA
+    spotlightMode = "friends";
+  }
+}
+
+const spotlightVideoEmbed = spotlightMedia
+  ? extractYouTubeEmbedUrl(spotlightMedia.youtubeUrl)
+  : null;
 const featuredMedia = media.slice(0, 3);
 
-const heroTagline = config.Hero_Tagline || 'Sing, Laugh, Cry. Be Real…Together.';
+const heroTagline =
+  config.Hero_Tagline || "Sing, Laugh, Cry. Be Real…Together.";
 const heroSubtitle =
   config.Hero_Subtitle ||
   `${choirName} is an a cappella chamber choir based in the Minnesota Twin Cities. Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.`;
 const missionStatement =
   config.Mission_Statement ||
-  'Expanding the worldview of artists and audiences through passionate and crafted artistic performances, partnerships, and projects.';
+  "Expanding the worldview of artists and audiences through passionate and crafted artistic performances, partnerships, and projects.";
 const visionStatement =
   config.Vision_Statement ||
-  'Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.';
+  "Fascinatingly remarkable artistic expression, inviting deep meaning and belonging.";
 
-const heroVideoRaw = (config.Hero_Video_URL || 'https://www.youtube.com/watch?v=GIvF19VzNPE').trim();
+const heroVideoRaw = (
+  config.Hero_Video_URL || "https://www.youtube.com/watch?v=GIvF19VzNPE"
+).trim();
 const heroVideo = heroVideoRaw ? extractYouTubeEmbedUrl(heroVideoRaw) : null;
-const heroBgImage = config.Hero_Image_URL || '';
-const featuredConcertImage =
-  featuredConcert?.heroImageUrl === '/images/advent-with-kantorei.webp' ||
-  featuredConcert?.slug === 'advent-with-kantorei'
-    ? '/images/advent-lantern.jpg'
-    : featuredConcert?.heroImageUrl;
+const heroBgImage = config.Hero_Image_URL || "";
 ---
 
 <PublicLayout title="Sing, Laugh, Cry — Twin Cities A Cappella Chamber Choir">
   <!-- Editorial Hero -->
-  <section class="relative flex min-h-[500px] items-center overflow-hidden bg-[#0B131E] pt-28 pb-14 text-ivory-50 sm:min-h-[560px] sm:pt-36 sm:pb-20 lg:min-h-[620px]">
-    {heroVideo?.videoId ? (
-      <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <iframe
-          src={`https://www.youtube-nocookie.com/embed/${heroVideo.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${heroVideo.videoId}&playsinline=1&rel=0&modestbranding=1&disablekb=1&iv_load_policy=3`}
-          title={`${choirName} performance`}
-          allow="autoplay; encrypted-media"
-          class="pointer-events-none select-none absolute top-1/2 left-1/2 aspect-video h-[300%] w-[300%] min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover opacity-65 filter contrast-105 saturate-100"
-          tabindex="-1"
-          aria-hidden="true"
-        />
-      </div>
-    ) : heroBgImage ? (
-      <div class="absolute inset-0 z-0">
-        <img
-          src={heroBgImage}
-          alt={`${choirName} concert`}
-          class="h-full w-full object-cover object-center"
-        />
-      </div>
-    ) : null}
+  <section
+    class="relative flex min-h-[500px] items-center overflow-hidden bg-[#0B131E] pt-28 pb-14 text-ivory-50 sm:min-h-[560px] sm:pt-36 sm:pb-20 lg:min-h-[620px]"
+  >
+    {
+      heroVideo?.videoId ? (
+        <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${heroVideo.videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${heroVideo.videoId}&playsinline=1&rel=0&modestbranding=1&disablekb=1&iv_load_policy=3`}
+            title={`${choirName} performance`}
+            allow="autoplay; encrypted-media"
+            class="pointer-events-none select-none absolute top-1/2 left-1/2 aspect-video h-[300%] w-[300%] min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover opacity-65 filter contrast-105 saturate-100"
+            tabindex="-1"
+            aria-hidden="true"
+          />
+        </div>
+      ) : heroBgImage ? (
+        <div class="absolute inset-0 z-0">
+          <img
+            src={heroBgImage}
+            alt={`${choirName} concert`}
+            class="h-full w-full object-cover object-center"
+          />
+        </div>
+      ) : null
+    }
 
     <!-- Subtle Editorial Overlays (Allows choir video to shine through clearly while protecting text contrast) -->
-    <div class="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-[#0B131E]/80 via-[#0B131E]/40 to-[#0B131E]/15"></div>
-    <div class="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-[#0B131E] via-transparent to-[#0B131E]/30"></div>
+    <div
+      class="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-[#0B131E]/80 via-[#0B131E]/40 to-[#0B131E]/15"
+    >
+    </div>
+    <div
+      class="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-[#0B131E] via-transparent to-[#0B131E]/30"
+    >
+    </div>
 
     <!-- Soft Ambient Warmth -->
     <div
       class="pointer-events-none absolute inset-0 z-0 opacity-20"
       style="background: radial-gradient(circle at 18% 30%, #b16437 0%, transparent 45%), radial-gradient(circle at 82% 70%, #2a4365 0%, transparent 55%);"
-    ></div>
+    >
+    </div>
 
     <div class="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
       <div class="max-w-3xl drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
-        <h1 class="font-editorial text-4xl sm:text-6xl md:text-7xl lg:text-[5.25rem] font-medium leading-[1.08] tracking-[-0.02em] text-white">
-          {heroTagline.includes('Be Real') ? (
-            <>
-              <span class="italic font-light">Sing, Laugh, Cry.</span>
-              <br />
-              <span class="text-gold-300 italic font-normal">Be Real</span>
-              <span class="text-ivory-100 font-normal">…Together.</span>
-            </>
-          ) : (
-            heroTagline
-          )}
+        <h1
+          class="font-editorial text-4xl sm:text-6xl md:text-7xl lg:text-[5.25rem] font-medium leading-[1.08] tracking-[-0.02em] text-white"
+        >
+          {
+            heroTagline.includes("Be Real") ? (
+              <>
+                <span class="italic font-light">Sing, Laugh, Cry.</span>
+                <br />
+                <span class="text-gold-300 italic font-normal">Be Real</span>
+                <span class="text-ivory-100 font-normal">…Together.</span>
+              </>
+            ) : (
+              heroTagline
+            )
+          }
         </h1>
 
-        <p class="mt-5 max-w-xl text-base sm:text-lg font-normal leading-relaxed text-[#E6E1DA]">
+        <p
+          class="mt-5 max-w-xl text-base sm:text-lg font-normal leading-relaxed text-[#E6E1DA]"
+        >
           {heroSubtitle}
         </p>
 
@@ -103,19 +183,31 @@ const featuredConcertImage =
             href="/concerts"
             class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-6 py-3.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.16em] text-white shadow-xs transition duration-200 hover:bg-copper-600 focus:outline-none focus:ring-2 focus:ring-copper-400 focus:ring-offset-2 focus:ring-offset-[#0B131E]"
           >
-            Concerts & Tickets
+            {
+              activeConcerts.length > 0
+                ? "Concerts & Tickets"
+                : "Concert Season"
+            }
           </a>
 
           <a
             href="/media"
             class="group inline-flex items-center gap-2.5 text-xs sm:text-sm font-medium tracking-wide text-[#E6E1DA] transition-colors duration-200 hover:text-white"
           >
-            <span class="flex h-7 w-7 items-center justify-center rounded-full border border-white/25 text-white transition-all duration-200 group-hover:border-gold-300 group-hover:bg-gold-500/20 group-hover:text-gold-200">
-              <svg class="h-3 w-3 fill-current translate-x-0.5" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 5v14l11-7z" />
+            <span
+              class="flex h-7 w-7 items-center justify-center rounded-full border border-white/25 text-white transition-all duration-200 group-hover:border-gold-300 group-hover:bg-gold-500/20 group-hover:text-gold-200"
+            >
+              <svg
+                class="h-3 w-3 fill-current translate-x-0.5"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M8 5v14l11-7z"></path>
               </svg>
             </span>
-            <span class="underline decoration-white/30 underline-offset-4 transition-colors group-hover:decoration-gold-300">
+            <span
+              class="underline decoration-white/30 underline-offset-4 transition-colors group-hover:decoration-gold-300"
+            >
               Watch & listen &rarr;
             </span>
           </a>
@@ -124,154 +216,321 @@ const featuredConcertImage =
     </div>
   </section>
 
-  <!-- Next Concert Spotlight (Bespoke Compact Editorial Card) -->
-  {featuredConcert && (
-    <section class="mx-auto -mt-6 sm:-mt-10 relative z-10 max-w-4xl px-3.5 sm:px-6">
-      <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-[#FAF7F2] shadow-sm flex flex-col md:flex-row items-stretch">
-        {featuredConcertImage && (
-          <div class="relative w-full md:w-64 lg:w-72 shrink-0 h-48 md:h-auto overflow-hidden bg-navy-950">
-            <img
-              src={featuredConcertImage}
-              alt={featuredConcert.title}
-              class="h-full w-full object-cover object-center transition-transform duration-700 ease-out hover:scale-105"
-              loading="lazy"
-            />
-          </div>
-        )}
+  <!-- Next Concert / Recording / Friends of Kantorei Spotlight (Bespoke Editorial Card) -->
+  <section
+    class="mx-auto -mt-6 sm:-mt-10 relative z-10 max-w-4xl px-3.5 sm:px-6"
+  >
+    {
+      spotlightMode === "concert" && spotlightConcert && (
+        <div class="rounded-2xl border border-stone-200/90 bg-[#FAF7F2] p-5 sm:p-7 shadow-sm">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-7 items-center">
+            {/* Left Column: 16:9 Artwork + Action Buttons */}
+            <div class="md:col-span-5 flex flex-col justify-between space-y-4">
+              {(spotlightConcert.heroImageUrl ||
+                spotlightConcert.posterImageUrl) && (
+                <ConcertArtwork
+                  heroImageUrl={spotlightConcert.heroImageUrl}
+                  posterImageUrl={spotlightConcert.posterImageUrl}
+                  title={spotlightConcert.title}
+                  aspectRatio="aspect-video w-full"
+                  class="rounded-xl shadow-xs"
+                  loading="eager"
+                />
+              )}
 
-        <div class="p-4 sm:p-7 flex-1 flex flex-col justify-between">
-          <div>
-            <!-- Single clean line of small uppercase text in warm copper accent color -->
-            <p class="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-copper-600">
-              Next Performance &bull; {featuredConcert.status === 'On_Sale' ? 'Tickets Available' : 'Upcoming Season'}
-            </p>
+              {/* Desktop Action Buttons (Placed directly underneath artwork for perfect height balance) */}
+              <div class="hidden md:flex flex-col gap-2.5 pt-0.5">
+                <a
+                  href={`/concerts#${spotlightConcert.slug}`}
+                  class="w-full inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"
+                >
+                  Reserve Tickets &rarr;
+                </a>
+                <a
+                  href="/concerts"
+                  class="text-center text-xs font-medium uppercase tracking-[0.14em] text-stone-600 underline decoration-stone-300 underline-offset-4 hover:text-navy-950 hover:decoration-copper-500 transition-colors py-0.5"
+                >
+                  View Season &rarr;
+                </a>
+              </div>
+            </div>
 
-            <h2 class="mt-1.5 font-editorial text-2xl sm:text-3xl lg:text-4xl font-medium leading-snug tracking-tight text-navy-950">
-              {featuredConcert.title}
-            </h2>
+            {/* Right Column: Editorial Details & Performance Itinerary */}
+            <div class="md:col-span-7 flex flex-col justify-between">
+              <div>
+                {/* Single clean line of small uppercase text in warm copper accent color */}
+                <p class="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-copper-600">
+                  Next Performance &bull;{" "}
+                  {spotlightConcert.status === "On_Sale"
+                    ? "Tickets Available"
+                    : "Upcoming Season"}
+                </p>
 
-            <p class="mt-2.5 text-sm sm:text-base leading-relaxed text-stone-700 line-clamp-3">
-              {featuredConcert.description}
-            </p>
+                <h2 class="mt-1.5 font-editorial text-2xl sm:text-3xl lg:text-4xl font-medium leading-snug tracking-tight text-navy-950">
+                  {spotlightConcert.title}
+                </h2>
 
-            <!-- Vertical Performance Itinerary -->
-            {featuredConcert.performances && featuredConcert.performances.length > 1 ? (
-              <div class="mt-4 space-y-3.5 border-t border-b border-stone-200/70 py-3.5">
-                {featuredConcert.performances.map((perf, pIdx) => (
-                  <div class={pIdx > 0 ? 'border-t border-stone-200/50 pt-3.5' : ''}>
+                <p class="mt-2 text-sm sm:text-base leading-relaxed text-stone-700 line-clamp-3">
+                  {spotlightConcert.description}
+                </p>
+
+                {/* Vertical Performance Itinerary */}
+                {spotlightConcert.performances &&
+                spotlightConcert.performances.length > 1 ? (
+                  <div class="mt-4 space-y-3.5 border-t border-b border-stone-200/70 py-3.5">
+                    {spotlightConcert.performances.map((perf, pIdx) => (
+                      <div
+                        class={
+                          pIdx > 0 ? "border-t border-stone-200/50 pt-3.5" : ""
+                        }
+                      >
+                        <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5 sm:gap-2">
+                          <h3 class="font-serif font-semibold text-navy-950 text-base sm:text-lg leading-snug">
+                            {perf.dateDisplay}
+                          </h3>
+                          <div class="shrink-0">
+                            <AddToCalendarButton
+                              client:load
+                              title={spotlightConcert.title}
+                              description={spotlightConcert.description}
+                              dateStr={perf.dateDisplay}
+                              location={buildCleanLocationQuery(
+                                perf.venueName,
+                                perf.venueAddress,
+                              )}
+                              venueName={perf.venueName}
+                              venueAddress={perf.venueAddress}
+                              label="+ Calendar"
+                              variant="inline"
+                              align="right"
+                            />
+                          </div>
+                        </div>
+                        <div class="mt-1">
+                          <LocationDirectionsButton
+                            client:load
+                            location={buildCleanLocationQuery(
+                              perf.venueName,
+                              perf.venueAddress,
+                            )}
+                            venueName={perf.venueName}
+                            variant="inline"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div class="mt-4 border-t border-b border-stone-200/70 py-3.5 space-y-2">
                     <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5 sm:gap-2">
                       <h3 class="font-serif font-semibold text-navy-950 text-base sm:text-lg leading-snug">
-                        {perf.dateDisplay}
+                        {spotlightConcert.datesDisplay}
                       </h3>
                       <div class="shrink-0">
                         <AddToCalendarButton
                           client:load
-                          title={featuredConcert.title}
-                          description={featuredConcert.description}
-                          dateStr={perf.dateDisplay}
-                          location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
-                          venueName={perf.venueName}
-                          venueAddress={perf.venueAddress}
+                          title={spotlightConcert.title}
+                          description={spotlightConcert.description}
+                          dateStr={spotlightConcert.datesDisplay}
+                          location={buildCleanLocationQuery(
+                            spotlightConcert.venueName,
+                            spotlightConcert.venueAddress,
+                          )}
+                          venueName={spotlightConcert.venueName}
+                          venueAddress={spotlightConcert.venueAddress}
                           label="+ Calendar"
                           variant="inline"
                           align="right"
                         />
                       </div>
                     </div>
-                    <div class="mt-1">
-                      <LocationDirectionsButton
-                        client:load
-                        location={buildCleanLocationQuery(perf.venueName, perf.venueAddress)}
-                        venueName={perf.venueName}
-                        variant="inline"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div class="mt-4 border-t border-b border-stone-200/70 py-3.5 space-y-2">
-                <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1.5 sm:gap-2">
-                  <h3 class="font-serif font-semibold text-navy-950 text-base sm:text-lg leading-snug">
-                    {featuredConcert.datesDisplay}
-                  </h3>
-                  <div class="shrink-0">
-                    <AddToCalendarButton
-                      client:load
-                      title={featuredConcert.title}
-                      description={featuredConcert.description}
-                      dateStr={featuredConcert.datesDisplay}
-                      location={buildCleanLocationQuery(featuredConcert.venueName, featuredConcert.venueAddress)}
-                      venueName={featuredConcert.venueName}
-                      venueAddress={featuredConcert.venueAddress}
-                      label="+ Calendar"
-                      variant="inline"
-                      align="right"
-                    />
-                  </div>
-                </div>
-                {featuredConcert.venueName && (
-                  <div class="mt-1">
-                    <LocationDirectionsButton
-                      client:load
-                      location={buildCleanLocationQuery(featuredConcert.venueName, featuredConcert.venueAddress)}
-                      venueName={featuredConcert.venueName}
-                      variant="inline"
-                    />
+                    {spotlightConcert.venueName && (
+                      <div class="mt-1">
+                        <LocationDirectionsButton
+                          client:load
+                          location={buildCleanLocationQuery(
+                            spotlightConcert.venueName,
+                            spotlightConcert.venueAddress,
+                          )}
+                          venueName={spotlightConcert.venueName}
+                          variant="inline"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          <div class="mt-6 flex flex-wrap items-center gap-4 sm:gap-5">
-            <a
-              href={`/concerts#${featuredConcert.slug}`}
-              class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"
-            >
-              Reserve Tickets &rarr;
-            </a>
-            <a
-              href="/concerts"
-              class="text-xs sm:text-sm font-medium uppercase tracking-[0.14em] text-stone-600 underline decoration-stone-300 underline-offset-4 hover:text-navy-950 hover:decoration-copper-500 transition-colors"
-            >
-              View Season &rarr;
-            </a>
+              {/* Mobile Action Buttons (Displayed after details on mobile) */}
+              <div class="mt-5 flex md:hidden flex-wrap items-center gap-4">
+                <a
+                  href={`/concerts#${spotlightConcert.slug}`}
+                  class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"
+                >
+                  Reserve Tickets &rarr;
+                </a>
+                <a
+                  href="/concerts"
+                  class="text-xs sm:text-sm font-medium uppercase tracking-[0.14em] text-stone-600 underline decoration-stone-300 underline-offset-4 hover:text-navy-950 hover:decoration-copper-500 transition-colors"
+                >
+                  View Season &rarr;
+                </a>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
-  )}
+      )
+    }
+
+    {
+      spotlightMode === "recording" && spotlightMedia && (
+        <div class="overflow-hidden rounded-2xl border border-stone-200/90 bg-[#FAF7F2] shadow-sm">
+          <div class="grid gap-0 md:grid-cols-12 md:items-center">
+            <div class="md:col-span-5 bg-navy-950">
+              {spotlightVideoEmbed?.embedUrl ? (
+                <div class="aspect-video w-full">
+                  <iframe
+                    src={spotlightVideoEmbed.embedUrl}
+                    title={spotlightMedia.title}
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    class="h-full w-full border-0"
+                  />
+                </div>
+              ) : (
+                <a
+                  href={spotlightMedia.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="group relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden p-6 text-center text-white"
+                >
+                  <span class="relative flex h-12 w-12 items-center justify-center rounded-full bg-gold-500 text-white shadow-lg transition group-hover:scale-105">
+                    <svg
+                      class="ml-0.5 h-5 w-5 fill-current"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                  <span class="relative mt-2 text-xs font-semibold uppercase tracking-widest text-gold-300">
+                    Watch on YouTube ↗
+                  </span>
+                </a>
+              )}
+            </div>
+
+            <div class="p-5 sm:p-7 lg:p-8 md:col-span-7 flex flex-col justify-between">
+              <div>
+                <p class="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-copper-600">
+                  Featured Recording &bull;{" "}
+                  {spotlightMedia.category || "Listen & Watch"}
+                </p>
+
+                <h2 class="mt-1.5 font-editorial text-2xl sm:text-3xl lg:text-4xl font-medium leading-snug tracking-tight text-navy-950">
+                  {spotlightMedia.title}
+                </h2>
+
+                {spotlightMedia.subtitle && (
+                  <p class="mt-1 text-sm font-medium text-stone-600">
+                    {spotlightMedia.subtitle}
+                  </p>
+                )}
+
+                {spotlightMedia.description && (
+                  <p class="mt-2.5 text-sm sm:text-base leading-relaxed text-stone-700 line-clamp-3">
+                    {spotlightMedia.description}
+                  </p>
+                )}
+              </div>
+
+              <div class="mt-6 flex flex-wrap items-center gap-4 sm:gap-5">
+                <a
+                  href={spotlightMedia.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"
+                >
+                  Watch on YouTube ↗
+                </a>
+                <a
+                  href="/media"
+                  class="text-xs sm:text-sm font-medium uppercase tracking-[0.14em] text-stone-600 underline decoration-stone-300 underline-offset-4 hover:text-navy-950 hover:decoration-copper-500 transition-colors"
+                >
+                  Explore Media Library &rarr;
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    {
+      spotlightMode === "friends" && (
+        <NewsletterForm
+          client:load
+          variant="spotlight"
+          source="Home_Spotlight_Fallback"
+          title={config.Home_Spotlight_Title || "Stay in Touch with Kantorei"}
+          description={
+            config.Home_Spotlight_Description ||
+            "We don't have any upcoming concerts scheduled right now. Join Friends of Kantorei to receive season announcements, recording releases, and priority ticket access."
+          }
+          buttonText={
+            config.Newsletter_Button_Text || "Join Friends of Kantorei"
+          }
+        />
+      )
+    }
+  </section>
 
   <!-- Ensemble Identity & Mission -->
   <section class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
     <div class="grid gap-12 lg:grid-cols-12 lg:items-center">
       <div class="lg:col-span-7 space-y-4">
-        <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
+        <span
+          class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500"
+        >
           Who We Are
         </span>
         <h2 class="font-editorial text-4xl font-bold text-navy-950 sm:text-5xl">
           {visionStatement}
         </h2>
         <p class="text-base leading-relaxed text-zinc-700 sm:text-lg">
-          Founded in 1988 by Axel Theimer and led today by Artistic Director Adam Reinwald, {choirName} brings together passionate artists and audiences through choral singing from around the world.
+          {
+            config.Footer_About_Blurb ||
+              `Founded in 1988 by Axel Theimer and led today by Artistic Director Adam Reinwald, ${choirName} brings together passionate artists and audiences through choral singing from around the world.`
+          }
         </p>
 
         <!-- Official Mission & Vision Statements -->
         <div class="mt-6 grid gap-4 pt-2 sm:grid-cols-2">
-          <div class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6">
-            <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
+          <div
+            class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6"
+          >
+            <span
+              class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500"
+            >
               Our Vision
             </span>
-            <p class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950">
+            <p
+              class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950"
+            >
               {visionStatement}
             </p>
           </div>
-          <div class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6">
-            <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
+          <div
+            class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6"
+          >
+            <span
+              class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500"
+            >
               Our Mission
             </span>
-            <p class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950">
+            <p
+              class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950"
+            >
               {missionStatement}
             </p>
           </div>
@@ -295,20 +554,30 @@ const featuredConcertImage =
 
       <div class="flex flex-col gap-4 lg:col-span-5">
         <div class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6">
-          <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
+          <span
+            class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500"
+          >
             Global Repertoire
           </span>
-          <p class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950">
-            Signature choral works paired with music from well-known and emerging composers.
+          <p
+            class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950"
+          >
+            Signature choral works paired with music from well-known and
+            emerging composers.
           </p>
         </div>
 
         <div class="rounded-2xl border border-zinc-200 bg-ivory-100 p-5 sm:p-6">
-          <span class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500">
+          <span
+            class="text-xs font-bold uppercase tracking-[0.18em] text-gold-500"
+          >
             Vocal Health & Outreach
           </span>
-          <p class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950">
-            Inviting singers and audiences of all ages to share the pursuit of singing for a lifetime.
+          <p
+            class="mt-2 font-editorial text-xl font-bold leading-snug text-navy-950"
+          >
+            Inviting singers and audiences of all ages to share the pursuit of
+            singing for a lifetime.
           </p>
         </div>
       </div>
@@ -320,14 +589,19 @@ const featuredConcertImage =
     <div class="mx-auto max-w-6xl px-4 sm:px-6">
       <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <span class="text-xs font-semibold uppercase tracking-[0.18em] text-pink-600">
+          <span
+            class="text-xs font-semibold uppercase tracking-[0.18em] text-pink-600"
+          >
             Instagram Feed · {instagramShowcase.handle}
           </span>
-          <h2 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+          <h2
+            class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl"
+          >
             Behind the Scenes with {choirName}
           </h2>
           <p class="mt-1.5 text-xs text-zinc-600 sm:text-sm">
-            Recent rehearsal blends, singer spotlights, and community concert updates.
+            Recent rehearsal blends, singer spotlights, and community concert
+            updates.
           </p>
         </div>
         <a
@@ -342,27 +616,29 @@ const featuredConcertImage =
 
       <!-- Vertical Flowing Grid of Captioned Instagram Posts -->
       <div class="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3 items-start">
-        {featuredInstagram.map((post) => (
-          <div class="w-full flex justify-center">
-            <blockquote
-              class="instagram-media w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs"
-              data-instgrm-captioned
-              data-instgrm-permalink={`https://www.instagram.com/p/${post.shortcode}/?utm_source=ig_embed&amp;utm_campaign=loading`}
-              data-instgrm-version="14"
-              style="margin: 0; min-width: 280px; max-width: 100%; width: 100%;"
-            >
-              <iframe
-                src={`https://www.instagram.com/p/${post.shortcode}/embed/captioned/`}
-                title={`Instagram post from ${instagramShowcase.handle}`}
-                loading="lazy"
-                allowtransparency="true"
-                allow="encrypted-media"
-                class="w-full border-0 overflow-hidden rounded-2xl"
-                style="min-height: 640px; height: 680px;"
-              />
-            </blockquote>
-          </div>
-        ))}
+        {
+          featuredInstagram.map((post) => (
+            <div class="w-full flex justify-center">
+              <blockquote
+                class="instagram-media w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs"
+                data-instgrm-captioned
+                data-instgrm-permalink={`https://www.instagram.com/p/${post.shortcode}/?utm_source=ig_embed&amp;utm_campaign=loading`}
+                data-instgrm-version="14"
+                style="margin: 0; min-width: 280px; max-width: 100%; width: 100%;"
+              >
+                <iframe
+                  src={`https://www.instagram.com/p/${post.shortcode}/embed/captioned/`}
+                  title={`Instagram post from ${instagramShowcase.handle}`}
+                  loading="lazy"
+                  allowtransparency="true"
+                  allow="encrypted-media"
+                  class="w-full border-0 overflow-hidden rounded-2xl"
+                  style="min-height: 640px; height: 680px;"
+                />
+              </blockquote>
+            </div>
+          ))
+        }
       </div>
     </div>
   </section>
@@ -372,14 +648,19 @@ const featuredConcertImage =
     <div class="mx-auto max-w-6xl px-4 sm:px-6">
       <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <span class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500">
+          <span
+            class="text-xs font-semibold uppercase tracking-[0.18em] text-gold-500"
+          >
             Recordings Shared Worldwide
           </span>
-          <h2 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+          <h2
+            class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl"
+          >
             Watch & Listen to {choirName}
           </h2>
           <p class="mt-1.5 text-xs text-zinc-600 sm:text-sm">
-            Studio recordings and signature a cappella performances shared from Minnesota.
+            Studio recordings and signature a cappella performances shared from
+            Minnesota.
           </p>
         </div>
         <a
@@ -391,72 +672,79 @@ const featuredConcertImage =
       </div>
 
       <div class="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {featuredMedia.map((item) => {
-          const { embedUrl } = extractYouTubeEmbedUrl(item.youtubeUrl);
+        {
+          featuredMedia.map((item) => {
+            const { embedUrl } = extractYouTubeEmbedUrl(item.youtubeUrl);
 
-          return (
-            <article class="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs transition hover:border-gold-400/60 hover:shadow-md">
-              {embedUrl ? (
-                <div class="aspect-video w-full bg-navy-950">
-                  <iframe
-                    src={embedUrl}
-                    title={item.title}
-                    loading="lazy"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowfullscreen
-                    class="h-full w-full border-0"
-                  />
-                </div>
-              ) : (
-                <a
-                  href={item.youtubeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="group relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden bg-navy-950 p-6 text-center text-white"
-                >
-                  <span class="relative flex h-12 w-12 items-center justify-center rounded-full bg-gold-500 text-white shadow-lg">
-                    <svg class="ml-0.5 h-5 w-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </span>
-                  <span class="relative mt-2 text-xs font-semibold uppercase tracking-widest text-gold-300">
-                    Watch on YouTube ↗
-                  </span>
-                </a>
-              )}
-
-              <div class="flex flex-1 flex-col justify-between p-6 sm:p-7">
-                <div>
-                  <span class="inline-block rounded-sm bg-copper-100/80 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.16em] text-copper-700">
-                    {item.category}
-                  </span>
-                  <h3 class="mt-2.5 font-editorial text-2xl font-bold text-navy-950 leading-snug">
-                    {item.title}
-                  </h3>
-                  {item.subtitle && (
-                    <p class="mt-1 text-sm font-medium text-stone-600">{item.subtitle}</p>
-                  )}
-                  {item.description && (
-                    <p class="mt-3 text-sm sm:text-base leading-relaxed text-stone-600 line-clamp-2">
-                      {item.description}
-                    </p>
-                  )}
-                </div>
-
-                <div class="mt-5 border-t border-stone-200/70 pt-3.5">
+            return (
+              <article class="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs transition hover:border-gold-400/60 hover:shadow-md">
+                {embedUrl ? (
+                  <div class="aspect-video w-full bg-navy-950">
+                    <iframe
+                      src={embedUrl}
+                      title={item.title}
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowfullscreen
+                      class="h-full w-full border-0"
+                    />
+                  </div>
+                ) : (
                   <a
                     href={item.youtubeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-copper-600 hover:text-navy-950 transition-colors"
+                    class="group relative flex aspect-video w-full flex-col items-center justify-center overflow-hidden bg-navy-950 p-6 text-center text-white"
                   >
-                    Open on YouTube ↗
+                    <span class="relative flex h-12 w-12 items-center justify-center rounded-full bg-gold-500 text-white shadow-lg">
+                      <svg
+                        class="ml-0.5 h-5 w-5 fill-current"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </span>
+                    <span class="relative mt-2 text-xs font-semibold uppercase tracking-widest text-gold-300">
+                      Watch on YouTube ↗
+                    </span>
                   </a>
+                )}
+
+                <div class="flex flex-1 flex-col justify-between p-6 sm:p-7">
+                  <div>
+                    <span class="inline-block rounded-sm bg-copper-100/80 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.16em] text-copper-700">
+                      {item.category}
+                    </span>
+                    <h3 class="mt-2.5 font-editorial text-2xl font-bold text-navy-950 leading-snug">
+                      {item.title}
+                    </h3>
+                    {item.subtitle && (
+                      <p class="mt-1 text-sm font-medium text-stone-600">
+                        {item.subtitle}
+                      </p>
+                    )}
+                    {item.description && (
+                      <p class="mt-3 text-sm sm:text-base leading-relaxed text-stone-600 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div class="mt-5 border-t border-stone-200/70 pt-3.5">
+                    <a
+                      href={item.youtubeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-copper-600 hover:text-navy-950 transition-colors"
+                    >
+                      Open on YouTube ↗
+                    </a>
+                  </div>
                 </div>
-              </div>
-            </article>
-          );
-        })}
+              </article>
+            );
+          })
+        }
       </div>
     </div>
   </section>
@@ -471,22 +759,33 @@ const featuredConcertImage =
         client:visible
         variant="banner"
         source="Home_Page"
-        title="Stay in Tune with Friends of Kantorei"
-        description="Join our circle of patrons, alumni, and choral lovers. Get first access to concert tickets, conductor Adam Reinwald’s listening guides, and unreleased choral recordings."
-        buttonText="Join Friends of Kantorei"
+        title={config.Home_Newsletter_Title ||
+          config.Newsletter_Headline ||
+          "Stay in Tune with Friends of Kantorei"}
+        description={config.Home_Newsletter_Description ||
+          config.Newsletter_Description ||
+          "Join our circle of patrons, alumni, and choral lovers. Get first access to concert tickets, conductor Adam Reinwald’s listening guides, and unreleased choral recordings."}
+        buttonText={config.Newsletter_Button_Text || "Join Friends of Kantorei"}
       />
     </div>
   </section>
 
   <!-- Tax-Deductible Patronage CTA -->
   <section class="border-t border-stone-200/80 bg-ivory-100/90 py-16">
-    <div class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 sm:px-6 md:flex-row md:items-center">
+    <div
+      class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 sm:px-6 md:flex-row md:items-center"
+    >
       <div class="max-w-2xl">
-        <span class="text-xs font-semibold uppercase tracking-[0.18em] text-copper-600">
+        <span
+          class="text-xs font-semibold uppercase tracking-[0.18em] text-copper-600"
+        >
           501(c)(3) Nonprofit Ensemble
         </span>
-        <h2 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
-          Help sustain {choirName}’s concerts, recordings, and community outreach.
+        <h2
+          class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl"
+        >
+          Help sustain {choirName}’s concerts, recordings, and community
+          outreach.
         </h2>
       </div>
       <a
@@ -501,16 +800,26 @@ const featuredConcertImage =
   <!-- Sing With Us / Auditions Callout (Bottom of Home Page) -->
   <section class="border-t border-stone-200/80 bg-white py-14 sm:py-16">
     <div class="mx-auto max-w-6xl px-4 sm:px-6">
-      <div class="flex flex-col items-start justify-between gap-6 rounded-2xl border border-stone-200/80 bg-[#FAF7F2] p-7 sm:flex-row sm:items-center sm:p-10">
+      <div
+        class="flex flex-col items-start justify-between gap-6 rounded-2xl border border-stone-200/80 bg-[#FAF7F2] p-7 sm:flex-row sm:items-center sm:p-10"
+      >
         <div class="max-w-2xl">
-          <span class="text-xs font-semibold uppercase tracking-[0.18em] text-copper-600">
+          <span
+            class="text-xs font-semibold uppercase tracking-[0.18em] text-copper-600"
+          >
             Sing With Us
           </span>
-          <h2 class="mt-1 font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
+          <h2
+            class="mt-1 font-editorial text-2xl font-bold text-navy-950 sm:text-3xl"
+          >
             Interested in auditioning for {choirName}?
           </h2>
           <p class="mt-2 text-sm sm:text-base leading-relaxed text-stone-600">
-            We hold auditions in the Spring (usually mid-May) and the Fall (mid-August) to fill out a roster of singers for the coming season. Kantorei rehearses Sunday evenings at rotating venues across the Twin Cities metro area. Inquiries and submissions are warmly welcomed year-round. Come sing with us!
+            We hold auditions in the Spring (usually mid-May) and the Fall
+            (mid-August) to fill out a roster of singers for the coming season.
+            Kantorei rehearses Sunday evenings at rotating venues across the
+            Twin Cities metro area. Inquiries and submissions are warmly
+            welcomed year-round. Come sing with us!
           </p>
         </div>
         <div class="flex shrink-0 flex-wrap items-center gap-4">
