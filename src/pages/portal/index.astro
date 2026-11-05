@@ -396,7 +396,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
             Ensemble rehearsal calls, dress rehearsals, and concert times
           </p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           {isAdmin && (
             <CalendarAdminControls client:load calendarId={calendarId} />
           )}

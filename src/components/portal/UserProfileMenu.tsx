@@ -120,7 +120,7 @@ export default function UserProfileMenu({
         <div
           role="menu"
           aria-orientation="vertical"
-          className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border border-white/15 bg-[#0e1726]/95 backdrop-blur-md p-2.5 text-stone-200 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100"
+          className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-[#0e1726]/95 backdrop-blur-md p-2.5 text-stone-200 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100"
         >
           {/* Identity Header Card */}
           <div className="flex items-start gap-3 rounded-xl bg-white/5 p-3">

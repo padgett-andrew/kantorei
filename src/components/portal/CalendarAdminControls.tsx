@@ -34,26 +34,27 @@ export default function CalendarAdminControls({ calendarId }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5">
       <a
         href={calendarUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+        className="inline-flex max-w-full items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
         title="Open official ensemble Google Calendar"
       >
-        <ExternalLink className="h-3.5 w-3.5 text-gold-500" />
-        <span>Open Google Calendar</span>
+        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-gold-500" />
+        <span className="hidden sm:inline">Open Google Calendar</span>
+        <span className="sm:hidden">Google Cal</span>
       </a>
 
       <button
         type="button"
         onClick={handleSync}
         disabled={syncing}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-2xs transition hover:border-navy-900 hover:text-navy-950 disabled:opacity-60"
+        className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-2xs transition hover:border-navy-900 hover:text-navy-950 disabled:opacity-60"
         title="Refresh schedule from Google Calendar"
       >
-        <RefreshCw className={cn('h-3.5 w-3.5 text-zinc-500', syncing && 'animate-spin')} />
+        <RefreshCw className={cn('h-3.5 w-3.5 shrink-0 text-zinc-500', syncing && 'animate-spin')} />
         <span>{syncing ? 'Syncing…' : synced ? 'Synced!' : 'Sync'}</span>
       </button>
     </div>

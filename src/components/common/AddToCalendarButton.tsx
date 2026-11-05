@@ -54,19 +54,55 @@ export default function AddToCalendarButton({
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [placement, setPlacement] = useState<'bottom' | 'top'>('bottom');
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const [downloaded, setDownloaded] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   function handleToggle() {
     if (!isOpen && menuRef.current) {
       const rect = menuRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const menuWidth = 264; // w-64 is 256px + borders/padding
+
+      // Vertical placement
+      const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
-      if (spaceBelow < 260 && spaceAbove > 220) {
+      if (spaceBelow < 270 && spaceAbove > 220) {
         setPlacement('top');
       } else {
         setPlacement('bottom');
       }
+
+      // Horizontal placement: dynamically ensure the menu NEVER overflows the viewport on mobile
+      const style: React.CSSProperties = {};
+
+      if (
+        viewportWidth < 340 ||
+        (rect.left + menuWidth > viewportWidth - 12 && rect.right - menuWidth < 12)
+      ) {
+        // Center relative to viewport on tiny screens
+        const targetScreenLeft = Math.max(
+          12,
+          Math.floor((viewportWidth - Math.min(menuWidth, viewportWidth - 24)) / 2)
+        );
+        style.left = `${targetScreenLeft - rect.left}px`;
+      } else if (align === 'right' || rect.left + menuWidth > viewportWidth - 12) {
+        if (rect.right - menuWidth >= 12) {
+          style.right = 0;
+        } else {
+          const offset = 12 - (rect.right - menuWidth);
+          style.right = `-${offset}px`;
+        }
+      } else {
+        if (rect.left >= 12) {
+          style.left = 0;
+        } else {
+          style.left = `${12 - rect.left}px`;
+        }
+      }
+
+      setMenuStyle(style);
     }
     setIsOpen((v) => !v);
   }
@@ -186,16 +222,16 @@ export default function AddToCalendarButton({
   }
 
   const triggerClasses = {
-    pill: 'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-semibold text-stone-700 shadow-2xs transition hover:border-gold-400 hover:text-navy-950',
+    pill: 'inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-semibold text-stone-700 shadow-2xs transition hover:border-gold-400 hover:text-navy-950',
     badge:
-      'inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1 text-xs sm:text-sm font-medium text-stone-700 transition hover:bg-stone-100 hover:text-navy-950',
+      'inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1 text-xs sm:text-sm font-medium text-stone-700 transition hover:bg-stone-100 hover:text-navy-950',
     inline:
-      'group inline-flex cursor-pointer items-center gap-1.5 text-xs sm:text-sm font-semibold text-stone-700 transition hover:text-navy-950 focus:outline-none focus:ring-1 focus:ring-copper-400 rounded-md py-0.5 px-1 -mx-1',
-    dark: 'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-white/20 bg-navy-900/80 px-3 py-1 text-xs sm:text-sm font-semibold text-ivory-50 shadow-2xs transition hover:border-gold-400 hover:text-gold-300',
+      'group inline-flex max-w-full cursor-pointer items-center gap-1.5 text-xs sm:text-sm font-semibold text-stone-700 transition hover:text-navy-950 focus:outline-none focus:ring-1 focus:ring-copper-400 rounded-md py-0.5 px-1 -mx-1',
+    dark: 'inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-white/20 bg-navy-900/80 px-3 py-1 text-xs sm:text-sm font-semibold text-ivory-50 shadow-2xs transition hover:border-gold-400 hover:text-gold-300',
   }[variant];
 
   return (
-    <div ref={menuRef} className={`relative inline-block text-left ${className}`}>
+    <div ref={menuRef} className={`relative inline-block max-w-full text-left ${className}`}>
       <button
         type="button"
         onClick={handleToggle}
@@ -226,15 +262,12 @@ export default function AddToCalendarButton({
         <div
           role="menu"
           aria-orientation="vertical"
+          style={menuStyle}
           className={`absolute ${
-            align === 'left'
-              ? placement === 'top'
-                ? 'left-0 bottom-full mb-1.5 origin-bottom-left'
-                : 'left-0 top-full mt-1.5 origin-top-left'
-              : placement === 'top'
-              ? 'right-0 bottom-full mb-1.5 origin-bottom-right'
-              : 'right-0 top-full mt-1.5 origin-top-right'
-          } z-50 w-64 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100`}
+            placement === 'top'
+              ? 'bottom-full mb-1.5 origin-bottom'
+              : 'top-full mt-1.5 origin-top'
+          } z-50 w-64 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100`}
         >
           <div className="border-b border-zinc-100 px-3 py-2">
             <p className="text-xs font-bold uppercase tracking-wider text-stone-600">

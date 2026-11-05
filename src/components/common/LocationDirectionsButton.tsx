@@ -21,6 +21,7 @@ export default function LocationDirectionsButton({
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [placement, setPlacement] = useState<'bottom' | 'top'>('bottom');
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -29,13 +30,47 @@ export default function LocationDirectionsButton({
   function handleToggle() {
     if (!isOpen && menuRef.current) {
       const rect = menuRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const menuWidth = 264;
+
+      const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
-      if (spaceBelow < 200 && spaceAbove > 180) {
+      if (spaceBelow < 220 && spaceAbove > 180) {
         setPlacement('top');
       } else {
         setPlacement('bottom');
       }
+
+      // Horizontal placement: dynamically ensure the menu NEVER overflows the viewport on mobile
+      const style: React.CSSProperties = {};
+
+      if (
+        viewportWidth < 340 ||
+        (rect.left + menuWidth > viewportWidth - 12 && rect.right - menuWidth < 12)
+      ) {
+        // Center relative to viewport on tiny screens
+        const targetScreenLeft = Math.max(
+          12,
+          Math.floor((viewportWidth - Math.min(menuWidth, viewportWidth - 24)) / 2)
+        );
+        style.left = `${targetScreenLeft - rect.left}px`;
+      } else if (align === 'right' || rect.left + menuWidth > viewportWidth - 12) {
+        if (rect.right - menuWidth >= 12) {
+          style.right = 0;
+        } else {
+          const offset = 12 - (rect.right - menuWidth);
+          style.right = `-${offset}px`;
+        }
+      } else {
+        if (rect.left >= 12) {
+          style.left = 0;
+        } else {
+          style.left = `${12 - rect.left}px`;
+        }
+      }
+
+      setMenuStyle(style);
     }
     setIsOpen((prev) => !prev);
   }
@@ -100,12 +135,12 @@ export default function LocationDirectionsButton({
   const isInline = variant === 'inline';
 
   return (
-    <div ref={menuRef} className={`relative inline-flex items-center ${className}`}>
+    <div ref={menuRef} className={`relative inline-flex max-w-full items-center ${className}`}>
       {/* Trigger Button */}
       <button
         type="button"
         onClick={handleToggle}
-        className={`group inline-flex cursor-pointer items-center gap-1.5 transition text-left focus:outline-none focus:ring-1 focus:ring-copper-400 rounded-sm ${
+        className={`group inline-flex max-w-full cursor-pointer items-center gap-1.5 transition text-left focus:outline-none focus:ring-1 focus:ring-copper-400 rounded-sm ${
           isDark
             ? 'rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium text-ivory-50 hover:bg-white/20'
             : variant === 'pill'
@@ -130,8 +165,8 @@ export default function LocationDirectionsButton({
         <span
           className={
             isInline
-              ? 'underline decoration-stone-300 underline-offset-4 transition-colors group-hover:decoration-copper-600 group-hover:text-navy-950 font-normal leading-snug'
-              : 'truncate max-w-[220px] sm:max-w-xs'
+              ? 'underline decoration-stone-300 underline-offset-4 transition-colors group-hover:decoration-copper-600 group-hover:text-navy-950 font-normal leading-snug line-clamp-1 max-w-[200px] sm:max-w-xs md:max-w-sm'
+              : 'truncate max-w-[180px] sm:max-w-xs'
           }
         >
           {displayText}
@@ -151,15 +186,12 @@ export default function LocationDirectionsButton({
       {isOpen && (
         <div
           role="menu"
+          style={menuStyle}
           className={`absolute ${
-            align === 'right'
-              ? placement === 'top'
-                ? 'right-0 bottom-full mb-1.5 origin-bottom-right'
-                : 'right-0 top-full mt-1.5 origin-top-right'
-              : placement === 'top'
-              ? 'left-0 bottom-full mb-1.5 origin-bottom-left'
-              : 'left-0 top-full mt-1.5 origin-top-left'
-          } z-50 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-xl ring-1 ring-black/5 animate-in fade-in-50 zoom-in-95`}
+            placement === 'top'
+              ? 'bottom-full mb-1.5 origin-bottom'
+              : 'top-full mt-1.5 origin-top'
+          } z-50 w-64 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-xl ring-1 ring-black/5 animate-in fade-in-50 zoom-in-95`}
         >
           <div className="border-b border-zinc-100 px-3 py-2">
             <span className="block text-xs font-bold uppercase tracking-wider text-stone-600">
