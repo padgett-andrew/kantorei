@@ -237,6 +237,17 @@ export default function TicketTailorEmbed({
             perf.venueAddress
           );
 
+          const fullVenueLabel = perf.venueName
+            ? perf.venueAddress &&
+              !perf.venueName
+                .toLowerCase()
+                .includes(
+                  perf.venueAddress.toLowerCase().replace(/,\s*mn$/i, '')
+                )
+              ? `${perf.venueName} · ${perf.venueAddress}`
+              : perf.venueName
+            : cleanLoc || perf.venueAddress || '';
+
           return (
             <div
               key={`${perf.dateDisplay}-${idx}`}
@@ -267,23 +278,12 @@ export default function TicketTailorEmbed({
                 </div>
               </div>
 
-              {perf.venueName && (
-                <p className="mt-1 text-sm font-medium text-stone-800">
-                  {perf.venueName}
-                  {perf.venueAddress && (
-                    <span className="text-stone-500 font-normal">
-                      {' '}
-                      · {perf.venueAddress}
-                    </span>
-                  )}
-                </p>
-              )}
-
-              {cleanLoc && (
-                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              {(cleanLoc || fullVenueLabel) && (
+                <div className="mt-1">
                   <LocationDirectionsButton
-                    location={cleanLoc}
+                    location={cleanLoc || fullVenueLabel}
                     venueName={perf.venueName}
+                    label={fullVenueLabel}
                     variant="inline"
                   />
                 </div>

@@ -127,6 +127,18 @@ const {
                             perf.venueAddress,
                           )}
                           venueName={perf.venueName}
+                          label={
+                            perf.venueAddress &&
+                            !perf.venueName
+                              .toLowerCase()
+                              .includes(
+                                perf.venueAddress
+                                  .toLowerCase()
+                                  .replace(/,\s*mn$/i, ""),
+                              )
+                              ? `${perf.venueName} · ${perf.venueAddress}`
+                              : perf.venueName
+                          }
                           variant="inline"
                         />
                       </div>
@@ -165,6 +177,18 @@ const {
                           spotlightConcert.venueAddress,
                         )}
                         venueName={spotlightConcert.venueName}
+                        label={
+                          spotlightConcert.venueAddress &&
+                          !spotlightConcert.venueName
+                            .toLowerCase()
+                            .includes(
+                              spotlightConcert.venueAddress
+                                .toLowerCase()
+                                .replace(/,\s*mn$/i, ""),
+                            )
+                            ? `${spotlightConcert.venueName} · ${spotlightConcert.venueAddress}`
+                            : spotlightConcert.venueName
+                        }
                         variant="inline"
                       />
                     </div>
