@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import type { Singer } from '../../types/choir';
-import { voicePartBadgeColor } from '../../lib/utils';
+import { voicePartBadgeColorDark } from '../../lib/utils';
 
 interface Props {
   currentPath: string;
@@ -163,7 +163,7 @@ export default function MobileBottomNav({
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     {singerVoicePart && (
                       <span
-                        className={`rounded-full border px-1.5 py-0.2 text-[10px] font-bold ${voicePartBadgeColor(
+                        className={`rounded-full border px-1.5 py-0.2 text-[10px] font-bold ${voicePartBadgeColorDark(
                           singerVoicePart
                         )}`}
                       >
@@ -450,95 +450,111 @@ export default function MobileBottomNav({
       {/* Fixed Bottom Dock on Mobile Phones */}
       <nav
         aria-label="Mobile Navigation"
-        className="fixed right-0 bottom-0 left-0 z-40 border-t border-white/10 bg-[#0B131E]/95 px-2 pt-1.5 shadow-2xl backdrop-blur-md sm:hidden pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+        className="fixed right-0 bottom-0 left-0 z-40 border-t border-white/10 bg-[#0B131E]/98 px-2 pt-1.5 shadow-2xl backdrop-blur-md sm:hidden pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
       >
         <div className="flex items-center justify-around">
           {/* 1. Schedule */}
           <a
             href="/portal"
             aria-current={isScheduleActive ? 'page' : undefined}
-            className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition ${
-              isScheduleActive
-                ? 'text-copper-400 font-semibold'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
+            className="flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
           >
             <span
               className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
                 isScheduleActive
-                  ? 'bg-copper-500/25 border border-copper-400/40 text-copper-300 shadow-2xs'
-                  : ''
+                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
+                  : 'text-stone-400'
               }`}
             >
               <Calendar className="h-4 w-4" />
             </span>
-            <span>Schedule</span>
+            <span
+              className={`transition-colors ${
+                isScheduleActive
+                  ? 'text-copper-200 font-bold tracking-wide'
+                  : 'text-stone-300 font-medium hover:text-white'
+              }`}
+            >
+              Schedule
+            </span>
           </a>
 
           {/* 2. Music */}
           <a
             href="/portal/music"
             aria-current={isMusicActive ? 'page' : undefined}
-            className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition ${
-              isMusicActive
-                ? 'text-copper-400 font-semibold'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
+            className="flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
           >
             <span
               className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
                 isMusicActive
-                  ? 'bg-copper-500/25 border border-copper-400/40 text-copper-300 shadow-2xs'
-                  : ''
+                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
+                  : 'text-stone-400'
               }`}
             >
               <Music className="h-4 w-4" />
             </span>
-            <span>Music</span>
+            <span
+              className={`transition-colors ${
+                isMusicActive
+                  ? 'text-copper-200 font-bold tracking-wide'
+                  : 'text-stone-300 font-medium hover:text-white'
+              }`}
+            >
+              Music
+            </span>
           </a>
 
           {/* 3. Absences */}
           <a
             href="/portal/absences"
             aria-current={isAbsencesActive ? 'page' : undefined}
-            className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition ${
-              isAbsencesActive
-                ? 'text-copper-400 font-semibold'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
+            className="flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
           >
             <span
               className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
                 isAbsencesActive
-                  ? 'bg-copper-500/25 border border-copper-400/40 text-copper-300 shadow-2xs'
-                  : ''
+                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
+                  : 'text-stone-400'
               }`}
             >
               <UserX className="h-4 w-4" />
             </span>
-            <span>Absences</span>
+            <span
+              className={`transition-colors ${
+                isAbsencesActive
+                  ? 'text-copper-200 font-bold tracking-wide'
+                  : 'text-stone-300 font-medium hover:text-white'
+              }`}
+            >
+              Absences
+            </span>
           </a>
 
           {/* 4. Hospitality */}
           <a
             href="/portal/snacks"
             aria-current={isSnacksActive ? 'page' : undefined}
-            className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition ${
-              isSnacksActive
-                ? 'text-copper-400 font-semibold'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
+            className="flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
           >
             <span
               className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
                 isSnacksActive
-                  ? 'bg-copper-500/25 border border-copper-400/40 text-copper-300 shadow-2xs'
-                  : ''
+                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
+                  : 'text-stone-400'
               }`}
             >
               <CheckSquare className="h-4 w-4" />
             </span>
-            <span>Hospitality</span>
+            <span
+              className={`transition-colors ${
+                isSnacksActive
+                  ? 'text-copper-200 font-bold tracking-wide'
+                  : 'text-stone-300 font-medium hover:text-white'
+              }`}
+            >
+              Hospitality
+            </span>
           </a>
 
           {/* 5. More / Menu */}
@@ -548,22 +564,26 @@ export default function MobileBottomNav({
             aria-expanded={showMoreMenu}
             aria-haspopup="dialog"
             onClick={() => setShowMoreMenu(true)}
-            className={`flex cursor-pointer flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition ${
-              isMoreActive
-                ? 'text-copper-400 font-semibold'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
+            className="flex cursor-pointer flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
           >
             <span
               className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
                 isMoreActive
-                  ? 'bg-copper-500/25 border border-copper-400/40 text-copper-300 shadow-2xs'
-                  : ''
+                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
+                  : 'text-stone-400'
               }`}
             >
               <MoreHorizontal className="h-4 w-4" />
             </span>
-            <span>More</span>
+            <span
+              className={`transition-colors ${
+                isMoreActive
+                  ? 'text-copper-200 font-bold tracking-wide'
+                  : 'text-stone-300 font-medium hover:text-white'
+              }`}
+            >
+              More
+            </span>
           </button>
         </div>
       </nav>

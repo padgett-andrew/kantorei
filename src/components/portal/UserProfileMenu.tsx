@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   BookOpen,
 } from 'lucide-react';
-import { voicePartBadgeColor } from '../../lib/utils';
+import { voicePartBadgeColorDark } from '../../lib/utils';
 import type { Singer } from '../../types/choir';
 
 interface Props {
@@ -33,7 +33,7 @@ export default function UserProfileMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isOnLeave = singer.status === 'On_Leave';
-  const badgeClass = voicePartBadgeColor(singer.voicePart);
+  const badgeClass = voicePartBadgeColorDark(singer.voicePart);
   const avatarUrl = singer.picture || singer.photoUrl;
   const showImage = Boolean(avatarUrl && !imgError);
 

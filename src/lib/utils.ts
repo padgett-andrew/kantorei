@@ -51,6 +51,14 @@ export function voicePartBadgeColor(part: VoicePart | string): string {
   return 'bg-emerald-100 text-emerald-800 border-emerald-200';
 }
 
+export function voicePartBadgeColorDark(part: VoicePart | string): string {
+  const norm = (part || '').trim().toUpperCase();
+  if (norm.startsWith('S')) return 'bg-rose-500/25 text-rose-200 border-rose-400/50';
+  if (norm.startsWith('A')) return 'bg-amber-500/25 text-amber-200 border-amber-400/50';
+  if (norm.startsWith('T')) return 'bg-sky-500/25 text-sky-200 border-sky-400/50';
+  return 'bg-emerald-500/25 text-emerald-200 border-emerald-400/50';
+}
+
 export function eventTypeBadgeColor(type: EventType): string {
   switch (type) {
     case 'Concert':
