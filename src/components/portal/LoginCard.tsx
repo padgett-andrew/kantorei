@@ -177,7 +177,7 @@ export default function LoginCard({
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-stone-300 bg-stone-50/40 py-2.5 pr-4 pl-10 text-sm text-stone-900 placeholder:text-stone-400 transition focus:border-copper-500 focus:bg-white focus:ring-2 focus:ring-copper-500/20 focus:outline-none"
+                className="w-full rounded-xl border border-stone-300 bg-stone-50/40 py-2.5 pr-4 pl-10 text-base sm:text-sm text-stone-900 placeholder:text-stone-400 transition focus:border-copper-500 focus:bg-white focus:ring-2 focus:ring-copper-500/20 focus:outline-none"
               />
             </div>
           </div>

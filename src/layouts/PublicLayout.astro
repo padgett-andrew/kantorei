@@ -53,6 +53,12 @@ const isSignedIn = Boolean(Astro.locals.singer);
     />
   </head>
   <body class="flex min-h-screen flex-col bg-[#0B131E] text-zinc-900 antialiased selection:bg-copper-500 selection:text-white">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-100 focus:rounded-lg focus:bg-copper-600 focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:shadow-xl focus:ring-2 focus:ring-white focus:outline-none"
+    >
+      Skip to main content
+    </a>
     <Navbar
       choirName={choirName}
       currentPath={Astro.url.pathname}
@@ -61,7 +67,7 @@ const isSignedIn = Boolean(Astro.locals.singer);
       instagramUrl={config.Instagram_URL}
       youtubeUrl={config.YouTube_URL}
     />
-    <main class="flex-1 bg-[#FAF7F2]">
+    <main id="main-content" class="flex-1 bg-[#FAF7F2]">
       <slot />
     </main>
     <Footer

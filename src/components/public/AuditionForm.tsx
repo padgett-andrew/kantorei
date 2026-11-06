@@ -288,7 +288,7 @@ export default function AuditionForm({
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="e.g. Maria Johnson"
-                          className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
+                          className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-base sm:text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
                         />
                       </div>
 
@@ -303,7 +303,7 @@ export default function AuditionForm({
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="singer@example.com"
-                          className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
+                          className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-base sm:text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
                         />
                       </div>
                     </div>
@@ -320,7 +320,7 @@ export default function AuditionForm({
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="612-555-0100"
-                          className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
+                          className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-base sm:text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
                         />
                       </div>
 
@@ -349,7 +349,7 @@ export default function AuditionForm({
 
                     {/* Split Voice Part refinement */}
                     <div className="rounded-xl border border-stone-200 bg-white p-3 space-y-2">
-                      <span className="block text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                      <span className="block text-xs font-bold uppercase tracking-wider text-stone-500">
                         Specify Voice Part Split (Optional):
                       </span>
                       <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
@@ -381,7 +381,7 @@ export default function AuditionForm({
                         value={preparedSelection}
                         onChange={(e) => setPreparedSelection(e.target.value)}
                         placeholder="e.g. Faure - Pie Jesu, or Bach aria, or traditional hymn/folk song"
-                        className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
+                        className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-base sm:text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
                       />
                     </div>
 
@@ -396,7 +396,7 @@ export default function AuditionForm({
                         value={experience}
                         onChange={(e) => setExperience(e.target.value)}
                         placeholder="Please share recent collegiate, professional, or community ensemble experience, sight-reading background, and vocal study."
-                        className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
+                        className="mt-1 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-base sm:text-sm text-stone-900 focus:border-navy-950 focus:outline-none"
                       />
                     </div>
 

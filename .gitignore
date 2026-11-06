@@ -20,3 +20,8 @@ backups/
 *.log
 scratch/
 
+# Playwright & test artifacts
+.playwright-mcp/
+test-results/
+playwright-report/
+

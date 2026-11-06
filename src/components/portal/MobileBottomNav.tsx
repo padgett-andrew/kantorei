@@ -195,6 +195,7 @@ export default function MobileBottomNav({
           {/* 1. Today / Schedule */}
           <a
             href="/portal"
+            aria-current={isTodayActive ? 'page' : undefined}
             className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isTodayActive
                 ? 'text-copper-600 font-semibold'
@@ -214,6 +215,7 @@ export default function MobileBottomNav({
           {/* 2. Music */}
           <a
             href="/portal/music"
+            aria-current={isMusicActive ? 'page' : undefined}
             className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isMusicActive
                 ? 'text-copper-600 font-semibold'
@@ -233,6 +235,7 @@ export default function MobileBottomNav({
           {/* 3. Duties & Hospitality */}
           <a
             href="/portal/snacks"
+            aria-current={isSnacksActive ? 'page' : undefined}
             className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isSnacksActive
                 ? 'text-copper-600 font-semibold'
@@ -252,6 +255,7 @@ export default function MobileBottomNav({
           {/* 4. Absences */}
           <a
             href="/portal/absences"
+            aria-current={isAbsencesActive ? 'page' : undefined}
             className={`flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isAbsencesActive
                 ? 'text-copper-600 font-semibold'
@@ -271,6 +275,9 @@ export default function MobileBottomNav({
           {/* 5. More Menu Button */}
           <button
             type="button"
+            aria-label="More navigation options"
+            aria-expanded={showMoreMenu}
+            aria-haspopup="dialog"
             onClick={() => setShowMoreMenu(true)}
             className={`flex cursor-pointer flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-xs transition ${
               isMoreActive

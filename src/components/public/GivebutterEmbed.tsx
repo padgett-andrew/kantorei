@@ -214,27 +214,29 @@ export default function GivebutterEmbed({
         {/* Custom Amount & Recognition */}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-semibold text-stone-600">
+            <label htmlFor="custom-donation-amount" className="block text-xs font-semibold text-stone-600">
               Or Custom Amount ($ USD)
             </label>
             <input
+              id="custom-donation-amount"
               type="number"
               min={5}
               placeholder="Other amount"
               value={customAmount}
               onChange={(e) => setCustomAmount(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm focus:border-navy-950 focus:outline-none"
+              className="mt-1 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-base sm:text-sm focus:border-navy-950 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-stone-600">
+            <label htmlFor="donor-recognition-name" className="block text-xs font-semibold text-stone-600">
               Program Recognition Name (Optional)
             </label>
             <input
+              id="donor-recognition-name"
               type="text"
               value={donorName}
               onChange={(e) => setDonorName(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm focus:border-navy-950 focus:outline-none"
+              className="mt-1 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-base sm:text-sm focus:border-navy-950 focus:outline-none"
             />
           </div>
         </div>

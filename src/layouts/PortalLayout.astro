@@ -77,6 +77,12 @@ if (isDevPreview) {
     />
   </head>
   <body class="min-h-screen bg-[#FAF7F2] text-stone-900 antialiased flex flex-col justify-between selection:bg-copper-500 selection:text-white">
+    <a
+      href="#portal-main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-100 focus:rounded-lg focus:bg-copper-600 focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:shadow-xl focus:ring-2 focus:ring-white focus:outline-none"
+    >
+      Skip to main content
+    </a>
     <div>
       {isDevPreview && (
         <DevPersonaSwitcher client:load currentSinger={singer} personas={devPersonas} />
@@ -90,7 +96,7 @@ if (isDevPreview) {
         calendarUrl={calendarUrl}
         isSheetAdmin={isAdmin}
       />
-      <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
+      <main id="portal-main" class="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
         <slot />
       </main>
     </div>

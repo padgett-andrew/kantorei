@@ -126,7 +126,7 @@ export default function NewsletterForm({
               placeholder="Enter your email"
               aria-label="Email address for Friends of Kantorei newsletter"
               disabled={status === 'submitting'}
-              className="w-full rounded-full border border-zinc-700 bg-navy-900/90 py-2.5 pl-10 pr-4 text-xs text-ivory-100 placeholder-zinc-400 shadow-inner outline-hidden transition focus:border-gold-400 focus:ring-1 focus:ring-gold-400 disabled:opacity-50"
+              className="w-full rounded-full border border-zinc-700 bg-navy-900/90 py-2.5 pl-10 pr-4 text-base sm:text-xs text-ivory-100 placeholder-zinc-400 shadow-inner outline-hidden transition focus:border-gold-400 focus:ring-1 focus:ring-gold-400 disabled:opacity-50"
             />
           </div>
           <button
@@ -232,7 +232,7 @@ export default function NewsletterForm({
                     placeholder="Your Name (optional)"
                     aria-label="Your Name"
                     disabled={status === 'submitting'}
-                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs text-white placeholder-zinc-400 outline-hidden transition focus:border-gold-400 focus:ring-1 focus:ring-gold-400 disabled:opacity-50"
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-base sm:text-xs text-white placeholder-zinc-400 outline-hidden transition focus:border-gold-400 focus:ring-1 focus:ring-gold-400 disabled:opacity-50"
                   />
                   <div className="relative">
                     <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
@@ -244,7 +244,7 @@ export default function NewsletterForm({
                       placeholder="Your Email address"
                       aria-label="Email address"
                       disabled={status === 'submitting'}
-                      className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 pl-10 pr-4 text-xs text-white placeholder-zinc-400 outline-hidden transition focus:border-gold-400 focus:ring-1 focus:ring-gold-400 disabled:opacity-50"
+                      className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 pl-10 pr-4 text-base sm:text-xs text-white placeholder-zinc-400 outline-hidden transition focus:border-gold-400 focus:ring-1 focus:ring-gold-400 disabled:opacity-50"
                     />
                   </div>
                 </div>

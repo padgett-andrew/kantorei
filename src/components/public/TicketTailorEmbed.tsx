@@ -244,11 +244,11 @@ export default function TicketTailorEmbed({
             >
               {/* Header: Full-width Date & Free Admission Badge */}
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h4 className="font-serif text-lg sm:text-xl font-semibold text-navy-950 leading-snug">
+                <h3 className="font-serif text-lg sm:text-xl font-semibold text-navy-950 leading-snug">
                   {perf.dateDisplay}
-                </h4>
+                </h3>
                 {isFree && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-emerald-900">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-emerald-900">
                     <CheckCircle2 className="h-3 w-3 text-emerald-700" />
                     Free Admission
                   </span>

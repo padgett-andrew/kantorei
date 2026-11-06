@@ -54,17 +54,10 @@ export default function MediaGallery({
             : null;
 
           return (
-            <article
+            <button
+              type="button"
               key={item.id || item.youtubeUrl}
               onClick={() => setActiveVideo(item)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setActiveVideo(item);
-                }
-              }}
-              tabIndex={0}
-              role="button"
               aria-label={`Play ${item.title}`}
               className="group flex flex-col text-left overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-2xs transition duration-200 hover:border-copper-400 hover:shadow-md cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-copper-500/50"
             >
@@ -98,7 +91,7 @@ export default function MediaGallery({
                 </div>
 
                 {/* Category Badge over Thumbnail */}
-                <span className="absolute top-3 left-3 rounded-md bg-navy-950/80 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-gold-300 backdrop-blur-xs">
+                <span className="absolute top-3 left-3 rounded-md bg-navy-950/80 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-gold-300 backdrop-blur-xs">
                   {item.category || 'Concert Video'}
                 </span>
               </div>
@@ -119,7 +112,7 @@ export default function MediaGallery({
                   </p>
                 )}
               </div>
-            </article>
+            </button>
           );
         })}
       </div>
@@ -159,7 +152,7 @@ export default function MediaGallery({
             {/* Top Bar */}
             <div className="flex items-center justify-between border-b border-stone-800 px-4 py-3 sm:px-6 bg-[#070D15] shrink-0">
               <div className="min-w-0 pr-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-gold-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-gold-400">
                   {activeVideo.category || 'Concert Recording'}
                 </span>
                 <h4 className="text-sm sm:text-base font-bold text-white truncate">
