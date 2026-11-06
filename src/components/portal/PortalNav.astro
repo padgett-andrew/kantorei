@@ -33,40 +33,37 @@ const tabs = [
 ];
 ---
 
-<header class="sticky top-0 z-30 border-b border-white/10 bg-[#0B131E] text-white shadow-md">
+<header class="sticky top-0 z-30 border-b border-stone-200/80 bg-[#FAF7F2]/95 text-navy-950 backdrop-blur-sm">
   <div class="mx-auto max-w-6xl px-4 sm:px-6">
-    <div class="flex h-16 items-center justify-between gap-4">
-      {/* Left: Brand Breadcrumb (Kantorei -> Public Site / Portal -> Overview) + Navigation Tabs */}
-      <div class="flex min-w-0 items-center gap-3 sm:gap-5 lg:gap-7">
-        <div class="flex shrink-0 items-center gap-2 sm:gap-2.5">
+    <div class="flex min-h-[4.5rem] items-center justify-between gap-4 py-2">
+      <div class="flex min-w-0 items-center gap-3 sm:gap-6">
+        <div class="flex shrink-0 items-center gap-2.5">
           <a
             href="/"
-            class="group flex items-center gap-1 opacity-90 transition hover:opacity-100"
-            title="Visit Kantorei Public Website (kantorei.net)"
+            class="group flex items-center opacity-90 transition hover:opacity-100"
+            title={`Visit ${choirName} public website`}
           >
             <img
-              src="/images/kantorei-logo-light.webp"
-              alt={`${choirName} public website`}
+              src="/images/kantorei-logo-transparent.webp"
+              alt={`${choirName} home`}
               width="110"
               height="57"
-              class="h-7 w-auto shrink-0 object-contain transition-transform group-hover:scale-[1.03] sm:h-8"
+              class="h-8 w-auto shrink-0 object-contain transition-transform group-hover:scale-[1.02] sm:h-9"
             />
           </a>
-
-          <span class="text-sm font-light text-stone-600 select-none" aria-hidden="true">/</span>
-
+          <span class="h-7 border-l border-stone-300" aria-hidden="true"></span>
           <a
             href="/portal"
-            class="rounded-sm border border-copper-400/35 bg-copper-500/20 px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-copper-300 transition hover:border-copper-400/60 hover:bg-copper-500/35 hover:text-white"
-            title="Singer Portal Overview"
+            aria-current={currentPath === '/portal' || currentPath === '/portal/' ? 'page' : undefined}
+            class="font-editorial text-lg font-semibold leading-none text-navy-950 transition hover:text-copper-600 sm:text-xl"
+            title="Singer Portal overview"
           >
-            Portal
+            Singer Portal
           </a>
         </div>
 
-        {/* Primary Navigation Tabs — Next to Logo */}
         <nav
-          class="scrollbar-none hidden sm:flex items-center gap-1 overflow-x-auto py-1"
+          class="scrollbar-none hidden items-center gap-4 overflow-x-auto py-2 lg:flex"
           aria-label="Singer Portal Navigation"
         >
           {tabs.map((tab) => {
@@ -76,11 +73,12 @@ const tabs = [
             return (
               <a
                 href={tab.href}
+                aria-current={isActive ? 'page' : undefined}
                 class:list={[
-                  'shrink-0 rounded-md px-2.5 py-1 text-xs font-medium transition-colors border',
+                  'relative shrink-0 py-2 text-xs font-medium transition-colors after:absolute after:right-0 after:bottom-0 after:left-0 after:h-px after:origin-left after:bg-copper-500 after:transition-transform',
                   isActive
-                    ? 'border-copper-400/40 bg-copper-500/25 font-semibold text-copper-300 shadow-2xs'
-                    : 'border-transparent text-stone-300 hover:bg-white/10 hover:text-white',
+                    ? 'text-navy-950 after:scale-x-100'
+                    : 'text-stone-600 after:scale-x-0 hover:text-navy-950 hover:after:scale-x-100',
                 ]}
               >
                 {tab.label}
@@ -90,17 +88,15 @@ const tabs = [
         </nav>
       </div>
 
-      {/* Right: Quick Public Site link + User Profile Menu */}
       <div class="flex shrink-0 items-center gap-2 sm:gap-3">
         <a
           href="/"
-          class="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-stone-300 transition hover:border-white/25 hover:bg-white/10 hover:text-white"
-          title="Return to Kantorei Public Website"
+          class="hidden items-center gap-1.5 border-r border-stone-300 pr-3 text-xs font-medium text-stone-600 transition hover:text-copper-600 sm:inline-flex"
+          title="Return to the public website"
         >
-          <span class="text-stone-400">←</span>
+          <span aria-hidden="true">←</span>
           <span>Public Site</span>
         </a>
-
         <UserProfileMenu
           client:load
           singer={singer}

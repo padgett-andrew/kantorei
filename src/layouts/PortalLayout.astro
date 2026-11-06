@@ -63,12 +63,12 @@ if (isDevPreview) {
     <link rel="apple-touch-icon" href="/images/kantorei-logo-transparent.png" />
     <link rel="apple-touch-icon" href="/images/kantorei-logo-transparent.webp" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#0c1524" />
+    <meta name="theme-color" content="#FAF7F2" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Kantorei" />
-    <title>{title} — {choirName} Portal</title>
+    <title>{title} — {choirName} Singer Portal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -76,10 +76,10 @@ if (isDevPreview) {
       rel="stylesheet"
     />
   </head>
-  <body class="min-h-screen bg-[#FAF7F2] text-stone-900 antialiased flex flex-col justify-between selection:bg-copper-500 selection:text-white">
+  <body class="flex min-h-screen flex-col justify-between bg-[#FAF7F2] text-stone-900 antialiased selection:bg-copper-500 selection:text-white">
     <a
       href="#portal-main"
-      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-100 focus:rounded-lg focus:bg-copper-600 focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:shadow-xl focus:ring-2 focus:ring-white focus:outline-none"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-100 focus:rounded-lg focus:bg-copper-600 focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:shadow-xl"
     >
       Skip to main content
     </a>
@@ -96,22 +96,21 @@ if (isDevPreview) {
         calendarUrl={calendarUrl}
         isSheetAdmin={isAdmin}
       />
-      <main id="portal-main" class="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 pb-24 sm:pb-8">
+      <main id="portal-main" class="mx-auto w-full max-w-6xl flex-1 px-4 py-7 sm:px-6 sm:py-10 pb-24 sm:pb-10">
         <slot />
       </main>
     </div>
 
-    <!-- Ensemble Google Workspace Cloud Footer -->
-    <footer class="border-t border-stone-200/80 bg-white/80 py-6 text-xs text-stone-500 backdrop-blur-xs pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6">
+    <footer class="border-t border-stone-200/80 bg-[#FAF7F2] py-6 text-xs text-stone-500 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6">
       <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6">
         <div class="flex flex-wrap items-center justify-center gap-2 text-center sm:text-left">
-          <span class="font-semibold text-navy-950">{choirName} Singer Portal</span>
+          <span class="font-editorial text-base font-semibold text-navy-950">{choirName} Singer Portal</span>
           <span class="text-stone-300">·</span>
           <span>Google Workspace Connected</span>
           <span class="text-stone-300">·</span>
           <span
             class:list={[
-              'rounded-sm px-2 py-0.5 text-xs font-semibold uppercase tracking-wider',
+              'px-2 py-0.5 text-xs font-semibold uppercase tracking-wider',
               isAdmin ? 'bg-emerald-100 text-emerald-900' : 'bg-stone-100 text-stone-700',
             ]}
           >
@@ -122,7 +121,7 @@ if (isDevPreview) {
         <div class="flex flex-wrap items-center justify-center gap-4">
           <a
             href="/"
-            class="inline-flex items-center gap-1 font-medium text-stone-700 transition hover:text-navy-950"
+            class="inline-flex items-center gap-1 border-b border-transparent font-medium text-stone-600 transition hover:border-copper-500 hover:text-navy-950"
             title="Return to Kantorei Public Website"
           >
             <span>← Public Website</span>
@@ -132,7 +131,7 @@ if (isDevPreview) {
               href={workspace.masterSheetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 font-medium text-stone-700 transition hover:text-navy-950"
+              class="inline-flex items-center gap-1.5 font-medium text-stone-600 transition hover:text-navy-950"
               title="Open Master Google Sheet with Edit Access"
             >
               <span>📊 Master Google Sheet (Edit)</span>
