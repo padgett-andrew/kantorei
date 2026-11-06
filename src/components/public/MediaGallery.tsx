@@ -102,12 +102,12 @@ export default function MediaGallery({
                   {item.title}
                 </h3>
                 {item.subtitle && (
-                  <p className="mt-1 text-xs sm:text-sm font-medium text-stone-600">
+                  <p className="mt-1 text-sm font-medium text-stone-700">
                     {item.subtitle}
                   </p>
                 )}
                 {item.description && (
-                  <p className="mt-2.5 text-xs sm:text-sm leading-relaxed text-stone-600 line-clamp-2">
+                  <p className="mt-2.5 text-sm sm:text-base leading-relaxed text-stone-700 line-clamp-2">
                     {item.description}
                   </p>
                 )}
@@ -201,19 +201,19 @@ export default function MediaGallery({
             {/* Liner Notes & Description Area */}
             <div className="p-4 sm:p-6 overflow-y-auto max-h-[35vh] space-y-3 bg-[#0B131E]">
               {activeVideo.subtitle && (
-                <p className="text-xs sm:text-sm font-semibold text-gold-400 flex items-center gap-1.5">
+                <p className="text-sm font-semibold text-gold-400 flex items-center gap-1.5">
                   <Music className="h-4 w-4" />
                   {activeVideo.subtitle}
                 </p>
               )}
 
               {activeVideo.description && (
-                <p className="text-xs sm:text-sm leading-relaxed text-stone-300">
+                <p className="text-sm sm:text-base leading-relaxed text-stone-300">
                   {activeVideo.description}
                 </p>
               )}
 
-              <div className="pt-2 flex items-center justify-between text-xs text-stone-500 border-t border-stone-800">
+              <div className="pt-2 flex items-center justify-between text-xs sm:text-sm text-stone-400 border-t border-stone-800">
                 <span>Kantorei &bull; Adam Reinwald, Artistic Director</span>
                 <a
                   href={youtubeChannelUrl}

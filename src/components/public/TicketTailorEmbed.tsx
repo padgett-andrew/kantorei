@@ -291,7 +291,7 @@ export default function TicketTailorEmbed({
 
               {/* Informational Sub-Cards for Free or Partner Concerts */}
               {isFree && (
-                <div className="mt-3.5 rounded-lg border border-emerald-200/80 bg-emerald-50/70 p-3 text-xs leading-relaxed text-emerald-950">
+                <div className="mt-3.5 rounded-lg border border-emerald-200/80 bg-emerald-50/70 p-3 text-sm leading-relaxed text-emerald-950">
                   <strong className="font-semibold text-emerald-900">
                     Open Seating · No Advance Ticket Required.
                   </strong>{' '}
@@ -302,7 +302,7 @@ export default function TicketTailorEmbed({
               )}
 
               {isExternal && (
-                <div className="mt-3.5 rounded-lg border border-amber-200/80 bg-amber-50/70 p-3 text-xs leading-relaxed text-amber-950">
+                <div className="mt-3.5 rounded-lg border border-amber-200/80 bg-amber-50/70 p-3 text-sm leading-relaxed text-amber-950">
                   <div className="flex items-start gap-2">
                     <Info className="h-4 w-4 shrink-0 text-amber-700 mt-0.5" />
                     <div>
@@ -414,7 +414,7 @@ export default function TicketTailorEmbed({
                   {iframeLoading && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-10 text-stone-500">
                       <div className="h-8 w-8 animate-spin rounded-full border-3 border-stone-200 border-t-copper-500" />
-                      <span className="mt-3 text-xs font-medium">
+                      <span className="mt-3 text-sm font-medium">
                         Connecting to secure Ticket Tailor box office…
                       </span>
                     </div>
@@ -435,12 +435,12 @@ export default function TicketTailorEmbed({
             </div>
 
             {/* Modal Footer reassurance */}
-            <div className="flex items-center justify-between border-t border-stone-200/80 bg-white px-4 py-2.5 sm:px-6 text-[11px] text-stone-500 shrink-0">
+            <div className="flex items-center justify-between border-t border-stone-200/80 bg-white px-4 py-2.5 sm:px-6 text-xs text-stone-600 shrink-0">
               <span>🔒 256-bit SSL Secure Checkout</span>
               <button
                 type="button"
                 onClick={() => setActiveModalIdx(null)}
-                className="text-xs font-semibold text-stone-600 hover:text-navy-950 underline cursor-pointer"
+                className="text-xs sm:text-sm font-semibold text-stone-600 hover:text-navy-950 underline cursor-pointer"
               >
                 Close Window
               </button>

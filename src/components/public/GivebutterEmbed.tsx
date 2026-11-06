@@ -207,7 +207,7 @@ export default function GivebutterEmbed({
         </div>
 
         {/* Impact Callout */}
-        <div className="mt-3.5 rounded-xl border border-stone-200/70 bg-stone-50/70 px-4 py-3 text-xs leading-relaxed text-stone-700">
+        <div className="mt-3.5 rounded-xl border border-stone-200/70 bg-stone-50/70 px-4 py-3 text-sm leading-relaxed text-stone-700">
           <strong className="font-semibold text-navy-950">Your Impact:</strong> {activeImpact}
         </div>
 
@@ -255,7 +255,7 @@ export default function GivebutterEmbed({
           Give ${effectiveAmount.toFixed(2)} {frequency === 'monthly' ? '/ Month' : ''} via Secure Checkout
         </button>
 
-        <p className="mt-3 text-center text-[11px] text-stone-500">
+        <p className="mt-3 text-center text-xs sm:text-sm text-stone-600">
           Instant 501(c)(3) tax receipt &bull; Supports Apple Pay, Google Pay, Venmo, PayPal, ACH &amp; Cards
         </p>
       </div>
@@ -270,7 +270,7 @@ export default function GivebutterEmbed({
               <h2 className="font-editorial text-2xl font-bold text-navy-950">
                 Annual Giving Circles
               </h2>
-              <p className="text-xs text-stone-500 mt-0.5">
+              <p className="text-sm text-stone-600 mt-0.5">
                 Choose a circle to support Kantorei&apos;s artistic leadership and community reach.
               </p>
             </div>
@@ -294,7 +294,7 @@ export default function GivebutterEmbed({
                       {tier.range}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs sm:text-sm text-stone-600 leading-relaxed">
+                  <p className="mt-1 text-sm sm:text-base text-stone-700 leading-relaxed">
                     {tier.description}
                   </p>
                 </div>
@@ -424,7 +424,7 @@ export default function GivebutterEmbed({
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-4 text-xs text-amber-950 space-y-1">
+                  <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-4 text-sm text-amber-950 space-y-1">
                     <p className="font-semibold">Your Gift at Work:</p>
                     <p className="leading-relaxed text-amber-900">{activeImpact}</p>
                   </div>
@@ -442,7 +442,7 @@ export default function GivebutterEmbed({
             </div>
 
             {/* Modal Footer reassurance */}
-            <div className="flex items-center justify-between border-t border-stone-200/80 bg-white px-4 py-2.5 sm:px-6 text-[11px] text-stone-500 shrink-0">
+            <div className="flex items-center justify-between border-t border-stone-200/80 bg-white px-4 py-2.5 sm:px-6 text-xs text-stone-600 shrink-0">
               <span className="inline-flex items-center gap-1">
                 <Lock className="h-3 w-3 text-emerald-600" />
                 256-bit SSL Secure Donation
@@ -450,7 +450,7 @@ export default function GivebutterEmbed({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-xs font-semibold text-stone-600 hover:text-navy-950 underline cursor-pointer"
+                className="text-xs sm:text-sm font-semibold text-stone-600 hover:text-navy-950 underline cursor-pointer"
               >
                 Cancel
               </button>

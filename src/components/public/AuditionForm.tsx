@@ -130,7 +130,7 @@ export default function AuditionForm({
               href={googleFormUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-600 hover:text-navy-950 underline decoration-stone-300 underline-offset-4"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-stone-600 hover:text-navy-950 underline decoration-stone-300 underline-offset-4"
             >
               Open Google Form in new tab
               <ExternalLink className="h-3.5 w-3.5" />
@@ -138,7 +138,7 @@ export default function AuditionForm({
           )}
         </div>
 
-        <p className="mt-4 text-xs text-stone-500">
+        <p className="mt-4 text-sm text-stone-600 sm:text-base">
           Questions before applying? Email{' '}
           <a href={`mailto:${contactEmail}`} className="font-semibold text-navy-950 underline decoration-copper-500">
             {contactEmail}
