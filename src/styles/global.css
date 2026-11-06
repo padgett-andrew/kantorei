@@ -54,6 +54,67 @@
   display: none;
 }
 
+/* The mobile account menu is rendered by MobileBottomNav rather than UserProfileMenu.
+   Keep its visual treatment in the same warm editorial family as the desktop menu. */
+@media (max-width: 639px) {
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] {
+    background: #faf7f2 !important;
+    color: #292524 !important;
+    border-color: #e7ddd0 !important;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    box-shadow: 0 -12px 40px rgb(13 24 38 / 18%) !important;
+  }
+
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-white,
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-100,
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-200,
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-300 {
+    color: #292524 !important;
+  }
+
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-400,
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-500 {
+    color: #78716c !important;
+  }
+
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-copper-300,
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-copper-400,
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-gold-400 {
+    color: #955029 !important;
+  }
+
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="border-white/"] {
+    border-color: #e7ddd0 !important;
+  }
+
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="bg-white/"] {
+    background-color: #f5efe8 !important;
+  }
+
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="text-emerald-400"],
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="text-amber-400"],
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="text-sky-400"] {
+    color: #955029 !important;
+  }
+
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] img {
+    display: block;
+    object-position: center;
+  }
+
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] button:hover,
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] a:hover {
+    background-color: #f5efe8 !important;
+    color: #142438 !important;
+  }
+
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] a:focus-visible,
+  [role="dialog"][aria-label="Singer Navigation & Account Menu"] button:focus-visible {
+    outline: 2px solid #955029;
+    outline-offset: 2px;
+  }
+}
+
 /* Clean typography styling for Google Doc Handbook HTML export */
 .handbook-prose h1 {
   font-family: var(--font-serif);
