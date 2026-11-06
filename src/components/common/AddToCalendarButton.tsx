@@ -18,6 +18,7 @@ interface Props {
   durationHours?: number;
   label?: string;
   variant?: 'pill' | 'badge' | 'inline' | 'dark';
+  iconOnly?: boolean;
   align?: 'left' | 'right';
   className?: string;
 }
@@ -49,6 +50,7 @@ export default function AddToCalendarButton({
   durationHours = 2,
   label = 'Add to Calendar',
   variant = 'pill',
+  iconOnly = false,
   align = 'right',
   className = '',
 }: Props) {
@@ -237,25 +239,36 @@ export default function AddToCalendarButton({
         onClick={handleToggle}
         aria-haspopup="true"
         aria-expanded={isOpen}
-        aria-label={`${label} for ${fullTitle}`}
-        className={triggerClasses}
+        aria-label={`Add to calendar: ${fullTitle}`}
+        title="Add to calendar"
+        className={
+          iconOnly
+            ? 'group inline-flex cursor-pointer items-center justify-center rounded-lg border border-stone-200/90 bg-white p-2 text-stone-600 shadow-2xs transition hover:border-copper-400 hover:bg-stone-50 hover:text-copper-600 focus:outline-none focus:ring-2 focus:ring-copper-400/40 min-h-[36px] min-w-[36px]'
+            : triggerClasses
+        }
       >
-        <CalendarPlus
-          className={`h-4 w-4 shrink-0 transition-colors ${
-            variant === 'inline'
-              ? 'text-copper-600 group-hover:text-copper-700'
-              : 'text-gold-500'
-          }`}
-        />
-        <span
-          className={
-            variant === 'inline'
-              ? 'underline decoration-stone-300 underline-offset-4 transition-colors group-hover:decoration-copper-500 font-medium'
-              : ''
-          }
-        >
-          {label}
-        </span>
+        {downloaded ? (
+          <Check className="h-4 w-4 text-emerald-600" />
+        ) : (
+          <CalendarPlus
+            className={`h-4 w-4 shrink-0 transition-colors ${
+              variant === 'inline' || iconOnly
+                ? 'text-copper-600 group-hover:text-copper-700'
+                : 'text-gold-500'
+            }`}
+          />
+        )}
+        {!iconOnly && (
+          <span
+            className={
+              variant === 'inline'
+                ? 'underline decoration-stone-300 underline-offset-4 transition-colors group-hover:decoration-copper-500 font-medium'
+                : ''
+            }
+          >
+            {label}
+          </span>
+        )}
       </button>
 
       {isOpen && (
@@ -346,10 +359,6 @@ export default function AddToCalendarButton({
               </div>
               <ExternalLink className="h-4 w-4 text-stone-400" />
             </a>
-          </div>
-
-          <div className="border-t border-zinc-100 px-3 py-2 text-xs font-medium text-stone-600">
-            Includes venue location &amp; call time
           </div>
         </div>
       )}

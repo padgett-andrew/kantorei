@@ -171,9 +171,7 @@ export default function LocationDirectionsButton({
         >
           {displayText}
         </span>
-        {isInline ? (
-          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-stone-500 transition-colors group-hover:text-copper-600" />
-        ) : (
+        {!isInline && (
           <Navigation
             className={`h-3 w-3 shrink-0 transition-transform ${
               isOpen ? 'rotate-90' : ''

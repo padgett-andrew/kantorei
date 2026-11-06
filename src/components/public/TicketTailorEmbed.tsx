@@ -242,17 +242,29 @@ export default function TicketTailorEmbed({
               key={`${perf.dateDisplay}-${idx}`}
               className="rounded-xl border border-stone-200/80 bg-stone-50/50 p-4 sm:p-5 transition hover:border-stone-300 hover:bg-stone-50/80 shadow-2xs"
             >
-              {/* Header: Full-width Date & Free Admission Badge */}
+              {/* Header: Full-width Date, Calendar Button & Free Admission Badge */}
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 className="font-serif text-lg sm:text-xl font-semibold text-navy-950 leading-snug">
                   {perf.dateDisplay}
                 </h3>
-                {isFree && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-emerald-900">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-700" />
-                    Free Admission
-                  </span>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {isFree && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-emerald-900">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-700" />
+                      Free Admission
+                    </span>
+                  )}
+                  <AddToCalendarButton
+                    title={concertTitle}
+                    description={concertDescription}
+                    dateStr={perf.dateDisplay}
+                    location={cleanLoc}
+                    venueName={perf.venueName}
+                    venueAddress={perf.venueAddress}
+                    iconOnly={true}
+                    align="right"
+                  />
+                </div>
               </div>
 
               {perf.venueName && (
@@ -267,26 +279,15 @@ export default function TicketTailorEmbed({
                 </p>
               )}
 
-              <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                {cleanLoc && (
+              {cleanLoc && (
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
                   <LocationDirectionsButton
                     location={cleanLoc}
                     venueName={perf.venueName}
                     variant="inline"
                   />
-                )}
-                <AddToCalendarButton
-                  title={concertTitle}
-                  description={concertDescription}
-                  dateStr={perf.dateDisplay}
-                  location={cleanLoc}
-                  venueName={perf.venueName}
-                  venueAddress={perf.venueAddress}
-                  label="+ Calendar"
-                  variant="inline"
-                  align="left"
-                />
-              </div>
+                </div>
+              )}
 
               {/* Informational Sub-Cards for Free or Partner Concerts */}
               {isFree && (
