@@ -135,12 +135,12 @@ export default function LocationDirectionsButton({
   const isInline = variant === 'inline';
 
   return (
-    <div ref={menuRef} className={`relative inline-flex max-w-full items-center ${className}`}>
+    <div ref={menuRef} className={`relative inline-flex max-w-full ${isInline ? 'items-start' : 'items-center'} ${className}`}>
       {/* Trigger Button */}
       <button
         type="button"
         onClick={handleToggle}
-        className={`group inline-flex max-w-full cursor-pointer items-center gap-1.5 transition text-left focus:outline-none focus:ring-1 focus:ring-copper-400 rounded-sm ${
+        className={`group inline-flex max-w-full cursor-pointer ${isInline ? 'items-start' : 'items-center'} gap-1.5 transition text-left focus:outline-none focus:ring-1 focus:ring-copper-400 rounded-sm ${
           isDark
             ? 'rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium text-ivory-50 hover:bg-white/20'
             : variant === 'pill'
@@ -158,15 +158,15 @@ export default function LocationDirectionsButton({
             isDark
               ? 'text-gold-300'
               : isInline
-              ? 'text-copper-600 group-hover:text-copper-700'
+              ? 'text-copper-600 group-hover:text-copper-700 mt-0.5'
               : 'text-gold-600 group-hover:text-gold-500'
           }`}
         />
         <span
           className={
             isInline
-              ? 'underline decoration-stone-300 underline-offset-4 transition-colors group-hover:decoration-copper-600 group-hover:text-navy-950 font-normal leading-snug line-clamp-1 max-w-[200px] sm:max-w-xs md:max-w-sm'
-              : 'truncate max-w-[180px] sm:max-w-xs'
+              ? 'underline decoration-stone-300 underline-offset-4 transition-colors group-hover:decoration-copper-600 group-hover:text-navy-950 font-normal leading-snug break-words'
+              : 'truncate max-w-[240px] sm:max-w-xs'
           }
         >
           {displayText}
