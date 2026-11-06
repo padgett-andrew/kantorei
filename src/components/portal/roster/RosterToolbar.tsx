@@ -1,4 +1,4 @@
-import { ExternalLink, FileSpreadsheet, Grid, List, Moon, Plus, Search } from 'lucide-react';
+import { Check, Copy, ExternalLink, FileSpreadsheet, Grid, List, Mail, Moon, Plus, Search } from 'lucide-react';
 import type { SectionGroup } from '../../../types/choir';
 import { SECTION_GROUPS } from '../../../types/choir';
 
@@ -19,6 +19,11 @@ interface Props {
   onLeaveCount: number;
   inactiveCount: number;
   totalCount: number;
+  cohortEmailCount?: number;
+  cohortLabel?: string;
+  copiedCohort?: boolean;
+  onCopyCohortEmails?: () => void;
+  mailtoCohortUrl?: string;
 }
 
 export default function RosterToolbar({
@@ -38,6 +43,11 @@ export default function RosterToolbar({
   onLeaveCount,
   inactiveCount,
   totalCount,
+  cohortEmailCount = 0,
+  cohortLabel = 'Section',
+  copiedCohort = false,
+  onCopyCohortEmails,
+  mailtoCohortUrl,
 }: Props) {
   return (
     <div className="rounded-3xl border border-zinc-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
@@ -199,6 +209,56 @@ export default function RosterToolbar({
           )}
         </div>
       </div>
+
+      {/* Cohort Communication Actions (Copy Emails & Email Cohort via Bcc) */}
+      {cohortEmailCount > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pt-3 border-t border-zinc-100/90 text-xs bg-zinc-50/70 -mx-4 -mb-4 sm:-mx-5 sm:-mb-5 px-4 py-3 sm:px-5 rounded-b-3xl">
+          <div className="flex items-center gap-2 text-zinc-600">
+            <span className="font-semibold text-navy-950">{cohortLabel}:</span>
+            <span className="text-zinc-500">
+              {cohortEmailCount} {cohortEmailCount === 1 ? 'singer email' : 'singer emails'}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {onCopyCohortEmails && (
+              <button
+                type="button"
+                onClick={onCopyCohortEmails}
+                className={`cursor-pointer inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 font-semibold transition ${
+                  copiedCohort
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-900 shadow-2xs'
+                    : 'border-zinc-200 bg-white text-zinc-700 shadow-2xs hover:bg-zinc-50 hover:text-navy-950'
+                }`}
+                title={`Copy all ${cohortEmailCount} email addresses for ${cohortLabel}`}
+              >
+                {copiedCohort ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Copied {cohortLabel} Emails</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5 text-zinc-400" />
+                    <span>Copy {cohortLabel} Emails</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {mailtoCohortUrl && (
+              <a
+                href={mailtoCohortUrl}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 hover:text-navy-950 transition"
+                title={`Draft email to all ${cohortEmailCount} singers with addresses in Bcc (protects privacy)`}
+              >
+                <Mail className="h-3.5 w-3.5 text-zinc-400" />
+                <span>Email {cohortLabel} (Bcc)</span>
+              </a>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

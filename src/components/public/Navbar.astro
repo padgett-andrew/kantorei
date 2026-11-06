@@ -120,7 +120,7 @@ const navLinks = [
     </div>
 
     <!-- Editorial Minimal Mobile Menu Toggle -->
-    <details class="group/menu relative md:hidden">
+    <details id="mobile-nav-details" class="group/menu relative md:hidden">
       <summary
         class="flex min-h-[44px] min-w-[44px] cursor-pointer list-none items-center gap-2 border-0 bg-transparent px-2.5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ivory-100 hover:text-white transition-colors focus:outline-none select-none"
         aria-label="Toggle navigation menu"
@@ -137,8 +137,15 @@ const navLinks = [
         </span>
       </summary>
 
+      <!-- Dismissable Backdrop -->
+      <div
+        id="mobile-nav-backdrop"
+        class="fixed inset-0 z-40 bg-navy-950/60 backdrop-blur-xs hidden group-open/menu:block"
+        aria-hidden="true"
+      ></div>
+
       <!-- Dropdown Panel in Rich Slate -->
-      <div class="absolute right-0 mt-3 w-64 rounded-xl border border-white/10 bg-[#0B131E]/98 p-4 shadow-2xl backdrop-blur-xl">
+      <div class="absolute right-0 mt-3 w-64 z-50 rounded-xl border border-white/10 bg-[#0B131E]/98 p-4 shadow-2xl backdrop-blur-xl">
         <div class="flex flex-col gap-1.5">
           {navLinks.map((link) => (
             <a
@@ -219,6 +226,43 @@ const navLinks = [
     }
   }
 
+  function setupMobileMenuDismissal() {
+    const details = document.getElementById('mobile-nav-details') as HTMLDetailsElement | null;
+    if (!details) return;
+
+    const backdrop = document.getElementById('mobile-nav-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        details.removeAttribute('open');
+      });
+    }
+
+    // Dismiss on click outside
+    document.addEventListener('click', (e) => {
+      if (details.open && !details.contains(e.target as Node)) {
+        details.removeAttribute('open');
+      }
+    });
+
+    // Dismiss on Escape key & restore focus
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && details.open) {
+        details.removeAttribute('open');
+        details.querySelector('summary')?.focus();
+      }
+    });
+
+    // Dismiss when navigating via links inside menu
+    details.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        details.removeAttribute('open');
+      });
+    });
+  }
+
   window.addEventListener('scroll', handleNavbarScroll, { passive: true });
   handleNavbarScroll();
+  setupMobileMenuDismissal();
 </script>

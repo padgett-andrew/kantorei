@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   CheckCircle2,
@@ -46,6 +46,10 @@ export default function TicketTailorEmbed({
   const [iframeLoading, setIframeLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusedElement = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -55,13 +59,44 @@ export default function TicketTailorEmbed({
   const [addOnDonation, setAddOnDonation] = useState<number>(0);
   const [completedOrder, setCompletedOrder] = useState<string | null>(null);
 
-  // Lock body scroll and handle ESC key when modal is open
+  // Lock body scroll, handle ESC key, trap focus, and restore focus on modal dismissal
   useEffect(() => {
     if (activeModalIdx === null) return;
 
+    lastFocusedElement.current = document.activeElement as HTMLElement | null;
+
+    // Move initial focus into modal
+    const focusTimer = setTimeout(() => {
+      if (closeButtonRef.current) {
+        closeButtonRef.current.focus();
+      } else if (modalRef.current) {
+        modalRef.current.focus();
+      }
+    }, 50);
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault();
         setActiveModalIdx(null);
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
 
@@ -70,8 +105,13 @@ export default function TicketTailorEmbed({
     document.body.style.overflow = 'hidden';
 
     return () => {
+      clearTimeout(focusTimer);
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow;
+      // Restore focus to the trigger button
+      if (lastFocusedElement.current && typeof lastFocusedElement.current.focus === 'function') {
+        lastFocusedElement.current.focus();
+      }
     };
   }, [activeModalIdx]);
 
@@ -370,7 +410,11 @@ export default function TicketTailorEmbed({
           />
 
           {/* Modal Container: Full-width on mobile, centered card on desktop */}
-          <div className="relative flex flex-col w-full h-[94vh] sm:h-[88vh] sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden border border-stone-200">
+          <div
+            ref={modalRef}
+            tabIndex={-1}
+            className="relative flex flex-col w-full h-[94vh] sm:h-[88vh] sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden border border-stone-200 outline-none"
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-stone-200/80 px-4 py-3 sm:px-6 sm:py-3.5 bg-stone-50/90 shrink-0">
               <div className="min-w-0 pr-3">
@@ -397,9 +441,10 @@ export default function TicketTailorEmbed({
                   </a>
                 )}
                 <button
+                  ref={closeButtonRef}
                   type="button"
                   onClick={() => setActiveModalIdx(null)}
-                  className="cursor-pointer rounded-full p-1.5 text-stone-500 hover:bg-stone-200 hover:text-navy-950 transition"
+                  className="cursor-pointer rounded-full p-1.5 text-stone-500 hover:bg-stone-200 hover:text-navy-950 transition focus:outline-2 focus:outline-copper-500"
                   aria-label="Close ticket checkout"
                 >
                   <X className="h-5 w-5" />

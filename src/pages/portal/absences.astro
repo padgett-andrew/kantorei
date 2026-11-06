@@ -1,31 +1,45 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import AbsenceManager from '../../components/portal/AbsenceManager';
-import { getAbsences, getPortalConfig, getSchedule } from '../../lib/google';
+import { getAbsences, getPortalConfig, getRoster, getSchedule } from '../../lib/google';
 import { getTodayIso } from '../../lib/utils';
+import { hasRole } from '../../lib/auth';
 
 const singer = Astro.locals.singer!;
-const [config, schedule, allAbsences] = await Promise.all([
+const isLeaderOrAdmin = hasRole(singer, ['Section_Leader', 'Admin']);
+
+const [config, schedule, allAbsences, rawRoster] = await Promise.all([
   getPortalConfig(Astro.locals),
   getSchedule(Astro.locals),
   getAbsences(Astro.locals),
+  isLeaderOrAdmin ? getRoster(Astro.locals) : Promise.resolve([]),
 ]);
 
 const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
 const upcomingEvents = schedule.filter((ev) => ev.date >= today);
-const myAbsences = allAbsences.filter((a) => a.singerEmail === singer.email);
+const myAbsences = allAbsences.filter((a) => a.singerEmail.toLowerCase() === singer.email.toLowerCase());
+const activeRoster = rawRoster.filter((s) => s.active);
 ---
 
 <PortalLayout title="Absence & Late Notices">
   <div class="mb-6">
-    <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
-      Attendance & Section Planning
-    </span>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
+        Attendance & Section Planning
+      </span>
+      {isLeaderOrAdmin && (
+        <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-900 border border-emerald-200">
+          {singer.role === 'Admin' ? 'Admin Roll Call Active' : `${singer.sectionGroup} Leader Access`}
+        </span>
+      )}
+    </div>
     <h1 class="mt-1 font-editorial text-3xl font-medium text-navy-950 sm:text-4xl">
       Absence &amp; Late Notices
     </h1>
     <p class="mt-1.5 text-sm sm:text-base leading-relaxed text-stone-600">
-      Let your {singer.sectionGroup} Section Leader, Artistic Director, and attendance administration know as early as possible if you must miss a rehearsal or will be running late.
+      {isLeaderOrAdmin
+        ? `Review upcoming rehearsal roll calls, section absences, and late notices, or log your own attendance.`
+        : `Let your ${singer.sectionGroup} Section Leader, Artistic Director, and attendance administration know as early as possible if you must miss a rehearsal or will be running late.`}
     </p>
   </div>
 
@@ -34,6 +48,8 @@ const myAbsences = allAbsences.filter((a) => a.singerEmail === singer.email);
     singer={singer}
     upcomingEvents={upcomingEvents}
     initialAbsences={myAbsences}
+    allAbsences={isLeaderOrAdmin ? allAbsences : undefined}
+    activeRoster={isLeaderOrAdmin ? activeRoster : undefined}
   />
 </PortalLayout>
 

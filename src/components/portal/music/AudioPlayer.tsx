@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Gauge, X } from 'lucide-react';
+import { Gauge, RotateCcw, RotateCw, X } from 'lucide-react';
 import type { DriveMusicFile } from '../../../types/choir';
 import { prettifyScoreName, streamUrl } from './utils';
 
@@ -25,6 +25,46 @@ export default function AudioPlayer({ activeAudio, onClose }: Props) {
     }
   }, [activeAudio, playbackRate]);
 
+  // Keyboard controls for singers: ArrowLeft/ArrowRight to skip 5s, Space to play/pause
+  useEffect(() => {
+    if (!activeAudio) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      // Don't intercept when user is typing in an input or textarea
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        skipTime(-5);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        skipTime(5);
+      } else if (e.key === ' ' || e.code === 'Space') {
+        if (audioRef.current) {
+          e.preventDefault();
+          if (audioRef.current.paused) {
+            void audioRef.current.play();
+          } else {
+            audioRef.current.pause();
+          }
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeAudio]);
+
+  function skipTime(seconds: number) {
+    if (!audioRef.current) return;
+    const current = audioRef.current.currentTime;
+    const duration = audioRef.current.duration || Infinity;
+    audioRef.current.currentTime = Math.max(0, Math.min(duration, current + seconds));
+  }
+
   if (!activeAudio) return null;
 
   return (
@@ -40,6 +80,30 @@ export default function AudioPlayer({ activeAudio, onClose }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:shrink-0">
+          {/* Quick Skip Buttons (Essential for Rehearsal Looping) */}
+          <div className="flex items-center gap-1 rounded-xl bg-white/10 p-1">
+            <button
+              type="button"
+              onClick={() => skipTime(-5)}
+              className="cursor-pointer inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-zinc-300 hover:bg-white/10 hover:text-white transition"
+              title="Rewind 5 seconds (←)"
+              aria-label="Rewind 5 seconds"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>5s</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => skipTime(5)}
+              className="cursor-pointer inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-zinc-300 hover:bg-white/10 hover:text-white transition"
+              title="Skip forward 5 seconds (→)"
+              aria-label="Skip forward 5 seconds"
+            >
+              <span>5s</span>
+              <RotateCw className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
           {/* Rehearsal Speed Buttons */}
           <div className="flex items-center gap-1 rounded-xl bg-white/10 p-1">
             <span className="px-1 text-[10px] font-bold text-gold-300 sm:inline flex items-center gap-0.5">

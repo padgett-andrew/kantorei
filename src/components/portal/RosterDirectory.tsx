@@ -45,6 +45,7 @@ export default function RosterDirectory({
   const [savingMember, setSavingMember] = useState(false);
   const [busyEmail, setBusyEmail] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const [copiedCohort, setCopiedCohort] = useState(false);
   const [banner, setBanner] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   // Filters & View State
@@ -93,6 +94,57 @@ export default function RosterDirectory({
       navigator.clipboard.writeText(email);
       setCopiedEmail(email);
       setTimeout(() => setCopiedEmail(null), 2000);
+    }
+  }
+
+  // Cohort email addresses (deduplicated, valid format)
+  const cohortEmails = useMemo(() => {
+    return Array.from(
+      new Set(
+        filteredSingers
+          .map((s) => s.email?.trim())
+          .filter((e): e is string => Boolean(e && e.includes('@')))
+      )
+    );
+  }, [filteredSingers]);
+
+  // Descriptive label for the current section or filtered cohort
+  const cohortLabel = useMemo(() => {
+    if (query.trim()) {
+      return 'Filtered Results';
+    }
+    if (section !== 'All') {
+      return `${section} Section`;
+    }
+    if (statusFilter === 'Active') {
+      return 'Active Ensemble';
+    }
+    if (statusFilter === 'On_Leave') {
+      return 'Season Leave';
+    }
+    if (statusFilter === 'Inactive') {
+      return 'Inactive Members';
+    }
+    return 'Full Ensemble';
+  }, [query, section, statusFilter]);
+
+  // Mailto link with all cohort emails in Bcc to protect privacy and prevent Reply-All storms
+  const mailtoCohortUrl = useMemo(() => {
+    if (cohortEmails.length === 0) return '';
+    return `mailto:?bcc=${encodeURIComponent(cohortEmails.join(','))}`;
+  }, [cohortEmails]);
+
+  function handleCopyCohortEmails() {
+    if (cohortEmails.length === 0) return;
+    const text = cohortEmails.join(', ');
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+      setCopiedCohort(true);
+      setBanner({
+        type: 'ok',
+        text: `Copied ${cohortEmails.length} ${cohortLabel.toLowerCase()} email address${cohortEmails.length === 1 ? '' : 'es'} to clipboard.`,
+      });
+      setTimeout(() => setCopiedCohort(false), 2500);
     }
   }
 
@@ -261,6 +313,11 @@ export default function RosterDirectory({
         onLeaveCount={onLeaveCount}
         inactiveCount={inactiveCount}
         totalCount={roster.length}
+        cohortEmailCount={cohortEmails.length}
+        cohortLabel={cohortLabel}
+        copiedCohort={copiedCohort}
+        onCopyCohortEmails={handleCopyCohortEmails}
+        mailtoCohortUrl={mailtoCohortUrl}
       />
 
       {/* Results Count Banner */}
