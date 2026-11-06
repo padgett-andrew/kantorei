@@ -146,10 +146,12 @@ if (isDevPreview) {
     <MobileBottomNav
       client:load
       currentPath={Astro.url.pathname}
+      singer={singer}
       isAdmin={singer.role === 'Admin' || singer.role === 'Section_Leader'}
       singerName={singer.name}
       voicePart={singer.voicePart}
       masterSheetUrl={workspace.masterSheetUrl}
+      repertoireDriveUrl={workspace.repertoireDriveUrl}
       isSheetAdmin={isAdmin}
       calendarUrl={calendarUrl}
     />

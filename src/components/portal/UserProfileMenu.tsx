@@ -72,12 +72,22 @@ export default function UserProfileMenu({
     };
   }, [isOpen]);
 
+  // Open dropdown on desktop, or trigger unified mobile sheet on mobile
+  function handleTriggerClick() {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      window.dispatchEvent(new CustomEvent('kantorei:open-mobile-drawer'));
+      setIsOpen(false);
+    } else {
+      setIsOpen((prev) => !prev);
+    }
+  }
+
   return (
     <div className="relative" ref={menuRef}>
       {/* Trigger Button: User Avatar + Name + Chevron */}
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={handleTriggerClick}
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="Singer profile and account menu"
@@ -115,12 +125,12 @@ export default function UserProfileMenu({
         />
       </button>
 
-      {/* Profile Dropdown Panel */}
+      {/* Profile Dropdown Panel (Desktop only; mobile viewports trigger unified slide-up sheet) */}
       {isOpen && (
         <div
           role="menu"
           aria-orientation="vertical"
-          className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-[#0e1726]/95 backdrop-blur-md p-2.5 text-stone-200 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100"
+          className="hidden sm:block absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-[#0e1726]/95 backdrop-blur-md p-2.5 text-stone-200 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100"
         >
           {/* Identity Header Card */}
           <div className="flex items-start gap-3 rounded-xl bg-white/5 p-3">
