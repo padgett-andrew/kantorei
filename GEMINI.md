@@ -132,8 +132,7 @@ Controls portal login access (both Google OAuth and Email OTP), section filterin
 
 Powers the Singer Portal rehearsal calendar, subscribable `/api/calendar.ics` feed, Absence form date selector, and 1-tap Snack Signup.
 
-- **Google Calendar Primary Source (Zero-Friction Admin)**: Set `GOOGLE_CALENDAR_ID` in `.env` / `Config`. The Artistic Director and choir admins manage recurring calls, concerts, dress rehearsals, call times, and locations directly in Google Calendar (web or mobile). The portal syncs calls via Google Calendar API v3 every 60s (with instant edge invalidation on demand).
-- **Hospitality & Snack Decoupling**: Snack claims are merged seamlessly by `Event_ID`, stored either in a dedicated `Snacks` sheet tab (`Event_ID`, `Slot`, `Singer_Name`, `Item`, `Updated_At`) or `Schedule!G:J`.
+- **Hospitality, Snacks & Duties Decoupling**: For standard rehearsals (`Rehearsal`, `Sectional`, `Retreat`), all four slots standardly reflect snack sign-up spots (`Snack Spot 1` through `Snack Spot 4`). On concert calls, slots default to concert crew roles (stage setup, strike, box office, reception). Any slot can be customized directly in the Master Google Sheet—either by entering a custom duty in `Schedule!G:J` (e.g. `(Room Setup)`, `[Sound Crew]`, or `Singer Name (Custom Duty)`) or via the dedicated `Snacks` sheet tab (`Event_ID`, `Slot`, `Singer_Name`, `Item`, `Updated_At`).
 - **Sheet Fallback Table (Legacy or Demo Mode)**:
   | Col | Header         | Example Value       | Specification                                                                  |
   | :-- | :------------- | :------------------ | :----------------------------------------------------------------------------- |

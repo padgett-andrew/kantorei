@@ -23,7 +23,10 @@ interface Props {
   onRelease: (eventId: string, slot: SlotNumber) => void;
 }
 
-function getDefaultSlotLabel(ev: ScheduleEvent, slot: SlotNumber): string {
+function getDefaultSlotLabel(ev: ScheduleEvent, slot: SlotNumber, customDuty?: string): string {
+  if (customDuty && customDuty.trim()) {
+    return customDuty.trim();
+  }
   const isConcertCall = ev.type === 'Concert' || ev.type === 'Dress';
   if (isConcertCall) {
     if (slot === 1) return 'Concert Setup & Stage';
@@ -31,8 +34,7 @@ function getDefaultSlotLabel(ev: ScheduleEvent, slot: SlotNumber): string {
     if (slot === 3) return 'Box Office & Will-Call';
     return 'Patron Reception';
   }
-  if (slot === 3) return 'Room Setup & Welcome';
-  return `Sign-Up Slot ${slot}`;
+  return `Snack Spot ${slot}`;
 }
 
 function getDutyIcon(dutyText: string) {
@@ -42,7 +44,7 @@ function getDutyIcon(dutyText: string) {
   if (lower.includes('strike') || lower.includes('teardown') || lower.includes('clean')) return <PackageCheck className={iconClass} />;
   if (lower.includes('box office') || lower.includes('ticket') || lower.includes('door') || lower.includes('usher')) return <Ticket className={iconClass} />;
   if (lower.includes('transport') || lower.includes('truck') || lower.includes('banner')) return <Truck className={iconClass} />;
-  if (lower.includes('reception') || lower.includes('drink') || lower.includes('wine') || lower.includes('coffee')) return <Coffee className={iconClass} />;
+  if (lower.includes('reception') || lower.includes('drink') || lower.includes('wine') || lower.includes('coffee') || lower.includes('water')) return <Coffee className={iconClass} />;
   return <Utensils className={iconClass} />;
 }
 
@@ -59,7 +61,7 @@ export default function SnackSlotCard({
   const { name: holderName, item } = parseSnackEntry(raw);
   const isMine = holderName.toLowerCase() === myNormalizedName;
   const canRelease = isMine || (Boolean(holderName) && singer.role === 'Admin');
-  const defaultLabel = getDefaultSlotLabel(ev, slot);
+  const defaultLabel = getDefaultSlotLabel(ev, slot, !holderName ? item : undefined);
 
   // Vacant Slot -> Claim Button
   if (!holderName) {
@@ -80,9 +82,10 @@ export default function SnackSlotCard({
         </div>
 
         <div className="mt-2.5">
-          <span className="block truncate text-xs font-medium text-navy-950">
-            {defaultLabel}
-          </span>
+          <div className="flex items-center gap-1.5 text-xs font-medium text-navy-950">
+            {getDutyIcon(defaultLabel)}
+            <span className="truncate">{defaultLabel}</span>
+          </div>
           <p className="mt-0.5 text-[11px] text-stone-400 group-hover:text-stone-600">
             Claim slot
           </p>
@@ -158,7 +161,7 @@ export default function SnackSlotCard({
             className="mt-1 inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-copper-700 hover:underline"
           >
             <Plus className="h-3 w-3" />
-            Specify duty or item
+            Specify snack or duty
           </button>
         ) : (
           <p className="mt-1 text-xs italic text-stone-400">{defaultLabel}</p>

@@ -57,11 +57,11 @@ export default function SnackClaimModal({
 
   const inputLabel = isConcertCall
     ? 'Duty or Crew Role'
-    : 'Task or Refreshment';
+    : 'Snack Item or Custom Task';
 
   const placeholderText = isConcertCall
     ? 'e.g. Stage Setup, Box Office Check-in, Strike…'
-    : 'e.g. Refreshments, room setup, end cleanup…';
+    : 'e.g. Clementines & cheese, cookies (nut-free), sparkling water, room setup…';
 
   return (
     <div
@@ -81,7 +81,7 @@ export default function SnackClaimModal({
               {modalState.action === 'claim'
                 ? isConcertCall
                   ? 'Concert Crew Signup'
-                  : 'Rehearsal Duty Signup'
+                  : 'Rehearsal Snack Signup'
                 : 'Update Commitment'}{' '}
               · Slot 0{modalState.slot}
             </span>
@@ -137,14 +137,14 @@ export default function SnackClaimModal({
             <p className="mt-1.5 text-xs text-stone-500">
               {isConcertCall
                 ? 'Helps concert managers and section leaders coordinate stage setup, doors, and strike.'
-                : 'Helps fellow singers coordinate rehearsal duties and refreshments.'}
+                : 'Standard rehearsal break snacks for ~45 singers. Enter your snack item or custom task.'}
             </p>
           </div>
 
           {/* Quick suggestion chips */}
           <div>
             <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
-              {isConcertCall ? 'Suggested Crew Roles' : 'Suggested Duties & Refreshments'}
+              {isConcertCall ? 'Suggested Crew Roles' : 'Suggested Snack Ideas & Tasks'}
             </span>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {suggestions.map((suggestion) => {

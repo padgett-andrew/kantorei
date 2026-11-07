@@ -60,26 +60,68 @@ export interface ParsedSnackSlot {
   item: string;
 }
 
+const OPEN_SLOT_PLACEHOLDERS = new Set([
+  'open',
+  'tbd',
+  'vacant',
+  'unclaimed',
+  'available',
+  'none',
+  '-',
+  '--',
+]);
+
 export function parseSnackEntry(raw?: string | null): ParsedSnackSlot {
   const trimmed = (raw || '').trim();
   if (!trimmed) return { name: '', item: '' };
-  // Pattern 1: "Andrew Padgett (Cheese & crackers)"
+
+  // Explicit bracket/parenthesis-only custom duty: "(Room Setup)" or "[Room Setup]"
+  if (
+    (trimmed.startsWith('(') && trimmed.endsWith(')')) ||
+    (trimmed.startsWith('[') && trimmed.endsWith(']'))
+  ) {
+    return { name: '', item: trimmed.slice(1, -1).trim() };
+  }
+
+  // Explicit prefix: "Role: Stage Setup" or "Duty: Door Greeter"
+  const prefixMatch = /^(?:role|duty|task|slot)\s*[:—–-]\s*(.+)$/i.exec(trimmed);
+  if (prefixMatch) {
+    return { name: '', item: prefixMatch[1].trim() };
+  }
+
+  // Pattern 1: "Andrew Padgett (Cheese & crackers)" or "Open (Room Setup)"
   const parenMatch = /^([^(]+?)\s*\(([^)]+)\)$/.exec(trimmed);
   if (parenMatch) {
-    return { name: parenMatch[1].trim(), item: parenMatch[2].trim() };
+    const singer = parenMatch[1].trim();
+    const item = parenMatch[2].trim();
+    if (OPEN_SLOT_PLACEHOLDERS.has(singer.toLowerCase())) {
+      return { name: '', item };
+    }
+    return { name: singer, item };
   }
-  // Pattern 2: "Andrew Padgett — Cheese & crackers" or "Andrew Padgett - Cheese"
+
+  // Pattern 2: "Andrew Padgett — Cheese & crackers" or "Open - Room Setup"
   const dashMatch = /^([^-—:]+?)\s*[-—:]\s*(.+)$/.exec(trimmed);
   if (dashMatch) {
-    return { name: dashMatch[1].trim(), item: dashMatch[2].trim() };
+    const singer = dashMatch[1].trim();
+    const item = dashMatch[2].trim();
+    if (OPEN_SLOT_PLACEHOLDERS.has(singer.toLowerCase())) {
+      return { name: '', item };
+    }
+    return { name: singer, item };
   }
+
+  if (OPEN_SLOT_PLACEHOLDERS.has(trimmed.toLowerCase())) {
+    return { name: '', item: '' };
+  }
+
   return { name: trimmed, item: '' };
 }
 
 export function formatSnackEntry(name: string, item?: string): string {
   const trimmedName = (name || '').trim();
   const trimmedItem = (item || '').trim();
-  if (!trimmedName) return '';
+  if (!trimmedName) return trimmedItem ? `(${trimmedItem})` : '';
   if (!trimmedItem) return trimmedName;
   return `${trimmedName} (${trimmedItem})`;
 }

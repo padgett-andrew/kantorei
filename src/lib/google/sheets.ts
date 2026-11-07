@@ -89,7 +89,7 @@ export async function getSnackClaims(locals?: App.Locals): Promise<SnackClaim[]>
     const rows = await readSheetValues('Snacks!A2:E', locals);
     if (rows && rows.length > 0) {
       return rows
-        .filter((r) => r[0] && r[1] && r[2])
+        .filter((r) => r[0] && r[1] && (r[2] || r[3]))
         .map((r) => ({
           eventId: (r[0] ?? '').trim(),
           slot: (Number(r[1]) || 1) as 1 | 2 | 3 | 4,
