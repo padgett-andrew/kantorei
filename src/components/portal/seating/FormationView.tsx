@@ -288,8 +288,8 @@ export default function FormationView({
 
       {/* Architectural Conductor Podium Marker (Downstage) */}
       <div className="mt-6 flex flex-col items-center justify-center">
-        <div className="rounded-sm border border-navy-900 bg-[#0B131E] px-8 py-2 text-center">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-copper-400">
+        <div className="rounded-sm border border-stone-300 border-t-2 border-t-navy-950 bg-[#f5efe8] px-8 py-2 text-center">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-navy-950">
             Conductor Podium · Downstage Center
           </span>
         </div>
