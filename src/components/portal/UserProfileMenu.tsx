@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   BookOpen,
 } from 'lucide-react';
-import { voicePartBadgeColorDark } from '../../lib/utils';
 import type { Singer } from '../../types/choir';
 
 interface Props {
@@ -33,7 +32,6 @@ export default function UserProfileMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isOnLeave = singer.status === 'On_Leave';
-  const badgeClass = voicePartBadgeColorDark(singer.voicePart);
   const avatarUrl = singer.picture || singer.photoUrl;
   const showImage = Boolean(avatarUrl && !imgError);
   const hasLeadershipAccess = isSheetAdmin || singer.role !== 'Singer';
@@ -156,10 +154,7 @@ export default function UserProfileMenu({
               </div>
               <p className="mt-0.5 truncate text-xs text-stone-500">{singer.email}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badgeClass}`}>
-                  {singer.voicePart}
-                </span>
-                <span className="text-xs text-stone-600">{singer.sectionGroup} Section</span>
+                <span className="text-xs font-medium text-stone-600">{singer.sectionGroup} Section</span>
                 {singer.role !== 'Singer' && (
                   <span className="border border-copper-200 bg-copper-100 px-1.5 py-0.5 text-[10px] font-medium text-copper-600">
                     {singer.role.replace('_', ' ')}

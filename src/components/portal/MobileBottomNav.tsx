@@ -19,7 +19,6 @@ import {
   X,
 } from 'lucide-react';
 import type { Singer } from '../../types/choir';
-import { voicePartBadgeColorDark } from '../../lib/utils';
 
 interface Props {
   currentPath: string;
@@ -38,7 +37,7 @@ export default function MobileBottomNav({
   singer,
   isAdmin = false,
   singerName = '',
-  voicePart = '',
+  voicePart: _voicePart = '',
   repertoireDriveUrl,
   masterSheetUrl,
   isSheetAdmin = isAdmin,
@@ -98,7 +97,6 @@ export default function MobileBottomNav({
 
   // Singer identity normalization
   const singerDisplayName = singer?.name || singerName || 'Singer';
-  const singerVoicePart = singer?.voicePart || voicePart || '';
   const singerSectionGroup = singer?.sectionGroup || '';
   const singerRole = singer?.role || (isAdmin ? 'Admin' : 'Singer');
   const singerStatus = singer?.status || 'Active';
@@ -161,15 +159,6 @@ export default function MobileBottomNav({
                     </p>
                   )}
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                    {singerVoicePart && (
-                      <span
-                        className={`rounded-full border px-1.5 py-0.2 text-[10px] font-bold ${voicePartBadgeColorDark(
-                          singerVoicePart
-                        )}`}
-                      >
-                        {singerVoicePart}
-                      </span>
-                    )}
                     {singerSectionGroup && (
                       <span className="text-[11px] text-stone-300">
                         {singerSectionGroup} Section
@@ -240,7 +229,7 @@ export default function MobileBottomNav({
                   </span>
                   <div>
                     <p className="font-semibold text-stone-100">Roster &amp; Member Directory</p>
-                    <p className="text-[10px] text-stone-400">Contact info, voice parts &amp; email cohort</p>
+                    <p className="text-[10px] text-stone-400">Contact info &amp; email cohort</p>
                   </div>
                 </div>
               </a>
