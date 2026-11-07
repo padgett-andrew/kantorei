@@ -1,0 +1,23 @@
+# Robots.txt for Kantorei (https://kantorei.net)
+# Twin Cities, Minnesota Premier A Cappella Chamber Choir
+# Explicitly allowing public pages and sitemap while protecting singer portal
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /concerts
+Allow: /auditions
+Allow: /media
+Allow: /support
+Allow: /images/
+Allow: /favicon.svg
+Allow: /sitemap.xml
+Allow: /api/calendar.ics
+
+# Disallow authenticated singer portal and internal mutation APIs from web crawlers
+Disallow: /portal/
+Disallow: /portal/*
+Disallow: /api/
+Disallow: /login
+
+Sitemap: https://kantorei.net/sitemap.xml

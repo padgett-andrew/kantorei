@@ -11,6 +11,11 @@ import { getConcerts, getMedia, getPortalConfig } from "../lib/google";
 import { extractYouTubeEmbedUrl, getInstagramShowcase } from "../lib/media";
 import { getTodayIso } from "../lib/utils";
 import { detectProviderFromUrl } from "../lib/tickettailor";
+import {
+  getSiteUrl,
+  buildWebSiteSchema,
+  buildConcertEventSchemas,
+} from "../lib/seo";
 
 const [config, concerts, media] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -171,9 +176,26 @@ const heroVideoRaw = (
 ).trim();
 const heroVideo = heroVideoRaw ? extractYouTubeEmbedUrl(heroVideoRaw) : null;
 const heroBgImage = config.Hero_Image_URL || "";
+const siteUrl = getSiteUrl(Astro.locals);
+const webSiteSchema = buildWebSiteSchema(siteUrl, choirName);
+const spotlightSchemas = spotlightConcert
+  ? buildConcertEventSchemas([spotlightConcert], siteUrl, config)
+  : [];
+const homeStructuredData = [webSiteSchema, ...spotlightSchemas];
+const homeOgImage =
+  spotlightConcert?.heroImageUrl ||
+  spotlightConcert?.posterImageUrl ||
+  heroBgImage ||
+  "/images/kantorei-logo.webp";
 ---
 
-<PublicLayout title="Sing, Laugh, Cry — Twin Cities A Cappella Chamber Choir">
+<PublicLayout
+  title={`${choirName} | Premier Twin Cities A Cappella Chamber Choir · Minneapolis & St. Paul, MN`}
+  description={`${choirName} is one of Minnesota's premier a cappella chamber choirs, based in Minneapolis and Saint Paul (Twin Cities). Explore upcoming choral concerts, our beloved Advent & Christmas traditions, singer auditions, and recordings.`}
+  keywords="choral music twin cities, best choirs in the twin cities, chamber choir minneapolis, a cappella choir st paul, Christmas concerts twin cities, Advent with Kantorei, choir auditions twin cities, choral concerts minneapolis, kantorei minnesota, kantorei net"
+  ogImage={homeOgImage}
+  structuredData={homeStructuredData}
+>
   <!-- Editorial Hero -->
   <HomeHero
     choirName={choirName}

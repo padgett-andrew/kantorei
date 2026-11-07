@@ -8,6 +8,7 @@ const isProd =
   globalThis.process?.env?.NODE_ENV === 'production';
 
 export default defineConfig({
+  site: 'https://kantorei.net',
   server: {
     port: 4321,
   },

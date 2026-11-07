@@ -4,6 +4,7 @@ import GivebutterEmbed from '../components/public/GivebutterEmbed';
 import { getEnv } from '../lib/env';
 import { getGivingTiers, getPortalConfig } from '../lib/google';
 import { formatRichText } from '../lib/config-interpolate';
+import { getSiteUrl, buildBreadcrumbsSchema } from '../lib/seo';
 
 const [config, givingTiers] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -14,6 +15,14 @@ const choirName = config.Choir_Name || 'Kantorei';
 const publicContactEmail = config.Contact_Email || 'info@kantorei.net';
 const publicContactPhone = config.Contact_Phone || '612-21-SINGS (612-217-4647)';
 const publicContactAddress = config.Contact_Address || '660 23rd Ave NW, Saint Paul, MN 55112';
+const siteUrl = getSiteUrl(Astro.locals);
+const breadcrumbs = buildBreadcrumbsSchema(
+  [
+    { name: 'Home', path: '/' },
+    { name: 'Support Our Season', path: '/support' },
+  ],
+  siteUrl,
+);
 const supportHeroTitle =
   config.Support_Hero_Title || 'Sustain choral artistry and lifelong singing in Minnesota.';
 const supportHeroSubtitle =
@@ -47,7 +56,12 @@ const lglFormUrl =
   'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA';
 ---
 
-<PublicLayout title="Support Our Season">
+<PublicLayout
+  title={`Support ${choirName} | 501(c)(3) Nonprofit Choral Arts · Twin Cities, MN`}
+  description={`Support ${choirName}'s choral artistry, commissions, and lifelong singing in Minnesota. Contributions to our 501(c)(3) nonprofit keep singer membership free of mandatory dues.`}
+  keywords="support kantorei, donate to choir minnesota, twin cities arts nonprofit, choral philanthropy minneapolis st paul, 501c3 choir twin cities"
+  structuredData={breadcrumbs}
+>
   <section class="relative overflow-hidden bg-[#0B131E] pt-28 pb-16 text-ivory-50 sm:pt-36 sm:pb-20">
     <div
       class="pointer-events-none absolute inset-0 opacity-25"

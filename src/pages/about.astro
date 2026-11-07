@@ -1,6 +1,7 @@
 ---
 import PublicLayout from "../layouts/PublicLayout.astro";
 import { getBoardMembers, getLeadership, getPortalConfig } from "../lib/google";
+import { getSiteUrl, buildBreadcrumbsSchema } from "../lib/seo";
 
 const [config, boardMembers, leadership] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -10,6 +11,14 @@ const [config, boardMembers, leadership] = await Promise.all([
 
 const choirName = config.Choir_Name || "Kantorei";
 const publicContactEmail = config.Contact_Email || "info@kantorei.net";
+const siteUrl = getSiteUrl(Astro.locals);
+const breadcrumbs = buildBreadcrumbsSchema(
+  [
+    { name: "Home", path: "/" },
+    { name: "About & Leadership", path: "/about" },
+  ],
+  siteUrl,
+);
 const aboutHeaderTitle =
   config.About_Header_Title ||
   "Vocal health, effortless sound, and singing for a lifetime.";
@@ -28,8 +37,10 @@ const auditionsTimingNote =
 ---
 
 <PublicLayout
-  title="About & Leadership"
-  description={`Founded in 1988 by Dr. Axel Theimer and led by Adam Reinwald, ${choirName} is one of the premier choral ensembles in Minnesota.`}
+  title={`About ${choirName} | Twin Cities Chamber Choir · History & Leadership`}
+  description={`Founded in 1988 by Dr. Axel Theimer and led by Artistic Director Adam Reinwald, ${choirName} is one of the premier a cappella choral ensembles in the Twin Cities, Minnesota. Discover our story, vocal health legacy, and leadership.`}
+  keywords="about kantorei, kantorei minnesota, best choirs in the twin cities, chamber choir minneapolis, a cappella choir st paul, axel theimer, adam reinwald, minnesota choral music, kantorei net"
+  structuredData={breadcrumbs}
 >
   <section
     class="relative overflow-hidden bg-[#0B131E] pt-28 pb-16 text-ivory-50 sm:pt-36 sm:pb-24"
@@ -108,6 +119,9 @@ const auditionsTimingNote =
             config.About_History_P2 ||
               `${choirName} performs primarily in Minnesota and shares recordings worldwide. Through its outreach programming, ${choirName} invites audiences of all ages to share its pursuit of singing for a lifetime.`
           }
+        </p>
+        <p class="text-xs sm:text-sm leading-relaxed text-zinc-500 italic border-l-2 border-gold-400 pl-3">
+          Note: {choirName} (Minnesota, operating at <span class="font-semibold text-zinc-700">kantorei.net</span>) is an independent 501(c)(3) arts organization based in Minneapolis & Saint Paul, distinct from the ensemble of the same name based in Denver, Colorado (kantorei.org).
         </p>
       </div>
 

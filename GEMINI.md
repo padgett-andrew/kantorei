@@ -597,3 +597,29 @@ src/
 3. **Phase 3 (Singer Portal Core Features):** Build `/portal` (Dashboard + `.ics` calendar subscription modal), `/portal/absences` + `/api/absences` + `src/lib/email.ts`, `/portal/snacks` + `/api/snacks`, `/portal/music` + `/api/music/[fileId]`, `/portal/directory`, `/portal/handbook`, and `/api/calendar.ics`.
 4. **Phase 4 (Section Leader & Admin Dashboard):** Build `/portal/admin` + `/api/roster` with the rehearsal attendance matrix by voice part, 1-click "Mark Absent / Clear at Roll Call", "Add / Edit Singer" modal, and Google Sheet `zod` data-health alerts.
 5. **Phase 5 (Public Website, Box Office & Verification):** Build `/`, `/concerts`, `/about`, `/support`, `TicketTailorEmbed.tsx`, and `GivebutterEmbed.tsx`, then run full TypeScript & Cloudflare Worker production build verification (`astro check && npm run build`).
+
+---
+
+## 9. SEO & Entity Disambiguation Architecture (`kantorei.net` vs `kantorei.org`)
+
+### A. The Disambiguation Challenge
+- **Kantorei (Colorado)** operates at `kantorei.org` (founded in 1997 in Denver, CO).
+- **Kantorei (Minnesota)** operates at `kantorei.net` (founded in 1988 by Dr. Axel Theimer in Minneapolis & Saint Paul, MN, led by Artistic Director Adam Reinwald).
+- To ensure search engines and LLM answer engines attribute searches accurately to `kantorei.net`:
+  1. **Canonical Entity Graph (`src/lib/seo.ts`):** Injects Schema.org `["MusicGroup", "PerformingGroup", "NGO"]` JSON-LD on all public pages with explicit `foundingDate: "1988"`, `founder: "Dr. Axel Theimer"`, `musicDirector: "Adam Reinwald"`, `areaServed` (`Minneapolis, MN`, `Saint Paul, MN`, `Twin Cities Metropolitan Area`, `Minnesota`), and `disambiguatingDescription` explaining the independent 501(c)(3) Minnesota foundation.
+  2. **Social Graph Authority:** Declares canonical `sameAs` links to Minnesota-anchored channels (`@kantoreiMN` on YouTube, `kantorei_mn` on Instagram, `kantoreimn` on Facebook).
+  3. **Geographic Metadata:** Declares Dublin Core and Geo tags (`geo.region: US-MN`, `geo.placename: Minneapolis-Saint Paul, Minnesota`, `geo.position: 45.0506;-93.1818`).
+
+### B. High-Intent Audience Discovery (Concerts & Holiday Choral Music)
+- **Target Queries:** "choral music twin cities", "best choirs in the twin cities", "chamber choir minneapolis", "Christmas concerts twin cities", "Advent choral concert st paul", "holiday choir concert minnesota".
+- **Structured `MusicEvent` Schemas:** Dynamically generated for every scheduled performance with venue name, address, date/time, performer (`Kantorei`), ticketing URLs, and enriched Christmas/Advent keywords so Google Event carousels populate automatically.
+
+### C. Singer Discovery (Auditions & Recruitment)
+- **Target Queries:** "choir auditions twin cities", "choral auditions minneapolis", "audition for choir twin cities", "chamber choir auditions minnesota", "sing in choir twin cities".
+- **Structured `FAQPage` Schema (`/auditions`):** Directly ranks for audition inquiries (SATB split parts, rehearsal schedule, vocal health philosophy, dues-free access, and entity disambiguation).
+
+### D. Technical Crawl Infrastructure
+- **`public/robots.txt`:** Allows all public pages, assets, and sitemap while protecting the private singer portal (`/portal/`, `/portal/*`, `/api/`, `/login`).
+- **`src/pages/sitemap.xml.ts`:** Edge-cached XML sitemap adhering to sitemaps.org standards with dynamic concert anchor entries.
+- **`PublicLayout.astro`:** Injects canonical `<link rel="canonical">`, absolute OpenGraph/Twitter images, and page-specific structured data.
+

@@ -5,7 +5,7 @@ import { Music2, Home, LogIn, Calendar } from 'lucide-react';
 const isSignedIn = Boolean(Astro.locals.singer);
 ---
 
-<PublicLayout title="Score Not Found (404)">
+<PublicLayout title="Score Not Found (404)" noindex={true}>
   <div class="relative flex min-h-[70vh] items-center justify-center px-4 pt-28 pb-16 sm:px-6 sm:pt-36 sm:pb-20 lg:px-8">
     <div class="w-full max-w-xl text-center">
       <!-- Musical measure rest badge -->

@@ -3,6 +3,11 @@ import PublicLayout from '../layouts/PublicLayout.astro';
 import AuditionForm from '../components/public/AuditionForm';
 import { getEnv } from '../lib/env';
 import { getPortalConfig } from '../lib/google';
+import {
+  getSiteUrl,
+  buildAuditionFaqSchema,
+  buildBreadcrumbsSchema,
+} from '../lib/seo';
 
 const config = await getPortalConfig(Astro.locals);
 
@@ -38,11 +43,24 @@ if (hasCustomForm && normalizedFormUrl.includes('docs.google.com/forms')) {
     normalizedFormUrl += normalizedFormUrl.includes('?') ? '&embedded=true' : '?embedded=true';
   }
 }
+
+const siteUrl = getSiteUrl(Astro.locals);
+const faqSchema = buildAuditionFaqSchema(choirName, siteUrl, config);
+const breadcrumbs = buildBreadcrumbsSchema(
+  [
+    { name: 'Home', path: '/' },
+    { name: 'Auditions', path: '/auditions' },
+  ],
+  siteUrl,
+);
+const auditionsStructuredData = [faqSchema, breadcrumbs];
 ---
 
 <PublicLayout
-  title={`Auditions · ${choirName}`}
-  description={`Audition for ${choirName}, one of Minnesota's premier choral ensembles led by Adam Reinwald. Rehearsals Sunday evenings at rotating venues across the Twin Cities.`}
+  title={`Auditions | Sing with ${choirName} · Twin Cities Choir (Minneapolis & St. Paul)`}
+  description={`Audition for ${choirName}, one of the premier a cappella chamber choirs in the Twin Cities, Minnesota. Openings for experienced choral singers across all voice parts (SATB). Sunday evening rehearsals in the Twin Cities metro.`}
+  keywords="choir auditions twin cities, choral auditions minneapolis, audition for choir twin cities, chamber choir auditions minnesota, sing in choir minneapolis st paul, adult choir auditions minnesota, best choirs in the twin cities"
+  structuredData={auditionsStructuredData}
 >
   <!-- Hero Section -->
   <section class="relative overflow-hidden bg-[#0B131E] pt-28 pb-16 text-ivory-50 sm:pt-36 sm:pb-24">
@@ -200,6 +218,15 @@ if (hasCustomForm && normalizedFormUrl.includes('docs.google.com/forms')) {
           </h3>
           <p class="mt-2 text-sm leading-relaxed text-zinc-600">
             No! {choirName} is proud to be tuition-free and dues-free. We believe choral excellence should be accessible to all qualified singers regardless of economic circumstances.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs">
+          <h3 class="font-editorial text-xl font-bold text-navy-950">
+            Is {choirName} in Minnesota affiliated with other choirs named Kantorei?
+          </h3>
+          <p class="mt-2 text-sm leading-relaxed text-zinc-600">
+            No. {choirName} (operating at <strong class="text-navy-950 font-semibold">kantorei.net</strong>) is an independent 501(c)(3) a cappella chamber choir founded in 1988 by Dr. Axel Theimer, based in the Minneapolis–Saint Paul Twin Cities metro area. It is entirely separate from other choral ensembles sharing the name (such as Kantorei in Denver, Colorado at kantorei.org).
           </p>
         </div>
       </div>

@@ -3,20 +3,60 @@ import '../styles/global.css';
 import Navbar from '../components/public/Navbar.astro';
 import Footer from '../components/public/Footer.astro';
 import { getPortalConfig } from '../lib/google';
+import {
+  getSiteUrl,
+  toAbsoluteUrl,
+  buildMusicGroupSchema,
+  DEFAULT_SEO_KEYWORDS,
+} from '../lib/seo';
 
 interface Props {
   title: string;
   description?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'music.musical_work' | 'article';
+  keywords?: string;
+  noindex?: boolean;
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
   title,
-  description = 'Founded in 1988 by Axel Theimer and led by Adam Reinwald, Kantorei is one of the premier a cappella choral ensembles in Minnesota.',
+  description = 'Founded in 1988 by Axel Theimer and led by Artistic Director Adam Reinwald, Kantorei is one of the premier a cappella choral ensembles in the Twin Cities, Minnesota.',
+  canonicalUrl: customCanonical,
+  ogImage: customOgImage,
+  ogType = 'website',
+  keywords = DEFAULT_SEO_KEYWORDS,
+  noindex = false,
+  structuredData,
 } = Astro.props;
 
 const config = await getPortalConfig(Astro.locals);
 const choirName = config.Choir_Name || 'Kantorei';
 const isSignedIn = Boolean(Astro.locals.singer);
+const siteUrl = getSiteUrl(Astro.locals);
+
+// Format page title cleanly: avoid "Kantorei | Kantorei" if title already contains the choir name
+const pageTitle = title.includes(choirName)
+  ? title
+  : `${title} | ${choirName} · Twin Cities Chamber Choir`;
+
+// Canonical and OpenGraph Absolute URLs
+const canonicalUrl = customCanonical || new URL(Astro.url.pathname, siteUrl).toString();
+const resolvedOgImage = toAbsoluteUrl(
+  customOgImage || config.Hero_Image_URL || '/images/kantorei-logo.webp',
+  Astro.locals,
+);
+
+// Structured Data (JSON-LD) composition
+const baseOrganizationSchema = buildMusicGroupSchema(config, siteUrl);
+const extraSchemas = Array.isArray(structuredData)
+  ? structuredData
+  : structuredData
+    ? [structuredData]
+    : [];
+const allJsonLd = [baseOrganizationSchema, ...extraSchemas];
 ---
 
 <!doctype html>
@@ -24,7 +64,24 @@ const isSignedIn = Boolean(Astro.locals.singer);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    <meta name="keywords" content={keywords} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    {noindex ? (
+      <meta name="robots" content="noindex, nofollow" />
+    ) : (
+      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    )}
+
+    <!-- Geographic & Entity Signals (Twin Cities, Minneapolis–Saint Paul, Minnesota) -->
+    <meta name="geo.region" content="US-MN" />
+    <meta name="geo.placename" content="Minneapolis-Saint Paul, Minnesota" />
+    <meta name="geo.position" content="45.0506;-93.1818" />
+    <meta name="ICBM" content="45.0506, -93.1818" />
+
+    <!-- Favicon & PWA Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/images/kantorei-logo-transparent.png" />
     <link rel="apple-touch-icon" href="/images/kantorei-logo-transparent.webp" />
@@ -33,18 +90,31 @@ const isSignedIn = Boolean(Astro.locals.singer);
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Kantorei" />
+    <meta name="apple-mobile-web-app-title" content={choirName} />
 
-    <!-- Open Graph & Social Sharing Cards -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={`${title} | ${choirName}`} />
+    <!-- Open Graph & Social Sharing Cards (Requires Absolute URLs) -->
+    <meta property="og:site_name" content={`${choirName} · Twin Cities Choral Ensemble`} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content="/images/kantorei-logo.webp" />
+    <meta property="og:image" content={resolvedOgImage} />
+    <meta property="og:image:alt" content={`${choirName} Choral Ensemble`} />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={`${title} | ${choirName}`} />
+    <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content="/images/kantorei-logo.webp" />
-    <title>{title} | {choirName}</title>
+    <meta name="twitter:image" content={resolvedOgImage} />
+    <meta name="twitter:image:alt" content={`${choirName} Choral Ensemble`} />
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    {allJsonLd.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
+
+    <!-- Typography Preconnects -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

@@ -6,6 +6,11 @@ import NewsletterForm from "../components/public/NewsletterForm";
 import { getEnv } from "../lib/env";
 import { getConcerts, getPortalConfig } from "../lib/google";
 import { resolveTicketTailorEntries } from "../lib/tickettailor";
+import {
+  getSiteUrl,
+  buildConcertEventSchemas,
+  buildBreadcrumbsSchema,
+} from "../lib/seo";
 
 const [config, allConcerts] = await Promise.all([
   getPortalConfig(Astro.locals),
@@ -60,11 +65,30 @@ const draftConcerts = isAdmin
         }),
     )
   : [];
+
+const siteUrl = getSiteUrl(Astro.locals);
+const choirName = config.Choir_Name || "Kantorei";
+const concertSchemas = buildConcertEventSchemas(activeConcerts, siteUrl, config);
+const breadcrumbs = buildBreadcrumbsSchema(
+  [
+    { name: "Home", path: "/" },
+    { name: "Concerts & Tickets", path: "/concerts" },
+  ],
+  siteUrl,
+);
+const concertsStructuredData = [...concertSchemas, breadcrumbs];
+const concertsOgImage =
+  activeConcerts[0]?.heroImageUrl ||
+  activeConcerts[0]?.posterImageUrl ||
+  "/images/advent-with-kantorei.webp";
 ---
 
 <PublicLayout
-  title="Concerts & Tickets"
-  description="Upcoming concerts and ticket box office for Kantorei choral ensemble performances in Minnesota."
+  title={`Upcoming Concerts & Tickets | ${choirName} · Twin Cities Choral Performances`}
+  description={`Experience radiant a cappella choral music live in the Twin Cities. Join ${choirName} in Minneapolis, St. Paul, Shoreview, and Edina for inspiring concerts, including our beloved annual Advent & Christmas concerts.`}
+  keywords="choral concerts twin cities, Christmas concerts minneapolis, Advent choral concert st paul, choral music minnesota, kantorei tickets, a cappella concert twin cities, holiday choir concerts minnesota, best choirs in the twin cities"
+  ogImage={concertsOgImage}
+  structuredData={concertsStructuredData}
 >
   <!-- Concerts Editorial Hero -->
   <section
@@ -79,18 +103,18 @@ const draftConcerts = isAdmin
       <span
         class="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-gold-300"
       >
-        2026–2027 Season &bull; Box Office & Tickets
+        2026–2027 Season &bull; Box Office & Tickets &bull; Minneapolis & St. Paul, MN
       </span>
       <h1
         class="mt-2.5 font-editorial text-4xl sm:text-5xl lg:text-6xl font-medium text-white tracking-tight leading-[1.08]"
       >
-        Upcoming Concerts
+        Twin Cities Choral Concerts & Tickets
       </h1>
       <p
         class="mt-3.5 max-w-2xl text-base sm:text-lg leading-relaxed text-[#E6E1DA]"
       >
         Experience luminous a cappella chamber singing live in Twin Cities
-        sanctuaries and premier acoustic halls.
+        sanctuaries and premier acoustic halls across Minneapolis, Saint Paul, and the Upper Midwest, including our beloved annual Advent & Christmas traditions.
       </p>
     </div>
   </section>
