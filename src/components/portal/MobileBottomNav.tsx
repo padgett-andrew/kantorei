@@ -156,14 +156,16 @@ export default function MobileBottomNav({
                   </span>
                 )}
                 <div className="min-w-0">
-                  <p className="truncate font-editorial text-xl font-semibold leading-tight text-navy-950">
-                    {singerDisplayName}
-                  </p>
-                  {singer?.sectionGroup && (
-                    <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-copper-600">
-                      {singer.sectionGroup} · {singer.voicePart}
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-editorial text-xl font-semibold leading-tight text-navy-950">
+                      {singerDisplayName}
                     </p>
-                  )}
+                    {isAdmin && (
+                      <span className="shrink-0 rounded-xs border border-copper-300/80 bg-[#f9efe8] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-copper-600">
+                        Admin
+                      </span>
+                    )}
+                  </div>
                   {singer?.email && (
                     <p className="mt-0.5 max-w-[220px] truncate text-xs text-stone-500">
                       {singer.email}

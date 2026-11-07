@@ -111,9 +111,11 @@ export default function UserProfileMenu({
         <span className="hidden min-w-0 truncate text-xs font-medium text-stone-800 sm:block">
           {singer.name}
         </span>
-        <span className="hidden text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400 md:inline">
-          {singer.voicePart}
-        </span>
+        {singer.role === 'Admin' && (
+          <span className="hidden rounded-xs border border-copper-300/80 bg-[#f9efe8] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-copper-600 md:inline">
+            Admin
+          </span>
+        )}
         <ChevronDown
           aria-hidden="true"
           className={`hidden h-3.5 w-3.5 shrink-0 text-stone-400 transition-transform sm:block ${
@@ -149,15 +151,17 @@ export default function UserProfileMenu({
                 <p className="truncate font-editorial text-xl font-semibold leading-tight text-navy-950">
                   {singer.name}
                 </p>
+                {singer.role === 'Admin' && (
+                  <span className="shrink-0 rounded-xs border border-copper-300/80 bg-[#f9efe8] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-copper-600">
+                    Admin
+                  </span>
+                )}
                 {isOnLeave && (
                   <span className="shrink-0 border border-copper-300/80 bg-[#f9efe8] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-copper-600">
                     Season Leave
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-copper-600">
-                {singer.sectionGroup} · {singer.voicePart}
-              </p>
               <p className="mt-0.5 truncate text-xs text-stone-500">{singer.email}</p>
             </div>
           </div>
