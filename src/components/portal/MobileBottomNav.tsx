@@ -97,7 +97,6 @@ export default function MobileBottomNav({
 
   // Singer identity normalization
   const singerDisplayName = singer?.name || singerName || 'Singer';
-  const singerSectionGroup = singer?.sectionGroup || '';
   const singerRole = singer?.role || (isAdmin ? 'Admin' : 'Singer');
   const singerStatus = singer?.status || 'Active';
   const avatarUrl = singer?.picture || singer?.photoUrl;
@@ -158,23 +157,13 @@ export default function MobileBottomNav({
                       {singer.email}
                     </p>
                   )}
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                    {singerSectionGroup && (
-                      <span className="text-[11px] text-stone-300">
-                        {singerSectionGroup} Section
-                      </span>
-                    )}
-                    {singerRole !== 'Singer' && (
-                      <span className="rounded-sm border border-gold-400/30 bg-gold-400/20 px-1.5 py-0.2 text-[10px] font-semibold text-gold-300">
-                        {singerRole.replace('_', ' ')}
-                      </span>
-                    )}
-                    {singerStatus === 'On_Leave' && (
+                  {singerStatus === 'On_Leave' && (
+                    <div className="mt-1">
                       <span className="rounded-sm border border-indigo-400/40 bg-indigo-500/20 px-1.5 py-0.2 text-[10px] font-semibold text-indigo-300">
                         On Leave
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
