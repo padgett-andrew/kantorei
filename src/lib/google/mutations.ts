@@ -49,7 +49,7 @@ export async function mutateSnackSlot(params: {
 
     if (action === 'claim') {
       if (existing && existing.singerName.trim() !== '') {
-        throw new ConflictError(`Hospitality Slot ${slot} was just claimed by ${existing.singerName}.`);
+        throw new ConflictError(`Sign-Up Slot ${slot} was just claimed by ${existing.singerName}.`);
       }
       if (existing) {
         existing.singerName = caller.name;
@@ -109,7 +109,7 @@ export async function mutateSnackSlot(params: {
       if (action === 'claim') {
         if (existingIdx !== -1 && (snackRows[existingIdx][2] ?? '').trim() !== '') {
           throw new ConflictError(
-            `Hospitality Slot ${slot} was just claimed by ${snackRows[existingIdx][2]}.`
+            `Sign-Up Slot ${slot} was just claimed by ${snackRows[existingIdx][2]}.`
           );
         }
         const nowIso = new Date().toISOString();

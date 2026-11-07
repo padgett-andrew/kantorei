@@ -191,7 +191,7 @@ export default function UserProfileMenu({
                   <CheckSquare className={iconClass} aria-hidden="true" />
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">Take Attendance</span>
-                    <span className={descriptionClass}>Visual riser roll call</span>
+                    <span className={descriptionClass}>Visual roll call</span>
                   </span>
                 </a>
                 <a role="menuitem" href="/portal/directory" onClick={closeMenu} className={linkClass}>

@@ -62,7 +62,7 @@ export default function FormationView({
         <span>
           {perspective === 'conductor' ? '← Choir Left (Stage Right)' : '← Your Left (Stage Left)'}
         </span>
-        <span className="hidden text-copper-600 sm:inline">Upstage Riser Formation</span>
+        <span className="hidden text-copper-600 sm:inline">Upstage Formation</span>
         <span>
           {perspective === 'conductor' ? 'Choir Right (Stage Left) →' : 'Your Right (Stage Right) →'}
         </span>
@@ -281,7 +281,7 @@ export default function FormationView({
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-dashed border-stone-400 bg-white px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Add Riser Row</span>
+            <span>Add Row</span>
           </button>
         </div>
       )}

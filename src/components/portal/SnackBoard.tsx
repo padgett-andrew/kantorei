@@ -169,7 +169,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
   const filterTabs: { id: typeof filterMode; label: string }[] = [
     { id: 'all', label: `All Calls (${events.length})` },
     { id: 'concerts', label: 'Concert Crew' },
-    { id: 'rehearsals', label: 'Rehearsal Hospitality' },
+    { id: 'rehearsals', label: 'Rehearsal Duties' },
     { id: 'open', label: 'Open Slots' },
     { id: 'mine', label: `My Commitments (${mySignupsCount})` },
   ];
@@ -246,7 +246,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
           {filterMode === 'mine' ? (
             <div className="space-y-2">
               <p className="font-editorial text-2xl text-navy-950">
-                No hospitality or crew commitments claimed yet
+                No sign-up or crew commitments claimed yet
               </p>
               <p className="mx-auto max-w-md text-xs leading-relaxed text-stone-500">
                 Select any open slot on an upcoming rehearsal or concert call to volunteer.
@@ -319,7 +319,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
                   </div>
                 </div>
 
-                {/* 4 Duties / Hospitality Slots Grid */}
+                {/* 4 Duties / Sign-Up Slots Grid */}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {([1, 2, 3, 4] as const).map((slot) => (
                     <SnackSlotCard

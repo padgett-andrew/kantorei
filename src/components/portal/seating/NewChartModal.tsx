@@ -217,8 +217,8 @@ export default function NewChartModal({
             </h2>
             <p className="mt-0.5 text-xs text-stone-500">
               {isDuplicateMode
-                ? 'Clone an existing riser arrangement into a new editable draft.'
-                : 'Configure riser rows, concert cycle, and initial seat capacity.'}
+                ? 'Clone an existing stage arrangement into a new editable draft.'
+                : 'Configure rows, concert cycle, and initial capacity.'}
             </p>
           </div>
 
@@ -256,7 +256,7 @@ export default function NewChartModal({
                   }`}
                 >
                   <Layers className="h-3.5 w-3.5" />
-                  <span>Blank Risers</span>
+                  <span>Blank Chart</span>
                 </button>
 
                 <button
@@ -305,7 +305,7 @@ export default function NewChartModal({
                   <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-stone-600">
                     <span className="inline-flex items-center gap-1 rounded-sm border border-stone-200 bg-[#FAF7F2] px-2 py-0.5 text-[11px] font-medium text-stone-700">
                       <Layers className="h-3 w-3 text-copper-600" />
-                      {sourceStats.rowCount} Riser Rows
+                      {sourceStats.rowCount} Rows
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-sm border border-stone-200 bg-[#FAF7F2] px-2 py-0.5 text-[11px] font-medium text-stone-700">
                       {sourceStats.totalSeats} Seats
@@ -332,7 +332,7 @@ export default function NewChartModal({
                       <p className="text-[11px] text-stone-500">
                         {copySingers
                           ? 'Singers remain in identical positions in the duplicated chart.'
-                          : 'Riser geometry and aisles are preserved, with all seats cleared.'}
+                          : 'Row geometry and aisles are preserved, with all seats cleared.'}
                       </p>
                     </div>
                   </label>

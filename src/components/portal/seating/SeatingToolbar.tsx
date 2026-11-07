@@ -104,10 +104,10 @@ export default function SeatingToolbar({
                   ? 'bg-navy-950 text-white'
                   : 'text-stone-600 hover:text-navy-950'
               }`}
-              title="Formation: Visual stage riser layout"
+              title="Formation: Visual stage layout"
             >
               <LayoutGrid className="h-3 w-3" />
-              <span className="hidden sm:inline">Risers</span>
+              <span className="hidden sm:inline">Formation</span>
               <span className="sm:hidden">Stage</span>
             </button>
             <button

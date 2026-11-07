@@ -46,7 +46,7 @@ export default function PersonalSeatBanner({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
-              Your Assigned Riser Position
+              Your Assigned Position
             </span>
             <span className="text-stone-300" aria-hidden="true">·</span>
             <span className="text-xs text-stone-500">{mySeatLocation.chartTitle}</span>

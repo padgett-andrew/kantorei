@@ -127,7 +127,7 @@ export function buildIcsCalendar(params: {
       `Time: ${ev.time}`,
       eventDescription ? `Details & Focus:\n${eventDescription}` : '',
       ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name
-        ? `Hospitality / Snacks: ${[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name].filter(Boolean).join(', ')}`
+        ? `Sign-ups / Duties: ${[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name].filter(Boolean).join(', ')}`
         : '',
     ]
       .filter(Boolean)

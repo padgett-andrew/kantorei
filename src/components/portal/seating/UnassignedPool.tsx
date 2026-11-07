@@ -66,7 +66,7 @@ export default function UnassignedPool({
             )}
           </div>
           <p className="text-xs text-stone-500">
-            Drag a singer onto any riser seat above, or drag an assigned seat here to return them to the pool.
+            Drag a singer onto any seat or position above, or drag an assigned seat here to return them to the pool.
           </p>
         </div>
 

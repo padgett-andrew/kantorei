@@ -26,19 +26,19 @@ interface Props {
 function getDefaultSlotLabel(ev: ScheduleEvent, slot: SlotNumber): string {
   const isConcertCall = ev.type === 'Concert' || ev.type === 'Dress';
   if (isConcertCall) {
-    if (slot === 1) return 'Concert Setup & Risers';
+    if (slot === 1) return 'Concert Setup & Stage';
     if (slot === 2) return 'Concert Strike & Teardown';
     if (slot === 3) return 'Box Office & Will-Call';
     return 'Patron Reception';
   }
   if (slot === 3) return 'Room Setup & Welcome';
-  return `Hospitality Slot ${slot}`;
+  return `Sign-Up Slot ${slot}`;
 }
 
 function getDutyIcon(dutyText: string) {
   const lower = dutyText.toLowerCase();
   const iconClass = 'h-3.5 w-3.5 shrink-0 text-copper-600';
-  if (lower.includes('setup') || lower.includes('riser')) return <Wrench className={iconClass} />;
+  if (lower.includes('setup') || lower.includes('riser') || lower.includes('stage')) return <Wrench className={iconClass} />;
   if (lower.includes('strike') || lower.includes('teardown') || lower.includes('clean')) return <PackageCheck className={iconClass} />;
   if (lower.includes('box office') || lower.includes('ticket') || lower.includes('door') || lower.includes('usher')) return <Ticket className={iconClass} />;
   if (lower.includes('transport') || lower.includes('truck') || lower.includes('banner')) return <Truck className={iconClass} />;

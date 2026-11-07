@@ -15,10 +15,10 @@ export interface ClaimModalState {
 }
 
 export const CONCERT_DUTY_SUGGESTIONS = [
-  'Concert Setup & Risers (Early Call)',
+  'Concert Setup & Stage (Early Call)',
   'Concert Strike & Teardown',
   'Box Office & Will-Call Check-in',
-  'Patron Reception & Hospitality',
+  'Patron Reception & Greeting',
   'Program Usher & Greeter',
   'Transport Equipment & Banners',
 ];
@@ -57,11 +57,11 @@ export default function SnackClaimModal({
 
   const inputLabel = isConcertCall
     ? 'Duty or Crew Role'
-    : 'Refreshment or Hospitality Task';
+    : 'Task or Refreshment';
 
   const placeholderText = isConcertCall
-    ? 'e.g. Concert Setup & Risers, Box Office Check-in, Strike…'
-    : 'e.g. Clementines & cheese, cookies (nut-free), sparkling water, room setup…';
+    ? 'e.g. Stage Setup, Box Office Check-in, Strike…'
+    : 'e.g. Refreshments, room setup, end cleanup…';
 
   return (
     <div
@@ -81,7 +81,7 @@ export default function SnackClaimModal({
               {modalState.action === 'claim'
                 ? isConcertCall
                   ? 'Concert Crew Signup'
-                  : 'Hospitality Signup'
+                  : 'Rehearsal Duty Signup'
                 : 'Update Commitment'}{' '}
               · Slot 0{modalState.slot}
             </span>
@@ -136,15 +136,15 @@ export default function SnackClaimModal({
             />
             <p className="mt-1.5 text-xs text-stone-500">
               {isConcertCall
-                ? 'Helps concert managers and section leaders coordinate risers, doors, and strike.'
-                : 'Helps fellow singers coordinate a balanced spread of refreshments.'}
+                ? 'Helps concert managers and section leaders coordinate stage setup, doors, and strike.'
+                : 'Helps fellow singers coordinate rehearsal duties and refreshments.'}
             </p>
           </div>
 
           {/* Quick suggestion chips */}
           <div>
             <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
-              {isConcertCall ? 'Suggested Crew Roles' : 'Suggested Refreshments & Tasks'}
+              {isConcertCall ? 'Suggested Crew Roles' : 'Suggested Duties & Refreshments'}
             </span>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {suggestions.map((suggestion) => {

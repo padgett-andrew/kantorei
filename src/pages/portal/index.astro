@@ -269,7 +269,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                     <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
                       {nextEvent.type === 'Concert' || nextEvent.type === 'Dress'
                         ? 'Call Crew'
-                        : 'Hospitality'}
+                        : 'Sign-ups'}
                     </span>
                     <span class="font-medium text-navy-950">
                       {[
@@ -334,14 +334,14 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
           </span>
         </a>
 
-        {/* 02. Hospitality & Duties */}
+        {/* 02. Sign-Ups & Duties */}
         <a
           href="/portal/snacks"
           class="group flex flex-col justify-between border-b border-stone-200/90 py-6 transition-colors hover:bg-[#f5efe8]/60 sm:border-l sm:pl-6 lg:border-b-0 lg:px-6 lg:py-7"
         >
           <div>
             <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
-              02 · Hospitality
+              02 · Sign-Ups
             </span>
             <h3 class="mt-2 font-editorial text-2xl font-medium leading-snug text-navy-950">
               {mySnackDates.length > 0
@@ -351,7 +351,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
             <p class="mt-1.5 text-xs leading-relaxed text-stone-600">
               {mySnackDates.length > 0
                 ? `Next commitment: ${formatEventDate(mySnackDates[0].date)}`
-                : 'Rehearsal hospitality & concert crew signups.'}
+                : 'Rehearsal duties, hospitality & concert crew sign-ups.'}
             </p>
           </div>
           <span class="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-navy-950 transition group-hover:text-copper-600">
@@ -390,7 +390,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
         >
           <div>
             <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
-              04 · Stage Riser
+              04 · Seating Chart
             </span>
             <h3 class="mt-2 font-editorial text-2xl font-medium leading-snug text-navy-950">
               {mySeatLocation
@@ -400,7 +400,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
             <p class="mt-1.5 text-xs leading-relaxed text-stone-600">
               {mySeatLocation
                 ? `${mySeatLocation.chartTitle} · ${mySeatLocation.voicePart || singer.voicePart}`
-                : 'Published concert riser & section positions.'}
+                : 'Published concert seating & standing positions.'}
             </p>
           </div>
           <span class="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-navy-950 transition group-hover:text-copper-600">
@@ -501,7 +501,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                   )}
                 </div>
 
-                {/* Action & Hospitality Column */}
+                {/* Action & Sign-Ups Column */}
                 <div class="flex flex-wrap items-center justify-between gap-2 sm:col-span-3 sm:flex-col sm:items-end sm:justify-start">
                   <QuickLateNoticeModal
                     client:load
@@ -516,7 +516,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                   {(ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name) && (
                     <p class="text-xs leading-snug text-stone-500 sm:mt-1 sm:text-right">
                       <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400">
-                        {ev.type === 'Concert' || ev.type === 'Dress' ? 'Crew: ' : 'Hospitality: '}
+                        {ev.type === 'Concert' || ev.type === 'Dress' ? 'Crew: ' : 'Sign-ups: '}
                       </span>
                       <span class="text-stone-700">
                         {[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name]

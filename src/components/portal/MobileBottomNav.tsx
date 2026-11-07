@@ -205,7 +205,7 @@ export default function MobileBottomNav({
                     <Layers className="h-4 w-4 shrink-0 text-copper-600" />
                     <div>
                       <p className="font-medium text-navy-950">Seating &amp; Stage Formation</p>
-                      <p className="text-xs text-stone-500">Riser layout &amp; chair assignments</p>
+                      <p className="text-xs text-stone-500">Stage placement &amp; seating chart</p>
                     </div>
                   </div>
                 </a>
@@ -328,7 +328,7 @@ export default function MobileBottomNav({
                       <CheckSquare className="h-4 w-4 shrink-0 text-copper-600" />
                       <div>
                         <p className="font-medium text-navy-950">Take Roll Call</p>
-                        <p className="text-xs text-stone-500">Visual riser attendance check</p>
+                        <p className="text-xs text-stone-500">Visual chart attendance check</p>
                       </div>
                     </div>
                   </a>
@@ -411,7 +411,7 @@ export default function MobileBottomNav({
             { href: '/portal', label: 'Schedule', active: isScheduleActive, Icon: Calendar },
             { href: '/portal/music', label: 'Music', active: isMusicActive, Icon: Music },
             { href: '/portal/absences', label: 'Absences', active: isAbsencesActive, Icon: UserX },
-            { href: '/portal/snacks', label: 'Hospitality', active: isSnacksActive, Icon: CheckSquare },
+            { href: '/portal/snacks', label: 'Sign-Ups', active: isSnacksActive, Icon: CheckSquare },
           ].map(({ href, label, active, Icon }) => (
             <a
               key={href}

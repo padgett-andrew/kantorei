@@ -776,7 +776,7 @@ export const demoStore: DemoStore = {
       snack2Name: '',
       snack3Name: '',
       snack4Name: '',
-      notes: 'Full concert program run-through at the venue to lock in risers and logistics (casual attire OK).',
+      notes: 'Full concert program run-through at the venue to lock in staging and logistics (casual attire OK).',
     },
     {
       eventId: 'con-2026-12-19',
