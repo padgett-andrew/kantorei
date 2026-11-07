@@ -1,6 +1,7 @@
-import { Compass, MapPin, Sparkles } from 'lucide-react';
+import { Compass, Crosshair } from 'lucide-react';
+import { voicePartBadgeColor } from '../../../lib/utils';
 import type { SeatingPerspective } from './types';
-import type { Singer } from '../../../types/choir';
+import type { Singer, VoicePart } from '../../../types/choir';
 
 interface Props {
   caller: Singer;
@@ -28,87 +29,68 @@ export default function PersonalSeatBanner({
   onTogglePerspective,
   onFocusSeat,
 }: Props) {
+  const voicePart = (mySeatLocation.voicePart || caller.voicePart) as VoicePart;
+
+  let neighborSummary = '';
+  if (myNeighbors?.leftSinger && myNeighbors?.rightSinger) {
+    neighborSummary = `Between ${myNeighbors.leftSinger} & ${myNeighbors.rightSinger}`;
+  } else if (myNeighbors?.leftSinger) {
+    neighborSummary = `Next to ${myNeighbors.leftSinger} · Stage Edge`;
+  } else if (myNeighbors?.rightSinger) {
+    neighborSummary = `Stage Edge · Next to ${myNeighbors.rightSinger}`;
+  }
+
   return (
-    <div className="space-y-3">
-      {/* Perspective Flip Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-50/95 via-amber-100/50 to-orange-50/80 p-4 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold-500 text-white shadow-2xs">
-              <Sparkles className="h-4 w-4" />
+    <div className="rounded-sm border border-stone-200/90 border-l-2 border-l-copper-500 bg-white px-5 py-4 sm:px-6">
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+              Your Assigned Riser Position
             </span>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-gold-600">
-                Your Assigned Position
-              </p>
-              <h3 className="text-sm sm:text-base font-bold text-navy-950">
-                {caller.name} · {mySeatLocation.rowName}, Seat #{mySeatLocation.seatIndex} (
-                {mySeatLocation.voicePart || caller.voicePart})
-              </h3>
-              <p className="text-xs text-zinc-600">
-                Chart: <span className="font-semibold">{mySeatLocation.chartTitle}</span>
-              </p>
-            </div>
+            <span className="text-stone-300" aria-hidden="true">·</span>
+            <span className="text-xs text-stone-500">{mySeatLocation.chartTitle}</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onTogglePerspective}
-              className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-white/90 px-3 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs hover:bg-white"
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h2 className="font-editorial text-2xl font-normal text-navy-950 sm:text-[26px]">
+              {mySeatLocation.rowName}, Seat #{mySeatLocation.seatIndex}
+            </h2>
+            <span
+              className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${voicePartBadgeColor(
+                voicePart
+              )}`}
             >
-              <Compass className="h-3.5 w-3.5 text-gold-600" />
-              <span>Flip to {perspective === 'conductor' ? "Singer's View" : "Conductor's View"}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Locator / Focus Seat Card */}
-      <div className="rounded-2xl border border-gold-300 bg-amber-50/70 p-3 sm:p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-in fade-in">
-        <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold-500 text-white shadow-2xs">
-            <MapPin className="h-5 w-5" />
-          </span>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gold-900">
-                Your Seat Location
-              </span>
-              <span className="rounded-md bg-gold-200/90 px-1.5 py-0.2 text-[10px] font-bold text-gold-950">
-                {mySeatLocation.voicePart || caller.voicePart}
-              </span>
-            </div>
-            <p className="text-sm font-bold text-navy-950 leading-snug">
-              {mySeatLocation.rowName} · Seat #{mySeatLocation.seatIndex}
-              {myNeighbors?.leftSinger && myNeighbors?.rightSinger && (
-                <span className="text-xs font-normal text-zinc-600 block sm:inline sm:ml-2">
-                  (Between {myNeighbors.leftSinger} &amp; {myNeighbors.rightSinger})
-                </span>
-              )}
-              {myNeighbors?.leftSinger && !myNeighbors?.rightSinger && (
-                <span className="text-xs font-normal text-zinc-600 block sm:inline sm:ml-2">
-                  (Next to {myNeighbors.leftSinger} · Stage Edge)
-                </span>
-              )}
-              {!myNeighbors?.leftSinger && myNeighbors?.rightSinger && (
-                <span className="text-xs font-normal text-zinc-600 block sm:inline sm:ml-2">
-                  (Stage Edge · Next to {myNeighbors.rightSinger})
-                </span>
-              )}
-            </p>
+              {voicePart}
+            </span>
+            {neighborSummary && (
+              <span className="text-xs text-stone-500">{neighborSummary}</span>
+            )}
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onFocusSeat}
-          className="cursor-pointer inline-flex items-center justify-center gap-1.5 rounded-xl bg-gold-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-gold-600 active:scale-95 transition self-start sm:self-auto"
-        >
-          <span>🎯 Focus My Seat</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onTogglePerspective}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-stone-300 bg-[#FAF7F2] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.13em] text-navy-950 transition hover:border-navy-950 hover:bg-white"
+          >
+            <Compass className="h-3.5 w-3.5 text-copper-600" />
+            <span>
+              {perspective === 'conductor' ? "Flip to Singer's View" : "Flip to Conductor's View"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onFocusSeat}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm bg-navy-950 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.13em] text-white transition hover:bg-navy-900"
+          >
+            <Crosshair className="h-3.5 w-3.5 text-copper-400" />
+            <span>Locate Seat</span>
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-

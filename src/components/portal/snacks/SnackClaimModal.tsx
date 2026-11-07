@@ -1,6 +1,6 @@
 import { formatEventDate } from '../../../lib/utils';
 import type { EventType, Singer } from '../../../types/choir';
-import { Sparkles, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export type SlotNumber = 1 | 2 | 3 | 4;
 
@@ -15,22 +15,22 @@ export interface ClaimModalState {
 }
 
 export const CONCERT_DUTY_SUGGESTIONS = [
-  '🎪 Concert Setup & Risers (Early Call)',
-  '📦 Concert Strike & Teardown',
-  '🎟️ Box Office & Will-Call Check-in',
-  '🍷 Patron Reception & Hospitality',
-  '🚪 Program Usher & Greeter',
-  '🚚 Transport Equipment & Banners',
+  'Concert Setup & Risers (Early Call)',
+  'Concert Strike & Teardown',
+  'Box Office & Will-Call Check-in',
+  'Patron Reception & Hospitality',
+  'Program Usher & Greeter',
+  'Transport Equipment & Banners',
 ];
 
 export const REHEARSAL_SNACK_SUGGESTIONS = [
-  '🍇 Fresh fruit (grapes, clementines, berries)',
-  '🍪 Cookies or brownies (nut-free)',
-  '🧀 Cheese & crackers',
-  '💧 Sparkling water or juice',
-  '🥨 Pretzels, chips & salsa',
-  '🪑 Room & Chair Setup (early call)',
-  '🧹 End-of-Rehearsal Cleanup',
+  'Fresh fruit (grapes, clementines, berries)',
+  'Cookies or brownies (nut-free)',
+  'Cheese & crackers',
+  'Sparkling water or juice',
+  'Pretzels, chips & salsa',
+  'Room & Chair Setup (early call)',
+  'End-of-Rehearsal Cleanup',
 ];
 
 interface Props {
@@ -56,8 +56,8 @@ export default function SnackClaimModal({
   const suggestions = isConcertCall ? CONCERT_DUTY_SUGGESTIONS : REHEARSAL_SNACK_SUGGESTIONS;
 
   const inputLabel = isConcertCall
-    ? 'What duty or task are you claiming?'
-    : 'What do you plan to bring or assist with?';
+    ? 'Duty or Crew Role'
+    : 'Refreshment or Hospitality Task';
 
   const placeholderText = isConcertCall
     ? 'e.g. Concert Setup & Risers, Box Office Check-in, Strike…'
@@ -67,51 +67,56 @@ export default function SnackClaimModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/70 p-4 backdrop-blur-xs"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
       <div
-        className="flex w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+        className="flex w-full max-w-lg flex-col overflow-hidden rounded-sm border border-stone-300 bg-[#FAF7F2] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200/80 bg-ivory-50 px-6 py-4">
+        <div className="flex items-start justify-between border-b border-stone-200/90 bg-white px-6 py-5">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gold-600">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
               {modalState.action === 'claim'
                 ? isConcertCall
-                  ? 'Concert Duty Signup'
+                  ? 'Concert Crew Signup'
                   : 'Hospitality Signup'
-                : 'Edit Your Commitment'}{' '}
-              · Slot {modalState.slot}
+                : 'Update Commitment'}{' '}
+              · Slot 0{modalState.slot}
             </span>
-            <h3 className="font-editorial text-lg font-bold text-navy-950">
+            <h3 className="mt-1 font-editorial text-2xl font-normal text-navy-950">
               {formatEventDate(modalState.eventDate)} — {modalState.eventTitle}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-200/70 hover:text-navy-950"
+            aria-label="Close modal"
+            className="cursor-pointer rounded-sm p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-navy-950"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="space-y-4 p-6">
+        <div className="space-y-5 p-6">
           <div>
-            <label className="block text-xs font-semibold text-zinc-500">Signing Up As</label>
-            <div className="mt-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-sm font-semibold text-navy-950">
-              {singer.name} ({singer.voicePart})
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-500">
+              Member
+            </label>
+            <div className="mt-1.5 rounded-sm border border-stone-200/90 bg-white px-3.5 py-2 text-sm font-medium text-navy-950">
+              {singer.name} <span className="text-stone-500">· {singer.voicePart}</span>
             </div>
           </div>
 
           <div>
             <label
               htmlFor="duty-item"
-              className="flex items-center justify-between text-xs font-semibold text-zinc-700"
+              className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600"
             >
               <span>{inputLabel}</span>
-              <span className="text-zinc-400 font-normal">Custom text allowed</span>
+              <span className="font-normal lowercase tracking-normal text-stone-400">Custom text welcome</span>
             </label>
             <input
               id="duty-item"
@@ -126,31 +131,34 @@ export default function SnackClaimModal({
                 }
               }}
               placeholder={placeholderText}
-              className="mt-1.5 w-full rounded-xl border border-zinc-300 px-3.5 py-2.5 text-sm text-navy-950 focus:border-navy-900 focus:outline-none"
+              className="mt-1.5 w-full rounded-sm border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-navy-950 focus:border-navy-950 focus:outline-none"
               autoFocus
             />
-            <p className="mt-1 text-[11px] text-zinc-500">
+            <p className="mt-1.5 text-xs text-stone-500">
               {isConcertCall
-                ? 'Lets concert managers & section leaders know who is handling risers, doors, or strike.'
-                : 'Entering this lets fellow singers know what’s already covered so we have a great variety!'}
+                ? 'Helps concert managers and section leaders coordinate risers, doors, and strike.'
+                : 'Helps fellow singers coordinate a balanced spread of refreshments.'}
             </p>
           </div>
 
           {/* Quick suggestion chips */}
           <div>
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-zinc-400">
-              <Sparkles className="h-3 w-3 text-gold-500" />
-              {isConcertCall ? 'Recommended Concert Tasks:' : 'Quick Ideas:'}
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+              {isConcertCall ? 'Suggested Crew Roles' : 'Suggested Refreshments & Tasks'}
             </span>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {suggestions.map((suggestion) => {
-                const cleanText = suggestion.replace(/^[^\s]+\s*/, '');
+                const isSelected = itemInput === suggestion;
                 return (
                   <button
                     key={suggestion}
                     type="button"
-                    onClick={() => onItemInputChange(cleanText)}
-                    className="cursor-pointer rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700 transition hover:border-gold-500 hover:bg-ivory-50 hover:text-navy-900"
+                    onClick={() => onItemInputChange(suggestion)}
+                    className={`cursor-pointer rounded-sm border px-2.5 py-1 text-xs transition ${
+                      isSelected
+                        ? 'border-navy-950 bg-navy-950 font-medium text-white'
+                        : 'border-stone-200/90 bg-white text-stone-700 hover:border-copper-500 hover:text-navy-950'
+                    }`}
                   >
                     {suggestion}
                   </button>
@@ -161,20 +169,20 @@ export default function SnackClaimModal({
         </div>
 
         {/* Modal Actions */}
-        <div className="flex items-center justify-end gap-2.5 border-t border-zinc-200/80 bg-zinc-50 px-6 py-4">
+        <div className="flex items-center justify-end gap-2.5 border-t border-stone-200/90 bg-white px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-xl border border-zinc-300 bg-white px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+            className="cursor-pointer rounded-sm border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onSubmit}
-            className="cursor-pointer rounded-xl bg-navy-900 px-5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-navy-800"
+            className="cursor-pointer rounded-sm bg-navy-950 px-5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-navy-900"
           >
-            {modalState.action === 'claim' ? 'Confirm Slot Signup' : 'Save Duty / Item'}
+            {modalState.action === 'claim' ? 'Confirm Signup' : 'Save Changes'}
           </button>
         </div>
       </div>

@@ -24,19 +24,21 @@ export default function SeatingToolbar({
   setSectionFilter,
 }: Props) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200/80 pb-3">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-3 border-b border-stone-200/90 pb-3.5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-wrap items-center gap-4">
         {/* Perspective toggle */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-zinc-500">Perspective:</span>
-          <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+            Perspective
+          </span>
+          <div className="flex rounded-sm border border-stone-300/90 bg-white p-0.5 text-[11px]">
             <button
               type="button"
               onClick={() => setPerspective('conductor')}
-              className={`cursor-pointer rounded-md px-2.5 py-1 font-semibold transition ${
+              className={`cursor-pointer rounded-sm px-2.5 py-1 font-semibold uppercase tracking-[0.1em] transition ${
                 perspective === 'conductor'
-                  ? 'bg-navy-950 text-white shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-navy-950 text-white'
+                  : 'text-stone-600 hover:text-navy-950'
               }`}
             >
               Conductor
@@ -44,73 +46,77 @@ export default function SeatingToolbar({
             <button
               type="button"
               onClick={() => setPerspective('singer')}
-              className={`cursor-pointer rounded-md px-2.5 py-1 font-semibold transition ${
+              className={`cursor-pointer rounded-sm px-2.5 py-1 font-semibold uppercase tracking-[0.1em] transition ${
                 perspective === 'singer'
-                  ? 'bg-navy-950 text-white shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-navy-950 text-white'
+                  : 'text-stone-600 hover:text-navy-950'
               }`}
             >
-              Singer View
+              Singer
             </button>
           </div>
         </div>
 
-        {/* Density toggle (designed for 50-member choir / up to 20 seats per row) */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-zinc-500">View:</span>
-          <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5 text-xs">
+        {/* Density toggle */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+            Scale
+          </span>
+          <div className="flex rounded-sm border border-stone-300/90 bg-white p-0.5 text-[11px]">
             <button
               type="button"
               onClick={() => setDensity('compact')}
-              className={`cursor-pointer rounded-md px-2.5 py-1 font-semibold transition ${
+              className={`cursor-pointer rounded-sm px-2.5 py-1 font-semibold uppercase tracking-[0.1em] transition ${
                 density === 'compact'
-                  ? 'bg-navy-950 text-white shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-navy-950 text-white'
+                  : 'text-stone-600 hover:text-navy-950'
               }`}
-              title="Compact mode: Fits 16–20 singers per row on screen without horizontal scroll"
+              title="Compact mode: Fits 16–20 singers per row on screen"
             >
-              Compact (50 Choir)
+              Compact
             </button>
             <button
               type="button"
               onClick={() => setDensity('comfortable')}
-              className={`cursor-pointer rounded-md px-2.5 py-1 font-semibold transition ${
+              className={`cursor-pointer rounded-sm px-2.5 py-1 font-semibold uppercase tracking-[0.1em] transition ${
                 density === 'comfortable'
-                  ? 'bg-navy-950 text-white shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-navy-950 text-white'
+                  : 'text-stone-600 hover:text-navy-950'
               }`}
               title="Comfortable mode: Expanded cards with full names"
             >
-              Comfortable
+              Expanded
             </button>
           </div>
         </div>
 
-        {/* Layout toggle (Formation vs Mobile Row List) */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-zinc-500">Layout:</span>
-          <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5 text-xs">
+        {/* Layout toggle (Formation vs Row List) */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+            Layout
+          </span>
+          <div className="flex rounded-sm border border-stone-300/90 bg-white p-0.5 text-[11px]">
             <button
               type="button"
               onClick={() => setLayoutView('formation')}
-              className={`cursor-pointer inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-semibold transition ${
+              className={`inline-flex cursor-pointer items-center gap-1 rounded-sm px-2.5 py-1 font-semibold uppercase tracking-[0.1em] transition ${
                 layoutView === 'formation'
-                  ? 'bg-navy-950 text-white shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-navy-950 text-white'
+                  : 'text-stone-600 hover:text-navy-950'
               }`}
               title="Formation: Visual stage riser layout"
             >
               <LayoutGrid className="h-3 w-3" />
-              <span className="hidden sm:inline">Formation</span>
+              <span className="hidden sm:inline">Risers</span>
               <span className="sm:hidden">Stage</span>
             </button>
             <button
               type="button"
               onClick={() => setLayoutView('list')}
-              className={`cursor-pointer inline-flex items-center gap-1 rounded-md px-2.5 py-1 font-semibold transition ${
+              className={`inline-flex cursor-pointer items-center gap-1 rounded-sm px-2.5 py-1 font-semibold uppercase tracking-[0.1em] transition ${
                 layoutView === 'list'
-                  ? 'bg-navy-950 text-white shadow-2xs'
-                  : 'text-zinc-600 hover:text-zinc-900'
+                  ? 'bg-navy-950 text-white'
+                  : 'text-stone-600 hover:text-navy-950'
               }`}
               title="Row List: Mobile attendance and quick list"
             >
@@ -122,17 +128,19 @@ export default function SeatingToolbar({
       </div>
 
       {/* Section Filter Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-        <span className="text-xs font-semibold text-zinc-500 mr-1">Section:</span>
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none lg:pb-0">
+        <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+          Section
+        </span>
         {(['All', 'Soprano', 'Alto', 'Tenor', 'Bass'] as const).map((sec) => (
           <button
             key={sec}
             type="button"
             onClick={() => setSectionFilter(sec)}
-            className={`cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+            className={`cursor-pointer rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
               sectionFilter === sec
-                ? 'bg-navy-950 text-white shadow-2xs'
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                ? 'border-navy-950 bg-navy-950 text-white'
+                : 'border-stone-200/90 bg-white text-stone-600 hover:border-stone-400 hover:text-navy-950'
             }`}
           >
             {sec}
@@ -142,4 +150,3 @@ export default function SeatingToolbar({
     </div>
   );
 }
-

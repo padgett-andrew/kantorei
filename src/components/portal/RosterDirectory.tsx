@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Users } from 'lucide-react';
 import type {
   SectionGroup,
   SheetWarning,
@@ -269,21 +268,21 @@ export default function RosterDirectory({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Notifications Banner */}
       {banner && (
         <div
-          className={`flex items-center justify-between rounded-2xl p-4 text-xs font-semibold shadow-2xs ${
+          className={`flex items-center justify-between rounded-sm border px-4 py-3 text-xs ${
             banner.type === 'ok'
-              ? 'border border-emerald-300 bg-emerald-50 text-emerald-950'
-              : 'border border-rose-300 bg-rose-50 text-rose-950'
+              ? 'border-stone-300 bg-[#FAF7F2] text-navy-950'
+              : 'border-[#e4c4bc] bg-[#f7ebe8] text-[#84372d]'
           }`}
         >
           <span>{banner.text}</span>
           <button
             type="button"
             onClick={() => setBanner(null)}
-            className="cursor-pointer text-xs underline opacity-70 hover:opacity-100"
+            className="cursor-pointer text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-500 hover:text-navy-950"
           >
             Dismiss
           </button>
@@ -320,16 +319,16 @@ export default function RosterDirectory({
         mailtoCohortUrl={mailtoCohortUrl}
       />
 
-      {/* Results Count Banner */}
-      <div className="flex items-center justify-between text-xs text-zinc-500 px-1">
+      {/* Results Count Line */}
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
         <span>
-          Showing <strong>{filteredSingers.length}</strong> {filteredSingers.length === 1 ? 'member' : 'members'}
-          {section !== 'All' && ` in ${section}`}
-          {statusFilter !== 'All' && ` (${statusFilter.replace('_', ' ')})`}
+          Showing <strong className="font-semibold text-navy-950">{filteredSingers.length}</strong> {filteredSingers.length === 1 ? 'member' : 'members'}
+          {section !== 'All' && ` · ${section} Section`}
+          {statusFilter !== 'All' && ` · ${statusFilter.replace('_', ' ')}`}
         </span>
         {canManageRoster && (
-          <span className="text-[11px] text-zinc-400">
-            Admins have full edit access to voice parts, roles, and status
+          <span className="text-[11px] text-stone-400">
+            Admin access: edit vocal parts, roles, and season participation
           </span>
         )}
       </div>
@@ -361,11 +360,10 @@ export default function RosterDirectory({
 
       {/* Empty State */}
       {filteredSingers.length === 0 && (
-        <div className="rounded-3xl border border-dashed border-zinc-200 bg-zinc-50/50 p-12 text-center">
-          <Users className="mx-auto h-8 w-8 text-zinc-400" />
-          <h3 className="mt-2 text-sm font-bold text-navy-950">No Members Match Search</h3>
-          <p className="mt-1 text-xs text-zinc-500">
-            Try adjusting your search query, section filter, or status filter.
+        <div className="rounded-sm border border-stone-200/90 bg-white px-6 py-12 text-center">
+          <p className="font-editorial text-2xl text-navy-950">No members match your filters</p>
+          <p className="mt-1 text-xs text-stone-500">
+            Adjust your search query, section cohort, or participation status filter.
           </p>
           <button
             type="button"
@@ -374,7 +372,7 @@ export default function RosterDirectory({
               setSection('All');
               setStatusFilter('Active');
             }}
-            className="mt-4 cursor-pointer rounded-xl bg-navy-900 px-4 py-1.5 text-xs font-semibold text-white hover:bg-navy-950"
+            className="mt-4 cursor-pointer rounded-sm bg-navy-950 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-navy-900"
           >
             Reset Filters
           </button>

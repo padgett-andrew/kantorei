@@ -9,25 +9,21 @@ if (!singer || !hasRole(singer, ['Section_Leader', 'Admin'])) {
 }
 ---
 
-<PortalLayout title="Choir Board & Operations Manual">
-  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
-    <div>
-      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-gold-500">
-        Board Members, Section Leaders &amp; Staff Manual
-      </span>
-      <h1 class="mt-1 font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
-        Admin &amp; Operations Guide
-      </h1>
-    </div>
-    <div class="flex items-center gap-2">
-      <span class="rounded-full bg-navy-900 px-3 py-1 text-xs font-semibold text-gold-300">
-        Staff &amp; Leadership Reference
-      </span>
-    </div>
-  </div>
+<PortalLayout title="Board & Operations Manual">
+  <header class="mb-8">
+    <p class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-copper-600">
+      <span>Board, Section Leaders &amp; Staff Reference</span>
+      <span class="text-stone-300" aria-hidden="true">/</span>
+      <span class="text-stone-500">Leadership Edition</span>
+    </p>
+    <h1 class="mt-2 font-editorial text-4xl font-normal tracking-tight text-navy-950 sm:text-5xl">
+      Board &amp; Operations Manual
+    </h1>
+  </header>
 
-  <article class="handbook-prose rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs sm:p-10">
-    <AdminGuideContent />
+  <article class="rounded-sm border border-stone-200/90 bg-white px-6 py-8 sm:px-12 sm:py-12">
+    <div class="handbook-prose max-w-3xl">
+      <AdminGuideContent />
+    </div>
   </article>
 </PortalLayout>
-

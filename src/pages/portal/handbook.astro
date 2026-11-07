@@ -25,52 +25,44 @@ const { html, isDemo } =
 
 const pageTitle =
   activeDoc === 'admin-guide'
-    ? 'Choir Board & Operations Manual'
+    ? 'Board & Operations Manual'
     : activeDoc === 'strategic-plan'
       ? '2026–2036 Strategic Vision'
-      : 'Singer Handbook';
+      : 'Singer Handbook & Bylaws';
 
 const subtitle =
   activeDoc === 'admin-guide'
-    ? 'Board Members, Section Leaders & Staff Operations Guide'
+    ? 'Board, Section Leaders & Staff Reference'
     : activeDoc === 'strategic-plan'
-      ? '10-Year Ensemble Roadmap & Goals'
-      : 'Policies, Roster Leadership, Attire & Rehearsal Standards';
+      ? 'Ten-Year Artistic & Organizational Roadmap'
+      : 'Ensemble Policies, Rehearsal Standards & Concert Attire';
 ---
 
 <PortalLayout title={pageTitle}>
-  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
-    <div>
-      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
-        {subtitle}
-      </span>
-      <h1 class="mt-1 font-editorial text-3xl font-medium text-navy-950 sm:text-4xl">
-        {pageTitle}
-      </h1>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2">
+  <header class="mb-8">
+    <p class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-copper-600">
+      <span>{subtitle}</span>
       {activeDoc === 'admin-guide' && (
-        <span class="rounded-full bg-navy-900 px-3 py-1 text-xs font-semibold text-gold-300">
-          Staff &amp; Leadership Reference
-        </span>
+        <>
+          <span class="text-stone-300" aria-hidden="true">/</span>
+          <span class="text-stone-500">Leadership Edition</span>
+        </>
       )}
       {activeDoc === 'strategic-plan' && isDemo && (
-        <span class="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
-          Singer Review Working Draft
-        </span>
+        <>
+          <span class="text-stone-300" aria-hidden="true">/</span>
+          <span class="text-stone-500">Member Review Draft</span>
+        </>
       )}
-      {activeDoc !== 'admin-guide' && !isDemo && (
-        <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-          Synced Live from Google Docs
-        </span>
-      )}
-    </div>
-  </div>
+    </p>
+    <h1 class="mt-2 font-editorial text-4xl font-normal tracking-tight text-navy-950 sm:text-5xl">
+      {pageTitle}
+    </h1>
+  </header>
 
-  <!-- Document Switcher: Singer Handbook vs. 2026-2036 Strategic Vision vs. Admin Guide -->
-  <div
-    class="mb-6 inline-flex flex-wrap gap-1.5 rounded-2xl border border-zinc-200 bg-zinc-100/80 p-1.5"
+  <!-- Editorial Underline Document Tabs -->
+  <nav
+    class="mb-8 flex flex-wrap items-center gap-x-7 gap-y-2 border-b border-stone-200/90"
     role="tablist"
     aria-label="Ensemble Documents"
   >
@@ -79,13 +71,16 @@ const subtitle =
       role="tab"
       aria-selected={activeDoc === 'handbook'}
       class:list={[
-        'rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition',
+        'relative pb-3 text-xs font-semibold uppercase tracking-[0.16em] transition',
         activeDoc === 'handbook'
-          ? 'bg-navy-950 text-white shadow-2xs'
-          : 'text-zinc-600 hover:bg-white/70 hover:text-navy-950',
+          ? 'text-navy-950'
+          : 'text-stone-500 hover:text-navy-950',
       ]}
     >
-      2026–2027 Singer Handbook
+      <span>2026–2027 Singer Handbook</span>
+      {activeDoc === 'handbook' && (
+        <span class="absolute inset-x-0 bottom-0 h-[1.5px] bg-copper-600"></span>
+      )}
     </a>
 
     <a
@@ -93,23 +88,19 @@ const subtitle =
       role="tab"
       aria-selected={activeDoc === 'strategic-plan'}
       class:list={[
-        'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition',
+        'relative inline-flex items-center gap-2 pb-3 text-xs font-semibold uppercase tracking-[0.16em] transition',
         activeDoc === 'strategic-plan'
-          ? 'bg-navy-950 text-white shadow-2xs'
-          : 'text-zinc-600 hover:bg-white/70 hover:text-navy-950',
+          ? 'text-navy-950'
+          : 'text-stone-500 hover:text-navy-950',
       ]}
     >
       <span>2026–2036 Strategic Plan</span>
-      <span
-        class:list={[
-          'rounded-sm px-2 py-0.5 text-xs font-semibold',
-          activeDoc === 'strategic-plan'
-            ? 'bg-copper-500 text-white'
-            : 'bg-amber-100 text-amber-900',
-        ]}
-      >
+      <span class="rounded-sm border border-[#e6d5bc] bg-[#f8efe2] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[#7d5220]">
         Draft
       </span>
+      {activeDoc === 'strategic-plan' && (
+        <span class="absolute inset-x-0 bottom-0 h-[1.5px] bg-copper-600"></span>
+      )}
     </a>
 
     {isAdminOrLeader && (
@@ -118,35 +109,32 @@ const subtitle =
         role="tab"
         aria-selected={activeDoc === 'admin-guide'}
         class:list={[
-          'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition',
+          'relative inline-flex items-center gap-2 pb-3 text-xs font-semibold uppercase tracking-[0.16em] transition',
           activeDoc === 'admin-guide'
-            ? 'bg-navy-950 text-white shadow-2xs'
-            : 'text-zinc-600 hover:bg-white/70 hover:text-navy-950',
+            ? 'text-navy-950'
+            : 'text-stone-500 hover:text-navy-950',
         ]}
       >
-        <span>Admin &amp; Board Guide</span>
-        <span
-          class:list={[
-            'rounded-sm px-2 py-0.5 text-xs font-semibold',
-            activeDoc === 'admin-guide'
-              ? 'bg-gold-400 text-navy-950'
-              : 'bg-navy-100 text-navy-800',
-          ]}
-        >
-          Staff &amp; Leaders
+        <span>Board &amp; Operations Manual</span>
+        <span class="rounded-sm border border-stone-200 bg-[#FAF7F2] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-stone-600">
+          Leadership
         </span>
+        {activeDoc === 'admin-guide' && (
+          <span class="absolute inset-x-0 bottom-0 h-[1.5px] bg-copper-600"></span>
+        )}
       </a>
     )}
-  </div>
+  </nav>
 
   {activeDoc === 'admin-guide' ? (
-    <article class="handbook-prose rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs sm:p-10">
-      <AdminGuideContent />
+    <article class="rounded-sm border border-stone-200/90 bg-white px-6 py-8 sm:px-12 sm:py-12">
+      <div class="handbook-prose max-w-3xl">
+        <AdminGuideContent />
+      </div>
     </article>
   ) : (
-    <article
-      class="handbook-prose rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xs sm:p-10"
-      set:html={html}
-    />
+    <article class="rounded-sm border border-stone-200/90 bg-white px-6 py-8 sm:px-12 sm:py-12">
+      <div class="handbook-prose max-w-3xl" set:html={html} />
+    </article>
   )}
 </PortalLayout>

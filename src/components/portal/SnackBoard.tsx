@@ -1,16 +1,11 @@
 import { useMemo, useState } from 'react';
 import {
   AlertTriangle,
-  Calendar,
   Check,
-  CheckCircle,
-  Coffee,
-  Sparkles,
-  Wrench,
 } from 'lucide-react';
 import type { ScheduleEvent, Singer } from '../../types/choir';
 import { formatSnackEntry, parseSnackEntry } from '../../types/choir';
-import { formatEventDate } from '../../lib/utils';
+import { eventTypeBadgeColor, formatEventDate } from '../../lib/utils';
 import LocationDirectionsButton from '../common/LocationDirectionsButton';
 import SnackClaimModal, { type ClaimModalState, type SlotNumber } from './snacks/SnackClaimModal';
 import SnackSlotCard from './snacks/SnackSlotCard';
@@ -171,152 +166,103 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
     void executeSlotMutation(eventId, slot, 'release');
   }
 
+  const filterTabs: { id: typeof filterMode; label: string }[] = [
+    { id: 'all', label: `All Calls (${events.length})` },
+    { id: 'concerts', label: 'Concert Crew' },
+    { id: 'rehearsals', label: 'Rehearsal Hospitality' },
+    { id: 'open', label: 'Open Slots' },
+    { id: 'mine', label: `My Commitments (${mySignupsCount})` },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Overview Statistics Banner */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-2xs">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gold-50 text-gold-600">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                My Signups
-              </span>
-              <p className="font-editorial text-2xl font-bold text-navy-950">{mySignupsCount}</p>
-            </div>
-          </div>
+    <div className="space-y-8">
+      {/* Hairline Numerical Summary Ledger */}
+      <div className="grid grid-cols-3 divide-x divide-stone-200/90 border-y border-stone-200/90 py-4">
+        <div className="pr-4 sm:pr-8">
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+            My Commitments
+          </span>
+          <p className="mt-1 font-editorial text-3xl font-normal tabular-nums text-navy-950">
+            {mySignupsCount}
+          </p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-2xs">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <CheckCircle className="h-4 w-4" />
-            </span>
-            <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                Open Slots Available
-              </span>
-              <p className="font-editorial text-2xl font-bold text-navy-950">{totalOpenSlots}</p>
-            </div>
-          </div>
+        <div className="px-4 sm:px-8">
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+            Open Slots
+          </span>
+          <p className="mt-1 font-editorial text-3xl font-normal tabular-nums text-copper-600">
+            {totalOpenSlots}
+          </p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-2xs">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-navy-50 text-navy-900">
-              <Coffee className="h-4 w-4" />
-            </span>
-            <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                Ensemble Calls
-              </span>
-              <p className="font-editorial text-2xl font-bold text-navy-950">{events.length}</p>
-            </div>
-          </div>
+        <div className="pl-4 sm:pl-8">
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+            Upcoming Calls
+          </span>
+          <p className="mt-1 font-editorial text-3xl font-normal tabular-nums text-navy-950">
+            {events.length}
+          </p>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200/80 pb-3">
-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-zinc-100/80 p-1">
-          <button
-            type="button"
-            onClick={() => setFilterMode('all')}
-            className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              filterMode === 'all'
-                ? 'bg-white text-navy-950 shadow-2xs'
-                : 'text-zinc-600 hover:text-zinc-900'
-            }`}
-          >
-            All Calls ({events.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilterMode('concerts')}
-            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              filterMode === 'concerts'
-                ? 'bg-white text-navy-950 shadow-2xs'
-                : 'text-zinc-600 hover:text-zinc-900'
-            }`}
-          >
-            <Wrench className="h-3.5 w-3.5 text-amber-600" />
-            Concert Setup & Duties
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilterMode('rehearsals')}
-            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              filterMode === 'rehearsals'
-                ? 'bg-white text-navy-950 shadow-2xs'
-                : 'text-zinc-600 hover:text-zinc-900'
-            }`}
-          >
-            <Coffee className="h-3.5 w-3.5 text-gold-600" />
-            Rehearsal Hospitality
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilterMode('open')}
-            className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              filterMode === 'open'
-                ? 'bg-white text-navy-950 shadow-2xs'
-                : 'text-zinc-600 hover:text-zinc-900'
-            }`}
-          >
-            Has Open Slots
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilterMode('mine')}
-            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              filterMode === 'mine'
-                ? 'bg-white text-navy-950 shadow-2xs'
-                : 'text-zinc-600 hover:text-zinc-900'
-            }`}
-          >
-            <Sparkles className="h-3 w-3 text-gold-500" />
-            My Signups ({mySignupsCount})
-          </button>
+      {/* Editorial Underline Filter Tabs */}
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-stone-200/90">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          {filterTabs.map((tab) => {
+            const isActive = filterMode === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setFilterMode(tab.id)}
+                className={`relative cursor-pointer pb-3 text-xs font-semibold uppercase tracking-[0.15em] transition ${
+                  isActive
+                    ? 'text-navy-950'
+                    : 'text-stone-500 hover:text-navy-950'
+                }`}
+              >
+                {tab.label}
+                {isActive && (
+                  <span className="absolute inset-x-0 bottom-0 h-[1.5px] bg-copper-600" />
+                )}
+              </button>
+            );
+          })}
         </div>
-
-        <p className="text-xs text-zinc-400">
-          Sign up to bring break snacks or assist with concert risers, doors & strike!
-        </p>
       </div>
 
       {/* Error Alert */}
       {errorBanner && (
-        <div className="flex items-center gap-2.5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-700" />
+        <div className="flex items-center gap-2.5 rounded-sm border border-[#e4c4bc] bg-[#f7ebe8] p-4 text-sm text-[#84372d]">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-[#84372d]" />
           <span>{errorBanner}</span>
         </div>
       )}
 
-      {/* Event List */}
+      {/* Event Call Sheets */}
       {filteredEvents.length === 0 ? (
-        <div className="rounded-3xl border border-zinc-200 bg-white p-12 text-center text-sm text-zinc-500">
+        <div className="rounded-sm border border-stone-200/90 bg-white px-6 py-12 text-center">
           {filterMode === 'mine' ? (
             <div className="space-y-2">
-              <Coffee className="mx-auto h-8 w-8 text-zinc-300" />
-              <p className="font-semibold text-navy-950">You haven&apos;t claimed any duties or hospitality slots yet.</p>
-              <p className="text-xs text-zinc-400">
-                Click on any open slot below to sign up to bring a treat or assist at an upcoming concert!
+              <p className="font-editorial text-2xl text-navy-950">
+                No hospitality or crew commitments claimed yet
+              </p>
+              <p className="mx-auto max-w-md text-xs leading-relaxed text-stone-500">
+                Select any open slot on an upcoming rehearsal or concert call to volunteer.
               </p>
               <button
                 type="button"
                 onClick={() => setFilterMode('open')}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-xs font-semibold text-white"
+                className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-sm bg-navy-950 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-navy-900"
               >
                 Browse Open Slots
               </button>
             </div>
           ) : (
-            <div className="space-y-1">
-              <Calendar className="mx-auto h-8 w-8 text-zinc-300" />
-              <p className="font-semibold text-navy-950">No ensemble calls match this filter.</p>
-            </div>
+            <p className="font-editorial text-xl text-navy-950">
+              No ensemble calls match this filter.
+            </p>
           )}
         </div>
       ) : (
@@ -330,53 +276,46 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
             const isConcertCall = ev.type === 'Concert' || ev.type === 'Dress';
 
             return (
-              <div
+              <section
                 key={ev.eventId}
-                className="overflow-hidden rounded-3xl border border-zinc-200/90 bg-white p-5 shadow-2xs sm:p-6"
+                className={`rounded-sm border border-stone-200/90 bg-white p-5 sm:p-6 ${
+                  isConcertCall ? 'border-l-2 border-l-copper-500' : ''
+                }`}
               >
-                <div className="flex flex-col justify-between gap-3 border-b border-zinc-100 pb-4 sm:flex-row sm:items-center">
+                <div className="flex flex-col justify-between gap-3 border-b border-stone-200/80 pb-4 sm:flex-row sm:items-baseline">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-gold-600">
-                        {isConcertCall ? (
-                          <Wrench className="h-3.5 w-3.5 text-amber-600" />
-                        ) : (
-                          <Coffee className="h-3.5 w-3.5 text-gold-600" />
-                        )}
+                      <span
+                        className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${eventTypeBadgeColor(
+                          ev.type
+                        )}`}
+                      >
                         {ev.type}
                       </span>
-                      <span className="text-xs text-zinc-400">·</span>
-                      <span className="text-xs font-medium text-zinc-500">{ev.time}</span>
-                      <span className="text-xs text-zinc-400">·</span>
-                      {/* Location with Google Maps & Apple Maps navigation */}
+                      <span className="text-xs text-stone-300" aria-hidden="true">·</span>
+                      <span className="text-xs font-medium text-stone-600">{ev.time}</span>
+                      <span className="text-xs text-stone-300" aria-hidden="true">·</span>
                       <LocationDirectionsButton location={ev.location} />
                     </div>
-                    <h3 className="mt-1 font-editorial text-xl font-bold text-navy-950 sm:text-2xl">
+                    <h3 className="mt-2 font-editorial text-2xl font-normal text-navy-950 sm:text-[26px]">
                       {formatEventDate(ev.date)} — {ev.title}
                     </h3>
-                    {ev.notes && <p className="mt-0.5 text-xs text-zinc-500">{ev.notes}</p>}
+                    {ev.notes && <p className="mt-1 text-xs text-stone-500">{ev.notes}</p>}
                   </div>
 
-                  {/* Slot progress pill */}
+                  {/* Understated Tabular Slot Count */}
                   <div className="shrink-0">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                        filledCount === 4
-                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                          : filledCount >= 2
-                          ? 'bg-amber-50 text-amber-900 border border-amber-200'
-                          : 'bg-zinc-100 text-zinc-700'
-                      }`}
-                    >
-                      {filledCount === 4 ? (
-                        <>
-                          <Check className="h-3.5 w-3.5 text-emerald-700" />
-                          All 4 duties filled!
-                        </>
-                      ) : (
-                        `${filledCount} of 4 duties filled (${4 - filledCount} needed)`
-                      )}
-                    </span>
+                    {filledCount === 4 ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#c8d8ce] bg-[#eef3f0] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2d523d]">
+                        <Check className="h-3 w-3" />
+                        All 4 Filled
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium tabular-nums text-stone-500">
+                        <strong className="font-semibold text-navy-950">{filledCount} / 4</strong> claimed ·{' '}
+                        <span className="text-copper-600">{4 - filledCount} open</span>
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -396,7 +335,7 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
                     />
                   ))}
                 </div>
-              </div>
+              </section>
             );
           })}
         </div>

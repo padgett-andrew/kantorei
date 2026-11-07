@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, CheckCircle2, KeyRound, Mail, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, KeyRound, Mail } from 'lucide-react';
 
 interface DevPersonaOption {
   email: string;
@@ -117,9 +117,9 @@ export default function LoginCard({
   }
 
   return (
-    <div className="w-full rounded-2xl border border-stone-200/80 bg-white p-5 sm:p-6 shadow-xs">
+    <div className="w-full rounded-sm border border-stone-200/90 bg-white p-6 sm:p-7">
       {error && (
-        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50/90 px-3.5 py-2.5 text-xs sm:text-sm text-rose-800">
+        <div className="mb-5 rounded-sm border border-[#e4c4bc] bg-[#f7ebe8] px-3.5 py-2.5 text-xs text-[#84372d] sm:text-sm">
           {error}
         </div>
       )}
@@ -127,7 +127,7 @@ export default function LoginCard({
       {/* Option 1: Google OAuth */}
       <a
         href="/api/auth/google"
-        className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 shadow-2xs transition hover:border-stone-400 hover:bg-stone-50/80 focus:outline-none focus:ring-2 focus:ring-copper-500/20"
+        className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-sm border border-stone-300 bg-white px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-navy-950 transition hover:border-navy-950 hover:bg-[#FAF7F2]"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <path
@@ -150,25 +150,25 @@ export default function LoginCard({
         Continue with Google
       </a>
 
-      <div className="my-4 flex items-center gap-3">
+      <div className="my-5 flex items-center gap-3">
         <div className="h-px flex-1 bg-stone-200" />
-        <span className="text-xs font-medium uppercase tracking-wider text-stone-500">
-          Or any roster email (iCloud, Outlook, Yahoo)
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+          Or any roster email
         </span>
         <div className="h-px flex-1 bg-stone-200" />
       </div>
 
       {/* Option 2: Stateless 6-Digit Email OTP */}
       {step === 'email' ? (
-        <form onSubmit={handleSendOtp} className="space-y-3.5">
+        <form onSubmit={handleSendOtp} className="space-y-4">
           <div>
             <label
               htmlFor="singer-email"
-              className="block text-xs font-semibold uppercase tracking-wider text-stone-600"
+              className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600"
             >
               Roster Email Address
             </label>
-            <div className="relative mt-1">
+            <div className="relative mt-1.5">
               <Mail className="pointer-events-none absolute top-3 left-3.5 h-4 w-4 text-stone-400" />
               <input
                 id="singer-email"
@@ -177,7 +177,7 @@ export default function LoginCard({
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-stone-300 bg-stone-50/40 py-2.5 pr-4 pl-10 text-base sm:text-sm text-stone-900 placeholder:text-stone-400 transition focus:border-copper-500 focus:bg-white focus:ring-2 focus:ring-copper-500/20 focus:outline-none"
+                className="w-full rounded-sm border border-stone-300 bg-[#FAF7F2]/50 py-2.5 pr-4 pl-10 text-base text-navy-950 placeholder:text-stone-400 transition focus:border-navy-950 focus:bg-white focus:outline-none sm:text-sm"
               />
             </div>
           </div>
@@ -185,29 +185,29 @@ export default function LoginCard({
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-copper-500 px-4 py-2.5 sm:py-3 text-sm font-semibold text-white shadow-xs transition duration-200 hover:bg-copper-600 focus:outline-none focus:ring-2 focus:ring-copper-400 focus:ring-offset-2 disabled:opacity-60"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-sm bg-navy-950 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-navy-900 disabled:opacity-60"
           >
-            {loading ? 'Sending 6-Digit Code…' : 'Email Me a 6-Digit Login Code'}
-            <ArrowRight className="h-4 w-4" />
+            {loading ? 'Sending Code…' : 'Send 6-Digit Login Code'}
+            <ArrowRight className="h-3.5 w-3.5 text-copper-400" />
           </button>
         </form>
       ) : (
-        <form onSubmit={handleVerifyOtp} className="space-y-3.5">
+        <form onSubmit={handleVerifyOtp} className="space-y-4">
           {statusMessage && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-900">
+            <div className="rounded-sm border border-stone-300 bg-[#FAF7F2] p-3.5 text-xs text-navy-950">
               <div className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-copper-600" />
                 <span>{statusMessage}</span>
               </div>
               {devPreviewCode && (
-                <div className="mt-2 flex items-center justify-between rounded-lg border border-emerald-200 bg-white px-3 py-1.5">
-                  <span className="font-medium text-stone-700">
-                    Sandbox Code: <strong className="font-mono text-sm text-emerald-950">{devPreviewCode}</strong>
+                <div className="mt-2.5 flex items-center justify-between rounded-sm border border-stone-200 bg-white px-3 py-1.5">
+                  <span className="text-stone-600">
+                    Sandbox Code: <strong className="font-mono text-sm text-navy-950">{devPreviewCode}</strong>
                   </span>
                   <button
                     type="button"
                     onClick={() => setCode(devPreviewCode)}
-                    className="cursor-pointer rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-200"
+                    className="cursor-pointer rounded-sm border border-stone-300 bg-[#FAF7F2] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-navy-950 hover:border-navy-950"
                   >
                     Auto-fill
                   </button>
@@ -219,11 +219,11 @@ export default function LoginCard({
           <div>
             <label
               htmlFor="otp-code"
-              className="block text-xs font-semibold uppercase tracking-wider text-stone-600"
+              className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600"
             >
               6-Digit Code for {email}
             </label>
-            <div className="relative mt-1">
+            <div className="relative mt-1.5">
               <KeyRound className="pointer-events-none absolute top-3 left-3.5 h-4 w-4 text-stone-400" />
               <input
                 id="otp-code"
@@ -235,7 +235,7 @@ export default function LoginCard({
                 placeholder="123456"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                className="w-full rounded-xl border border-stone-300 bg-stone-50/40 py-2.5 pr-4 pl-10 font-mono text-base tracking-[0.3em] text-stone-900 placeholder:text-stone-400 transition focus:border-copper-500 focus:bg-white focus:ring-2 focus:ring-copper-500/20 focus:outline-none"
+                className="w-full rounded-sm border border-stone-300 bg-[#FAF7F2]/50 py-2.5 pr-4 pl-10 font-mono text-base tracking-[0.3em] text-navy-950 placeholder:text-stone-400 transition focus:border-navy-950 focus:bg-white focus:outline-none"
               />
             </div>
           </div>
@@ -243,9 +243,9 @@ export default function LoginCard({
           <button
             type="submit"
             disabled={loading || code.length !== 6}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-copper-500 px-4 py-2.5 sm:py-3 text-sm font-semibold text-white shadow-xs transition duration-200 hover:bg-copper-600 focus:outline-none focus:ring-2 focus:ring-copper-400 focus:ring-offset-2 disabled:opacity-60"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-sm bg-copper-600 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-copper-700 disabled:opacity-60"
           >
-            {loading ? 'Verifying…' : 'Verify & Open Singer Portal'}
+            {loading ? 'Verifying…' : 'Verify & Open Portal'}
           </button>
 
           <button
@@ -255,7 +255,7 @@ export default function LoginCard({
               setCode('');
               setDevPreviewCode(null);
             }}
-            className="w-full cursor-pointer text-center text-xs font-medium text-stone-500 transition hover:text-copper-600"
+            className="w-full cursor-pointer text-center text-xs font-medium text-stone-500 transition hover:text-navy-950"
           >
             ← Use a different email address
           </button>
@@ -263,21 +263,18 @@ export default function LoginCard({
       )}
 
       {isDevPreviewAvailable && (
-        <div className="mt-5 rounded-xl border border-gold-300/60 bg-amber-50/50 p-3.5">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-navy-950">
-            <Sparkles className="h-3.5 w-3.5 text-copper-600" />
-            <span>Local Dev Quick Entry</span>
+        <div className="mt-6 border-t border-stone-200/80 pt-5">
+          <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+            <span>Sandbox Persona Entry</span>
+            <span className="text-stone-400">Local Preview</span>
           </div>
-          <p className="mt-1 text-xs text-stone-600">
-            Jump straight into the portal as any sample Kantorei roster role:
-          </p>
           <div className="mt-2.5 flex flex-wrap gap-2">
             {quickEntryPersonas.map((p) => (
               <button
                 key={p.email}
                 type="button"
                 onClick={() => enterDevPreview(p.email)}
-                className="flex-1 cursor-pointer rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-800 transition hover:border-copper-400 hover:bg-copper-50/30 hover:text-copper-700"
+                className="flex-1 cursor-pointer rounded-sm border border-stone-200/90 bg-[#FAF7F2] px-2.5 py-2 text-xs font-medium text-navy-950 transition hover:border-copper-500 hover:bg-white"
               >
                 {p.shortLabel}
               </button>

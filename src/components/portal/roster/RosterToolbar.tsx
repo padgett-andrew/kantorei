@@ -1,4 +1,4 @@
-import { Check, Copy, ExternalLink, FileSpreadsheet, Grid, List, Mail, Moon, Plus, Search } from 'lucide-react';
+import { Check, Copy, ExternalLink, Grid, List, Mail, Moon, Plus, Search } from 'lucide-react';
 import type { SectionGroup } from '../../../types/choir';
 import { SECTION_GROUPS } from '../../../types/choir';
 
@@ -50,173 +50,177 @@ export default function RosterToolbar({
   mailtoCohortUrl,
 }: Props) {
   return (
-    <div className="rounded-3xl border border-zinc-200/90 bg-white p-4 sm:p-5 shadow-2xs space-y-4">
-      {/* Top Controls Row */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        {/* Search Box */}
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute top-3 left-3.5 h-4 w-4 text-zinc-400" />
-          <input
-            type="search"
-            placeholder="Search by singer name, email, phone, or voice part…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-zinc-50/70 py-2.5 pr-4 pl-10 text-xs sm:text-sm text-zinc-900 focus:border-navy-900 focus:bg-white focus:outline-hidden"
-          />
-        </div>
-
-        {/* View Switcher & Admin Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* View Mode Toggle: Cards vs Table */}
-          <div className="flex items-center rounded-xl border border-zinc-200 bg-zinc-50 p-1">
-            <button
-              type="button"
-              onClick={() => setViewMode('cards')}
-              className={`cursor-pointer inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                viewMode === 'cards'
-                  ? 'bg-white text-navy-950 shadow-2xs'
-                  : 'text-zinc-500 hover:text-navy-950'
-              }`}
-              title="View member contact cards"
-            >
-              <Grid className="h-3.5 w-3.5" />
-              <span className="hidden xs:inline">Cards</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('table')}
-              className={`cursor-pointer inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                viewMode === 'table'
-                  ? 'bg-white text-navy-950 shadow-2xs'
-                  : 'text-zinc-500 hover:text-navy-950'
-              }`}
-              title="View roster table"
-            >
-              <List className="h-3.5 w-3.5" />
-              <span className="hidden xs:inline">Table</span>
-            </button>
+    <div className="overflow-hidden rounded-sm border border-stone-200/90 bg-white">
+      <div className="space-y-4 p-4 sm:p-5">
+        {/* Top Controls Row */}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          {/* Search Box */}
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute top-2.5 left-3.5 h-4 w-4 text-stone-400" />
+            <input
+              type="search"
+              placeholder="Search by singer name, email, phone, or vocal part…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full rounded-sm border border-stone-300 bg-[#FAF7F2]/60 py-2 pr-4 pl-10 text-xs text-navy-950 focus:border-navy-950 focus:bg-white focus:outline-none sm:text-sm"
+            />
           </div>
 
-          {/* Admin Add Singer Button */}
-          {canManageRoster && (
-            <button
-              type="button"
-              onClick={onOpenCreateMember}
-              className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-3.5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-navy-950 transition"
-            >
-              <Plus className="h-3.5 w-3.5 text-gold-400" />
-              <span>Add Singer</span>
-            </button>
-          )}
-
-          {/* Master Sheet Link (Desktop) */}
-          {masterSheetUrl && (
-            <a
-              href={masterSheetUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 shadow-2xs hover:border-zinc-300 hover:bg-zinc-50 transition"
-              title={isAdmin ? 'Open Master Google Sheet (Edit Access)' : 'Open Master Google Sheet (View Access)'}
-            >
-              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Sheet</span>
-              <ExternalLink className="h-3 w-3 text-zinc-400" />
-            </a>
-          )}
-        </div>
-      </div>
-
-      {/* Filters Row: Sections & Status Pills */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-zinc-100">
-        {/* Section Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {(['All', ...SECTION_GROUPS] as const).map((group) => {
-            const isSelected = section === group;
-            return (
-              <button
-                key={group}
-                type="button"
-                onClick={() => setSection(group)}
-                className={`cursor-pointer rounded-xl px-3 py-1 text-xs font-bold transition ${
-                  isSelected
-                    ? 'bg-navy-900 text-white shadow-2xs'
-                    : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
-                }`}
-              >
-                {group}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Status Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setStatusFilter('Active')}
-            className={`cursor-pointer rounded-xl px-2.5 py-1 text-xs font-semibold transition ${
-              statusFilter === 'Active'
-                ? 'bg-emerald-700 text-white shadow-2xs'
-                : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
-            }`}
-          >
-            Active ({activeCount})
-          </button>
-
-          {onLeaveCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setStatusFilter(statusFilter === 'On_Leave' ? 'Active' : 'On_Leave')}
-              className={`cursor-pointer inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-semibold transition ${
-                statusFilter === 'On_Leave'
-                  ? 'bg-indigo-700 text-white shadow-2xs'
-                  : 'border border-indigo-200 bg-indigo-50/70 text-indigo-900 hover:bg-indigo-100'
-              }`}
-            >
-              <Moon className="h-3 w-3" />
-              <span>Season Leave ({onLeaveCount})</span>
-            </button>
-          )}
-
-          {canManageRoster && (
-            <>
+          {/* View Switcher & Admin Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* View Mode Toggle: Cards vs Table */}
+            <div className="flex items-center rounded-sm border border-stone-300/90 bg-[#FAF7F2] p-0.5">
               <button
                 type="button"
-                onClick={() => setStatusFilter('All')}
-                className={`cursor-pointer rounded-xl px-2.5 py-1 text-xs font-semibold transition ${
-                  statusFilter === 'All'
-                    ? 'bg-navy-900 text-white shadow-2xs'
-                    : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
+                onClick={() => setViewMode('cards')}
+                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
+                  viewMode === 'cards'
+                    ? 'bg-navy-950 text-white'
+                    : 'text-stone-600 hover:text-navy-950'
                 }`}
+                title="View member directory cards"
               >
-                All ({totalCount})
+                <Grid className="h-3.5 w-3.5" />
+                <span>Directory</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
+                  viewMode === 'table'
+                    ? 'bg-navy-950 text-white'
+                    : 'text-stone-600 hover:text-navy-950'
+                }`}
+                title="View roster ledger"
+              >
+                <List className="h-3.5 w-3.5" />
+                <span>Ledger</span>
+              </button>
+            </div>
 
-              {inactiveCount > 0 && (
+            {/* Admin Add Singer Button */}
+            {canManageRoster && (
+              <button
+                type="button"
+                onClick={onOpenCreateMember}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm bg-navy-950 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.13em] text-white transition hover:bg-navy-900"
+              >
+                <Plus className="h-3.5 w-3.5 text-copper-400" />
+                <span>Add Member</span>
+              </button>
+            )}
+
+            {/* Master Sheet Link (Desktop) */}
+            {masterSheetUrl && (
+              <a
+                href={masterSheetUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden items-center gap-1.5 rounded-sm border border-stone-300 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.13em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950 sm:inline-flex"
+                title={isAdmin ? 'Open Master Google Sheet (Edit Access)' : 'Open Master Google Sheet (View Access)'}
+              >
+                <span>Master Sheet</span>
+                <ExternalLink className="h-3 w-3 text-stone-400" />
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Filters Row: Sections & Status */}
+        <div className="flex flex-col gap-3 border-t border-stone-200/80 pt-3.5 sm:flex-row sm:items-center sm:justify-between">
+          {/* Section Filter */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(['All', ...SECTION_GROUPS] as const).map((group) => {
+              const isSelected = section === group;
+              return (
                 <button
+                  key={group}
                   type="button"
-                  onClick={() => setStatusFilter('Inactive')}
-                  className={`cursor-pointer rounded-xl px-2.5 py-1 text-xs font-semibold transition ${
-                    statusFilter === 'Inactive'
-                      ? 'bg-zinc-800 text-white shadow-2xs'
-                      : 'border border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
+                  onClick={() => setSection(group)}
+                  className={`cursor-pointer rounded-sm border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.13em] transition ${
+                    isSelected
+                      ? 'border-navy-950 bg-navy-950 text-white'
+                      : 'border-stone-200/90 bg-white text-stone-600 hover:border-stone-400 hover:text-navy-950'
                   }`}
                 >
-                  Inactive ({inactiveCount})
+                  {group}
                 </button>
-              )}
-            </>
-          )}
+              );
+            })}
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setStatusFilter('Active')}
+              className={`cursor-pointer rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
+                statusFilter === 'Active'
+                  ? 'border-navy-950 bg-navy-950 text-white'
+                  : 'border-stone-200/90 bg-[#FAF7F2] text-stone-600 hover:border-stone-400 hover:text-navy-950'
+              }`}
+            >
+              Active ({activeCount})
+            </button>
+
+            {onLeaveCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setStatusFilter(statusFilter === 'On_Leave' ? 'Active' : 'On_Leave')}
+                className={`inline-flex cursor-pointer items-center gap-1 rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
+                  statusFilter === 'On_Leave'
+                    ? 'border-copper-600 bg-copper-600 text-white'
+                    : 'border-[#e6d5bc] bg-[#f8efe2]/70 text-[#7d5220] hover:border-copper-500'
+                }`}
+              >
+                <Moon className="h-3 w-3" />
+                <span>Season Leave ({onLeaveCount})</span>
+              </button>
+            )}
+
+            {canManageRoster && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('All')}
+                  className={`cursor-pointer rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
+                    statusFilter === 'All'
+                      ? 'border-navy-950 bg-navy-950 text-white'
+                      : 'border-stone-200/90 bg-[#FAF7F2] text-stone-600 hover:border-stone-400 hover:text-navy-950'
+                  }`}
+                >
+                  All ({totalCount})
+                </button>
+
+                {inactiveCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('Inactive')}
+                    className={`cursor-pointer rounded-sm border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
+                      statusFilter === 'Inactive'
+                        ? 'border-stone-700 bg-stone-700 text-white'
+                        : 'border-stone-200/90 bg-[#FAF7F2] text-stone-500 hover:border-stone-400 hover:text-navy-950'
+                    }`}
+                  >
+                    Inactive ({inactiveCount})
+                  </button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Cohort Communication Actions (Copy Emails & Email Cohort via Bcc) */}
+      {/* Cohort Communication Bar */}
       {cohortEmailCount > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pt-3 border-t border-zinc-100/90 text-xs bg-zinc-50/70 -mx-4 -mb-4 sm:-mx-5 sm:-mb-5 px-4 py-3 sm:px-5 rounded-b-3xl">
-          <div className="flex items-center gap-2 text-zinc-600">
-            <span className="font-semibold text-navy-950">{cohortLabel}:</span>
-            <span className="text-zinc-500">
-              {cohortEmailCount} {cohortEmailCount === 1 ? 'singer email' : 'singer emails'}
+        <div className="flex flex-col gap-2.5 border-t border-stone-200/90 bg-[#FAF7F2] px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div className="flex items-center gap-2 text-stone-600">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-navy-950">
+              {cohortLabel}
+            </span>
+            <span className="text-stone-300" aria-hidden="true">·</span>
+            <span className="text-stone-500">
+              {cohortEmailCount} {cohortEmailCount === 1 ? 'address' : 'addresses'}
             </span>
           </div>
 
@@ -225,22 +229,22 @@ export default function RosterToolbar({
               <button
                 type="button"
                 onClick={onCopyCohortEmails}
-                className={`cursor-pointer inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 font-semibold transition ${
+                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
                   copiedCohort
-                    ? 'border-emerald-300 bg-emerald-50 text-emerald-900 shadow-2xs'
-                    : 'border-zinc-200 bg-white text-zinc-700 shadow-2xs hover:bg-zinc-50 hover:text-navy-950'
+                    ? 'border-copper-600 bg-[#f9efe8] text-navy-950'
+                    : 'border-stone-300 bg-white text-stone-700 hover:border-navy-950 hover:text-navy-950'
                 }`}
                 title={`Copy all ${cohortEmailCount} email addresses for ${cohortLabel}`}
               >
                 {copiedCohort ? (
                   <>
-                    <Check className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>Copied {cohortLabel} Emails</span>
+                    <Check className="h-3.5 w-3.5 text-copper-600" />
+                    <span>Copied {cohortLabel}</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="h-3.5 w-3.5 text-zinc-400" />
-                    <span>Copy {cohortLabel} Emails</span>
+                    <Copy className="h-3.5 w-3.5 text-stone-400" />
+                    <span>Copy Emails</span>
                   </>
                 )}
               </button>
@@ -249,10 +253,10 @@ export default function RosterToolbar({
             {mailtoCohortUrl && (
               <a
                 href={mailtoCohortUrl}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 shadow-2xs hover:bg-zinc-50 hover:text-navy-950 transition"
-                title={`Draft email to all ${cohortEmailCount} singers with addresses in Bcc (protects privacy)`}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-stone-300 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950"
+                title={`Draft email to all ${cohortEmailCount} singers with addresses in Bcc`}
               >
-                <Mail className="h-3.5 w-3.5 text-zinc-400" />
+                <Mail className="h-3.5 w-3.5 text-copper-600" />
                 <span>Email {cohortLabel} (Bcc)</span>
               </a>
             )}
@@ -262,4 +266,3 @@ export default function RosterToolbar({
     </div>
   );
 }
-

@@ -68,45 +68,45 @@ export default function AudioPlayer({ activeAudio, onClose }: Props) {
   if (!activeAudio) return null;
 
   return (
-    <div className="fixed right-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-0 left-0 z-45 border-t border-navy-800 bg-navy-950 px-4 py-3 text-white shadow-2xl animate-in slide-in-from-bottom">
+    <div className="fixed right-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-0 left-0 z-45 border-t border-white/15 bg-[#0B131E] px-4 py-3 text-white shadow-2xl animate-in slide-in-from-bottom sm:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gold-400">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-300">
             {activeAudio.pieceTitle}
           </p>
-          <p className="truncate text-sm font-semibold text-ivory-50">
+          <p className="truncate font-editorial text-lg font-medium text-ivory-50">
             {prettifyScoreName(activeAudio.file.name)}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:shrink-0">
-          {/* Quick Skip Buttons (Essential for Rehearsal Looping) */}
-          <div className="flex items-center gap-1 rounded-xl bg-white/10 p-1">
+          {/* Quick Skip Buttons */}
+          <div className="flex items-center gap-0.5 rounded-sm border border-white/15 bg-white/5 p-0.5">
             <button
               type="button"
               onClick={() => skipTime(-5)}
-              className="cursor-pointer inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-zinc-300 hover:bg-white/10 hover:text-white transition"
+              className="inline-flex cursor-pointer items-center gap-1 rounded-xs px-2 py-1 text-xs font-medium text-stone-300 transition hover:bg-white/10 hover:text-white"
               title="Rewind 5 seconds (←)"
               aria-label="Rewind 5 seconds"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <RotateCcw className="h-3 w-3" />
               <span>5s</span>
             </button>
             <button
               type="button"
               onClick={() => skipTime(5)}
-              className="cursor-pointer inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-zinc-300 hover:bg-white/10 hover:text-white transition"
+              className="inline-flex cursor-pointer items-center gap-1 rounded-xs px-2 py-1 text-xs font-medium text-stone-300 transition hover:bg-white/10 hover:text-white"
               title="Skip forward 5 seconds (→)"
               aria-label="Skip forward 5 seconds"
             >
               <span>5s</span>
-              <RotateCw className="h-3.5 w-3.5" />
+              <RotateCw className="h-3 w-3" />
             </button>
           </div>
 
           {/* Rehearsal Speed Buttons */}
-          <div className="flex items-center gap-1 rounded-xl bg-white/10 p-1">
-            <span className="px-1 text-[10px] font-bold text-gold-300 sm:inline flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5 rounded-sm border border-white/15 bg-white/5 p-0.5">
+            <span className="flex items-center px-1.5 text-[10px] text-copper-300">
               <Gauge className="h-3 w-3" />
             </span>
             {SPEED_OPTIONS.map((rate) => (
@@ -114,10 +114,10 @@ export default function AudioPlayer({ activeAudio, onClose }: Props) {
                 key={rate}
                 type="button"
                 onClick={() => setPlaybackRate(rate)}
-                className={`cursor-pointer rounded-lg px-2 py-0.5 text-[11px] font-bold transition ${
+                className={`cursor-pointer rounded-xs px-2 py-0.5 text-[11px] font-semibold tabular-nums transition ${
                   playbackRate === rate
-                    ? 'bg-gold-500 text-white shadow-2xs'
-                    : 'text-zinc-300 hover:text-white'
+                    ? 'bg-copper-500 text-white'
+                    : 'text-stone-300 hover:text-white'
                 }`}
               >
                 {rate}x
@@ -138,7 +138,7 @@ export default function AudioPlayer({ activeAudio, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-lg p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white"
+            className="cursor-pointer rounded-sm p-1.5 text-stone-400 transition hover:bg-white/10 hover:text-white"
             aria-label="Close player"
           >
             <X className="h-4 w-4" />

@@ -1,4 +1,3 @@
-import { Calendar, Check, Clock, UserX } from 'lucide-react';
 import type { ScheduleEvent, SectionGroup } from '../../../types/choir';
 
 export interface MissingSingerItem {
@@ -42,48 +41,59 @@ export default function AttendanceStatsBar({
   onToggleSectionFilter,
 }: Props) {
   return (
-    <div className="rounded-2xl border border-emerald-300 bg-emerald-50/50 p-4 shadow-2xs">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="rounded-sm border border-stone-200/90 bg-white p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         {/* Event Selector */}
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-emerald-700 shrink-0" />
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-              Rehearsal / Concert Call
-            </label>
-            <select
-              value={selectedEventId}
-              onChange={(e) => onSelectEvent(e.target.value)}
-              className="rounded-xl border border-emerald-300 bg-white px-3 py-1 text-xs font-bold text-emerald-950 focus:outline-hidden"
-            >
-              {scheduleList.map((ev) => (
-                <option key={ev.eventId} value={ev.eventId}>
-                  {ev.date} — {ev.title} ({ev.time})
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="min-w-64">
+          <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+            Roll Call Rehearsal / Performance
+          </label>
+          <select
+            value={selectedEventId}
+            onChange={(e) => onSelectEvent(e.target.value)}
+            className="w-full rounded-sm border border-stone-300 bg-white px-3 py-2 text-xs font-medium text-navy-950 focus:border-navy-950 focus:outline-none"
+          >
+            {scheduleList.map((ev) => (
+              <option key={ev.eventId} value={ev.eventId}>
+                {ev.date} — {ev.title} ({ev.time})
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Attendance Stats Counter Bar */}
-        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-emerald-800">
-            <Check className="h-3.5 w-3.5" />
-            Present: {presentCount}
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-lg bg-rose-100 px-2.5 py-1 text-rose-800">
-            <UserX className="h-3.5 w-3.5" />
-            Absent: {absentCount}
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100 px-2.5 py-1 text-amber-800">
-            <Clock className="h-3.5 w-3.5" />
-            Late: {lateCount}
-          </span>
+        {/* Tabular Attendance Totals */}
+        <div className="flex flex-wrap items-center gap-5 border-t border-stone-200/80 pt-3 sm:border-t-0 sm:pt-0">
+          <div>
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+              Present
+            </span>
+            <span className="font-editorial text-2xl font-normal tabular-nums text-navy-950">
+              {presentCount}
+            </span>
+          </div>
+          <div className="h-7 w-px bg-stone-200" aria-hidden="true" />
+          <div>
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+              Late
+            </span>
+            <span className="font-editorial text-2xl font-normal tabular-nums text-copper-600">
+              {lateCount}
+            </span>
+          </div>
+          <div className="h-7 w-px bg-stone-200" aria-hidden="true" />
+          <div>
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+              Absent
+            </span>
+            <span className="font-editorial text-2xl font-normal tabular-nums text-[#84372d]">
+              {absentCount}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Section Attendance Headcounts */}
-      <div className="mt-3.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-2.5 border-t border-stone-200/80 pt-4 sm:grid-cols-4">
         {sectionHeadcounts.map((sec) => {
           const isSelected = sectionFilter === sec.section;
           return (
@@ -91,30 +101,30 @@ export default function AttendanceStatsBar({
               key={sec.section}
               type="button"
               onClick={() => onToggleSectionFilter(sec.section)}
-              className={`cursor-pointer rounded-xl border p-2.5 text-left transition ${
+              className={`cursor-pointer rounded-sm border p-3 text-left transition ${
                 isSelected
-                  ? 'border-navy-900 bg-navy-900 text-white shadow-xs'
-                  : 'border-emerald-200/90 bg-white/90 hover:border-emerald-400'
+                  ? 'border-navy-950 bg-navy-950 text-white'
+                  : 'border-stone-200/90 bg-[#FAF7F2] hover:border-stone-400'
               }`}
               title={`Filter seating & attendance to ${sec.section}`}
             >
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-navy-950'}`}>
+                <span className={`text-xs font-semibold uppercase tracking-[0.14em] ${isSelected ? 'text-white' : 'text-navy-950'}`}>
                   {sec.section}
                 </span>
-                <span className={`text-[10px] font-semibold ${isSelected ? 'text-zinc-300' : 'text-zinc-500'}`}>
-                  {sec.total} active
+                <span className={`text-[10px] tabular-nums ${isSelected ? 'text-stone-300' : 'text-stone-500'}`}>
+                  {sec.total} total
                 </span>
               </div>
-              <div className="mt-1 flex items-center justify-between text-[11px]">
-                <span className={isSelected ? 'font-bold text-emerald-300' : 'font-semibold text-emerald-700'}>
-                  {sec.present} here
+              <div className="mt-1.5 flex items-baseline justify-between text-xs tabular-nums">
+                <span className={isSelected ? 'font-medium text-copper-300' : 'font-medium text-navy-950'}>
+                  {sec.present} present
                 </span>
                 {(sec.late > 0 || sec.absent > 0) && (
-                  <span className={isSelected ? 'text-zinc-300' : 'text-zinc-500'}>
-                    {sec.late > 0 && <span className={isSelected ? 'text-amber-300' : 'text-amber-700'}>{sec.late} late</span>}
+                  <span className={`text-[11px] ${isSelected ? 'text-stone-300' : 'text-stone-500'}`}>
+                    {sec.late > 0 && <span>{sec.late} late</span>}
                     {sec.late > 0 && sec.absent > 0 && ' · '}
-                    {sec.absent > 0 && <span className={isSelected ? 'text-rose-300' : 'text-rose-700'}>{sec.absent} out</span>}
+                    {sec.absent > 0 && <span>{sec.absent} out</span>}
                   </span>
                 )}
               </div>
@@ -123,28 +133,28 @@ export default function AttendanceStatsBar({
         })}
       </div>
 
-      {/* Quick Missing List (if any absences/lates logged) */}
+      {/* Quick Missing List */}
       {missingSingers.length > 0 && (
-        <div className="mt-3.5 border-t border-emerald-200/80 pt-3">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-900 mb-1.5">
-            Reported Absent or Late for this Call:
+        <div className="mt-4 border-t border-stone-200/80 pt-3">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+            Notices Recorded for This Call
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {missingSingers.map((m, idx) => (
               <span
                 key={idx}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-0.5 text-xs font-semibold ${
+                className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-0.5 text-xs ${
                   m.status === 'Absent'
-                    ? 'border-rose-300 bg-rose-50 text-rose-900'
-                    : 'border-amber-300 bg-amber-50 text-amber-900'
+                    ? 'border-[#e4c4bc] bg-[#f7ebe8] text-[#84372d]'
+                    : 'border-[#e6d5bc] bg-[#f8efe2] text-[#7d5220]'
                 }`}
                 title={m.reason}
               >
-                <span>{m.singerName} ({m.voicePart})</span>
-                <span className="text-[10px] uppercase font-bold opacity-75">
+                <span className="font-medium">{m.singerName} ({m.voicePart})</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
                   · {m.status}
                 </span>
-                {m.reason && <span className="text-[10px] italic">({m.reason})</span>}
+                {m.reason && <span className="text-[11px] italic opacity-90">({m.reason})</span>}
               </span>
             ))}
           </div>
@@ -153,4 +163,3 @@ export default function AttendanceStatsBar({
     </div>
   );
 }
-

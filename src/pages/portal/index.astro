@@ -96,41 +96,38 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
 ---
 
 <PortalLayout title="Overview">
-  <div class="space-y-6 sm:space-y-7">
-    <!-- Season Leave (Asleep) Status Notice -->
+  <div class="space-y-10 sm:space-y-12">
+    {/* Season Leave Status Notice */}
     {isOnLeave && (
-      <div class="flex items-start gap-3.5 rounded-2xl border border-indigo-200 bg-indigo-50/90 px-5 py-4 text-sm text-indigo-950 shadow-2xs">
-        <span class="mt-0.5 text-lg leading-none">🌙</span>
-        <div>
-          <p class="font-semibold text-indigo-950">Season Leave Active (Skipping Current Cycle)</p>
-          <p class="mt-0.5 text-xs leading-relaxed text-indigo-800">
-            You’re currently paused from rehearsal roll call and season absence alerts, while keeping full access to future scores, schedules, and the Singer Handbook.
-          </p>
-        </div>
+      <div class="border-l-2 border-copper-500 bg-[#f5efe8] px-5 py-4">
+        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+          Season Leave Active
+        </p>
+        <p class="mt-1 text-sm leading-relaxed text-stone-700">
+          You are paused from rehearsal roll call and absence alerts for the current cycle while retaining full access to scores, schedules, and ensemble documents.
+        </p>
       </div>
     )}
 
-    <!-- Optional Board Announcement Banner from Config Sheet -->
+    {/* Optional Board Announcement Banner from Config Sheet */}
     {config.Portal_Announcement && (
-      <div class="flex flex-col gap-2 rounded-2xl border border-gold-400/40 bg-gradient-to-r from-amber-50/90 to-[#FAF7F2] px-5 py-3.5 text-sm text-navy-950 shadow-xs sm:flex-row sm:items-center sm:gap-3">
-        <span class="w-fit shrink-0 rounded-sm bg-navy-900 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-gold-300">
+      <div class="flex flex-col gap-1.5 border-y border-stone-300/80 bg-[#f5efe8]/70 px-4 py-3.5 sm:flex-row sm:items-baseline sm:gap-4">
+        <span class="shrink-0 text-[10px] font-semibold uppercase tracking-[0.2em] text-copper-600">
           Season Note
         </span>
-        <span class="text-sm font-medium leading-relaxed text-stone-800">
+        <p class="text-sm leading-relaxed text-stone-800">
           {config.Portal_Announcement}
-        </span>
+        </p>
       </div>
     )}
 
-    <!-- Greeting & Calendar Sync Row -->
-    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    {/* Editorial Masthead & Calendar Subscription */}
+    <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="inline-flex items-center rounded-sm bg-white px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-copper-600 border border-stone-200/80 shadow-2xs">
-            {singer.sectionGroup} Section · {singer.voicePart}
-          </span>
-        </div>
-        <h1 class="mt-1.5 font-editorial text-3xl font-medium tracking-tight text-navy-950 sm:text-4xl">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-copper-600">
+          {singer.sectionGroup} Section · {singer.voicePart}
+        </p>
+        <h1 class="mt-2 font-editorial text-4xl font-normal tracking-tight text-navy-950 sm:text-5xl">
           Welcome back, {singer.name.split(' ')[0]}
         </h1>
       </div>
@@ -140,347 +137,406 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
         httpsFeedUrl={httpsFeedUrl}
         webcalFeedUrl={webcalFeedUrl}
       />
-    </div>
+    </header>
 
-    <!-- Next Rehearsal Hero Card + Modern Quick Action Tiles -->
-    <div class="grid gap-5 lg:grid-cols-12">
-      <!-- Left: Next Call Hero -->
-      <div class="relative overflow-hidden rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs sm:p-7 lg:col-span-7 flex flex-col justify-between">
-        <div class="relative">
-          <div class="flex items-center justify-between gap-2">
-            <span
-              class:list={[
-                'text-xs font-semibold uppercase tracking-[0.18em]',
-                isCallToday ? 'text-amber-700 flex items-center gap-1.5' : 'text-copper-600',
-              ]}
-            >
-              {isCallToday && <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
-              {isCallToday ? 'Today’s Ensemble Call' : 'Next Ensemble Call'}
-            </span>
-            {nextEvent && (
-              <span class="rounded-full border border-stone-200/80 bg-[#FAF7F2] px-3 py-0.5 text-xs font-semibold text-navy-950">
-                {nextEvent.type}
-              </span>
-            )}
-          </div>
+    {/* Full-Width Nocturne Feature Folio + 4-Column Typographic Ledger */}
+    <div class="space-y-0">
+      <section
+        aria-label="Next Ensemble Call"
+        class="relative overflow-hidden rounded-sm border border-navy-900 bg-[#0B131E] text-ivory-50 shadow-xl shadow-navy-950/10"
+      >
+        <div
+          aria-hidden="true"
+          class="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-copper-500/12 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          class="pointer-events-none absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-copper-400/8 blur-3xl"
+        />
 
-          {nextEvent ? (
-            <div class="mt-4">
-              <h2 class="font-editorial text-3xl font-semibold text-navy-950 sm:text-4xl">
-                {nextEvent.title}
-              </h2>
-              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                <span class="font-serif font-semibold text-navy-950">
-                  🗓 {isCallToday ? 'Today · ' : ''}{formatEventDate(nextEvent.date)} · {nextEvent.time}
+        <div class="relative grid gap-8 p-6 sm:p-9 lg:grid-cols-12 lg:gap-10 lg:p-10">
+          {/* Left Column: Call Title, Time, Venue & Primary Actions */}
+          <div class="flex flex-col justify-between lg:col-span-7">
+            <div>
+              <div class="flex flex-wrap items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.22em]">
+                {isCallToday && (
+                  <span class="h-2 w-2 rounded-full bg-copper-400 animate-pulse" aria-hidden="true" />
+                )}
+                <span class="text-copper-300">
+                  {isCallToday ? 'Today’s Ensemble Call' : 'Next Ensemble Call'}
                 </span>
-                <LocationDirectionsButton
-                  client:load
-                  location={nextEvent.location}
-                  variant="badge"
-                />
+                {nextEvent && (
+                  <>
+                    <span class="text-white/25" aria-hidden="true">·</span>
+                    <span class="text-stone-300">{nextEvent.type}</span>
+                  </>
+                )}
               </div>
 
-              {nextEvent.notes && (
-                <div class="mt-4 rounded-xl border border-stone-200/70 bg-[#FAF7F2] p-4 text-sm leading-relaxed text-stone-700">
-                  <span class="font-semibold uppercase tracking-wider text-copper-600 text-xs block mb-1">
-                    Call Details &amp; Rehearsal Focus
-                  </span>
-                  <p class="whitespace-pre-line leading-relaxed text-stone-700">
-                    {nextEvent.notes}
-                  </p>
-                </div>
-              )}
+              {nextEvent ? (
+                <div class="mt-4">
+                  <h2 class="font-editorial text-3xl font-normal leading-[1.12] tracking-tight text-white sm:text-4xl lg:text-[2.65rem]">
+                    {nextEvent.title}
+                  </h2>
 
-              {nextEventConflict && (
-                <div
-                  class:list={[
-                    'mt-4 flex items-start gap-2.5 rounded-xl border p-3.5 text-xs sm:text-sm font-semibold',
-                    nextEventConflict.status === 'Late'
-                      ? 'border-amber-300 bg-amber-50 text-amber-950'
-                      : 'border-rose-300 bg-rose-50 text-rose-950',
-                  ]}
-                >
-                  <span class="text-base mt-0.5">{nextEventConflict.status === 'Late' ? '⏰' : '🔴'}</span>
-                  <div>
-                    <span class="font-bold">
-                      {nextEventConflict.status === 'Late'
-                        ? 'Running Late Notice Active'
-                        : 'Absence Reported for this Call'}
+                  <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2.5 text-sm">
+                    <span class="font-editorial text-xl font-normal tracking-wide text-stone-200">
+                      {isCallToday ? 'Today, ' : ''}{formatEventDate(nextEvent.date)} · {nextEvent.time}
                     </span>
-                    <p class="mt-0.5 opacity-90 text-xs font-normal">
-                      {nextEventConflict.reason || (nextEventConflict.status === 'Late' ? 'Running late' : 'Absence recorded')}
-                    </p>
+                    <LocationDirectionsButton
+                      client:load
+                      location={nextEvent.location}
+                      variant="dark"
+                    />
                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p class="mt-4 text-sm text-stone-500">
-              No upcoming rehearsals are posted on the Schedule tab right now.
-            </p>
-          )}
-        </div>
 
-        <div class="relative mt-6 flex flex-wrap items-center gap-3 pt-2">
-          <a
-            href="/portal/music"
-            class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.14em] text-white shadow-xs transition hover:bg-copper-600"
-          >
-            Open Digital Scores ({totalScoreFiles})
-          </a>
-          {nextEvent && (
-            <QuickLateNoticeModal
-              client:load
-              eventId={nextEvent.eventId}
-              eventTitle={nextEvent.title}
-              eventDate={nextEvent.date}
-              sectionGroup={singer.sectionGroup}
-              buttonLabel={
-                nextEventConflict
-                  ? nextEventConflict.status === 'Late'
-                    ? 'Update Late ETA'
-                    : 'Update Absence'
-                  : isCallToday
-                  ? 'Running Late? Send 1-Tap Notice'
-                  : 'Report Conflict / Late'
-              }
-            />
-          )}
-        </div>
-      </div>
-
-      <!-- Right: Clean, Modern Status & Action Cards -->
-      <div class="flex flex-col gap-3.5 lg:col-span-5">
-        <!-- 1. Attendance Status Card (Positive, Clear UX — No Weird "0 Absences") -->
-        <a
-          href="/portal/absences"
-          class="group flex items-start justify-between gap-4 rounded-xl border border-stone-200/80 bg-white p-4.5 shadow-xs transition hover:border-gold-400/60 hover:shadow-sm sm:p-5"
-        >
-          <div class="flex items-start gap-3.5">
-            <span
-              class:list={[
-                'flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-base font-bold ring-1',
-                myUpcomingConflicts.length === 0
-                  ? 'bg-emerald-50 text-emerald-700 ring-emerald-200/80'
-                  : myUpcomingAbsences.length > 0
-                  ? 'bg-rose-50 text-rose-700 ring-rose-200/80'
-                  : 'bg-amber-50 text-amber-700 ring-amber-200/80',
-              ]}
-            >
-              {myUpcomingConflicts.length === 0 ? '✓' : myUpcomingConflicts.length}
-            </span>
-            <div>
-              <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
-                Attendance
-              </span>
-              <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
-                {myUpcomingConflicts.length === 0
-                  ? 'Attending All Upcoming Calls'
-                  : myUpcomingAbsences.length > 0 && myUpcomingLates.length > 0
-                  ? `${myUpcomingAbsences.length} Absence, ${myUpcomingLates.length} Late Notice`
-                  : myUpcomingAbsences.length > 0
-                  ? `${myUpcomingAbsences.length} Absence${myUpcomingAbsences.length > 1 ? 's' : ''} Logged`
-                  : `${myUpcomingLates.length} Late Notice${myUpcomingLates.length > 1 ? 's' : ''} Logged`}
-              </h3>
-              <p class="mt-1 text-sm leading-relaxed text-stone-600">
-                {myUpcomingConflicts.length === 0
-                  ? `Marked present across all ${upcomingEvents.length} scheduled dates.`
-                  : `Next notice: ${formatEventDate(myUpcomingConflicts[0].date)} (${
-                      myUpcomingConflicts[0].status === 'Late' ? 'Running Late' : 'Absent'
-                    })`}
-              </p>
-            </div>
-          </div>
-          <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-copper-600 transition group-hover:translate-x-0.5">
-            {myUpcomingConflicts.length === 0 ? 'Log' : 'Edit'} →
-          </span>
-        </a>
-
-        <!-- 2. Duties & Hospitality Signup Card -->
-        <a
-          href="/portal/snacks"
-          class="group flex items-start justify-between gap-4 rounded-xl border border-stone-200/80 bg-white p-4.5 shadow-xs transition hover:border-gold-400/60 hover:shadow-sm sm:p-5"
-        >
-          <div class="flex items-start gap-3.5">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-copper-50 text-base text-copper-600 ring-1 ring-copper-200/60">
-              ☕
-            </span>
-            <div>
-              <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
-                Duties &amp; Hospitality
-              </span>
-              <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
-                {mySnackDates.length > 0
-                  ? `${mySnackDates.length} Signup${mySnackDates.length > 1 ? 's' : ''} Claimed`
-                  : 'Duty & Snack Signups'}
-              </h3>
-              <p class="mt-1 text-sm leading-relaxed text-stone-600">
-                {mySnackDates.length > 0
-                  ? `Your next call: ${formatEventDate(mySnackDates[0].date)}`
-                  : `${openSnackSlotsCount} open duty & hospitality slots available.`}
-              </p>
-            </div>
-          </div>
-          <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-copper-600 transition group-hover:translate-x-0.5">
-            Claim →
-          </span>
-        </a>
-
-        <!-- 3. Digital Music Folder Summary Card -->
-        <a
-          href="/portal/music"
-          class="group flex items-start justify-between gap-4 rounded-xl border border-stone-200/80 bg-white p-4.5 shadow-xs transition hover:border-gold-400/60 hover:shadow-sm sm:p-5"
-        >
-          <div class="flex items-start gap-3.5">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-navy-950 text-sm font-bold text-gold-300">
-              ♫
-            </span>
-            <div>
-              <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
-                Music Library
-              </span>
-              <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
-                {totalScoreFiles} Scores & Part Tracks
-              </h3>
-              <p class="mt-1 text-sm leading-relaxed text-stone-600">
-                {uniqueConcertPrograms} active concert folder{uniqueConcertPrograms === 1 ? '' : 's'}
-                {totalMarkingsDocs > 0 ? ' · Director markings' : ''} · Tablet & print ready.
-              </p>
-            </div>
-          </div>
-          <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-copper-600 transition group-hover:translate-x-0.5">
-            Open →
-          </span>
-        </a>
-
-        <!-- 4. Choir Formation & Seating Card -->
-        <a
-          href="/portal/seating"
-          class="group flex items-start justify-between gap-4 rounded-xl border border-stone-200/80 bg-white p-4.5 shadow-xs transition hover:border-gold-400/60 hover:shadow-sm sm:p-5"
-        >
-          <div class="flex items-start gap-3.5">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-stone-100 text-sm font-bold text-stone-700 ring-1 ring-stone-200/80">
-              🪑
-            </span>
-            <div>
-              <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
-                Seating &amp; Attendance
-              </span>
-              <h3 class="mt-0.5 font-sans text-base font-bold text-navy-950">
-                {mySeatLocation
-                  ? `${mySeatLocation.rowName}, Seat #${mySeatLocation.seatIndex}`
-                  : `${publishedCharts.length} Formation Chart${publishedCharts.length === 1 ? '' : 's'}`}
-              </h3>
-              <p class="mt-1 text-sm leading-relaxed text-stone-600">
-                {mySeatLocation
-                  ? `${mySeatLocation.chartTitle} · Voice part ${mySeatLocation.voicePart || singer.voicePart}`
-                  : 'View published concert seating charts & choir positions.'}
-              </p>
-            </div>
-          </div>
-          <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-copper-600 transition group-hover:translate-x-0.5">
-            View →
-          </span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Full Upcoming Rehearsal & Concert Schedule -->
-    <section class="overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-xs">
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200/60 px-5 py-4 sm:px-6">
-        <div>
-          <h2 class="font-editorial text-2xl font-bold text-navy-950">
-            Upcoming Schedule
-          </h2>
-          <p class="mt-0.5 text-sm text-stone-600">
-            Ensemble rehearsal calls, dress rehearsals, and concert times
-          </p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          {isAdmin && (
-            <CalendarAdminControls client:load calendarId={calendarId} />
-          )}
-          <span class="rounded-sm bg-[#FAF7F2] border border-stone-200/80 px-3 py-1 text-xs font-semibold text-navy-950">
-            {upcomingEvents.length} calls
-          </span>
-        </div>
-      </div>
-
-      <ul class="divide-y divide-stone-200/60">
-        {upcomingEvents.map((ev) => {
-          const { weekday, month, day } = formatShortMonthDay(ev.date);
-          const isAbsent = myUpcomingAbsences.some((a) => a.eventId === ev.eventId);
-
-          return (
-            <li class="flex flex-col gap-3 px-5 py-4 transition hover:bg-[#FAF7F2]/60 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-              <div class="flex items-start gap-4">
-                <div class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-stone-200/80 bg-[#FAF7F2] text-center shadow-2xs">
-                  <span class="text-xs font-semibold uppercase tracking-wider text-copper-600">
-                    {month}
-                  </span>
-                  <span class="text-lg font-bold leading-tight text-navy-950">{day}</span>
-                  <span class="text-xs font-medium text-stone-500">{weekday}</span>
-                </div>
-
-                <div class="min-w-0">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="font-sans text-base font-bold text-navy-950">
-                      {ev.title}
-                    </h3>
-                    <span
-                      class={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${eventTypeBadgeColor(
-                        ev.type
-                      )}`}
+                  {nextEventConflict && (
+                    <div
+                      class:list={[
+                        'mt-5 border-l-2 px-4 py-3 text-xs sm:text-sm',
+                        nextEventConflict.status === 'Late'
+                          ? 'border-amber-400 bg-amber-500/10 text-amber-100'
+                          : 'border-rose-400 bg-rose-500/10 text-rose-100',
+                      ]}
                     >
-                      {ev.type}
-                    </span>
-                    {isAbsent && (
-                      <span class="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-800">
-                        Marked Absent
-                      </span>
-                    )}
-                  </div>
-                  <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-600">
-                    <span class="font-semibold text-navy-900">{ev.time}</span>
-                    <LocationDirectionsButton client:load location={ev.location} />
-                  </div>
-                  {ev.notes && (
-                    <div class="mt-2 whitespace-pre-line rounded-lg border border-stone-200/70 bg-[#FAF7F2] px-3.5 py-2 text-sm leading-relaxed text-stone-700">
-                      {ev.notes}
+                      <p class="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-90">
+                        {nextEventConflict.status === 'Late'
+                          ? 'Running Late Notice Active'
+                          : 'Absence Logged for This Call'}
+                      </p>
+                      <p class="mt-0.5 text-xs opacity-85">
+                        {nextEventConflict.reason ||
+                          (nextEventConflict.status === 'Late' ? 'Running late' : 'Absence recorded')}
+                      </p>
                     </div>
                   )}
                 </div>
-              </div>
+              ) : (
+                <p class="mt-4 text-sm leading-relaxed text-stone-300">
+                  No upcoming ensemble calls are posted on the schedule at this moment.
+                </p>
+              )}
+            </div>
 
-              <div class="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+            <div class="mt-7 flex flex-wrap items-center gap-3 pt-2">
+              <a
+                href="/portal/music"
+                class="inline-flex items-center justify-center rounded-sm bg-copper-500 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-copper-400"
+              >
+                Open Digital Scores ({totalScoreFiles})
+              </a>
+              {nextEvent && (
                 <QuickLateNoticeModal
                   client:load
-                  eventId={ev.eventId}
-                  eventTitle={ev.title}
-                  eventDate={ev.date}
+                  eventId={nextEvent.eventId}
+                  eventTitle={nextEvent.title}
+                  eventDate={nextEvent.date}
                   sectionGroup={singer.sectionGroup}
-                  buttonLabel={isAbsent ? 'Edit Notice' : 'Report Conflict / Late'}
-                  buttonVariant="ghost"
+                  buttonVariant="nocturne"
+                  buttonLabel={
+                    nextEventConflict
+                      ? nextEventConflict.status === 'Late'
+                        ? 'Update Late ETA'
+                        : 'Update Notice'
+                      : isCallToday
+                      ? 'Running Late / Conflict'
+                      : 'Report Conflict'
+                  }
                 />
+              )}
+            </div>
+          </div>
 
-                {(ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name) && (
-                  <div class="shrink-0 rounded-lg bg-[#FAF7F2] border border-stone-200/60 px-3 py-1.5 text-xs text-stone-600 sm:text-right">
-                    <span class="block text-xs font-semibold uppercase tracking-wider text-copper-600">
-                      {ev.type === 'Concert' || ev.type === 'Dress' ? 'Volunteer Crew' : 'Hospitality'}
+          {/* Right Column: Call Sheet Notes & Stage Context */}
+          <div class="flex flex-col justify-between border-t border-white/12 pt-6 lg:col-span-5 lg:border-t-0 lg:border-l lg:pl-9 lg:pt-0">
+            <div>
+              <span class="block text-[10px] font-semibold uppercase tracking-[0.2em] text-copper-300">
+                Call Sheet &amp; Rehearsal Focus
+              </span>
+              {nextEvent?.notes ? (
+                <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-stone-300">
+                  {nextEvent.notes}
+                </p>
+              ) : (
+                <p class="mt-3 text-sm leading-relaxed text-stone-400">
+                  Please have all current concert folder scores and a pencil ready at downbeat. Rehearsal order and director markings are updated in the Music Library.
+                </p>
+              )}
+            </div>
+
+            {nextEvent && (
+              <div class="mt-6 border-t border-white/10 pt-4 text-xs text-stone-400">
+                {(nextEvent.snack1Name ||
+                  nextEvent.snack2Name ||
+                  nextEvent.snack3Name ||
+                  nextEvent.snack4Name) ? (
+                  <div class="flex flex-wrap items-baseline justify-between gap-2">
+                    <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+                      {nextEvent.type === 'Concert' || nextEvent.type === 'Dress'
+                        ? 'Call Crew'
+                        : 'Hospitality'}
                     </span>
-                    <span class="font-medium text-navy-950">
-                      {[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name]
+                    <span class="text-stone-200">
+                      {[
+                        nextEvent.snack1Name,
+                        nextEvent.snack2Name,
+                        nextEvent.snack3Name,
+                        nextEvent.snack4Name,
+                      ]
                         .filter(Boolean)
                         .map((s) => parseSnackEntry(s).name)
                         .join(', ')}
                     </span>
                   </div>
+                ) : (
+                  <div class="flex items-baseline justify-between gap-2">
+                    <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+                      Season Horizon
+                    </span>
+                    <span class="text-stone-300">
+                      {upcomingEvents.length} scheduled call{upcomingEvents.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
                 )}
               </div>
-            </li>
-          );
-        })}
-      </ul>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 4-Column Horizontal Typographic Status Ledger */}
+      <nav
+        aria-label="Member Status & Quick Workspaces"
+        class="grid grid-cols-1 border-b border-stone-300/80 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {/* 01. Attendance */}
+        <a
+          href="/portal/absences"
+          class="group flex flex-col justify-between border-b border-stone-200/90 py-6 transition-colors hover:bg-[#f5efe8]/60 sm:pr-6 lg:border-b-0 lg:py-7"
+        >
+          <div>
+            <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+              01 · Attendance
+            </span>
+            <h3 class="mt-2 font-editorial text-2xl font-medium leading-snug text-navy-950">
+              {myUpcomingConflicts.length === 0
+                ? 'All Calls Confirmed'
+                : myUpcomingAbsences.length > 0 && myUpcomingLates.length > 0
+                ? `${myUpcomingAbsences.length} Absence, ${myUpcomingLates.length} Late`
+                : myUpcomingAbsences.length > 0
+                ? `${myUpcomingAbsences.length} Absence${myUpcomingAbsences.length > 1 ? 's' : ''} Logged`
+                : `${myUpcomingLates.length} Late Notice${myUpcomingLates.length > 1 ? 's' : ''}`}
+            </h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-stone-600">
+              {myUpcomingConflicts.length === 0
+                ? `Present across all ${upcomingEvents.length} scheduled dates.`
+                : `Next notice: ${formatEventDate(myUpcomingConflicts[0].date)}`}
+            </p>
+          </div>
+          <span class="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-navy-950 transition group-hover:text-copper-600">
+            <span>{myUpcomingConflicts.length === 0 ? 'Log Conflict' : 'Manage'}</span>
+            <span aria-hidden="true" class="transition-transform group-hover:translate-x-0.5">→</span>
+          </span>
+        </a>
+
+        {/* 02. Hospitality & Duties */}
+        <a
+          href="/portal/snacks"
+          class="group flex flex-col justify-between border-b border-stone-200/90 py-6 transition-colors hover:bg-[#f5efe8]/60 sm:border-l sm:pl-6 lg:border-b-0 lg:px-6 lg:py-7"
+        >
+          <div>
+            <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+              02 · Hospitality
+            </span>
+            <h3 class="mt-2 font-editorial text-2xl font-medium leading-snug text-navy-950">
+              {mySnackDates.length > 0
+                ? `${mySnackDates.length} Date${mySnackDates.length > 1 ? 's' : ''} Claimed`
+                : `${openSnackSlotsCount} Open Slots`}
+            </h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-stone-600">
+              {mySnackDates.length > 0
+                ? `Next commitment: ${formatEventDate(mySnackDates[0].date)}`
+                : 'Rehearsal hospitality & concert crew signups.'}
+            </p>
+          </div>
+          <span class="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-navy-950 transition group-hover:text-copper-600">
+            <span>{mySnackDates.length > 0 ? 'View Signups' : 'Claim Slot'}</span>
+            <span aria-hidden="true" class="transition-transform group-hover:translate-x-0.5">→</span>
+          </span>
+        </a>
+
+        {/* 03. Music Library */}
+        <a
+          href="/portal/music"
+          class="group flex flex-col justify-between border-b border-stone-200/90 py-6 transition-colors hover:bg-[#f5efe8]/60 sm:border-b-0 sm:pr-6 lg:border-l lg:px-6 lg:py-7"
+        >
+          <div>
+            <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+              03 · Repertoire
+            </span>
+            <h3 class="mt-2 font-editorial text-2xl font-medium leading-snug text-navy-950">
+              {totalScoreFiles} Digital Scores
+            </h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-stone-600">
+              {uniqueConcertPrograms} active program{uniqueConcertPrograms === 1 ? '' : 's'}
+              {totalMarkingsDocs > 0 ? ' · Markings posted' : ' · Part tracks & octavos'}
+            </p>
+          </div>
+          <span class="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-navy-950 transition group-hover:text-copper-600">
+            <span>Open Library</span>
+            <span aria-hidden="true" class="transition-transform group-hover:translate-x-0.5">→</span>
+          </span>
+        </a>
+
+        {/* 04. Stage Formation */}
+        <a
+          href="/portal/seating"
+          class="group flex flex-col justify-between py-6 transition-colors hover:bg-[#f5efe8]/60 sm:border-l sm:border-stone-200/90 sm:pl-6 lg:py-7"
+        >
+          <div>
+            <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+              04 · Stage Riser
+            </span>
+            <h3 class="mt-2 font-editorial text-2xl font-medium leading-snug text-navy-950">
+              {mySeatLocation
+                ? `${mySeatLocation.rowName}, Seat ${mySeatLocation.seatIndex}`
+                : `${publishedCharts.length} Formation Chart${publishedCharts.length === 1 ? '' : 's'}`}
+            </h3>
+            <p class="mt-1.5 text-xs leading-relaxed text-stone-600">
+              {mySeatLocation
+                ? `${mySeatLocation.chartTitle} · ${mySeatLocation.voicePart || singer.voicePart}`
+                : 'Published concert riser & section positions.'}
+            </p>
+          </div>
+          <span class="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-navy-950 transition group-hover:text-copper-600">
+            <span>View Formation</span>
+            <span aria-hidden="true" class="transition-transform group-hover:translate-x-0.5">→</span>
+          </span>
+        </a>
+      </nav>
+    </div>
+
+    {/* Engraved-Style Season Schedule Ledger */}
+    <section aria-labelledby="season-schedule-heading" class="pt-2">
+      <div class="flex flex-col justify-between gap-4 border-b border-navy-950/15 pb-4 sm:flex-row sm:items-end">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-copper-600">
+            Season Calendar
+          </p>
+          <h2
+            id="season-schedule-heading"
+            class="mt-1 font-editorial text-3xl font-normal tracking-tight text-navy-950 sm:text-4xl"
+          >
+            Upcoming Ensemble Calls
+          </h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          {isAdmin && <CalendarAdminControls client:load calendarId={calendarId} />}
+          <span class="text-xs font-medium uppercase tracking-[0.14em] text-stone-500">
+            {upcomingEvents.length} {upcomingEvents.length === 1 ? 'Call' : 'Calls'}
+          </span>
+        </div>
+      </div>
+
+      {upcomingEvents.length === 0 ? (
+        <div class="border-b border-stone-200/90 py-12 text-center text-sm text-stone-500">
+          No upcoming ensemble calls are currently listed.
+        </div>
+      ) : (
+        <ul class="divide-y divide-stone-200/90 border-b border-stone-200/90">
+          {upcomingEvents.map((ev) => {
+            const { weekday, month, day } = formatShortMonthDay(ev.date);
+            const conflict = myUpcomingConflicts.find((a) => a.eventId === ev.eventId);
+
+            return (
+              <li class="grid gap-4 py-5 transition-colors hover:bg-[#f5efe8]/45 sm:grid-cols-12 sm:items-start sm:gap-6 sm:px-2">
+                {/* Engraved Date Column */}
+                <div class="flex items-baseline gap-2.5 sm:col-span-2 sm:flex-col sm:gap-0.5">
+                  <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+                    {weekday} · {month}
+                  </span>
+                  <span class="font-editorial text-3xl font-medium leading-none text-navy-950 sm:text-[2.15rem]">
+                    {day}
+                  </span>
+                </div>
+
+                {/* Call Details Column */}
+                <div class="min-w-0 sm:col-span-7">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="font-editorial text-xl font-semibold leading-snug text-navy-950 sm:text-[1.35rem]">
+                      {ev.title}
+                    </h3>
+                    <span
+                      class={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${eventTypeBadgeColor(
+                        ev.type
+                      )}`}
+                    >
+                      {ev.type}
+                    </span>
+                    {conflict && (
+                      <span
+                        class:list={[
+                          'rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]',
+                          conflict.status === 'Late'
+                            ? 'border-amber-300 bg-amber-50 text-amber-900'
+                            : 'border-rose-200 bg-rose-50 text-rose-800',
+                        ]}
+                      >
+                        {conflict.status === 'Late' ? 'Running Late' : 'Absent'}
+                      </span>
+                    )}
+                  </div>
+
+                  <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-stone-600">
+                    <span class="font-medium text-navy-950 tabular-nums">{ev.time}</span>
+                    <span class="text-stone-300" aria-hidden="true">·</span>
+                    <LocationDirectionsButton
+                      client:load
+                      location={ev.location}
+                      variant="inline"
+                      className="text-xs sm:text-sm"
+                    />
+                  </div>
+
+                  {ev.notes && (
+                    <p class="mt-2.5 whitespace-pre-line border-l border-stone-300 pl-3.5 text-xs leading-relaxed text-stone-600 sm:text-sm">
+                      {ev.notes}
+                    </p>
+                  )}
+                </div>
+
+                {/* Action & Hospitality Column */}
+                <div class="flex flex-wrap items-center justify-between gap-2 sm:col-span-3 sm:flex-col sm:items-end sm:justify-start">
+                  <QuickLateNoticeModal
+                    client:load
+                    eventId={ev.eventId}
+                    eventTitle={ev.title}
+                    eventDate={ev.date}
+                    sectionGroup={singer.sectionGroup}
+                    buttonLabel={conflict ? 'Edit Notice' : 'Report Conflict'}
+                    buttonVariant="ghost"
+                  />
+
+                  {(ev.snack1Name || ev.snack2Name || ev.snack3Name || ev.snack4Name) && (
+                    <p class="text-xs leading-snug text-stone-500 sm:mt-1 sm:text-right">
+                      <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400">
+                        {ev.type === 'Concert' || ev.type === 'Dress' ? 'Crew: ' : 'Hospitality: '}
+                      </span>
+                      <span class="text-stone-700">
+                        {[ev.snack1Name, ev.snack2Name, ev.snack3Name, ev.snack4Name]
+                          .filter(Boolean)
+                          .map((s) => parseSnackEntry(s).name)
+                          .join(', ')}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   </div>
 </PortalLayout>

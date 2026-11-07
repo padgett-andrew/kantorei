@@ -77,7 +77,7 @@ export default function UserProfileMenu({
 
   const closeMenu = () => setIsOpen(false);
   const linkClass =
-    'group flex min-h-10 items-center gap-3 px-3 py-2 text-sm text-stone-700 transition hover:bg-ivory-100 hover:text-navy-950 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-copper-600';
+    'group flex min-h-10 items-center gap-3 px-4 py-2.5 text-sm text-stone-700 transition hover:bg-[#f5efe8] hover:text-navy-950 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-copper-600';
   const iconClass = 'h-4 w-4 shrink-0 text-copper-600';
   const descriptionClass = 'mt-0.5 text-xs leading-snug text-stone-500';
 
@@ -89,11 +89,11 @@ export default function UserProfileMenu({
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label="Singer profile and account menu"
-        className={`group flex max-w-[min(15rem,45vw)] cursor-pointer items-center gap-2 rounded-full border bg-white/70 py-1 pl-1 pr-2.5 text-navy-950 transition hover:border-copper-300 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper-600 ${
-          isOpen ? 'border-copper-400 bg-white' : 'border-stone-200'
+        className={`group flex max-w-[min(16rem,45vw)] cursor-pointer items-center gap-2.5 rounded-sm border py-1 pl-1.5 pr-2.5 text-navy-950 transition hover:border-stone-300 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper-600 ${
+          isOpen ? 'border-copper-400 bg-white' : 'border-stone-200/90 bg-white/60'
         }`}
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-ivory-100 ring-1 ring-stone-200">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-ivory-100 ring-1 ring-stone-200">
           {showImage ? (
             <img
               src={avatarUrl}
@@ -103,17 +103,20 @@ export default function UserProfileMenu({
               className="block h-full w-full object-cover object-center"
             />
           ) : (
-            <span className="flex h-full w-full items-center justify-center rounded-full bg-copper-100 text-xs font-semibold text-copper-600">
+            <span className="flex h-full w-full items-center justify-center rounded-full bg-[#f9efe8] text-[11px] font-semibold text-copper-600">
               {initials}
             </span>
           )}
         </span>
-        <span className="hidden min-w-0 truncate text-xs font-medium text-stone-700 sm:block">
+        <span className="hidden min-w-0 truncate text-xs font-medium text-stone-800 sm:block">
           {singer.name}
+        </span>
+        <span className="hidden text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400 md:inline">
+          {singer.voicePart}
         </span>
         <ChevronDown
           aria-hidden="true"
-          className={`hidden h-3.5 w-3.5 shrink-0 text-stone-500 transition-transform sm:block ${
+          className={`hidden h-3.5 w-3.5 shrink-0 text-stone-400 transition-transform sm:block ${
             isOpen ? 'rotate-180 text-copper-600' : ''
           }`}
         />
@@ -123,9 +126,9 @@ export default function UserProfileMenu({
         <div
           role="menu"
           aria-label="Singer account menu"
-          className="absolute right-0 top-full z-50 mt-2 max-h-[min(80vh,42rem)] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto border border-stone-200 bg-[#FAF7F2] text-stone-800 shadow-xl shadow-navy-950/10"
+          className="absolute right-0 top-full z-50 mt-2 max-h-[min(80vh,42rem)] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-sm border border-stone-200 bg-[#FAF7F2] text-stone-800 shadow-xl shadow-navy-950/10"
         >
-          <div className="flex items-start gap-3 border-b border-stone-200 px-4 py-4">
+          <div className="flex items-start gap-3 border-b border-stone-200/90 px-4 py-4">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-ivory-100 ring-1 ring-stone-200">
               {showImage ? (
                 <img
@@ -136,33 +139,36 @@ export default function UserProfileMenu({
                   className="block h-full w-full object-cover object-center"
                 />
               ) : (
-                <span className="flex h-full w-full items-center justify-center rounded-full bg-copper-100 text-sm font-semibold text-copper-600">
+                <span className="flex h-full w-full items-center justify-center rounded-full bg-[#f9efe8] text-sm font-semibold text-copper-600">
                   {initials}
                 </span>
               )}
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex items-start justify-between gap-2">
-                <p className="truncate font-editorial text-lg font-semibold leading-tight text-navy-950">
+                <p className="truncate font-editorial text-xl font-semibold leading-tight text-navy-950">
                   {singer.name}
                 </p>
                 {isOnLeave && (
-                  <span className="shrink-0 border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-800">
-                    On leave
+                  <span className="shrink-0 border border-copper-300/80 bg-[#f9efe8] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-copper-600">
+                    Season Leave
                   </span>
                 )}
               </div>
+              <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-copper-600">
+                {singer.sectionGroup} · {singer.voicePart}
+              </p>
               <p className="mt-0.5 truncate text-xs text-stone-500">{singer.email}</p>
             </div>
           </div>
 
           {hasLeadershipAccess && (
-            <section className="border-b border-stone-200 py-2" aria-label="Leadership tools">
+            <section className="border-b border-stone-200/90 py-2" aria-label="Leadership tools">
               <div className="flex items-center gap-2 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-copper-600">
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Leadership &amp; Workspace</span>
               </div>
-              <div className="divide-y divide-stone-200/70">
+              <div className="divide-y divide-stone-200/60">
                 <a role="menuitem" href={masterSheetUrl} target="_blank" rel="noopener noreferrer" onClick={closeMenu} className={linkClass}>
                   <FileSpreadsheet className={iconClass} aria-hidden="true" />
                   <span className="min-w-0 flex-1">
@@ -199,11 +205,11 @@ export default function UserProfileMenu({
             </section>
           )}
 
-          <section className="border-b border-stone-200 py-2" aria-label="Quick links">
+          <section className="border-b border-stone-200/90 py-2" aria-label="Quick links">
             <div className="px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
-              Quick Links
+              Ensemble Resources
             </div>
-            <div className="divide-y divide-stone-200/70">
+            <div className="divide-y divide-stone-200/60">
               <a role="menuitem" href="/portal/handbook" onClick={closeMenu} className={linkClass}>
                 <BookOpen className={iconClass} aria-hidden="true" />
                 <span className="min-w-0 flex-1">
@@ -226,7 +232,7 @@ export default function UserProfileMenu({
             <button
               role="menuitem"
               type="submit"
-              className="flex min-h-10 w-full cursor-pointer items-center gap-3 px-3 py-2 text-sm text-stone-600 transition hover:bg-rose-50 hover:text-rose-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-rose-700"
+              className="flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-sm px-3 py-2 text-sm text-stone-600 transition hover:bg-rose-50 hover:text-rose-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-rose-700"
             >
               <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>Sign Out</span>

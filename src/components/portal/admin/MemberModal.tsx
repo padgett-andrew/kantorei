@@ -40,34 +40,40 @@ export default function MemberModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/60 p-4 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/65 p-4 backdrop-blur-xs"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
       <div
-        className="w-full max-w-lg rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl sm:p-7"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-sm border border-stone-300 bg-[#FAF7F2] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+        <div className="flex items-start justify-between border-b border-stone-200/90 bg-white px-6 py-5">
           <div>
-            <h3 className="font-editorial text-2xl font-bold text-navy-950">
-              {mode === 'create' ? 'Add Singer' : 'Edit Member'}
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+              Ensemble Roster
+            </span>
+            <h3 className="mt-0.5 font-editorial text-2xl font-normal text-navy-950">
+              {mode === 'create' ? 'Add Ensemble Member' : 'Edit Member Record'}
             </h3>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              Manage vocal part, attendance status, and admin privileges.
+            <p className="mt-0.5 text-xs text-stone-500">
+              Configure vocal part, season participation status, and portal permissions.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-100"
+            aria-label="Close modal"
+            className="cursor-pointer rounded-sm p-1.5 text-stone-400 hover:bg-stone-100 hover:text-navy-950"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <form onSubmit={onSave} className="mt-4 space-y-4">
+        <form onSubmit={onSave} className="space-y-4 p-6">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600">
               Email Address
             </label>
             <input
@@ -76,12 +82,12 @@ export default function MemberModal({
               disabled={mode === 'update'}
               value={formState.email}
               onChange={(e) => onChange({ ...formState, email: e.target.value })}
-              className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 text-sm disabled:bg-zinc-100 disabled:text-zinc-500"
+              className="mt-1.5 w-full rounded-sm border border-stone-300 bg-white px-3.5 py-2 text-sm text-navy-950 focus:border-navy-950 focus:outline-none disabled:bg-stone-100 disabled:text-stone-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600">
               Full Name
             </label>
             <input
@@ -89,13 +95,13 @@ export default function MemberModal({
               required
               value={formState.name}
               onChange={(e) => onChange({ ...formState, name: e.target.value })}
-              className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 text-sm"
+              className="mt-1.5 w-full rounded-sm border border-stone-300 bg-white px-3.5 py-2 text-sm text-navy-950 focus:border-navy-950 focus:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600">
                 Voice Part
               </label>
               <select
@@ -108,7 +114,7 @@ export default function MemberModal({
                     sectionGroup: inferSectionGroup(vp),
                   });
                 }}
-                className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm"
+                className="mt-1.5 w-full rounded-sm border border-stone-300 bg-white px-3 py-2 text-sm text-navy-950 focus:border-navy-950 focus:outline-none"
               >
                 <optgroup label="Soprano">
                   <option value="S">S — Soprano (General)</option>
@@ -134,7 +140,7 @@ export default function MemberModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600">
                 Portal Role
               </label>
               <select
@@ -142,7 +148,7 @@ export default function MemberModal({
                 onChange={(e) =>
                   onChange({ ...formState, role: e.target.value as MemberRole })
                 }
-                className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm"
+                className="mt-1.5 w-full rounded-sm border border-stone-300 bg-white px-3 py-2 text-sm text-navy-950 focus:border-navy-950 focus:outline-none"
               >
                 {MEMBER_ROLES.map((r) => (
                   <option key={r} value={r}>
@@ -154,7 +160,7 @@ export default function MemberModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <label className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600">
               Phone Number
             </label>
             <input
@@ -162,15 +168,15 @@ export default function MemberModal({
               placeholder="612-555-0100"
               value={formState.phone}
               onChange={(e) => onChange({ ...formState, phone: e.target.value })}
-              className="mt-1 w-full rounded-xl border border-zinc-300 px-3.5 py-2 text-sm"
+              className="mt-1.5 w-full rounded-sm border border-stone-300 bg-white px-3.5 py-2 text-sm text-navy-950 focus:border-navy-950 focus:outline-none"
             />
           </div>
 
           <div>
-            <span className="block text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600">
               Season Participation Status
             </span>
-            <div className="mt-1.5 space-y-2">
+            <div className="mt-2 space-y-2">
               {(
                 [
                   {
@@ -180,8 +186,8 @@ export default function MemberModal({
                   },
                   {
                     value: 'On_Leave',
-                    title: 'Season Leave / Asleep (Skipping Cycle)',
-                    desc: 'Paused from roll call & season alerts · keeps portal access',
+                    title: 'Season Leave (Skipping Cycle)',
+                    desc: 'Paused from roll call & season alerts · retains portal access',
                   },
                   {
                     value: 'Inactive',
@@ -192,10 +198,10 @@ export default function MemberModal({
               ).map((opt) => (
                 <label
                   key={opt.value}
-                  className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition ${
+                  className={`flex cursor-pointer items-start gap-3 rounded-sm border p-3 transition ${
                     formState.status === opt.value
-                      ? 'border-navy-900 bg-ivory-50'
-                      : 'border-zinc-200 hover:bg-zinc-50'
+                      ? 'border-navy-950 bg-white'
+                      : 'border-stone-200/90 bg-white/70 hover:border-stone-400'
                   }`}
                 >
                   <input
@@ -203,34 +209,34 @@ export default function MemberModal({
                     name="singer-status"
                     checked={formState.status === opt.value}
                     onChange={() => onChange({ ...formState, status: opt.value })}
-                    className="mt-0.5 h-4 w-4 accent-navy-900"
+                    className="mt-0.5 h-4 w-4 accent-navy-950"
                   />
                   <div>
-                    <span className="block text-xs font-bold text-navy-950">
+                    <span className="block text-xs font-semibold text-navy-950">
                       {opt.title}
                     </span>
-                    <span className="block text-[11px] text-zinc-500">{opt.desc}</span>
+                    <span className="block text-[11px] text-stone-500">{opt.desc}</span>
                   </div>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-3">
+          <div className="flex justify-end gap-2.5 border-t border-stone-200/80 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="cursor-pointer rounded-xl border border-zinc-300 px-4 py-2 text-xs font-semibold text-zinc-700"
+              className="cursor-pointer rounded-sm border border-stone-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-stone-700 hover:border-navy-950 hover:text-navy-950"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-navy-900 px-5 py-2 text-xs font-semibold text-white hover:bg-navy-800 disabled:opacity-60"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm bg-navy-950 px-5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-navy-900 disabled:opacity-60"
             >
-              <Check className="h-4 w-4" />
-              {saving ? 'Saving…' : 'Save to Roster'}
+              <Check className="h-3.5 w-3.5 text-copper-400" />
+              {saving ? 'Saving…' : 'Save Member'}
             </button>
           </div>
         </form>

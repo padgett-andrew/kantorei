@@ -5,7 +5,6 @@ import {
   Plus,
   Ticket,
   Truck,
-  UserCheck,
   Utensils,
   Wrench,
   X,
@@ -38,12 +37,13 @@ function getDefaultSlotLabel(ev: ScheduleEvent, slot: SlotNumber): string {
 
 function getDutyIcon(dutyText: string) {
   const lower = dutyText.toLowerCase();
-  if (lower.includes('setup') || lower.includes('riser')) return <Wrench className="h-3 w-3 shrink-0 text-amber-600" />;
-  if (lower.includes('strike') || lower.includes('teardown') || lower.includes('clean')) return <PackageCheck className="h-3 w-3 shrink-0 text-indigo-600" />;
-  if (lower.includes('box office') || lower.includes('ticket') || lower.includes('door') || lower.includes('usher')) return <Ticket className="h-3 w-3 shrink-0 text-sky-600" />;
-  if (lower.includes('transport') || lower.includes('truck') || lower.includes('banner')) return <Truck className="h-3 w-3 shrink-0 text-emerald-600" />;
-  if (lower.includes('reception') || lower.includes('drink') || lower.includes('wine') || lower.includes('coffee')) return <Coffee className="h-3 w-3 shrink-0 text-gold-600" />;
-  return <Utensils className="h-3 w-3 shrink-0 text-gold-500" />;
+  const iconClass = 'h-3.5 w-3.5 shrink-0 text-copper-600';
+  if (lower.includes('setup') || lower.includes('riser')) return <Wrench className={iconClass} />;
+  if (lower.includes('strike') || lower.includes('teardown') || lower.includes('clean')) return <PackageCheck className={iconClass} />;
+  if (lower.includes('box office') || lower.includes('ticket') || lower.includes('door') || lower.includes('usher')) return <Ticket className={iconClass} />;
+  if (lower.includes('transport') || lower.includes('truck') || lower.includes('banner')) return <Truck className={iconClass} />;
+  if (lower.includes('reception') || lower.includes('drink') || lower.includes('wine') || lower.includes('coffee')) return <Coffee className={iconClass} />;
+  return <Utensils className={iconClass} />;
 }
 
 export default function SnackSlotCard({
@@ -68,22 +68,24 @@ export default function SnackSlotCard({
         type="button"
         disabled={isBusy}
         onClick={() => onOpenClaim(ev, slot)}
-        className="group relative flex w-full cursor-pointer flex-col justify-between rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 p-3.5 text-left transition hover:border-navy-900 hover:bg-ivory-50/70 disabled:opacity-50"
+        className="group relative flex w-full cursor-pointer flex-col justify-between rounded-sm border border-dashed border-stone-300/90 bg-[#FAF7F2]/60 p-3.5 text-left transition hover:border-copper-500 hover:bg-[#FAF7F2] disabled:opacity-50"
       >
         <div className="flex w-full items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-gold-600">
-            Slot {slot} · Open
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400 group-hover:text-copper-600">
+            0{slot} · Open
           </span>
-          <span className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-navy-900 shadow-2xs group-hover:border-navy-900 group-hover:bg-navy-900 group-hover:text-gold-300 transition">
-            <Plus className="h-3.5 w-3.5" />
+          <span className="flex h-5 w-5 items-center justify-center rounded-sm border border-stone-300 bg-white text-stone-600 transition group-hover:border-copper-600 group-hover:bg-copper-600 group-hover:text-white">
+            <Plus className="h-3 w-3" />
           </span>
         </div>
 
-        <div className="mt-2">
-          <span className="text-xs font-semibold text-navy-950 group-hover:text-navy-900 block truncate">
-            + {defaultLabel}
+        <div className="mt-2.5">
+          <span className="block truncate text-xs font-medium text-navy-950">
+            {defaultLabel}
           </span>
-          <p className="mt-0.5 text-[11px] text-zinc-400">Tap to claim this duty</p>
+          <p className="mt-0.5 text-[11px] text-stone-400 group-hover:text-stone-600">
+            Claim slot
+          </p>
         </div>
       </button>
     );
@@ -92,38 +94,33 @@ export default function SnackSlotCard({
   // Claimed Slot
   return (
     <div
-      className={`flex w-full flex-col justify-between rounded-2xl border p-3.5 transition shadow-2xs ${
+      className={`flex w-full flex-col justify-between rounded-sm border p-3.5 transition ${
         isMine
-          ? 'border-emerald-300/90 bg-emerald-50/60'
-          : 'border-zinc-200/90 bg-white hover:border-zinc-300'
+          ? 'border-copper-400/80 bg-[#f9efe8]/45'
+          : 'border-stone-200/90 bg-white hover:border-stone-300'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <UserCheck
-            className={`h-3.5 w-3.5 shrink-0 ${
-              isMine ? 'text-emerald-700' : 'text-gold-500'
-            }`}
-          />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-            Slot {slot}
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+            0{slot}
           </span>
           {isMine && (
-            <span className="rounded-full bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider text-emerald-800">
-              You
+            <span className="rounded-sm bg-copper-600 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-white">
+              Yours
             </span>
           )}
         </div>
 
         {/* Quick Actions (Edit Item / Release) */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           {isMine && (
             <button
               type="button"
               disabled={isBusy}
               onClick={() => onOpenClaim(ev, slot)}
               title="Edit your duty or food item"
-              className="cursor-pointer rounded-lg p-1 text-zinc-400 transition hover:bg-white hover:text-navy-900"
+              className="cursor-pointer rounded-sm p-1 text-stone-400 transition hover:bg-white hover:text-navy-950"
             >
               <Edit2 className="h-3 w-3" />
             </button>
@@ -134,7 +131,7 @@ export default function SnackSlotCard({
               disabled={isBusy}
               onClick={() => onRelease(ev.eventId, slot)}
               title="Release slot"
-              className="cursor-pointer rounded-lg p-1 text-zinc-400 transition hover:bg-rose-50 hover:text-rose-700"
+              className="cursor-pointer rounded-sm p-1 text-stone-400 transition hover:bg-[#f7ebe8] hover:text-[#84372d]"
             >
               <X className="h-3 w-3" />
             </button>
@@ -144,13 +141,13 @@ export default function SnackSlotCard({
 
       {/* Singer Name */}
       <div className="mt-2 min-w-0">
-        <span className="block truncate text-xs font-bold text-navy-950 sm:text-sm">
+        <span className="block truncate font-editorial text-lg font-medium leading-snug text-navy-950">
           {holderName}
         </span>
 
         {/* Optional item / duty description */}
         {item ? (
-          <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-navy-900">
+          <div className="mt-1 flex items-center gap-1.5 text-xs text-stone-700">
             {getDutyIcon(item)}
             <span className="truncate">{item}</span>
           </div>
@@ -158,13 +155,13 @@ export default function SnackSlotCard({
           <button
             type="button"
             onClick={() => onOpenClaim(ev, slot)}
-            className="mt-1.5 inline-flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:underline"
+            className="mt-1 inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-copper-700 hover:underline"
           >
             <Plus className="h-3 w-3" />
-            Specify your duty or item
+            Specify duty or item
           </button>
         ) : (
-          <p className="mt-1 text-[11px] text-zinc-400 italic">{defaultLabel}</p>
+          <p className="mt-1 text-xs italic text-stone-400">{defaultLabel}</p>
         )}
       </div>
     </div>

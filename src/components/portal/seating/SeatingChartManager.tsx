@@ -190,31 +190,31 @@ export default function SeatingChartManager({
       {/* Top Banner Alert */}
       {banner && (
         <div
-          className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-xs shadow-2xs animate-in fade-in ${
+          className={`flex items-center justify-between gap-3 rounded-sm border px-4 py-3 text-xs ${
             banner.type === 'ok'
-              ? 'border-emerald-200 bg-emerald-50/90 text-emerald-900'
-              : 'border-rose-200 bg-rose-50/90 text-rose-900'
+              ? 'border-stone-300 bg-[#FAF7F2] text-navy-950'
+              : 'border-[#e4c4bc] bg-[#f7ebe8] text-[#84372d]'
           }`}
         >
           <div className="flex items-center gap-2">
             {banner.type === 'ok' ? (
-              <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+              <Check className="h-4 w-4 shrink-0 text-copper-600" />
             ) : (
-              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+              <AlertCircle className="h-4 w-4 shrink-0 text-[#84372d]" />
             )}
             <span>{banner.text}</span>
           </div>
           <button
             type="button"
             onClick={() => setBanner(null)}
-            className="cursor-pointer text-zinc-400 hover:text-zinc-600"
+            className="cursor-pointer text-stone-400 hover:text-navy-950"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      {/* "Find My Seat" Locator Banner for logged-in singers */}
+      {/* Personal Seat Callout for logged-in singers */}
       {mySeatLocation && mode !== 'edit' && (
         <PersonalSeatBanner
           caller={caller}
@@ -230,9 +230,9 @@ export default function SeatingChartManager({
               const el = document.getElementById('my-seat-card');
               if (el) {
                 el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                el.classList.add('ring-4', 'ring-gold-400', 'scale-105');
+                el.classList.add('ring-2', 'ring-copper-600', 'scale-105');
                 setTimeout(() => {
-                  el.classList.remove('ring-4', 'ring-gold-400', 'scale-105');
+                  el.classList.remove('ring-2', 'ring-copper-600', 'scale-105');
                 }, 1800);
               }
             }, 50);
@@ -303,14 +303,14 @@ export default function SeatingChartManager({
 
       {/* Selected Seat for Swap Banner */}
       {editor.selectedSeatForSwap && mode === 'edit' && (
-        <div className="flex items-center justify-between rounded-xl border border-gold-400 bg-amber-50 p-3 text-xs text-amber-950 animate-in fade-in">
+        <div className="flex items-center justify-between rounded-sm border border-copper-400 bg-[#f9efe8] px-4 py-3 text-xs text-navy-950">
           <span>
             Selected <strong>{editor.selectedSeatForSwap.seat.singerName || 'Seat'}</strong> in {editor.selectedSeatForSwap.row.name}. Click another seat to swap, or select an unassigned singer from the pool below.
           </span>
           <button
             type="button"
             onClick={() => editor.setSelectedSeatForSwap(null)}
-            className="cursor-pointer text-amber-800 hover:text-amber-950 font-bold ml-2"
+            className="ml-3 cursor-pointer font-semibold uppercase tracking-[0.12em] text-copper-700 hover:text-navy-950"
           >
             Cancel
           </button>
@@ -320,7 +320,7 @@ export default function SeatingChartManager({
       {/* Mobile Row Quick Jump Bar */}
       {layoutView === 'formation' && (
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:hidden">
-          <span className="text-[11px] font-semibold text-zinc-400 mr-0.5">Jump:</span>
+          <span className="mr-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-400">Row:</span>
           {currentDisplayRows.map((r) => (
             <button
               key={r.rowNumber}
@@ -329,13 +329,13 @@ export default function SeatingChartManager({
                 const rowEl = document.getElementById(`seating-row-${r.rowNumber}`);
                 rowEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
               }}
-              className="cursor-pointer rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-bold text-zinc-700 shadow-2xs active:bg-zinc-100 shrink-0"
+              className="shrink-0 cursor-pointer rounded-sm border border-stone-200/90 bg-white px-2.5 py-1 text-[11px] font-semibold text-navy-950 active:bg-stone-100"
             >
               R{r.rowNumber} ({r.seats.filter((s) => !s.isAisle).length})
             </button>
           ))}
-          <span className="text-[10px] text-zinc-400 italic ml-auto pl-2">
-            Swipe rows ← →
+          <span className="ml-auto pl-2 text-[10px] italic text-stone-400">
+            Swipe ← →
           </span>
         </div>
       )}

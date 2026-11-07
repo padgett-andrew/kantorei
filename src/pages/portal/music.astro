@@ -35,14 +35,17 @@ const initialDocs: Record<string, LoadedDocPayload> = Object.fromEntries(
 ---
 
 <PortalLayout title="Music & Rehearsal Tracks">
-  <div class="mb-6">
-    <h1 class="font-editorial text-3xl font-bold text-navy-950 sm:text-4xl">
+  <header class="mb-8">
+    <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-copper-600">
+      Repertoire &amp; Editions
+    </p>
+    <h1 class="mt-2 font-editorial text-4xl font-normal tracking-tight text-navy-950 sm:text-5xl">
       Concert Scores &amp; Rehearsal Tracks
     </h1>
-    <p class="mt-1 text-sm text-stone-600">
-      Concert scores, part rehearsal tracks, and director&apos;s markings.
+    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-stone-600">
+      Performance editions, voice-part learning tracks, reference recordings, and director&apos;s markings arranged in concert order.
     </p>
-  </div>
+  </header>
 
   <MusicLibrary
     client:load

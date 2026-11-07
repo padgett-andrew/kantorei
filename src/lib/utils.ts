@@ -45,32 +45,31 @@ export function formatShortMonthDay(isoDate: string): { weekday: string; month: 
 
 export function voicePartBadgeColor(part: VoicePart | string): string {
   const norm = (part || '').trim().toUpperCase();
-  if (norm.startsWith('S')) return 'bg-rose-100 text-rose-800 border-rose-200';
-  if (norm.startsWith('A')) return 'bg-amber-100 text-amber-800 border-amber-200';
-  if (norm.startsWith('T')) return 'bg-sky-100 text-sky-800 border-sky-200';
-  return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  if (norm.startsWith('S')) return 'bg-[#f9efe8] text-[#7c3f1d] border-[#e8cbb8]';
+  if (norm.startsWith('A')) return 'bg-[#f5efe6] text-[#5c4934] border-[#dfd3c0]';
+  if (norm.startsWith('T')) return 'bg-[#eef1f4] text-[#23354b] border-[#cfd7e0]';
+  return 'bg-[#ebeeec] text-[#1e332e] border-[#cad3ce]';
 }
 
 export function voicePartBadgeColorDark(part: VoicePart | string): string {
   const norm = (part || '').trim().toUpperCase();
-  if (norm.startsWith('S')) return 'bg-rose-500/25 text-rose-200 border-rose-400/50';
-  if (norm.startsWith('A')) return 'bg-amber-500/25 text-amber-200 border-amber-400/50';
-  if (norm.startsWith('T')) return 'bg-sky-500/25 text-sky-200 border-sky-400/50';
-  return 'bg-emerald-500/25 text-emerald-200 border-emerald-400/50';
+  if (norm.startsWith('S')) return 'bg-copper-500/20 text-copper-200 border-copper-400/35';
+  if (norm.startsWith('A')) return 'bg-stone-500/20 text-stone-200 border-stone-400/35';
+  if (norm.startsWith('T')) return 'bg-slate-400/20 text-slate-200 border-slate-300/35';
+  return 'bg-stone-400/15 text-stone-300 border-stone-400/30';
 }
 
 export function eventTypeBadgeColor(type: EventType): string {
   switch (type) {
     case 'Concert':
-      return 'bg-amber-100 text-amber-900 border-amber-300';
+      return 'bg-[#f9efe8] text-[#955029] border-[#e5c2ab]';
     case 'Dress':
-      return 'bg-purple-100 text-purple-900 border-purple-200';
+      return 'bg-[#eef1f4] text-[#142438] border-[#cbd4df]';
     case 'Retreat':
-      return 'bg-teal-100 text-teal-900 border-teal-200';
     case 'Sectional':
-      return 'bg-sky-100 text-sky-900 border-sky-200';
+      return 'bg-[#f5efe8] text-stone-700 border-stone-300/80';
     default:
-      return 'bg-zinc-100 text-zinc-700 border-zinc-200';
+      return 'bg-transparent text-stone-500 border-stone-200/90';
   }
 }
 

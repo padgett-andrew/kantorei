@@ -54,24 +54,23 @@ const currentSeason = '2026–2027';
 ---
 
 <PortalLayout title="Seating & Attendance">
-  <div class="mb-5">
-    <div class="flex items-center gap-2">
-      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
-        Choir Formation &amp; Attendance
-      </span>
+  <header class="mb-8">
+    <p class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-copper-600">
+      <span>Stage Formation &amp; Roll Call</span>
       {isAdmin && (
-        <span class="rounded-sm bg-navy-900 px-2 py-0.5 text-xs font-medium text-gold-300">
-          Admin Enabled
-        </span>
+        <>
+          <span class="text-stone-300" aria-hidden="true">/</span>
+          <span class="text-stone-500">Formation Editor Access</span>
+        </>
       )}
-    </div>
-    <h1 class="mt-1 font-editorial text-3xl font-medium text-navy-950 sm:text-4xl">
-      Choir Seating &amp; Attendance
-    </h1>
-    <p class="mt-1.5 text-sm sm:text-base leading-relaxed text-stone-600">
-      Find your riser position and section placement, view physical stage formations, and take live rehearsal roll call.
     </p>
-  </div>
+    <h1 class="mt-2 font-editorial text-4xl font-normal tracking-tight text-navy-950 sm:text-5xl">
+      Stage Riser &amp; Seating
+    </h1>
+    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-stone-600">
+      Locate your riser assignment and neighboring singers, toggle between conductor and stage perspectives, and record rehearsal roll call.
+    </p>
+  </header>
 
   <SeatingChartManager
     client:load

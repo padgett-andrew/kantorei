@@ -9,15 +9,15 @@ export default function SheetWarningsBanner({ warnings }: Props) {
   if (!warnings || warnings.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-amber-300 bg-amber-50 p-5">
-      <div className="flex items-center gap-2 text-sm font-bold text-amber-950">
-        <AlertTriangle className="h-4 w-4 text-amber-700" />
-        Google Sheet Data-Health Warnings ({warnings.length})
+    <div className="rounded-sm border border-[#e6d5bc] border-l-2 border-l-copper-600 bg-[#f8efe2]/70 p-4 sm:p-5">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7d5220]">
+        <AlertTriangle className="h-4 w-4 text-copper-700" />
+        Sheet Formatting Notices ({warnings.length})
       </div>
-      <p className="mt-1 text-xs text-amber-900">
-        These rows had formatting issues and were safely skipped so the website stayed online:
+      <p className="mt-1 text-xs text-stone-700">
+        The following rows had formatting issues and were safely skipped:
       </p>
-      <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-amber-950">
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-navy-950">
         {warnings.map((w, idx) => (
           <li key={idx}>
             <strong>
@@ -30,4 +30,3 @@ export default function SheetWarningsBanner({ warnings }: Props) {
     </div>
   );
 }
-

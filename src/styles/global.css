@@ -54,108 +54,49 @@
   display: none;
 }
 
-/* The mobile account menu is rendered by MobileBottomNav rather than UserProfileMenu.
-   Keep its visual treatment in the same warm editorial family as the desktop menu. */
-@media (max-width: 639px) {
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] {
-    background: #faf7f2 !important;
-    color: #292524 !important;
-    border-color: #e7ddd0 !important;
-    border-radius: 0.75rem 0.75rem 0 0 !important;
-    box-shadow: 0 -12px 40px rgb(13 24 38 / 18%) !important;
-  }
-
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-white,
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-100,
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-200,
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-300 {
-    color: #292524 !important;
-  }
-
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-400,
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-stone-500 {
-    color: #78716c !important;
-  }
-
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-copper-300,
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-copper-400,
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] .text-gold-400 {
-    color: #955029 !important;
-  }
-
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="border-white/"] {
-    border-color: #e7ddd0 !important;
-  }
-
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="bg-white/"] {
-    background-color: #f5efe8 !important;
-  }
-
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="text-emerald-400"],
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="text-amber-400"],
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] [class*="text-sky-400"] {
-    color: #955029 !important;
-  }
-
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] img {
-    display: block;
-    object-position: center;
-  }
-
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] button:hover,
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] a:hover {
-    background-color: #f5efe8 !important;
-    color: #142438 !important;
-  }
-
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] a:focus-visible,
-  [role="dialog"][aria-label="Singer Navigation & Account Menu"] button:focus-visible {
-    outline: 2px solid #955029;
-    outline-offset: 2px;
-  }
-}
-
-/* Clean typography styling for Google Doc Handbook HTML export */
+/* Editorial typography for rendered Google Docs (Handbook, Bylaws, Director's Markings) */
 .handbook-prose h1 {
   font-family: var(--font-serif);
-  font-size: 2rem;
-  font-weight: 700;
-  color: #142438;
+  font-size: 2.125rem;
+  font-weight: 600;
+  color: #0d1826;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
-  line-height: 1.2;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
 }
 
 .handbook-prose h2 {
   font-family: var(--font-serif);
-  font-size: 1.5rem;
+  font-size: 1.55rem;
   font-weight: 600;
   color: #142438;
-  margin-top: 1.75rem;
-  margin-bottom: 0.625rem;
-  padding-bottom: 0.375rem;
-  border-bottom: 1px solid #e4e4e7;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid #e7e2da;
 }
 
 .handbook-prose h3 {
-  font-size: 1.125rem;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
   font-weight: 600;
-  color: #27272a;
-  margin-top: 1.25rem;
+  color: #292524;
+  margin-top: 1.5rem;
   margin-bottom: 0.5rem;
 }
 
 .handbook-prose p {
-  margin-bottom: 1rem;
-  line-height: 1.7;
-  color: #3f3f46;
+  margin-bottom: 1.05rem;
+  line-height: 1.75;
+  color: #44403c;
 }
 
 .handbook-prose ul,
 .handbook-prose ol {
   margin-bottom: 1.25rem;
   padding-left: 1.5rem;
-  color: #3f3f46;
+  color: #44403c;
 }
 
 .handbook-prose ul {
@@ -168,23 +109,30 @@
 
 .handbook-prose li {
   margin-bottom: 0.375rem;
-  line-height: 1.65;
+  line-height: 1.68;
 }
 
 .handbook-prose a {
-  color: #b16437;
+  color: #955029;
   text-decoration: underline;
+  text-decoration-color: rgb(177 100 55 / 45%);
   text-underline-offset: 3px;
   font-weight: 500;
+  transition: color 150ms ease, text-decoration-color 150ms ease;
+}
+
+.handbook-prose a:hover {
+  color: #0d1826;
+  text-decoration-color: #0d1826;
 }
 
 .handbook-prose blockquote {
-  border-left: 3px solid #b16437;
+  border-left: 2px solid #b16437;
   background-color: #f5efe8;
   padding: 0.875rem 1.25rem;
-  border-radius: 0 0.5rem 0.5rem 0;
-  margin: 1.25rem 0;
-  color: #27272a;
+  margin: 1.5rem 0;
+  color: #292524;
+  font-style: italic;
 }
 
 .handbook-prose table {
@@ -196,22 +144,22 @@
 
 .handbook-prose th,
 .handbook-prose td {
-  border: 1px solid #e4e4e7;
+  border: 1px solid #e7e2da;
   padding: 0.625rem 0.875rem;
   text-align: left;
 }
 
 .handbook-prose th {
-  background-color: #f4f4f5;
+  background-color: #f5efe8;
   font-weight: 600;
-  color: #18181b;
+  color: #142438;
 }
 
 .handbook-prose pre {
-  background-color: #0c1524;
-  color: #f8fafc;
+  background-color: #0d1826;
+  color: #faf7f2;
   padding: 1rem 1.25rem;
-  border-radius: 0.75rem;
+  border-radius: 0.25rem;
   overflow-x: auto;
   font-size: 0.85rem;
   margin: 1.25rem 0;
@@ -222,9 +170,9 @@
 }
 
 .handbook-prose :not(pre) > code {
-  background-color: #f4f4f5;
-  color: #18181b;
+  background-color: #f5efe8;
+  color: #142438;
   padding: 0.15rem 0.35rem;
-  border-radius: 0.375rem;
+  border-radius: 0.1875rem;
   font-size: 0.875em;
 }

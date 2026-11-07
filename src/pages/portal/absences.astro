@@ -22,26 +22,27 @@ const activeRoster = rawRoster.filter((s) => s.active);
 ---
 
 <PortalLayout title="Absence & Late Notices">
-  <div class="mb-6">
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="text-xs font-semibold uppercase tracking-[0.16em] text-copper-600">
-        Attendance & Section Planning
-      </span>
+  <header class="mb-8">
+    <p class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-copper-600">
+      <span>Attendance &amp; Section Planning</span>
       {isLeaderOrAdmin && (
-        <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-900 border border-emerald-200">
-          {singer.role === 'Admin' ? 'Admin Roll Call Active' : `${singer.sectionGroup} Leader Access`}
-        </span>
+        <>
+          <span class="text-stone-300" aria-hidden="true">/</span>
+          <span class="text-stone-500">
+            {singer.role === 'Admin' ? 'Ensemble Roll Call Access' : `${singer.sectionGroup} Section Leader`}
+          </span>
+        </>
       )}
-    </div>
-    <h1 class="mt-1 font-editorial text-3xl font-medium text-navy-950 sm:text-4xl">
+    </p>
+    <h1 class="mt-2 font-editorial text-4xl font-normal tracking-tight text-navy-950 sm:text-5xl">
       Absence &amp; Late Notices
     </h1>
-    <p class="mt-1.5 text-sm sm:text-base leading-relaxed text-stone-600">
+    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-stone-600">
       {isLeaderOrAdmin
-        ? `Review upcoming rehearsal roll calls, section absences, and late notices, or log your own attendance.`
-        : `Let your ${singer.sectionGroup} Section Leader, Artistic Director, and attendance administration know as early as possible if you must miss a rehearsal or will be running late.`}
+        ? 'Review upcoming rehearsal roll calls, section absences, and late arrival notices, or record your own attendance.'
+        : `Notify your ${singer.sectionGroup} Section Leader, Artistic Director, and attendance administration promptly if you must miss a call or anticipate arriving late.`}
     </p>
-  </div>
+  </header>
 
   <AbsenceManager
     client:load

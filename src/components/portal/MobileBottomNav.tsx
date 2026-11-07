@@ -111,56 +111,68 @@ export default function MobileBottomNav({
       .join('')
       .toUpperCase() || 'K';
 
+  const rowLinkClass = (active = false) =>
+    `flex items-center justify-between px-3 py-2.5 text-sm transition ${
+      active
+        ? 'bg-[#f5efe8] text-navy-950 font-medium border-l-2 border-copper-500'
+        : 'text-stone-700 hover:bg-[#f5efe8] hover:text-navy-950'
+    }`;
+
   return (
     <>
-      {/* Unified Slide-Up Mobile Sheet */}
+      {/* Unified Slide-Up Mobile Sheet in Warm Cotton-Ivory */}
       {showMoreMenu && (
         <div className="fixed inset-0 z-50 sm:hidden">
           {/* Backdrop */}
           <div
             onClick={() => setShowMoreMenu(false)}
-            className="fixed inset-0 bg-navy-950/75 backdrop-blur-xs transition-opacity duration-200"
+            className="fixed inset-0 bg-navy-950/55 backdrop-blur-xs transition-opacity duration-200"
             aria-hidden="true"
           />
 
-          {/* Sheet Container in Rich Dark Slate */}
+          {/* Sheet Container */}
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Singer Navigation & Account Menu"
-            className="fixed right-0 bottom-0 left-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-3xl border-t border-white/15 bg-[#0B131E] text-stone-200 p-5 shadow-2xl animate-in slide-in-from-bottom duration-200 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]"
+            className="fixed right-0 bottom-0 left-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-xl border-t border-stone-200 bg-[#FAF7F2] p-5 text-stone-800 shadow-2xl animate-in slide-in-from-bottom duration-200 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]"
           >
             {/* Grab Handle */}
-            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-white/20" aria-hidden="true" />
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-stone-300" aria-hidden="true" />
 
-            {/* Identity Card */}
-            <div className="flex items-start justify-between border-b border-white/10 pb-4">
-              <div className="flex items-center gap-3">
+            {/* Identity Header */}
+            <div className="flex items-start justify-between border-b border-stone-200/90 pb-4">
+              <div className="flex items-center gap-3 min-w-0">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt={singerDisplayName}
                     referrerPolicy="no-referrer"
-                    className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-white/20 shadow-xs"
+                    className="block h-11 w-11 shrink-0 rounded-full object-cover object-center ring-1 ring-stone-200"
                   />
                 ) : (
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-copper-500 to-amber-600 text-sm font-bold text-white shadow-xs">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f9efe8] text-sm font-semibold text-copper-600 ring-1 ring-copper-200">
                     {initials}
                   </span>
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-white leading-tight truncate">
+                  <p className="truncate font-editorial text-xl font-semibold leading-tight text-navy-950">
                     {singerDisplayName}
                   </p>
+                  {singer?.sectionGroup && (
+                    <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-copper-600">
+                      {singer.sectionGroup} · {singer.voicePart}
+                    </p>
+                  )}
                   {singer?.email && (
-                    <p className="text-[11px] text-stone-400 truncate max-w-[210px]">
+                    <p className="mt-0.5 max-w-[220px] truncate text-xs text-stone-500">
                       {singer.email}
                     </p>
                   )}
                   {singerStatus === 'On_Leave' && (
-                    <div className="mt-1">
-                      <span className="rounded-sm border border-indigo-400/40 bg-indigo-500/20 px-1.5 py-0.2 text-[10px] font-semibold text-indigo-300">
-                        On Leave
+                    <div className="mt-1.5">
+                      <span className="border border-copper-300/80 bg-[#f9efe8] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-copper-600">
+                        Season Leave
                       </span>
                     </div>
                   )}
@@ -171,159 +183,87 @@ export default function MobileBottomNav({
                 type="button"
                 onClick={() => setShowMoreMenu(false)}
                 aria-label="Close menu"
-                className="cursor-pointer rounded-xl p-2 text-stone-400 hover:bg-white/10 hover:text-white transition"
+                className="cursor-pointer rounded-sm p-2 text-stone-400 transition hover:bg-[#f5efe8] hover:text-navy-950"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Section 1: Singer Portal Workspaces */}
-            <div className="mt-4 space-y-1">
-              <div className="px-1 mb-1 text-[10px] font-bold uppercase tracking-wider text-copper-400">
-                Singer Workspace
+            <div className="mt-4">
+              <div className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-copper-600">
+                Ensemble Workspaces
               </div>
 
-              <a
-                href="/portal/seating"
-                onClick={() => setShowMoreMenu(false)}
-                className={`flex items-center justify-between rounded-xl p-2.5 text-xs font-semibold transition ${
-                  isSeatingActive
-                    ? 'border border-copper-400/40 bg-copper-500/20 text-copper-300'
-                    : 'text-stone-200 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-copper-300">
-                    <Layers className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="font-semibold text-stone-100">Seating &amp; Visual Riser</p>
-                    <p className="text-[10px] text-stone-400">Riser layout &amp; chair assignments</p>
+              <div className="divide-y divide-stone-200/70 border-y border-stone-200/80">
+                <a
+                  href="/portal/seating"
+                  onClick={() => setShowMoreMenu(false)}
+                  className={rowLinkClass(isSeatingActive)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Layers className="h-4 w-4 shrink-0 text-copper-600" />
+                    <div>
+                      <p className="font-medium text-navy-950">Seating &amp; Stage Formation</p>
+                      <p className="text-xs text-stone-500">Riser layout &amp; chair assignments</p>
+                    </div>
                   </div>
-                </div>
-              </a>
+                </a>
 
-              <a
-                href="/portal/directory"
-                onClick={() => setShowMoreMenu(false)}
-                className={`flex items-center justify-between rounded-xl p-2.5 text-xs font-semibold transition ${
-                  currentPath.startsWith('/portal/directory')
-                    ? 'border border-copper-400/40 bg-copper-500/20 text-copper-300'
-                    : 'text-stone-200 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-copper-300">
-                    <Users className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="font-semibold text-stone-100">Roster &amp; Member Directory</p>
-                    <p className="text-[10px] text-stone-400">Contact info &amp; email cohort</p>
+                <a
+                  href="/portal/directory"
+                  onClick={() => setShowMoreMenu(false)}
+                  className={rowLinkClass(currentPath.startsWith('/portal/directory'))}
+                >
+                  <div className="flex items-center gap-3">
+                    <Users className="h-4 w-4 shrink-0 text-copper-600" />
+                    <div>
+                      <p className="font-medium text-navy-950">Roster &amp; Member Directory</p>
+                      <p className="text-xs text-stone-500">Contact info &amp; section cohorts</p>
+                    </div>
                   </div>
-                </div>
-              </a>
+                </a>
 
-              <a
-                href="/portal/handbook"
-                onClick={() => setShowMoreMenu(false)}
-                className={`flex items-center justify-between rounded-xl p-2.5 text-xs font-semibold transition ${
-                  currentPath.startsWith('/portal/handbook')
-                    ? 'border border-copper-400/40 bg-copper-500/20 text-copper-300'
-                    : 'text-stone-200 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-copper-300">
-                    <BookOpen className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="font-semibold text-stone-100">Choir Handbook &amp; Documents</p>
-                    <p className="text-[10px] text-stone-400">Policies, governance &amp; bylaws</p>
+                <a
+                  href="/portal/handbook"
+                  onClick={() => setShowMoreMenu(false)}
+                  className={rowLinkClass(currentPath.startsWith('/portal/handbook'))}
+                >
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="h-4 w-4 shrink-0 text-copper-600" />
+                    <div>
+                      <p className="font-medium text-navy-950">Handbook &amp; Ensemble Documents</p>
+                      <p className="text-xs text-stone-500">Policies, governance &amp; bylaws</p>
+                    </div>
                   </div>
-                </div>
-              </a>
+                </a>
+              </div>
             </div>
 
-            {/* Section 2: Public Website & Box Office (Seamless Bridge) */}
-            <div className="mt-4 pt-4 border-t border-white/10">
-              <div className="flex items-center justify-between px-1 mb-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gold-400">
-                  Public Box Office &amp; Info
-                </p>
-                <Globe className="h-3 w-3 text-gold-400/80" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <a
-                  href="/concerts"
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs font-medium text-stone-200 hover:bg-white/10 hover:text-white transition"
-                >
-                  <Ticket className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-                  <span className="truncate">Concerts &amp; Tickets</span>
-                </a>
-                <a
-                  href="/media"
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs font-medium text-stone-200 hover:bg-white/10 hover:text-white transition"
-                >
-                  <Music className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-                  <span className="truncate">Media &amp; Video</span>
-                </a>
-                <a
-                  href="/about"
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs font-medium text-stone-200 hover:bg-white/10 hover:text-white transition"
-                >
-                  <Users className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-                  <span className="truncate">About Kantorei</span>
-                </a>
-                <a
-                  href="/support"
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs font-medium text-stone-200 hover:bg-white/10 hover:text-white transition"
-                >
-                  <Heart className="h-3.5 w-3.5 text-gold-400 shrink-0" />
-                  <span className="truncate">Support / Giving</span>
-                </a>
-              </div>
-
-              <a
-                href="/"
-                className="mt-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs font-medium text-stone-300 hover:bg-white/10 hover:text-white transition"
-              >
-                <div className="flex items-center gap-2">
-                  <Globe className="h-3.5 w-3.5 text-stone-400" />
-                  <span>Visit Public Home Page (kantorei.net)</span>
-                </div>
-                <ExternalLink className="h-3 w-3 text-stone-500" />
-              </a>
-            </div>
-
-            {/* Section 3: Leadership & Workspace (Conditional) */}
+            {/* Section 2: Leadership & Workspace (Conditional) */}
             {isLeaderOrAdmin && (
-              <div className="mt-4 pt-4 border-t border-white/10">
-                <div className="flex items-center justify-between px-1 mb-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                    Leadership &amp; Workspace
-                  </p>
-                  <ShieldCheck className="h-3 w-3 text-emerald-400" />
+              <div className="mt-5">
+                <div className="mb-1.5 flex items-center gap-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-copper-600">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Leadership &amp; Workspace</span>
                 </div>
 
-                <div className="space-y-1">
+                <div className="divide-y divide-stone-200/70 border-y border-stone-200/80">
                   {masterSheetUrl && (
                     <a
                       href={masterSheetUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between rounded-xl p-2.5 text-xs font-semibold text-stone-200 hover:bg-white/10 hover:text-white transition"
+                      className={rowLinkClass()}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/15 text-emerald-400">
-                          <FileSpreadsheet className="h-4 w-4" />
-                        </span>
+                        <FileSpreadsheet className="h-4 w-4 shrink-0 text-copper-600" />
                         <div>
-                          <p className="font-semibold text-stone-100">Master Google Sheet</p>
-                          <p className="text-[10px] text-stone-400">Live roster, schedule &amp; config</p>
+                          <p className="font-medium text-navy-950">Master Google Sheet</p>
+                          <p className="text-xs text-stone-500">Roster, schedule &amp; configuration</p>
                         </div>
                       </div>
-                      <ExternalLink className="h-3.5 w-3.5 text-stone-500" />
+                      <ExternalLink className="h-3.5 w-3.5 text-stone-400" />
                     </a>
                   )}
 
@@ -332,18 +272,16 @@ export default function MobileBottomNav({
                       href={repertoireDriveUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between rounded-xl p-2.5 text-xs font-semibold text-stone-200 hover:bg-white/10 hover:text-white transition"
+                      className={rowLinkClass()}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/15 text-amber-400">
-                          <Folder className="h-4 w-4" />
-                        </span>
+                        <Folder className="h-4 w-4 shrink-0 text-copper-600" />
                         <div>
-                          <p className="font-semibold text-stone-100">Repertoire Google Drive</p>
-                          <p className="text-[10px] text-stone-400">PDF scores &amp; audio storage</p>
+                          <p className="font-medium text-navy-950">Repertoire Google Drive</p>
+                          <p className="text-xs text-stone-500">PDF scores &amp; audio storage</p>
                         </div>
                       </div>
-                      <ExternalLink className="h-3.5 w-3.5 text-stone-500" />
+                      <ExternalLink className="h-3.5 w-3.5 text-stone-400" />
                     </a>
                   )}
 
@@ -352,18 +290,16 @@ export default function MobileBottomNav({
                       href={calendarUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between rounded-xl p-2.5 text-xs font-semibold text-stone-200 hover:bg-white/10 hover:text-white transition"
+                      className={rowLinkClass()}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-500/30 bg-sky-500/15 text-sky-400">
-                          <Calendar className="h-4 w-4" />
-                        </span>
+                        <Calendar className="h-4 w-4 shrink-0 text-copper-600" />
                         <div>
-                          <p className="font-semibold text-stone-100">Google Calendar</p>
-                          <p className="text-[10px] text-stone-400">Rehearsal calls &amp; locations</p>
+                          <p className="font-medium text-navy-950">Google Calendar</p>
+                          <p className="text-xs text-stone-500">Rehearsal calls &amp; locations</p>
                         </div>
                       </div>
-                      <ExternalLink className="h-3.5 w-3.5 text-stone-500" />
+                      <ExternalLink className="h-3.5 w-3.5 text-stone-400" />
                     </a>
                   )}
 
@@ -371,15 +307,13 @@ export default function MobileBottomNav({
                     <a
                       href="/portal/handbook?doc=admin-guide"
                       onClick={() => setShowMoreMenu(false)}
-                      className="flex items-center justify-between rounded-xl p-2.5 text-xs font-semibold text-stone-200 hover:bg-white/10 hover:text-white transition"
+                      className={rowLinkClass()}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-gold-400/30 bg-navy-900 text-gold-400">
-                          <BookOpen className="h-4 w-4" />
-                        </span>
+                        <BookOpen className="h-4 w-4 shrink-0 text-copper-600" />
                         <div>
-                          <p className="font-semibold text-stone-100">Admin Operations Guide</p>
-                          <p className="text-[10px] text-stone-400">Maintenance &amp; permissions protocols</p>
+                          <p className="font-medium text-navy-950">Admin Operations Guide</p>
+                          <p className="text-xs text-stone-500">Maintenance &amp; permissions protocols</p>
                         </div>
                       </div>
                     </a>
@@ -388,15 +322,13 @@ export default function MobileBottomNav({
                   <a
                     href="/portal/seating?mode=attendance"
                     onClick={() => setShowMoreMenu(false)}
-                    className="flex items-center justify-between rounded-xl p-2.5 text-xs font-semibold text-stone-200 hover:bg-white/10 hover:text-white transition"
+                    className={rowLinkClass()}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-500/30 bg-sky-500/15 text-sky-400">
-                        <CheckSquare className="h-4 w-4" />
-                      </span>
+                      <CheckSquare className="h-4 w-4 shrink-0 text-copper-600" />
                       <div>
-                        <p className="font-semibold text-stone-100">Take Roll Call</p>
-                        <p className="text-[10px] text-stone-400">Visual riser attendance check</p>
+                        <p className="font-medium text-navy-950">Take Roll Call</p>
+                        <p className="text-xs text-stone-500">Visual riser attendance check</p>
                       </div>
                     </div>
                   </a>
@@ -404,20 +336,64 @@ export default function MobileBottomNav({
               </div>
             )}
 
+            {/* Section 3: Public Website & Box Office */}
+            <div className="mt-5">
+              <div className="mb-2 flex items-center justify-between px-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+                  Public Website &amp; Season
+                </p>
+                <Globe className="h-3.5 w-3.5 text-stone-400" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href="/concerts"
+                  className="flex items-center gap-2 rounded-sm border border-stone-200/90 bg-white/80 p-2.5 text-xs font-medium text-stone-700 transition hover:border-copper-300 hover:text-navy-950"
+                >
+                  <Ticket className="h-3.5 w-3.5 shrink-0 text-copper-600" />
+                  <span className="truncate">Concerts</span>
+                </a>
+                <a
+                  href="/media"
+                  className="flex items-center gap-2 rounded-sm border border-stone-200/90 bg-white/80 p-2.5 text-xs font-medium text-stone-700 transition hover:border-copper-300 hover:text-navy-950"
+                >
+                  <Music className="h-3.5 w-3.5 shrink-0 text-copper-600" />
+                  <span className="truncate">Media &amp; Recordings</span>
+                </a>
+                <a
+                  href="/about"
+                  className="flex items-center gap-2 rounded-sm border border-stone-200/90 bg-white/80 p-2.5 text-xs font-medium text-stone-700 transition hover:border-copper-300 hover:text-navy-950"
+                >
+                  <Users className="h-3.5 w-3.5 shrink-0 text-copper-600" />
+                  <span className="truncate">About Kantorei</span>
+                </a>
+                <a
+                  href="/support"
+                  className="flex items-center gap-2 rounded-sm border border-stone-200/90 bg-white/80 p-2.5 text-xs font-medium text-stone-700 transition hover:border-copper-300 hover:text-navy-950"
+                >
+                  <Heart className="h-3.5 w-3.5 shrink-0 text-copper-600" />
+                  <span className="truncate">Support</span>
+                </a>
+              </div>
+
+              <a
+                href="/"
+                className="mt-2 flex items-center justify-between rounded-sm border border-stone-200/90 bg-white/80 px-3 py-2.5 text-xs font-medium text-stone-700 transition hover:border-copper-300 hover:text-navy-950"
+              >
+                <span>Visit Public Home Page</span>
+                <ExternalLink className="h-3.5 w-3.5 text-stone-400" />
+              </a>
+            </div>
+
             {/* Section 4: Sign Out */}
-            <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="mt-5 border-t border-stone-200/90 pt-3">
               <form method="POST" action="/api/auth/logout">
                 <button
                   type="submit"
-                  className="flex w-full cursor-pointer items-center gap-3 rounded-xl p-2.5 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/15 hover:text-rose-300"
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium text-stone-600 transition hover:bg-rose-50 hover:text-rose-800"
                 >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/15 text-rose-400">
-                    <LogOut className="h-4 w-4" />
-                  </span>
-                  <div className="text-left">
-                    <p className="font-semibold">Sign Out</p>
-                    <p className="text-[10px] text-stone-400">Log out of singer portal</p>
-                  </div>
+                  <LogOut className="h-4 w-4 text-stone-500" />
+                  <span>Sign Out</span>
                 </button>
               </form>
             </div>
@@ -425,139 +401,68 @@ export default function MobileBottomNav({
         </div>
       )}
 
-      {/* Fixed Bottom Dock on Mobile Phones */}
+      {/* Fixed Bottom Bar on Mobile Phones — Cohesive Warm Cotton-Ivory */}
       <nav
         aria-label="Mobile Navigation"
-        className="fixed right-0 bottom-0 left-0 z-40 border-t border-white/10 bg-[#0B131E]/98 px-2 pt-1.5 shadow-2xl backdrop-blur-md sm:hidden pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+        className="fixed right-0 bottom-0 left-0 z-40 border-t border-stone-200/90 bg-[#FAF7F2]/96 px-2 pt-1 shadow-[0_-4px_20px_rgba(13,24,38,0.05)] backdrop-blur-md sm:hidden pb-[calc(0.45rem+env(safe-area-inset-bottom,0px))]"
       >
         <div className="flex items-center justify-around">
-          {/* 1. Schedule */}
-          <a
-            href="/portal"
-            aria-current={isScheduleActive ? 'page' : undefined}
-            className="flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
-          >
-            <span
-              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
-                isScheduleActive
-                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
-                  : 'text-stone-400'
-              }`}
+          {[
+            { href: '/portal', label: 'Schedule', active: isScheduleActive, Icon: Calendar },
+            { href: '/portal/music', label: 'Music', active: isMusicActive, Icon: Music },
+            { href: '/portal/absences', label: 'Absences', active: isAbsencesActive, Icon: UserX },
+            { href: '/portal/snacks', label: 'Hospitality', active: isSnacksActive, Icon: CheckSquare },
+          ].map(({ href, label, active, Icon }) => (
+            <a
+              key={href}
+              href={href}
+              aria-current={active ? 'page' : undefined}
+              className="relative flex flex-col items-center gap-0.5 px-2.5 py-1.5 text-[10px] transition"
             >
-              <Calendar className="h-4 w-4" />
-            </span>
-            <span
-              className={`transition-colors ${
-                isScheduleActive
-                  ? 'text-copper-200 font-bold tracking-wide'
-                  : 'text-stone-300 font-medium hover:text-white'
-              }`}
-            >
-              Schedule
-            </span>
-          </a>
+              {active && (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-0 right-2 left-2 h-[1.5px] bg-copper-500"
+                />
+              )}
+              <Icon
+                className={`h-4 w-4 transition-colors ${
+                  active ? 'text-copper-600' : 'text-stone-400'
+                }`}
+              />
+              <span
+                className={`tracking-[0.04em] transition-colors ${
+                  active ? 'font-semibold text-navy-950' : 'font-medium text-stone-500'
+                }`}
+              >
+                {label}
+              </span>
+            </a>
+          ))}
 
-          {/* 2. Music */}
-          <a
-            href="/portal/music"
-            aria-current={isMusicActive ? 'page' : undefined}
-            className="flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
-          >
-            <span
-              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
-                isMusicActive
-                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
-                  : 'text-stone-400'
-              }`}
-            >
-              <Music className="h-4 w-4" />
-            </span>
-            <span
-              className={`transition-colors ${
-                isMusicActive
-                  ? 'text-copper-200 font-bold tracking-wide'
-                  : 'text-stone-300 font-medium hover:text-white'
-              }`}
-            >
-              Music
-            </span>
-          </a>
-
-          {/* 3. Absences */}
-          <a
-            href="/portal/absences"
-            aria-current={isAbsencesActive ? 'page' : undefined}
-            className="flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
-          >
-            <span
-              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
-                isAbsencesActive
-                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
-                  : 'text-stone-400'
-              }`}
-            >
-              <UserX className="h-4 w-4" />
-            </span>
-            <span
-              className={`transition-colors ${
-                isAbsencesActive
-                  ? 'text-copper-200 font-bold tracking-wide'
-                  : 'text-stone-300 font-medium hover:text-white'
-              }`}
-            >
-              Absences
-            </span>
-          </a>
-
-          {/* 4. Hospitality */}
-          <a
-            href="/portal/snacks"
-            aria-current={isSnacksActive ? 'page' : undefined}
-            className="flex flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
-          >
-            <span
-              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
-                isSnacksActive
-                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
-                  : 'text-stone-400'
-              }`}
-            >
-              <CheckSquare className="h-4 w-4" />
-            </span>
-            <span
-              className={`transition-colors ${
-                isSnacksActive
-                  ? 'text-copper-200 font-bold tracking-wide'
-                  : 'text-stone-300 font-medium hover:text-white'
-              }`}
-            >
-              Hospitality
-            </span>
-          </a>
-
-          {/* 5. More / Menu */}
+          {/* More / Menu */}
           <button
             type="button"
             aria-label="More navigation options and account"
             aria-expanded={showMoreMenu}
             aria-haspopup="dialog"
             onClick={() => setShowMoreMenu(true)}
-            className="flex cursor-pointer flex-col items-center gap-1 rounded-sm px-2.5 py-1 text-[11px] transition"
+            className="relative flex cursor-pointer flex-col items-center gap-0.5 px-2.5 py-1.5 text-[10px] transition"
           >
-            <span
-              className={`flex h-7 w-7 items-center justify-center rounded-sm transition ${
-                isMoreActive
-                  ? 'bg-copper-500/30 border border-copper-300/50 text-copper-200 shadow-xs'
-                  : 'text-stone-400'
+            {isMoreActive && (
+              <span
+                aria-hidden="true"
+                className="absolute top-0 right-2 left-2 h-[1.5px] bg-copper-500"
+              />
+            )}
+            <MoreHorizontal
+              className={`h-4 w-4 transition-colors ${
+                isMoreActive ? 'text-copper-600' : 'text-stone-400'
               }`}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </span>
+            />
             <span
-              className={`transition-colors ${
-                isMoreActive
-                  ? 'text-copper-200 font-bold tracking-wide'
-                  : 'text-stone-300 font-medium hover:text-white'
+              className={`tracking-[0.04em] transition-colors ${
+                isMoreActive ? 'font-semibold text-navy-950' : 'font-medium text-stone-500'
               }`}
             >
               More

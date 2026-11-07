@@ -40,11 +40,13 @@ export default function DevPersonaSwitcher({ currentSinger, personas }: Props) {
   }
 
   return (
-    <div className="border-b border-amber-300/70 bg-amber-50 px-4 py-1.5 text-xs text-amber-950">
+    <div className="border-b border-stone-300/80 bg-[#f5efe8] px-4 py-1.5 text-[11px] text-stone-700 sm:px-8">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 font-medium">
-          <Sparkles className="h-3.5 w-3.5 text-amber-700" />
-          <span>Dev Preview Mode Active — Test portal permissions as:</span>
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-3 w-3 text-copper-600" />
+          <span className="font-semibold uppercase tracking-[0.14em] text-copper-600">Preview</span>
+          <span className="text-stone-400" aria-hidden="true">·</span>
+          <span className="text-stone-600">Switch ensemble persona:</span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           {options.map((p) => {
@@ -55,10 +57,10 @@ export default function DevPersonaSwitcher({ currentSinger, personas }: Props) {
                 type="button"
                 disabled={switching}
                 onClick={() => switchRole(p.email)}
-                className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition cursor-pointer ${
+                className={`cursor-pointer rounded-sm px-2.5 py-0.5 text-[11px] font-medium transition ${
                   active
-                    ? 'bg-navy-900 text-white'
-                    : 'bg-white text-zinc-700 border border-amber-300 hover:bg-amber-100'
+                    ? 'bg-navy-950 text-white'
+                    : 'border border-stone-300/80 bg-white/80 text-stone-700 hover:border-navy-950 hover:text-navy-950'
                 }`}
               >
                 {p.label}

@@ -1,17 +1,15 @@
 import { useMemo, useState } from 'react';
 import {
   AlertCircle,
+  Check,
   CheckCircle2,
   Mail,
   RotateCcw,
   Send,
-  ShieldCheck,
-  UserCheck,
-  Users,
 } from 'lucide-react';
 import type { AbsenceRecord, ScheduleEvent, SectionGroup, Singer } from '../../types/choir';
 import { SECTION_GROUPS } from '../../types/choir';
-import { formatEventDate } from '../../lib/utils';
+import { formatEventDate, voicePartBadgeColor } from '../../lib/utils';
 
 interface Props {
   singer: Singer;
@@ -22,18 +20,18 @@ interface Props {
 }
 
 const LATE_OPTIONS = [
-  { label: '🚗 10–15m late', text: 'Running 10–15 minutes late (traffic / commute)' },
-  { label: '🚗 ~30m late', text: 'Running ~30 minutes late, arriving during rehearsal' },
-  { label: '🚗 Arriving by 7:30 PM', text: 'Delayed, arriving by 7:30 PM' },
-  { label: '💼 Work running late', text: 'Work call running late, on my way shortly' },
-  { label: '🌧 Weather / Transit', text: 'Delayed due to weather or transit delay' },
+  { label: '10–15 min late', text: 'Running 10–15 minutes late (traffic / commute)' },
+  { label: '~30 min late', text: 'Running ~30 minutes late, arriving during rehearsal' },
+  { label: 'Arriving by 7:30 PM', text: 'Delayed, arriving by 7:30 PM' },
+  { label: 'Work running late', text: 'Work call running late, on my way shortly' },
+  { label: 'Weather / Transit', text: 'Delayed due to weather or transit delay' },
 ];
 
 const ABSENCE_OPTIONS = [
-  { label: '🤒 Sick / Vocal rest', text: 'Feeling sick / resting voice' },
-  { label: '✈️ Travel / Out of town', text: 'Out of town / travel conflict' },
-  { label: '💼 Work / Family conflict', text: 'Work or family emergency' },
-  { label: '🩺 Medical appointment', text: 'Medical appointment conflict' },
+  { label: 'Illness / Vocal rest', text: 'Feeling unwell / resting voice' },
+  { label: 'Travel / Out of town', text: 'Out of town / travel conflict' },
+  { label: 'Work / Family conflict', text: 'Work or family commitment' },
+  { label: 'Medical appointment', text: 'Medical appointment conflict' },
 ];
 
 export default function AbsenceManager({
@@ -137,7 +135,7 @@ export default function AbsenceManager({
       setFeedback({
         type: 'success',
         text: isLate
-          ? `Late notice recorded for ${formatEventDate(saved.date)}. Your ${singer.sectionGroup} Section Leader and leadership team know you are on your way!`
+          ? `Late notice recorded for ${formatEventDate(saved.date)}. Your ${singer.sectionGroup} Section Leader and leadership team have been notified.`
           : `Absence recorded for ${formatEventDate(saved.date)}. Your ${singer.sectionGroup} Section Leader and leadership team have been notified.`,
       });
     } catch {
@@ -181,8 +179,8 @@ export default function AbsenceManager({
       setFeedback({
         type: 'success',
         text: wasLate
-          ? `Welcome! Your running late notice for ${formatEventDate(date)} has been withdrawn. Section leadership has been notified that you will be on time!`
-          : `Welcome back! Your absence for ${formatEventDate(date)} has been withdrawn. Section leadership has been notified that you are attending!`,
+          ? `Your running-late notice for ${formatEventDate(date)} has been withdrawn. Section leadership has been updated.`
+          : `Your absence notice for ${formatEventDate(date)} has been withdrawn. Section leadership has been updated.`,
       });
     } catch {
       setFeedback({ type: 'error', text: 'Network error clearing record.' });
@@ -233,61 +231,68 @@ export default function AbsenceManager({
     return activeCohortSingers.filter((s) => !absentEmails.has(s.email.toLowerCase()));
   }, [activeCohortSingers, absentCohortList]);
 
+  const activePersonalCount = absences.filter((a) => a.status !== 'Cleared').length;
+
   return (
-    <div className="space-y-6">
-      {/* Role-Adaptive Navigation Tabs for Section Leaders & Admins */}
+    <div className="space-y-8">
+      {/* Role-Adaptive Editorial Underline Tabs */}
       {isLeaderOrAdmin && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200/90 bg-white p-2 shadow-xs">
-          <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-stone-200/90">
+          <div className="flex flex-wrap items-center gap-6">
             <button
               type="button"
               onClick={() => setActiveTab('my')}
-              className={`cursor-pointer inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition ${
+              className={`relative cursor-pointer pb-3 text-xs font-semibold uppercase tracking-[0.16em] transition ${
                 activeTab === 'my'
-                  ? 'bg-navy-900 text-white shadow-2xs'
-                  : 'text-stone-600 hover:text-navy-950 hover:bg-stone-50'
+                  ? 'text-navy-950'
+                  : 'text-stone-500 hover:text-navy-950'
               }`}
             >
-              <UserCheck className="h-4 w-4" />
-              <span>My Attendance</span>
-              {absences.filter((a) => a.status !== 'Cleared').length > 0 && (
-                <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[10px] text-white">
-                  {absences.filter((a) => a.status !== 'Cleared').length}
-                </span>
+              <span className="inline-flex items-center gap-2">
+                <span>My Attendance</span>
+                {activePersonalCount > 0 && (
+                  <span className="rounded-sm bg-[#f7ebe8] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[#84372d]">
+                    {activePersonalCount}
+                  </span>
+                )}
+              </span>
+              {activeTab === 'my' && (
+                <span className="absolute inset-x-0 bottom-0 h-[1.5px] bg-copper-600" />
               )}
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('rollcall')}
-              className={`cursor-pointer inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition ${
+              className={`relative cursor-pointer pb-3 text-xs font-semibold uppercase tracking-[0.16em] transition ${
                 activeTab === 'rollcall'
-                  ? 'bg-navy-900 text-white shadow-2xs'
-                  : 'text-stone-600 hover:text-navy-950 hover:bg-stone-50'
+                  ? 'text-navy-950'
+                  : 'text-stone-500 hover:text-navy-950'
               }`}
             >
-              <Users className="h-4 w-4 text-gold-400" />
-              <span>
-                {isAdmin
-                  ? 'Ensemble Roll Call'
-                  : `${singer.sectionGroup} Section Roll Call`}
-              </span>
-              {eventCohortRecords.length > 0 && (
-                <span className="rounded-full bg-amber-400 px-1.5 py-0.2 text-[10px] font-bold text-navy-950">
-                  {eventCohortRecords.length}
+              <span className="inline-flex items-center gap-2">
+                <span>
+                  {isAdmin
+                    ? 'Ensemble Roll Call'
+                    : `${singer.sectionGroup} Section Roll Call`}
                 </span>
+                {eventCohortRecords.length > 0 && (
+                  <span className="rounded-sm bg-[#f8efe2] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[#7d5220]">
+                    {eventCohortRecords.length}
+                  </span>
+                )}
+              </span>
+              {activeTab === 'rollcall' && (
+                <span className="absolute inset-x-0 bottom-0 h-[1.5px] bg-copper-600" />
               )}
             </button>
           </div>
 
-          <div className="hidden pr-3 text-xs text-stone-500 sm:flex items-center gap-1.5">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-            <span>
-              {isAdmin
-                ? 'Full Choir Attendance Overview'
-                : `Section Leader: ${singer.sectionGroup} Section`}
-            </span>
-          </div>
+          <p className="hidden pb-3 text-[11px] font-medium uppercase tracking-[0.15em] text-stone-400 sm:block">
+            {isAdmin
+              ? 'Full Ensemble Overview'
+              : `${singer.sectionGroup} Section Roster`}
+          </p>
         </div>
       )}
 
@@ -298,60 +303,63 @@ export default function AbsenceManager({
         <div className="grid gap-8 lg:grid-cols-12">
           {/* Left: Submit / Update Absence Form */}
           <div className="lg:col-span-6">
-            <div className="rounded-2xl border border-stone-200/90 bg-white p-6 shadow-xs">
-              <h2 className="font-editorial text-2xl font-bold text-navy-950">
-                Report Absence or Running Late
+            <div className="rounded-sm border border-stone-200/90 bg-white p-6 sm:p-7">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+                Attendance Notice
+              </p>
+              <h2 className="mt-1 font-editorial text-2xl font-normal text-navy-950 sm:text-3xl">
+                Report Absence or Late Arrival
               </h2>
-              <p className="mt-1 text-sm text-stone-600">
+              <p className="mt-1.5 text-sm leading-relaxed text-stone-600">
                 Submitting notifies the Artistic Director, attendance administration, and your{' '}
-                <strong>{singer.sectionGroup}</strong> Section Leader automatically.
+                <strong className="font-semibold text-navy-950">{singer.sectionGroup}</strong> Section Leader automatically.
               </p>
 
               {feedback && (
                 <div
-                  className={`mt-4 flex items-start gap-2.5 rounded-xl border p-3.5 text-sm ${
+                  className={`mt-5 flex items-start gap-2.5 rounded-sm border p-3.5 text-sm ${
                     feedback.type === 'success'
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                      : 'border-rose-200 bg-rose-50 text-rose-800'
+                      ? 'border-stone-300 bg-[#FAF7F2] text-navy-950'
+                      : 'border-[#e4c4bc] bg-[#f7ebe8] text-[#84372d]'
                   }`}
                 >
                   {feedback.type === 'success' ? (
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-copper-600" />
                   ) : (
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#84372d]" />
                   )}
                   <span>{feedback.text}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+              <form onSubmit={handleSubmit} className="mt-6 space-y-5">
                 {/* 2-mode toggle: Full Absence vs Running Late */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-600 mb-1.5">
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600">
                     Notice Type
                   </label>
-                  <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-stone-100 p-1">
+                  <div className="grid grid-cols-2 gap-1 rounded-sm border border-stone-300/90 bg-[#FAF7F2] p-1">
                     <button
                       type="button"
                       onClick={() => handleTypeChange('Absent')}
-                      className={`cursor-pointer rounded-lg py-2 text-xs font-bold transition ${
+                      className={`cursor-pointer rounded-sm py-2 text-xs font-semibold uppercase tracking-[0.12em] transition ${
                         statusType === 'Absent'
-                          ? 'bg-rose-600 text-white shadow-xs'
+                          ? 'bg-navy-950 text-white'
                           : 'text-stone-600 hover:text-navy-950'
                       }`}
                     >
-                      🔴 Full Absence
+                      Full Absence
                     </button>
                     <button
                       type="button"
                       onClick={() => handleTypeChange('Late')}
-                      className={`cursor-pointer rounded-lg py-2 text-xs font-bold transition ${
+                      className={`cursor-pointer rounded-sm py-2 text-xs font-semibold uppercase tracking-[0.12em] transition ${
                         statusType === 'Late'
-                          ? 'bg-amber-400 text-amber-950 shadow-xs'
+                          ? 'bg-copper-600 text-white'
                           : 'text-stone-600 hover:text-navy-950'
                       }`}
                     >
-                      🟡 Running Late
+                      Running Late
                     </button>
                   </div>
                 </div>
@@ -359,15 +367,15 @@ export default function AbsenceManager({
                 <div>
                   <label
                     htmlFor="absence-event"
-                    className="block text-xs font-semibold uppercase tracking-wider text-stone-600"
+                    className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600"
                   >
-                    Rehearsal or Performance Date
+                    Rehearsal or Performance Call
                   </label>
                   <select
                     id="absence-event"
                     value={selectedEventId}
                     onChange={(e) => setSelectedEventId(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-navy-900 focus:outline-none"
+                    className="mt-1.5 w-full rounded-sm border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-navy-950 focus:border-navy-950 focus:outline-none"
                   >
                     {upcomingEvents.map((ev) => {
                       const existingRecord = activeRecordMap.get(ev.eventId);
@@ -376,8 +384,8 @@ export default function AbsenceManager({
                           {formatEventDate(ev.date)} — {ev.title} ({ev.type})
                           {existingRecord
                             ? existingRecord.status === 'Late'
-                              ? ' [Marked Running Late]'
-                              : ' [Marked Absent]'
+                              ? ' · Marked Running Late'
+                              : ' · Marked Absent'
                             : ''}
                         </option>
                       );
@@ -386,9 +394,9 @@ export default function AbsenceManager({
                 </div>
 
                 {existingForSelected && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-900">
-                    You are currently marked {existingForSelected.status === 'Late' ? 'running late' : 'absent'} for this date (
-                    <em>"{existingForSelected.reason}"</em>). Submitting below will update your status and note without creating a duplicate entry.
+                  <div className="rounded-sm border border-copper-300/80 bg-[#f9efe8]/60 px-3.5 py-2.5 text-xs leading-relaxed text-navy-950">
+                    You currently have a {existingForSelected.status === 'Late' ? 'running-late' : 'absence'} notice on file for this date (
+                    <em className="text-stone-700">&ldquo;{existingForSelected.reason}&rdquo;</em>). Submitting below will update your existing entry.
                   </div>
                 )}
 
@@ -396,32 +404,33 @@ export default function AbsenceManager({
                   <div className="flex items-center justify-between">
                     <label
                       htmlFor="absence-reason"
-                      className="block text-xs font-semibold uppercase tracking-wider text-stone-600"
+                      className="block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600"
                     >
-                      {statusType === 'Late' ? 'Estimated Arrival / Note' : 'Note / Reason'}{' '}
-                      <span className="font-normal lowercase text-stone-400">(optional)</span>
+                      {statusType === 'Late' ? 'Estimated Arrival / Note' : 'Reason / Note'}{' '}
+                      <span className="font-normal lowercase tracking-normal text-stone-400">(optional)</span>
                     </label>
-                    <span className="text-[10px] text-stone-400">1-Tap Quick Select</span>
+                    <span className="text-[10px] uppercase tracking-[0.14em] text-stone-400">Quick Select</span>
                   </div>
 
-                  {/* 1-Tap Quick Reason Chips */}
-                  <div className="mt-1.5 mb-2 flex flex-wrap gap-1.5">
-                    {(statusType === 'Late' ? LATE_OPTIONS : ABSENCE_OPTIONS).map((chip) => (
-                      <button
-                        key={chip.label}
-                        type="button"
-                        onClick={() => setReason(chip.text)}
-                        className={`cursor-pointer rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
-                          reason === chip.text
-                            ? statusType === 'Late'
-                              ? 'border-amber-400 bg-amber-100 text-amber-950 font-semibold'
-                              : 'border-rose-400 bg-rose-100 text-rose-950 font-semibold'
-                            : 'border-stone-200 bg-stone-50 text-stone-700 hover:border-stone-300 hover:bg-stone-100'
-                        }`}
-                      >
-                        {chip.label}
-                      </button>
-                    ))}
+                  {/* Quick Reason Chips */}
+                  <div className="mt-2 mb-2.5 flex flex-wrap gap-1.5">
+                    {(statusType === 'Late' ? LATE_OPTIONS : ABSENCE_OPTIONS).map((chip) => {
+                      const isSelected = reason === chip.text;
+                      return (
+                        <button
+                          key={chip.label}
+                          type="button"
+                          onClick={() => setReason(chip.text)}
+                          className={`cursor-pointer rounded-sm border px-2.5 py-1 text-xs transition ${
+                            isSelected
+                              ? 'border-navy-950 bg-navy-950 font-medium text-white'
+                              : 'border-stone-200/90 bg-[#FAF7F2] text-stone-700 hover:border-stone-400 hover:text-navy-950'
+                          }`}
+                        >
+                          {chip.label}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <textarea
@@ -432,31 +441,31 @@ export default function AbsenceManager({
                     placeholder={
                       statusType === 'Late'
                         ? 'e.g. ETA 7:25 PM, traffic delay on I-94'
-                        : 'Select a quick chip above or type details here…'
+                        : 'Select a quick note above or enter details…'
                     }
-                    className="w-full rounded-xl border border-stone-300 px-3.5 py-2.5 text-sm text-stone-900 focus:border-navy-900 focus:outline-none"
+                    className="w-full rounded-sm border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-navy-950 focus:border-navy-950 focus:outline-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting || upcomingEvents.length === 0}
-                  className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:opacity-60 ${
+                  className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-sm px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-white transition disabled:opacity-60 ${
                     statusType === 'Late'
-                      ? 'bg-amber-600 hover:bg-amber-700'
-                      : 'bg-navy-900 hover:bg-navy-800'
+                      ? 'bg-copper-600 hover:bg-copper-700'
+                      : 'bg-navy-950 hover:bg-navy-900'
                   }`}
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3.5 w-3.5" />
                   {submitting
-                    ? 'Sending Notification…'
+                    ? 'Recording Notice…'
                     : existingForSelected
                       ? statusType === 'Late'
                         ? 'Update Late Notice'
-                        : 'Update Absence Note'
+                        : 'Update Absence Notice'
                       : statusType === 'Late'
-                      ? 'Submit Late Notice'
-                      : 'Submit Absence Notification'}
+                        ? 'Submit Late Notice'
+                        : 'Submit Absence Notice'}
                 </button>
               </form>
             </div>
@@ -464,20 +473,28 @@ export default function AbsenceManager({
 
           {/* Right: Singer's Personal Absence History */}
           <div className="lg:col-span-6">
-            <div className="rounded-2xl border border-stone-200/90 bg-white p-6 shadow-xs">
-              <h2 className="font-editorial text-2xl font-bold text-navy-950">
-                Your Logged Absences &amp; Late Notices
+            <div className="rounded-sm border border-stone-200/90 bg-white p-6 sm:p-7">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+                Season Record
+              </p>
+              <h2 className="mt-1 font-editorial text-2xl font-normal text-navy-950 sm:text-3xl">
+                Logged Notices
               </h2>
-              <p className="mt-1 text-sm text-stone-600">
-                Plans changed? Withdraw a notice below so your section’s seating count stays accurate.
+              <p className="mt-1.5 text-sm leading-relaxed text-stone-600">
+                If your schedule clears, withdraw a notice below so your section&apos;s stage formation count stays accurate.
               </p>
 
               {absences.length === 0 ? (
-                <div className="mt-6 rounded-xl border border-dashed border-stone-200 p-8 text-center text-sm text-stone-500">
-                  You have perfect attendance on file—no absences or late notices logged this season!
+                <div className="mt-6 rounded-sm border border-stone-200/80 bg-[#FAF7F2] px-6 py-10 text-center">
+                  <p className="font-editorial text-xl text-navy-950">
+                    Full Attendance on File
+                  </p>
+                  <p className="mt-1 text-xs text-stone-500">
+                    No absences or late arrival notices have been recorded this season.
+                  </p>
                 </div>
               ) : (
-                <ul className="mt-5 divide-y divide-stone-200">
+                <ul className="mt-5 divide-y divide-stone-200/80 border-t border-stone-200/80">
                   {absences
                     .slice()
                     .sort((a, b) => b.date.localeCompare(a.date))
@@ -490,25 +507,27 @@ export default function AbsenceManager({
                           className="flex flex-col justify-between gap-3 py-4 sm:flex-row sm:items-center"
                         >
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-stone-900">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-editorial text-lg font-medium text-navy-950">
                                 {formatEventDate(item.date)}
                               </span>
                               <span
-                                className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                                className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${
                                   isCleared
-                                    ? 'bg-stone-100 text-stone-500 line-through'
+                                    ? 'border-stone-200 bg-stone-100 text-stone-500 line-through'
                                     : isLate
-                                    ? 'border border-amber-300 bg-amber-50 text-amber-900'
-                                    : 'border border-rose-200 bg-rose-100 text-rose-800'
+                                      ? 'border-[#e6d5bc] bg-[#f8efe2] text-[#7d5220]'
+                                      : 'border-[#e4c4bc] bg-[#f7ebe8] text-[#84372d]'
                                 }`}
                               >
-                                {isCleared ? 'Cleared' : isLate ? '🟡 Running Late' : '🔴 Absent'}
+                                {isCleared ? 'Withdrawn' : isLate ? 'Running Late' : 'Absent'}
                               </span>
                             </div>
-                            <p className="mt-0.5 text-sm text-stone-600">{item.reason}</p>
-                            <p className="mt-0.5 text-xs text-stone-400">
-                              Logged via {item.submittedBy}
+                            {item.reason && (
+                              <p className="mt-1 text-sm text-stone-600">{item.reason}</p>
+                            )}
+                            <p className="mt-0.5 text-[11px] text-stone-400">
+                              Recorded via {item.submittedBy}
                             </p>
                           </div>
 
@@ -517,14 +536,12 @@ export default function AbsenceManager({
                               type="button"
                               disabled={clearingId === item.eventId}
                               onClick={() => handleWithdraw(item.eventId, item.date)}
-                              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 self-start rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 transition hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 sm:self-center"
+                              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 self-start rounded-sm border border-stone-300 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950 sm:self-center"
                             >
-                              <RotateCcw className="h-3.5 w-3.5" />
+                              <RotateCcw className="h-3 w-3" />
                               {clearingId === item.eventId
-                                ? 'Clearing…'
-                                : isLate
-                                ? 'Withdraw Late Notice'
-                                : 'Withdraw Absence'}
+                                ? 'Withdrawing…'
+                                : 'Withdraw'}
                             </button>
                           )}
                         </li>
@@ -541,40 +558,38 @@ export default function AbsenceManager({
           TAB 2: SECTION LEADER & ADMIN ROLL CALL OVERVIEW
           =================================================================== */}
       {isLeaderOrAdmin && activeTab === 'rollcall' && (
-        <div className="space-y-6 animate-in fade-in">
-          {/* Controls Bar: Rehearsal Call Selector & Section Filter */}
-          <div className="rounded-2xl border border-stone-200/90 bg-white p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-6">
+          {/* Controls & Ledger Strip */}
+          <div className="rounded-sm border border-stone-200/90 bg-white p-5 sm:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               {/* Event Selector */}
-              <div className="flex-1 max-w-md">
+              <div className="max-w-md flex-1">
                 <label
                   htmlFor="rollcall-event-select"
-                  className="block text-xs font-semibold uppercase tracking-wider text-stone-600 mb-1"
+                  className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600"
                 >
-                  Select Upcoming Rehearsal or Call
+                  Rehearsal or Performance Call
                 </label>
-                <div className="relative">
-                  <select
-                    id="rollcall-event-select"
-                    value={rollCallEventId}
-                    onChange={(e) => setRollCallEventId(e.target.value)}
-                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-navy-950 focus:border-navy-900 focus:outline-none"
-                  >
-                    {upcomingEvents.map((ev) => (
-                      <option key={ev.eventId} value={ev.eventId}>
-                        {formatEventDate(ev.date)} — {ev.title} ({ev.time})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  id="rollcall-event-select"
+                  value={rollCallEventId}
+                  onChange={(e) => setRollCallEventId(e.target.value)}
+                  className="w-full rounded-sm border border-stone-300 bg-white px-3.5 py-2.5 text-sm font-medium text-navy-950 focus:border-navy-950 focus:outline-none"
+                >
+                  {upcomingEvents.map((ev) => (
+                    <option key={ev.eventId} value={ev.eventId}>
+                      {formatEventDate(ev.date)} — {ev.title} ({ev.time})
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Section Filter Pills (Admin can switch all, Section leader defaults to their section) */}
+              {/* Section Filter */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-stone-600 mb-1">
-                  Section Filter
-                </label>
-                <div className="flex flex-wrap items-center gap-1.5">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.15em] text-stone-600">
+                  Section Cohort
+                </span>
+                <div className="flex flex-wrap items-center gap-1">
                   {(isAdmin ? (['All', ...SECTION_GROUPS] as const) : [singer.sectionGroup]).map(
                     (sec) => {
                       const isSelected = rollCallSection === sec;
@@ -583,10 +598,10 @@ export default function AbsenceManager({
                           key={sec}
                           type="button"
                           onClick={() => setRollCallSection(sec)}
-                          className={`cursor-pointer rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                          className={`cursor-pointer rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] transition ${
                             isSelected
-                              ? 'bg-navy-900 text-white shadow-2xs'
-                              : 'border border-stone-200 bg-stone-50 text-stone-700 hover:bg-stone-100'
+                              ? 'border-navy-950 bg-navy-950 text-white'
+                              : 'border-stone-200/90 bg-[#FAF7F2] text-stone-700 hover:border-stone-400 hover:text-navy-950'
                           }`}
                         >
                           {sec}
@@ -598,126 +613,132 @@ export default function AbsenceManager({
               </div>
             </div>
 
-            {/* Attendance Status Metrics Banner */}
+            {/* 4-Column Hairline Numerical Ledger */}
             {selectedRollCallEvent && (
-              <div className="pt-4 border-t border-stone-100">
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 sm:p-4">
-                    <span className="block text-xs font-bold uppercase tracking-wider text-emerald-800">
-                      Expected Present
-                    </span>
-                    <span className="mt-1 block text-2xl font-bold text-emerald-950">
-                      {attendingCohortSingers.length}
-                    </span>
-                    <span className="text-[11px] text-emerald-700">
-                      of {activeCohortSingers.length} active {rollCallSection === 'All' ? 'singers' : `${rollCallSection}s`}
-                    </span>
-                  </div>
+              <div className="mt-6 grid grid-cols-2 divide-y divide-stone-200/80 border-t border-stone-200/90 pt-5 sm:grid-cols-4 sm:divide-x sm:divide-y-0">
+                <div className="pb-3 sm:pr-5 sm:pb-0">
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+                    Expected Present
+                  </span>
+                  <span className="mt-1 block font-editorial text-3xl font-normal tabular-nums text-navy-950">
+                    {attendingCohortSingers.length}
+                  </span>
+                  <span className="text-xs text-stone-500">
+                    of {activeCohortSingers.length} active {rollCallSection === 'All' ? 'singers' : `${rollCallSection}s`}
+                  </span>
+                </div>
 
-                  <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-3 sm:p-4">
-                    <span className="block text-xs font-bold uppercase tracking-wider text-rose-800">
-                      Reported Absences
-                    </span>
-                    <span className="mt-1 block text-2xl font-bold text-rose-950">
-                      {absentCohortList.length}
-                    </span>
-                    <span className="text-[11px] text-rose-700">
-                      {absentCohortList.length === 1 ? '1 singer absent' : `${absentCohortList.length} singers absent`}
-                    </span>
-                  </div>
+                <div className="pb-3 sm:px-5 sm:pb-0">
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+                    Reported Absences
+                  </span>
+                  <span
+                    className={`mt-1 block font-editorial text-3xl font-normal tabular-nums ${
+                      absentCohortList.length > 0 ? 'text-[#84372d]' : 'text-navy-950'
+                    }`}
+                  >
+                    {absentCohortList.length}
+                  </span>
+                  <span className="text-xs text-stone-500">
+                    {absentCohortList.length === 1 ? '1 singer absent' : `${absentCohortList.length} singers absent`}
+                  </span>
+                </div>
 
-                  <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 sm:p-4">
-                    <span className="block text-xs font-bold uppercase tracking-wider text-amber-800">
-                      Running Late
-                    </span>
-                    <span className="mt-1 block text-2xl font-bold text-amber-950">
-                      {lateCohortList.length}
-                    </span>
-                    <span className="text-[11px] text-amber-700">
-                      {lateCohortList.length === 1 ? '1 late notice' : `${lateCohortList.length} late notices`}
-                    </span>
-                  </div>
+                <div className="pt-3 sm:px-5 sm:pt-0">
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+                    Running Late
+                  </span>
+                  <span
+                    className={`mt-1 block font-editorial text-3xl font-normal tabular-nums ${
+                      lateCohortList.length > 0 ? 'text-copper-600' : 'text-navy-950'
+                    }`}
+                  >
+                    {lateCohortList.length}
+                  </span>
+                  <span className="text-xs text-stone-500">
+                    {lateCohortList.length === 1 ? '1 late arrival' : `${lateCohortList.length} late arrivals`}
+                  </span>
+                </div>
 
-                  <div className="rounded-xl border border-stone-200 bg-stone-50 p-3 sm:p-4">
-                    <span className="block text-xs font-bold uppercase tracking-wider text-stone-600">
-                      Total Roster
-                    </span>
-                    <span className="mt-1 block text-2xl font-bold text-navy-950">
-                      {activeCohortSingers.length}
-                    </span>
-                    <span className="text-[11px] text-stone-500">
-                      Active this cycle
-                    </span>
-                  </div>
+                <div className="pt-3 sm:pl-5 sm:pt-0">
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+                    Active Roster
+                  </span>
+                  <span className="mt-1 block font-editorial text-3xl font-normal tabular-nums text-navy-950">
+                    {activeCohortSingers.length}
+                  </span>
+                  <span className="text-xs text-stone-500">
+                    Current concert cycle
+                  </span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Section Attendance List */}
+          {/* Section Attendance Split */}
           <div className="grid gap-6 lg:grid-cols-12">
-            {/* Left: Active Notices for This Event (Absences & Late ETAs) */}
+            {/* Left: Active Notices for This Event */}
             <div className="lg:col-span-7">
-              <div className="rounded-2xl border border-stone-200/90 bg-white p-6 shadow-xs">
-                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                  <h3 className="font-editorial text-xl font-bold text-navy-950">
-                    Notices on File for this Call ({eventCohortRecords.length})
+              <div className="rounded-sm border border-stone-200/90 bg-white p-6">
+                <div className="flex items-baseline justify-between border-b border-stone-200/80 pb-3">
+                  <h3 className="font-editorial text-2xl font-normal text-navy-950">
+                    Notices on File ({eventCohortRecords.length})
                   </h3>
-                  <span className="text-xs font-semibold text-stone-500">
+                  <span className="text-xs text-stone-500">
                     {selectedRollCallEvent ? formatEventDate(selectedRollCallEvent.date) : ''}
                   </span>
                 </div>
 
                 {eventCohortRecords.length === 0 ? (
-                  <div className="mt-6 rounded-2xl bg-emerald-50/80 border border-emerald-200 p-8 text-center">
-                    <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-600" />
-                    <h4 className="mt-2 text-base font-bold text-emerald-950">
-                      100% Attendance on File!
-                    </h4>
-                    <p className="mt-1 text-xs sm:text-sm text-emerald-800 max-w-md mx-auto">
-                      All {activeCohortSingers.length} {rollCallSection === 'All' ? 'choir members' : `${rollCallSection} singers`} are currently marked present for this rehearsal call.
+                  <div className="mt-6 rounded-sm border border-stone-200/80 bg-[#FAF7F2] px-6 py-10 text-center">
+                    <p className="font-editorial text-2xl text-navy-950">
+                      Full Attendance on File
+                    </p>
+                    <p className="mx-auto mt-1.5 max-w-md text-xs leading-relaxed text-stone-600">
+                      All {activeCohortSingers.length} {rollCallSection === 'All' ? 'ensemble members' : `${rollCallSection} singers`} are expected on time for this call.
                     </p>
                   </div>
                 ) : (
-                  <ul className="mt-4 divide-y divide-stone-100">
+                  <ul className="divide-y divide-stone-200/80">
                     {eventCohortRecords.map((item) => {
                       const isLate = item.status === 'Late';
                       return (
                         <li key={item.singerEmail} className="py-4">
-                          <div className="flex flex-wrap items-start justify-between gap-2">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-navy-950 text-base">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-editorial text-lg font-medium text-navy-950">
                                   {item.singerName}
                                 </span>
-                                <span className="rounded-sm bg-stone-100 px-2 py-0.5 text-xs font-bold text-stone-700 border border-stone-200">
+                                <span
+                                  className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${voicePartBadgeColor(
+                                    item.voicePart
+                                  )}`}
+                                >
                                   {item.voicePart}
                                 </span>
                                 <span
-                                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                  className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${
                                     isLate
-                                      ? 'border border-amber-300 bg-amber-50 text-amber-900'
-                                      : 'border border-rose-200 bg-rose-50 text-rose-800'
+                                      ? 'border-[#e6d5bc] bg-[#f8efe2] text-[#7d5220]'
+                                      : 'border-[#e4c4bc] bg-[#f7ebe8] text-[#84372d]'
                                   }`}
                                 >
-                                  {isLate ? '🟡 Running Late' : '🔴 Full Absence'}
+                                  {isLate ? 'Running Late' : 'Absent'}
                                 </span>
                               </div>
 
-                              <p className="mt-1.5 text-sm text-stone-700 bg-stone-50/80 rounded-xl p-3 border border-stone-100">
-                                <span className="font-medium text-stone-500 text-xs block mb-0.5">
-                                  {isLate ? 'Estimated ETA / Reason:' : 'Absence Reason:'}
-                                </span>
+                              <p className="mt-2 border-l-2 border-stone-300 pl-3 text-sm text-stone-700">
                                 {item.reason || (isLate ? 'Running late' : 'Absence recorded')}
                               </p>
                             </div>
 
                             <a
                               href={`mailto:${item.singerEmail}?subject=Kantorei%20Rehearsal%20Check-In`}
-                              className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-600 hover:text-navy-950 hover:bg-stone-50 transition"
+                              className="inline-flex items-center gap-1.5 rounded-sm border border-stone-300/90 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-600 transition hover:border-navy-950 hover:text-navy-950"
                               title={`Email ${item.singerName}`}
                             >
-                              <Mail className="h-3 w-3" />
+                              <Mail className="h-3 w-3 text-copper-600" />
                               <span>Email</span>
                             </a>
                           </div>
@@ -731,29 +752,31 @@ export default function AbsenceManager({
 
             {/* Right: Attending Roster Cohort */}
             <div className="lg:col-span-5">
-              <div className="rounded-2xl border border-stone-200/90 bg-white p-6 shadow-xs">
-                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                  <h3 className="font-editorial text-xl font-bold text-navy-950">
-                    Attending ({attendingCohortSingers.length})
+              <div className="rounded-sm border border-stone-200/90 bg-white p-6">
+                <div className="flex items-baseline justify-between border-b border-stone-200/80 pb-3">
+                  <h3 className="font-editorial text-2xl font-normal text-navy-950">
+                    Expected Present ({attendingCohortSingers.length})
                   </h3>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
-                    Present
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-400">
+                    Roll Sheet
                   </span>
                 </div>
 
-                <ul className="mt-3 max-h-[460px] overflow-y-auto divide-y divide-stone-100 pr-1">
+                <ul className="mt-2 max-h-[460px] divide-y divide-stone-100 overflow-y-auto pr-1">
                   {attendingCohortSingers.map((member) => (
                     <li
                       key={member.email}
                       className="flex items-center justify-between py-2.5 text-sm"
                     >
                       <div className="flex items-center gap-2.5">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-800">
-                          ✓
-                        </span>
-                        <span className="font-medium text-navy-950">{member.name}</span>
+                        <Check className="h-3.5 w-3.5 shrink-0 text-copper-600" />
+                        <span className="text-navy-950">{member.name}</span>
                       </div>
-                      <span className="rounded-sm bg-stone-100 px-2 py-0.5 text-xs font-bold text-stone-600">
+                      <span
+                        className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${voicePartBadgeColor(
+                          member.voicePart
+                        )}`}
+                      >
                         {member.voicePart}
                       </span>
                     </li>

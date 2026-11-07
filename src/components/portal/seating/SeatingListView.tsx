@@ -32,24 +32,26 @@ export default function SeatingListView({
   onUpdateAttendance,
 }: Props) {
   return (
-    <div className="space-y-4 animate-in fade-in">
+    <div className="space-y-5">
       {currentDisplayRows.map((row) => {
         const nonAisleSeats = row.seats.filter((s) => !s.isAisle);
         const filledCount = nonAisleSeats.filter((s) => s.singerEmail || s.singerName).length;
 
         return (
-          <div
+          <section
             key={row.rowNumber}
-            className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-2xs"
+            className="rounded-sm border border-stone-200/90 bg-white p-5"
           >
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-2 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-100 text-[10px] font-bold text-zinc-700">
-                  R{row.rowNumber}
+            <div className="mb-3.5 flex items-center justify-between border-b border-stone-200/80 pb-2.5">
+              <div className="flex items-center gap-2.5">
+                <span className="font-editorial text-sm font-medium text-copper-600">
+                  0{row.rowNumber}
                 </span>
-                <h4 className="text-sm font-bold text-navy-950">{row.name}</h4>
-                <span className="text-xs text-zinc-400">
-                  ({filledCount} of {nonAisleSeats.length} filled)
+                <h4 className="text-xs font-semibold uppercase tracking-[0.14em] text-navy-950">
+                  {row.name}
+                </h4>
+                <span className="text-xs tabular-nums text-stone-400">
+                  · {filledCount} / {nonAisleSeats.length} seated
                 </span>
               </div>
 
@@ -59,14 +61,14 @@ export default function SeatingListView({
                     type="button"
                     onClick={() => onRemoveSeatFromRow(row.rowNumber)}
                     disabled={nonAisleSeats.length <= 1}
-                    className="cursor-pointer rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-40"
+                    className="cursor-pointer rounded-sm border border-stone-300 bg-[#FAF7F2] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-stone-700 hover:bg-stone-200/60 disabled:opacity-40"
                   >
                     - Seat
                   </button>
                   <button
                     type="button"
                     onClick={() => onAddSeatToRow(row.rowNumber, 'auto')}
-                    className="cursor-pointer rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold text-zinc-700 hover:bg-zinc-100"
+                    className="cursor-pointer rounded-sm border border-stone-300 bg-[#FAF7F2] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-stone-700 hover:bg-stone-200/60"
                     title={`Add seat to ${row.name} (balances midpoint)`}
                   >
                     + Seat
@@ -75,7 +77,7 @@ export default function SeatingListView({
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {nonAisleSeats.map((seat) => {
                 const assignedSinger = seat.singerEmail
                   ? rosterMap.get(seat.singerEmail.toLowerCase())
@@ -96,28 +98,28 @@ export default function SeatingListView({
                   absenceRecord?.status === 'Absent'
                     ? 'Absent'
                     : absenceRecord?.status === 'Late'
-                    ? 'Late'
-                    : 'Present';
+                      ? 'Late'
+                      : 'Present';
 
                 return (
                   <div
                     key={seat.seatIndex}
-                    className={`rounded-xl border p-2.5 transition flex flex-col justify-between ${
+                    className={`flex flex-col justify-between rounded-sm border p-3 transition ${
                       isCurrentUser
-                        ? 'border-gold-400 bg-amber-50/40 ring-1 ring-gold-400'
+                        ? 'border-copper-600 bg-[#f9efe8]/55 ring-1 ring-copper-600'
                         : isOccupied
-                        ? 'border-zinc-200 bg-zinc-50/50'
-                        : 'border-dashed border-zinc-200 bg-white'
+                          ? 'border-stone-200/90 bg-[#FAF7F2]/50'
+                          : 'border-dashed border-stone-300 bg-white'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white border border-zinc-200 text-[10px] font-bold text-zinc-600">
+                        <span className="text-[10px] font-semibold tabular-nums text-stone-400">
                           #{seat.seatIndex}
                         </span>
                         {isOccupied && (
                           <span
-                            className={`rounded-md border px-1.5 py-0.2 text-[10px] font-bold ${badgeClass}`}
+                            className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${badgeClass}`}
                           >
                             {voicePart}
                           </span>
@@ -126,7 +128,7 @@ export default function SeatingListView({
 
                       <div className="flex items-center gap-1">
                         {isCurrentUser && (
-                          <span className="rounded-full bg-gold-500 px-1.5 py-0.2 text-[9px] font-black uppercase text-white shadow-2xs">
+                          <span className="rounded-sm bg-copper-600 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">
                             You
                           </span>
                         )}
@@ -134,7 +136,7 @@ export default function SeatingListView({
                           <button
                             type="button"
                             onClick={() => onClearSeat(seat, row)}
-                            className="cursor-pointer text-zinc-400 hover:text-rose-600 p-0.5"
+                            className="cursor-pointer p-0.5 text-stone-400 hover:text-[#84372d]"
                             title="Unassign singer"
                           >
                             <X className="h-3 w-3" />
@@ -143,20 +145,20 @@ export default function SeatingListView({
                       </div>
                     </div>
 
-                    {/* Name formatted across 2 lines */}
+                    {/* Name */}
                     <div className="my-1.5">
                       {isOccupied ? (
-                        <p className="line-clamp-2 break-words text-xs font-bold text-navy-950 leading-tight">
+                        <p className="line-clamp-2 break-words font-editorial text-lg font-medium leading-snug text-navy-950">
                           {seat.singerName || assignedSinger?.name || 'Singer'}
                         </p>
                       ) : (
-                        <p className="text-xs italic text-zinc-400">Vacant Seat</p>
+                        <p className="text-xs italic text-stone-400">Vacant Seat</p>
                       )}
                     </div>
 
                     {/* Attendance Mode 1-Tap Mobile Actions */}
                     {mode === 'attendance' && isOccupied && (
-                      <div className="pt-2 border-t border-zinc-200/60 mt-1 space-y-1.5">
+                      <div className="mt-1 space-y-1.5 border-t border-stone-200/80 pt-2">
                         {(() => {
                           const targetSinger: Singer = assignedSinger || {
                             email: seat.singerEmail!,
@@ -175,10 +177,10 @@ export default function SeatingListView({
                                 <button
                                   type="button"
                                   onClick={() => onUpdateAttendance(targetSinger, 'Present')}
-                                  className={`cursor-pointer flex-1 rounded-lg py-1.5 text-[10px] font-bold transition flex items-center justify-center gap-1 ${
+                                  className={`flex flex-1 cursor-pointer items-center justify-center gap-1 rounded-sm border py-1.5 text-[10px] font-semibold uppercase tracking-wider transition ${
                                     attendanceStatus === 'Present'
-                                      ? 'bg-emerald-600 text-white shadow-2xs'
-                                      : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                                      ? 'border-navy-950 bg-navy-950 text-white'
+                                      : 'border-stone-200 bg-white text-stone-700 hover:border-stone-400'
                                   }`}
                                 >
                                   <Check className="h-3 w-3" />
@@ -188,10 +190,10 @@ export default function SeatingListView({
                                 <button
                                   type="button"
                                   onClick={() => onUpdateAttendance(targetSinger, 'Late')}
-                                  className={`cursor-pointer flex-1 rounded-lg py-1.5 text-[10px] font-bold transition flex items-center justify-center gap-1 ${
+                                  className={`flex flex-1 cursor-pointer items-center justify-center gap-1 rounded-sm border py-1.5 text-[10px] font-semibold uppercase tracking-wider transition ${
                                     attendanceStatus === 'Late'
-                                      ? 'bg-amber-500 text-white shadow-2xs'
-                                      : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                                      ? 'border-copper-600 bg-copper-600 text-white'
+                                      : 'border-stone-200 bg-white text-stone-700 hover:border-stone-400'
                                   }`}
                                 >
                                   <Clock className="h-3 w-3" />
@@ -201,10 +203,10 @@ export default function SeatingListView({
                                 <button
                                   type="button"
                                   onClick={() => onUpdateAttendance(targetSinger, 'Absent')}
-                                  className={`cursor-pointer flex-1 rounded-lg py-1.5 text-[10px] font-bold transition flex items-center justify-center gap-1 ${
+                                  className={`flex flex-1 cursor-pointer items-center justify-center gap-1 rounded-sm border py-1.5 text-[10px] font-semibold uppercase tracking-wider transition ${
                                     attendanceStatus === 'Absent'
-                                      ? 'bg-rose-600 text-white shadow-2xs'
-                                      : 'bg-rose-50 text-rose-800 hover:bg-rose-100'
+                                      ? 'border-[#84372d] bg-[#84372d] text-white'
+                                      : 'border-stone-200 bg-white text-stone-700 hover:border-stone-400'
                                   }`}
                                 >
                                   <X className="h-3 w-3" />
@@ -212,26 +214,25 @@ export default function SeatingListView({
                                 </button>
                               </div>
 
-                              {/* Contact Action for missing singers */}
                               {(attendanceStatus === 'Absent' || attendanceStatus === 'Late') &&
                                 assignedSinger?.phone && (
-                                  <div className="flex items-center justify-between text-[11px] text-zinc-500 bg-zinc-50 rounded-lg p-1 px-2">
+                                  <div className="flex items-center justify-between rounded-sm border border-stone-200 bg-white px-2 py-1 text-[11px] text-stone-600">
                                     <span>{assignedSinger.phone}</span>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2.5">
                                       <a
                                         href={`tel:${assignedSinger.phone}`}
-                                        className="inline-flex items-center gap-1 text-emerald-700 hover:underline font-semibold"
+                                        className="inline-flex items-center gap-1 font-medium text-navy-950 hover:text-copper-700"
                                         title="Call"
                                       >
-                                        <Phone className="h-3 w-3" />
+                                        <Phone className="h-3 w-3 text-copper-600" />
                                         <span>Call</span>
                                       </a>
                                       <a
                                         href={`sms:${assignedSinger.phone}`}
-                                        className="inline-flex items-center gap-1 text-blue-700 hover:underline font-semibold"
+                                        className="inline-flex items-center gap-1 font-medium text-navy-950 hover:text-copper-700"
                                         title="SMS"
                                       >
-                                        <MessageSquare className="h-3 w-3" />
+                                        <MessageSquare className="h-3 w-3 text-copper-600" />
                                         <span>Text</span>
                                       </a>
                                     </div>
@@ -245,16 +246,16 @@ export default function SeatingListView({
 
                     {/* Edit Mode Quick Action */}
                     {mode === 'edit' && (
-                      <div className="pt-1.5 border-t border-zinc-200/60 mt-1 flex justify-end">
+                      <div className="mt-1 flex justify-end border-t border-stone-200/80 pt-1.5">
                         {isOccupied ? (
                           <button
                             type="button"
                             onClick={() => onSeatClick(seat, row)}
-                            className={`cursor-pointer text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
+                            className={`cursor-pointer rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                               selectedSeatForSwap?.seat.seatIndex === seat.seatIndex &&
                               selectedSeatForSwap?.row.rowNumber === row.rowNumber
-                                ? 'bg-amber-500 text-white border-amber-500'
-                                : 'border-zinc-200 text-zinc-600 hover:bg-zinc-100'
+                                ? 'border-copper-600 bg-copper-600 text-white'
+                                : 'border-stone-300 bg-white text-stone-700 hover:border-navy-950'
                             }`}
                           >
                             {selectedSeatForSwap?.seat.seatIndex === seat.seatIndex &&
@@ -266,7 +267,7 @@ export default function SeatingListView({
                           <button
                             type="button"
                             onClick={() => onSeatClick(seat, row)}
-                            className="cursor-pointer text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gold-50 border border-gold-300 text-gold-900 hover:bg-gold-100"
+                            className="cursor-pointer rounded-sm border border-copper-400 bg-[#f9efe8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-navy-950 hover:bg-[#f3e3d6]"
                           >
                             + Assign
                           </button>
@@ -277,10 +278,9 @@ export default function SeatingListView({
                 );
               })}
             </div>
-          </div>
+          </section>
         );
       })}
     </div>
   );
 }
-

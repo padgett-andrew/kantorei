@@ -1,13 +1,11 @@
 import type { MouseEvent } from 'react';
 import {
-  BookOpen,
   ChevronDown,
   ChevronUp,
   Download,
   ExternalLink,
   FolderOpen,
   Maximize2,
-  Sparkles,
 } from 'lucide-react';
 import type { DriveMusicFile, Singer } from '../../../types/choir';
 import type { ConcertProgram, ProgramRecording } from '../../../lib/program';
@@ -63,40 +61,40 @@ export default function ProgramSection({
   const concertDriveUrl = driveFolderUrl(prog.id, repertoireDriveUrl);
 
   return (
-    <div className="space-y-4">
+    <section className="space-y-5">
       {/* Concert Program Header */}
-      <div className="flex flex-col justify-between gap-2 border-b border-zinc-200/70 pb-3 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-navy-900 text-sm font-bold text-gold-300 shadow-2xs">
-            ♫
-          </span>
-          <h2 className="font-editorial text-2xl font-bold text-navy-950 sm:text-3xl">
+      <div className="flex flex-col justify-between gap-3 border-b border-navy-950/15 pb-4 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-copper-600">
+            Concert Program
+          </p>
+          <h2 className="mt-1 font-editorial text-3xl font-normal tracking-tight text-navy-950 sm:text-4xl">
             {prog.title}
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           {concertDriveUrl && (
             <a
               href={concertDriveUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy-950 shadow-2xs transition hover:border-navy-900 hover:bg-zinc-50"
+              className="inline-flex items-center gap-1.5 rounded-sm border border-stone-300/90 bg-white/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-navy-950 transition hover:border-navy-950 hover:bg-white"
               title={`Open ${prog.title} folder in Google Drive`}
             >
-              <FolderOpen className="h-3.5 w-3.5 text-amber-600" />
+              <FolderOpen className="h-3.5 w-3.5 text-copper-600" />
               <span>Drive Folder</span>
-              <ExternalLink className="h-3 w-3 text-zinc-400" />
+              <ExternalLink className="h-3 w-3 text-stone-400" />
             </a>
           )}
-          <span className="rounded-full bg-ivory-100 px-3 py-1 text-xs font-semibold text-navy-900">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-stone-500 tabular-nums">
             {prog.visibleFileCount}{' '}
-            {prog.visibleFileCount === 1 ? 'score / track' : 'scores & tracks'}
+            {prog.visibleFileCount === 1 ? 'Item' : 'Items'}
           </span>
         </div>
       </div>
 
-      {/* Director's Markings Doc(s) Header Card */}
+      {/* Director's Markings Frontispiece Sheet */}
       {prog.docs.map((doc) => {
         const isExpanded = Boolean(expandedDocIds[doc.file.id]);
         const renderedHtml = highlightMyPart
@@ -106,45 +104,41 @@ export default function ProgramSection({
         return (
           <div
             key={doc.file.id}
-            className="overflow-hidden rounded-3xl border border-gold-400/40 bg-gradient-to-br from-ivory-50 via-white to-amber-50/20 shadow-xs"
+            className="overflow-hidden rounded-sm border border-stone-300/90 border-l-2 border-l-copper-500 bg-[#f5efe8]/75"
           >
-            <div className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center sm:px-6">
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-gold-300 shadow-2xs">
-                  <BookOpen className="h-4 w-4" />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-gold-600">
-                      Director&apos;s Markings & Concert Order
-                    </span>
-                    <span className="rounded-full border border-gold-300/60 bg-white px-2 py-0.5 text-[9px] font-semibold text-navy-900">
-                      {doc.file.mimeType === 'application/vnd.google-apps.document'
-                        ? 'Google Doc'
-                        : 'Word / Docx'}
-                    </span>
-                  </div>
-                  <h3 className="truncate text-sm font-bold text-navy-950 sm:text-base">
-                    {prettifyScoreName(doc.file.name)}
-                  </h3>
+            <div className="flex flex-col justify-between gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-600">
+                    Director&apos;s Markings &amp; Program Order
+                  </span>
+                  <span className="text-stone-300" aria-hidden="true">·</span>
+                  <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-stone-500">
+                    {doc.file.mimeType === 'application/vnd.google-apps.document'
+                      ? 'Live Doc'
+                      : 'Document'}
+                  </span>
                 </div>
+                <h3 className="mt-0.5 truncate font-editorial text-xl font-semibold text-navy-950">
+                  {prettifyScoreName(doc.file.name)}
+                </h3>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                 <button
                   type="button"
                   onClick={() => onToggleDocExpanded(doc.file)}
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-navy-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-800"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm bg-navy-950 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-navy-900"
                 >
                   {isExpanded ? (
                     <>
-                      <ChevronUp className="h-3.5 w-3.5 text-gold-400" />
-                      Hide Document
+                      <ChevronUp className="h-3.5 w-3.5 text-copper-300" />
+                      Hide Markings
                     </>
                   ) : (
                     <>
-                      <ChevronDown className="h-3.5 w-3.5 text-gold-400" />
-                      Inline Markings
+                      <ChevronDown className="h-3.5 w-3.5 text-copper-300" />
+                      Read Markings
                     </>
                   )}
                 </button>
@@ -152,10 +146,10 @@ export default function ProgramSection({
                 <button
                   type="button"
                   onClick={() => onOpenModalDoc(prog.title, doc.file)}
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-navy-900 hover:text-navy-950"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm border border-stone-300/90 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950"
                   title="Open distraction-free full document reader"
                 >
-                  <Maximize2 className="h-3.5 w-3.5" />
+                  <Maximize2 className="h-3 w-3" />
                   Full Reader
                 </button>
 
@@ -164,16 +158,16 @@ export default function ProgramSection({
                     href={streamUrl(doc.file, false)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-navy-900 hover:text-navy-950"
+                    className="inline-flex items-center gap-1.5 rounded-sm border border-stone-300/90 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950"
                     title="Open Director's Markings as PDF in a new tab"
                   >
-                    <ExternalLink className="h-3.5 w-3.5 text-gold-500" />
-                    Export PDF
+                    <ExternalLink className="h-3 w-3 text-copper-600" />
+                    PDF
                   </a>
                 ) : (
                   <a
                     href={streamUrl(doc.file, true)}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-navy-900 hover:text-navy-950"
+                    className="inline-flex items-center gap-1.5 rounded-sm border border-stone-300/90 bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950"
                     title="Download original document"
                   >
                     <Download className="h-3.5 w-3.5" />
@@ -184,23 +178,21 @@ export default function ProgramSection({
 
             {/* Inline Document Prose */}
             {isExpanded && (
-              <div className="border-t border-zinc-200/80 bg-white px-5 py-5 sm:px-7">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-3">
-                  <p className="text-xs text-zinc-500">
-                    Reference links and part callouts parsed from document. Tap any YouTube
-                    link to play.
+              <div className="border-t border-stone-200/90 bg-white px-5 py-6 sm:px-8">
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-stone-200/80 pb-3">
+                  <p className="text-xs text-stone-500">
+                    Tap any linked reference recording below to open the inline player.
                   </p>
                   <button
                     type="button"
                     onClick={onToggleHighlight}
-                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
                       highlightMyPart
-                        ? 'bg-amber-100 text-amber-950 ring-1 ring-amber-300'
-                        : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900'
+                        ? 'border-copper-300 bg-[#f9efe8] text-copper-600'
+                        : 'border-stone-200 bg-[#FAF7F2] text-stone-600 hover:text-navy-950'
                     }`}
                   >
-                    <Sparkles className="h-3 w-3 text-gold-500" />
-                    Highlight {singer.voicePart} / {singer.sectionGroup} Callouts
+                    Highlight {singer.voicePart} / {singer.sectionGroup}
                   </button>
                 </div>
 
@@ -236,6 +228,6 @@ export default function ProgramSection({
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 }

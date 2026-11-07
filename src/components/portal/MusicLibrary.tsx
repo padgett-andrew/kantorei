@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { FolderOpen, Music2, Search, Sparkles } from 'lucide-react';
+import { Music2, Search } from 'lucide-react';
 import type { DriveMusicFile, RepertoirePiece, Singer } from '../../types/choir';
 import { doesFileApplyToSinger, isSpecificVoicePartMatch } from '../../lib/utils';
 import { parseYouTubeUrl, type ReferenceRecordingLink } from '../../lib/youtube';
@@ -295,105 +295,93 @@ export default function MusicLibrary({
   }
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-8 pb-24">
       {/* Concert Program Switcher (shown only when multiple programs exist) */}
       {rawPrograms.length > 1 && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="scrollbar-none flex items-center gap-6 overflow-x-auto border-b border-stone-300/80">
           <button
             type="button"
             onClick={() => setSelectedConcertId('all')}
-            className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+            className={`relative shrink-0 cursor-pointer pb-3 text-xs font-semibold uppercase tracking-[0.15em] transition ${
               selectedConcertId === 'all'
-                ? 'bg-navy-900 text-white shadow-xs'
-                : 'border border-zinc-200 bg-white text-zinc-700 hover:border-navy-900'
+                ? 'text-navy-950 after:absolute after:right-0 after:bottom-0 after:left-0 after:h-[1.5px] after:bg-copper-500'
+                : 'text-stone-500 hover:text-navy-950'
             }`}
           >
-            <FolderOpen className="h-3.5 w-3.5 text-gold-400" />
-            All Active Concerts ({totalScoresAndTracks})
+            All Programs ({totalScoresAndTracks})
           </button>
           {rawPrograms.map((prog) => {
             const fileCount = prog.pieces.reduce((s, p) => s + p.files.length, 0);
+            const active = selectedConcertId === prog.id;
             return (
               <button
                 key={prog.id}
                 type="button"
                 onClick={() => setSelectedConcertId(prog.id)}
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
-                  selectedConcertId === prog.id
-                    ? 'bg-navy-900 text-white shadow-xs'
-                    : 'border border-zinc-200 bg-white text-zinc-700 hover:border-navy-900'
+                className={`relative inline-flex shrink-0 cursor-pointer items-baseline gap-2 pb-3 text-xs font-semibold uppercase tracking-[0.15em] transition ${
+                  active
+                    ? 'text-navy-950 after:absolute after:right-0 after:bottom-0 after:left-0 after:h-[1.5px] after:bg-copper-500'
+                    : 'text-stone-500 hover:text-navy-950'
                 }`}
               >
                 <span>{prog.title}</span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                    selectedConcertId === prog.id
-                      ? 'bg-white/15 text-gold-300'
-                      : 'bg-zinc-100 text-zinc-600'
-                  }`}
-                >
-                  {fileCount}
-                </span>
+                <span className="text-[10px] text-copper-600 tabular-nums">{fileCount}</span>
               </button>
             );
           })}
         </div>
       )}
 
-      {/* Filter & Search Toolbar */}
-      <div className="flex flex-col justify-between gap-3 rounded-2xl border border-zinc-200/90 bg-white p-3.5 shadow-2xs sm:flex-row sm:items-center sm:p-4">
+      {/* Architectural Filter & Search Bar */}
+      <div className="flex flex-col justify-between gap-3 border-y border-stone-300/80 py-3.5 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute top-3 left-3.5 h-4 w-4 text-zinc-400" />
+          <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-stone-400" />
           <input
             type="search"
-            placeholder="Search concert programs, pieces, composers, or voice parts…"
+            placeholder="Search programs, titles, composers, or voice parts…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-zinc-50/60 py-2 pr-4 pl-10 text-sm text-zinc-900 transition focus:border-navy-900 focus:bg-white focus:outline-none"
+            className="w-full rounded-sm border border-stone-300/90 bg-white/80 py-2 pr-4 pl-9 text-sm text-stone-900 placeholder:text-stone-400 transition focus:border-navy-950 focus:bg-white focus:outline-none"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-zinc-100/80 p-1">
+        <div className="inline-flex shrink-0 items-center rounded-sm border border-stone-300/90 bg-white p-0.5">
           <button
             type="button"
             onClick={() => handleFilterModeChange('all')}
-            className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+            className={`cursor-pointer rounded-xs px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
               filterMode === 'all'
-                ? 'bg-white text-navy-950 shadow-2xs'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-navy-950 text-white'
+                : 'text-stone-600 hover:text-navy-950'
             }`}
           >
-            All Music &amp; Tracks
+            All Repertoire
           </button>
           <button
             type="button"
             onClick={() => handleFilterModeChange('my-part')}
-            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+            className={`cursor-pointer rounded-xs px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
               filterMode === 'my-part'
-                ? 'bg-white text-navy-950 shadow-2xs'
-                : 'text-zinc-600 hover:text-zinc-900'
+                ? 'bg-copper-600 text-white'
+                : 'text-stone-600 hover:text-navy-950'
             }`}
           >
-            <Sparkles className="h-3.5 w-3.5 text-gold-500" />
             My Voice ({singer.voicePart})
           </button>
         </div>
       </div>
 
       {excludedPiecesCount > 0 && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-2.5 text-xs text-amber-900 shadow-2xs">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-            <span>
-              Filtered for <strong>{singer.sectionGroup} ({singer.voicePart})</strong> · {excludedPiecesCount} piece{excludedPiecesCount > 1 ? 's' : ''} not in your section {excludedPiecesCount > 1 ? 'are' : 'is'} hidden (e.g. Treble SSAA).
-            </span>
-          </div>
+        <div className="flex flex-col items-start justify-between gap-2 border-l-2 border-copper-500 bg-[#f5efe8] px-4 py-3 text-xs text-stone-700 sm:flex-row sm:items-center">
+          <span>
+            Filtered for <strong className="font-semibold text-navy-950">{singer.sectionGroup} ({singer.voicePart})</strong> · {excludedPiecesCount} piece{excludedPiecesCount > 1 ? 's' : ''} outside your voice division {excludedPiecesCount > 1 ? 'are' : 'is'} hidden.
+          </span>
           <button
             type="button"
             onClick={() => handleFilterModeChange('all')}
-            className="cursor-pointer font-bold text-navy-950 underline hover:text-gold-600 shrink-0"
+            className="shrink-0 cursor-pointer text-[11px] font-semibold uppercase tracking-[0.12em] text-copper-600 underline underline-offset-4 hover:text-navy-950"
           >
-            Show All Concert Pieces
+            Show Complete Program
           </button>
         </div>
       )}
@@ -407,45 +395,54 @@ export default function MusicLibrary({
 
       {/* Grouped Concert Program Sections */}
       {filteredPrograms.length === 0 ? (
-        <div className="rounded-3xl border border-zinc-200 bg-white p-12 text-center text-sm text-zinc-500">
+        <div className="border-y border-stone-200/90 py-14 text-center text-sm text-stone-500">
           {search ? (
             <div className="space-y-2">
-              <Music2 className="mx-auto h-8 w-8 text-zinc-300" />
-              <p className="font-semibold text-navy-950">No music found matching &ldquo;{search}&rdquo;</p>
-              <p className="text-xs text-zinc-400">Try searching for a different piece, composer, or score name.</p>
+              <Music2 className="mx-auto h-6 w-6 text-stone-400" />
+              <p className="font-editorial text-xl font-semibold text-navy-950">
+                No repertoire matching &ldquo;{search}&rdquo;
+              </p>
+              <p className="text-xs text-stone-500">
+                Try searching for a different work, composer, or score edition.
+              </p>
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="mt-2 text-xs font-semibold text-gold-600 underline hover:text-gold-700"
+                className="mt-2 cursor-pointer text-xs font-semibold uppercase tracking-[0.14em] text-copper-600 underline underline-offset-4 hover:text-navy-950"
               >
                 Clear Search
               </button>
             </div>
           ) : filterMode === 'my-part' ? (
             <div className="space-y-2">
-              <Sparkles className="mx-auto h-8 w-8 text-gold-400" />
-              <p className="font-semibold text-navy-950">No specific rehearsal tracks for {singer.voicePart} found.</p>
-              <p className="text-xs text-zinc-400">
-                Switch back to &ldquo;All Scores & Tracks&rdquo; to view full SATB scores and tutti reference recordings.
+              <p className="font-editorial text-xl font-semibold text-navy-950">
+                No dedicated {singer.voicePart} part files found.
+              </p>
+              <p className="text-xs text-stone-500">
+                Switch back to All Repertoire to view full SATB scores and tutti reference recordings.
               </p>
               <button
                 type="button"
                 onClick={() => setFilterMode('all')}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-xs font-semibold text-white"
+                className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-sm bg-navy-950 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white"
               >
-                Show All Scores & Tracks
+                Show All Repertoire
               </button>
             </div>
           ) : (
             <div className="space-y-2">
-              <Music2 className="mx-auto h-8 w-8 text-zinc-300" />
-              <p className="font-semibold text-navy-950">No repertoire pieces found.</p>
-              <p className="text-xs text-zinc-400">Upload PDF scores and MP3 part tracks to your Google Drive repertoire folder.</p>
+              <Music2 className="mx-auto h-6 w-6 text-stone-400" />
+              <p className="font-editorial text-xl font-semibold text-navy-950">
+                No repertoire posted yet.
+              </p>
+              <p className="text-xs text-stone-500">
+                Scores and rehearsal tracks appear automatically once uploaded to the ensemble Drive folder.
+              </p>
             </div>
           )}
         </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-14">
           {filteredPrograms.map((prog) => (
             <ProgramSection
               key={prog.id}

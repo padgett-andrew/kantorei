@@ -1,4 +1,4 @@
-import { Check, Copy, Edit3, Mail, Moon, Phone, ShieldCheck, Sun } from 'lucide-react';
+import { Check, Copy, Edit3, Mail, Moon, Phone, Sun } from 'lucide-react';
 import type { Singer } from '../../../types/choir';
 import { voicePartBadgeColor } from '../../../lib/utils';
 import StatusBadge from './StatusBadge';
@@ -25,77 +25,81 @@ export default function RosterCardView({
   onEditMember,
 }: Props) {
   return (
-    <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {singers.map((m) => {
         const isSelf = caller.email.toLowerCase() === m.email.toLowerCase();
         const badgeClass = voicePartBadgeColor(m.voicePart);
         const isBusy = busyEmail === m.email;
 
         return (
-          <div
+          <article
             key={m.email}
-            className={`flex flex-col justify-between rounded-2xl border p-4 sm:p-5 shadow-2xs transition ${
+            className={`flex flex-col justify-between rounded-sm border p-5 transition ${
               m.status === 'On_Leave'
-                ? 'border-indigo-200/80 bg-indigo-50/20'
+                ? 'border-[#e6d5bc] bg-[#FAF7F2]'
                 : isSelf
-                ? 'border-gold-400 bg-amber-50/30 ring-1 ring-gold-400'
-                : 'border-zinc-200/90 bg-white hover:border-zinc-300'
+                  ? 'border-copper-500 bg-white border-l-2 border-l-copper-600'
+                  : 'border-stone-200/90 bg-white hover:border-stone-300'
             }`}
           >
             <div>
-              {/* Top Row: Name, Voice Badge & Role */}
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <h3 className="font-bold text-sm sm:text-base text-zinc-900 leading-tight">
+              {/* Top Row: Name, Voice Badge & Section */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <h3 className="font-editorial text-2xl font-normal leading-tight text-navy-950">
                       {m.name}
                     </h3>
                     {isSelf && (
-                      <span className="rounded-full bg-gold-500 px-1.5 py-0.2 text-[9px] font-black uppercase text-white shadow-2xs">
+                      <span className="rounded-sm bg-copper-600 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-white">
                         You
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-500 mt-0.5">{m.sectionGroup} Section</p>
+                  <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-500">
+                    {m.sectionGroup} Section
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${badgeClass}`}>
-                    {m.voicePart}
-                  </span>
-                </div>
+                <span
+                  className={`shrink-0 rounded-sm border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${badgeClass}`}
+                >
+                  {m.voicePart}
+                </span>
               </div>
 
-              {/* Status & Role Badges */}
-              <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+              {/* Status & Leadership Role */}
+              <div className="mt-3 flex flex-wrap items-center gap-2.5 border-b border-stone-200/70 pb-3">
                 <StatusBadge status={m.status} />
                 {m.role !== 'Singer' && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-navy-900 px-2 py-0.5 text-[10px] font-semibold text-gold-300">
-                    <ShieldCheck className="h-3 w-3" />
-                    {m.role.replace('_', ' ')}
-                  </span>
+                  <>
+                    <span className="text-stone-300" aria-hidden="true">·</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-copper-700">
+                      {m.role.replace('_', ' ')}
+                    </span>
+                  </>
                 )}
               </div>
 
               {/* Contact Info */}
-              <div className="mt-3.5 space-y-1.5 text-xs text-zinc-600">
-                <div className="flex items-center justify-between">
+              <div className="mt-3.5 space-y-2 text-xs text-stone-600">
+                <div className="flex items-center justify-between gap-2">
                   <a
                     href={`mailto:${m.email}`}
-                    className="truncate hover:text-navy-950 hover:underline flex items-center gap-1.5"
+                    className="flex min-w-0 items-center gap-2 hover:text-navy-950 hover:underline"
                     title={m.email}
                   >
-                    <Mail className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-stone-400" />
                     <span className="truncate">{m.email}</span>
                   </a>
                   <button
                     type="button"
                     onClick={() => onCopyEmail(m.email)}
-                    className="cursor-pointer text-zinc-400 hover:text-navy-950 p-1"
+                    className="cursor-pointer rounded-sm p-1 text-stone-400 hover:bg-stone-100 hover:text-navy-950"
                     title="Copy email address"
                   >
                     {copiedEmail === m.email ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      <Check className="h-3.5 w-3.5 text-copper-600" />
                     ) : (
                       <Copy className="h-3.5 w-3.5" />
                     )}
@@ -103,22 +107,22 @@ export default function RosterCardView({
                 </div>
 
                 {m.phone ? (
-                  <div className="flex items-center justify-between pt-0.5">
-                    <span className="flex items-center gap-1.5 text-zinc-700 font-medium">
-                      <Phone className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 font-medium text-stone-700">
+                      <Phone className="h-3.5 w-3.5 shrink-0 text-stone-400" />
                       <span>{m.phone}</span>
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <a
                         href={`tel:${m.phone}`}
-                        className="cursor-pointer rounded-lg bg-zinc-100 hover:bg-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-800 transition"
+                        className="cursor-pointer rounded-sm border border-stone-200/90 bg-[#FAF7F2] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-navy-950 transition hover:border-navy-950"
                         title="Call"
                       >
                         Call
                       </a>
                       <a
                         href={`sms:${m.phone}`}
-                        className="cursor-pointer rounded-lg bg-zinc-100 hover:bg-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-800 transition"
+                        className="cursor-pointer rounded-sm border border-stone-200/90 bg-[#FAF7F2] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-navy-950 transition hover:border-navy-950"
                         title="Text"
                       >
                         Text
@@ -126,28 +130,28 @@ export default function RosterCardView({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-[11px] text-zinc-400 italic">No phone listed</p>
+                  <p className="text-[11px] italic text-stone-400">No telephone listed</p>
                 )}
               </div>
             </div>
 
-            {/* Admin Actions Footer on Card */}
+            {/* Admin Actions Footer */}
             {canManageRoster && (
-              <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
+              <div className="mt-4 flex items-center justify-between gap-2 border-t border-stone-200/80 pt-3">
                 <button
                   type="button"
                   onClick={() => onToggleSeasonLeave(m)}
                   disabled={isBusy}
-                  className={`cursor-pointer inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                  className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] transition ${
                     m.status === 'On_Leave'
-                      ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                      : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100'
+                      ? 'border-stone-300 bg-white text-navy-950 hover:border-navy-950'
+                      : 'border-[#e6d5bc] bg-[#f8efe2]/70 text-[#7d5220] hover:border-copper-500'
                   }`}
                   title={m.status === 'On_Leave' ? 'Reactivate for season' : 'Pause for season'}
                 >
                   {m.status === 'On_Leave' ? (
                     <>
-                      <Sun className="h-3 w-3" />
+                      <Sun className="h-3 w-3 text-copper-600" />
                       <span>Reactivate</span>
                     </>
                   ) : (
@@ -161,7 +165,7 @@ export default function RosterCardView({
                 <button
                   type="button"
                   onClick={() => onEditMember(m)}
-                  className="cursor-pointer inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 transition"
+                  className="inline-flex cursor-pointer items-center gap-1 rounded-sm border border-stone-300 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950"
                   title="Edit member details"
                 >
                   <Edit3 className="h-3 w-3" />
@@ -169,10 +173,9 @@ export default function RosterCardView({
                 </button>
               </div>
             )}
-          </div>
+          </article>
         );
       })}
     </div>
   );
 }
-
