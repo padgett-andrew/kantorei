@@ -33,7 +33,10 @@ const tabs = [
 ];
 ---
 
-<header class="sticky top-0 z-30 border-b border-stone-200/90 bg-[#FAF7F2]/95 text-navy-950 backdrop-blur-md">
+<header
+  id="portal-header"
+  class="sticky top-0 z-30 border-b border-stone-200/90 bg-[#FAF7F2]/95 text-navy-950 backdrop-blur-md transition-transform duration-300 ease-out will-change-transform"
+>
   <div class="mx-auto max-w-6xl px-4 sm:px-8">
     <div class="flex min-h-[4.5rem] items-center justify-between gap-4 py-2">
       <div class="flex min-w-0 items-center gap-4 sm:gap-8">
@@ -109,3 +112,82 @@ const tabs = [
     </div>
   </div>
 </header>
+
+<script>
+  function initPortalHeaderScroll() {
+    const header = document.getElementById('portal-header');
+    if (!header) return;
+
+    let lastScrollY = Math.max(0, window.scrollY);
+    let ticking = false;
+    const TOP_OFFSET = 64;
+    const SCROLL_DELTA = 8;
+
+    function showHeader() {
+      header!.classList.remove('-translate-y-full');
+    }
+
+    function hideHeader() {
+      header!.classList.add('-translate-y-full');
+    }
+
+    function updateHeader() {
+      ticking = false;
+      const currentY = Math.max(0, window.scrollY);
+
+      // Always reveal near the top of the document
+      if (currentY <= TOP_OFFSET) {
+        showHeader();
+        lastScrollY = currentY;
+        return;
+      }
+
+      // Keep header pinned if profile menu is open or focus is inside header
+      const isMenuOpen = header!.querySelector('[aria-expanded="true"]') !== null;
+      const hasFocus = header!.contains(document.activeElement);
+      if (isMenuOpen || hasFocus) {
+        showHeader();
+        lastScrollY = currentY;
+        return;
+      }
+
+      const diff = currentY - lastScrollY;
+
+      // Ignore tiny scroll tremors below hysteresis threshold
+      if (Math.abs(diff) < SCROLL_DELTA) {
+        return;
+      }
+
+      // Guard against iOS rubber-band bounce at the very bottom of the page
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (maxScroll > 0 && currentY >= maxScroll - 12 && diff < 0) {
+        return;
+      }
+
+      if (diff > 0) {
+        hideHeader();
+      } else {
+        showHeader();
+      }
+
+      lastScrollY = currentY;
+    }
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (!ticking) {
+          window.requestAnimationFrame(updateHeader);
+          ticking = true;
+        }
+      },
+      { passive: true },
+    );
+
+    // Reveal immediately if a keyboard user tabs into any link/button in the header
+    header.addEventListener('focusin', showHeader);
+  }
+
+  initPortalHeaderScroll();
+  document.addEventListener('astro:after-swap', initPortalHeaderScroll);
+</script>
