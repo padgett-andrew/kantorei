@@ -92,58 +92,6 @@ Adam Reinwald`,
       status: 'Pinned',
       threadId: 'thread-2026-11-07-saturday-notes',
     },
-    {
-      id: 'msg-2026-11-03-advent-markings',
-      timestamp: '2026-11-03T18:30:00.000Z',
-      fromName: 'Tony Rangel',
-      fromEmail: 'anthonyshanerangel@gmail.com',
-      subject: 'Sectional prep & breath markings for Gloria (Argento) and Aer Enim',
-      bodyText: `Hi everyone,
-
-Ahead of our 20-minute split sectionals this Sunday, please take a look at the updated PDFs in the Music Library for Dominick Argento’s "Gloria" and Linda Kachelmeier’s "Aer Enim".
-
-1) Gloria (Argento) — Tempo & Articulation:
-   mm. 1–24: Keep the eighth-note pulse crisp and buoyant (quarter = 132)
-   mm. 45–68: Staggered breathing across barlines so the long melismas never drop energy
-
-2) Aer Enim (SSAA) & Veni Emmanuel (TTBB):
-   Treble voices will meet in the Choir Room with CarlaJoy & Maryanne
-   Tenors and Basses will stay in the Main Sanctuary with me
-
-Bring a sharp pencil (or Apple Pencil) — looking forward to making great music together on Sunday!
-
-Tony`,
-      category: 'Rehearsal_Notes',
-      pinned: false,
-      status: 'Published',
-      threadId: 'thread-2026-11-03-advent-markings',
-    },
-    {
-      id: 'msg-2026-10-29-shoreview-logistics',
-      timestamp: '2026-10-29T14:10:00.000Z',
-      fromName: 'Maggie Akhavan',
-      fromEmail: 'maggieakhavan@gmail.com',
-      subject: 'Advent Cycle Venue Logistics, Fragrance-Free Reminder & Hospitality Sign-Ups',
-      bodyText: `Dear Kantorei Singers,
-
-Welcome to our Advent with Kantorei rehearsal cycle! A few quick operational notes as we settle into Sunday evenings at Shepherd of the Hills Lutheran Church in Shoreview (3920 Victoria St N):
-
-1) Arrival & North Entrance:
-   Please park in the main north lot and enter through Door B. Downbeat is promptly at 6:30 PM — aim to arrive by 6:15 PM to get settled in your row.
-
-2) Fragrance-Free Ensemble Policy:
-   As a reminder for vocal health across the choir, all rehearsals and performances are strictly fragrance-free (no perfumes, colognes, or scented lotions).
-
-3) Sunday Break Hospitality:
-   We still have open snack sign-up spots for November 15 and November 22! You can claim a spot in one tap on the Sign-Ups tab in the portal.
-
-Warmly,
-Maggie Akhavan`,
-      category: 'Logistics',
-      pinned: false,
-      status: 'Published',
-      threadId: 'thread-2026-10-29-shoreview-logistics',
-    },
   ],
   subscribers: [
     {
