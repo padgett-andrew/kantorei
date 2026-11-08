@@ -32,11 +32,13 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
   cookies.delete(SESSION_COOKIE, { path: '/' });
   cookies.delete(DEV_SIGNOUT_COOKIE, { path: '/' });
+  const maxAge = 60 * 60 * 24 * 7;
   cookies.set(DEV_ROLE_EMAIL_COOKIE, singer.email, {
     path: '/',
     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge,
+    expires: new Date(Date.now() + maxAge * 1000),
   });
 
   return new Response(JSON.stringify({ ok: true, singer }), {

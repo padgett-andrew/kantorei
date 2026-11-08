@@ -27,9 +27,11 @@ interface MemoryCacheEntry {
 }
 
 const memoryCache = new Map<string, MemoryCacheEntry>();
+const persistentMemoryCache = new Map<string, string>();
 
 function buildCacheUrl(tag: CacheTag): string {
-  return `https://kantorei-internal.cache/v4/${encodeURIComponent(tag)}`;
+  // Use a canonical URL matching the production zone domain so Cloudflare Cache API (caches.default) accepts it
+  return `https://kantorei.net/__kantorei_cache__/v4/${encodeURIComponent(tag)}`;
 }
 
 function getEdgeCache(): Cache | null {
@@ -64,6 +66,7 @@ export async function cachedFetchJson<T>(
       if (cachedRes) {
         const json = await cachedRes.text();
         memoryCache.set(key, { expiresAt: now + effectiveTtl * 1000, json });
+        persistentMemoryCache.set(key, json);
         return JSON.parse(json) as T;
       }
     } catch {
@@ -84,6 +87,15 @@ export async function cachedFetchJson<T>(
       return JSON.parse(memHit.json) as T;
     }
 
+    const persistent = persistentMemoryCache.get(key);
+    if (persistent) {
+      console.warn(
+        `[Cache Resilience] Fetch failed for tag "${tag}". Serving persistent memory-cached fallback. Reason:`,
+        err instanceof Error ? err.message : err
+      );
+      return JSON.parse(persistent) as T;
+    }
+
     if (edgeCache) {
       try {
         const cachedRes = await edgeCache.match(key);
@@ -94,6 +106,7 @@ export async function cachedFetchJson<T>(
             err instanceof Error ? err.message : err
           );
           memoryCache.set(key, { expiresAt: now + 30 * 1000, json });
+          persistentMemoryCache.set(key, json);
           return JSON.parse(json) as T;
         }
       } catch {
@@ -110,6 +123,7 @@ export async function cachedFetchJson<T>(
     expiresAt: now + effectiveTtl * 1000,
     json: serialized,
   });
+  persistentMemoryCache.set(key, serialized);
 
   if (edgeCache) {
     try {
@@ -118,7 +132,7 @@ export async function cachedFetchJson<T>(
         new Response(serialized, {
           headers: {
             'Content-Type': 'application/json',
-            'Cache-Control': `public, max-age=${effectiveTtl}`,
+            'Cache-Control': `public, max-age=${effectiveTtl}, stale-while-revalidate=86400, stale-if-error=604800`,
           },
         })
       );
@@ -133,6 +147,7 @@ export async function cachedFetchJson<T>(
 export async function invalidateCacheTag(tag: CacheTag): Promise<void> {
   const key = buildCacheUrl(tag);
   memoryCache.delete(key);
+  persistentMemoryCache.delete(key);
 
   const edgeCache = getEdgeCache();
   if (edgeCache) {

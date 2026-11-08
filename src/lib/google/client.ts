@@ -94,8 +94,8 @@ export async function getGoogleAccessToken(locals?: App.Locals): Promise<string>
     .setIssuer(clientEmail)
     .setSubject(clientEmail)
     .setAudience('https://oauth2.googleapis.com/token')
-    .setIssuedAt(nowSec)
-    .setExpirationTime(nowSec + 3600)
+    .setIssuedAt(nowSec - 30) // 30s skew tolerance for edge-to-Google clock drift
+    .setExpirationTime(nowSec + 300) // 5 minutes (assertion is exchanged immediately)
     .sign(privateKey);
 
   const res = await fetchWithRetry('https://oauth2.googleapis.com/token', {

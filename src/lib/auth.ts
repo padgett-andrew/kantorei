@@ -1,6 +1,13 @@
 import { createRemoteJWKSet, jwtVerify, SignJWT } from 'jose';
 import type { AstroCookies } from 'astro';
-import { canAccessPortal, type MemberRole, type Singer } from '../types/choir';
+import {
+  canAccessPortal,
+  type MemberRole,
+  type SectionGroup,
+  type Singer,
+  type SingerStatus,
+  type VoicePart,
+} from '../types/choir';
 import { getAuthSecret, getEnv, isDevPreviewEnabled } from './env';
 import { getRoster } from './google';
 
@@ -126,16 +133,43 @@ export async function exchangeGoogleCodeForVerifiedEmail(params: {
   };
 }
 
+export interface SessionSingerClaims {
+  email: string;
+  name?: string;
+  voicePart?: VoicePart;
+  sectionGroup?: SectionGroup;
+  role?: MemberRole;
+  phone?: string;
+  active?: boolean;
+  status?: SingerStatus;
+  picture?: string;
+}
+
 export async function createSessionToken(
-  email: string,
+  singerOrEmail: Singer | string,
   locals?: App.Locals,
   picture?: string
 ): Promise<string> {
+  const isSingerObj = typeof singerOrEmail === 'object' && singerOrEmail !== null;
+  const email = isSingerObj ? singerOrEmail.email : singerOrEmail;
   const normalized = email.trim().toLowerCase();
   const now = Math.floor(Date.now() / 1000);
+  const pic = picture || (isSingerObj ? singerOrEmail.picture || singerOrEmail.photoUrl : undefined);
+
   return new SignJWT({
     typ: 'session',
-    ...(picture ? { picture } : {}),
+    ...(isSingerObj
+      ? {
+          name: singerOrEmail.name,
+          voicePart: singerOrEmail.voicePart,
+          sectionGroup: singerOrEmail.sectionGroup,
+          role: singerOrEmail.role,
+          phone: singerOrEmail.phone,
+          active: singerOrEmail.active,
+          status: singerOrEmail.status,
+        }
+      : {}),
+    ...(pic ? { picture: pic } : {}),
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(normalized)
@@ -147,12 +181,22 @@ export async function createSessionToken(
 export async function verifySessionToken(
   token: string,
   locals?: App.Locals
-): Promise<{ email: string; picture?: string } | null> {
+): Promise<SessionSingerClaims | null> {
   try {
     const { payload } = await jwtVerify(token, getSecretKey(locals));
     if (payload.typ !== 'session' || typeof payload.sub !== 'string') return null;
     return {
       email: payload.sub.trim().toLowerCase(),
+      name: typeof payload.name === 'string' ? payload.name : undefined,
+      voicePart: typeof payload.voicePart === 'string' ? (payload.voicePart as VoicePart) : undefined,
+      sectionGroup:
+        typeof payload.sectionGroup === 'string'
+          ? (payload.sectionGroup as SectionGroup)
+          : undefined,
+      role: typeof payload.role === 'string' ? (payload.role as MemberRole) : undefined,
+      phone: typeof payload.phone === 'string' ? payload.phone : undefined,
+      active: typeof payload.active === 'boolean' ? payload.active : true,
+      status: typeof payload.status === 'string' ? (payload.status as SingerStatus) : 'Active',
       picture: typeof payload.picture === 'string' ? payload.picture : undefined,
     };
   } catch {
@@ -220,12 +264,14 @@ export async function verifyOtpChallengeToken(params: {
 
 export function setSessionCookie(cookies: AstroCookies, token: string, requestUrl: URL): void {
   const isSecure = requestUrl.protocol === 'https:';
+  const maxAge = 60 * 60 * 24 * 180; // 180 days (full choral season so singers never get logged out mid-cycle)
   cookies.set(SESSION_COOKIE, token, {
     path: '/',
     httpOnly: true,
     secure: isSecure,
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 180, // 180 days (full choral season so singers never get logged out mid-cycle)
+    maxAge,
+    expires: new Date(Date.now() + maxAge * 1000),
   });
   cookies.delete(DEV_SIGNOUT_COOKIE, { path: '/' });
 }
@@ -248,19 +294,52 @@ export async function resolveAuthenticatedSinger(
   cookies: AstroCookies,
   locals?: App.Locals
 ): Promise<{ singer: Singer | null; isDevPreview: boolean }> {
-  const roster = await getRoster(locals);
-
   const sessionToken = cookies.get(SESSION_COOKIE)?.value;
   if (sessionToken) {
     const session = await verifySessionToken(sessionToken, locals);
     if (session) {
-      const match = roster.find((s) => matchRosterEmail(s.email, session.email) && canAccessPortal(s));
-      if (match) {
+      // 1. Attempt live roster hydration from Google Sheets
+      try {
+        const roster = await getRoster(locals);
+        const match = roster.find((s) => matchRosterEmail(s.email, session.email));
+        if (match) {
+          if (canAccessPortal(match)) {
+            return {
+              singer: {
+                ...match,
+                ...(session.picture ? { picture: session.picture, photoUrl: session.picture } : {}),
+              },
+              isDevPreview: false,
+            };
+          } else {
+            // Explicitly inactive or revoked in sheet
+            return { singer: null, isDevPreview: false };
+          }
+        }
+      } catch (rosterErr) {
+        console.warn(
+          `[Auth Resilience] Google Sheets roster unreachable for session ${session.email}. Serving verified session claims. Reason:`,
+          rosterErr instanceof Error ? rosterErr.message : rosterErr
+        );
+      }
+
+      // 2. Resilience Fallback: If Google Sheets API had a hiccup, rate limit, or cold start latency,
+      // fall back to the cryptographically verified session claims in the JWT so singers are never logged out!
+      const fallbackSinger: Singer = {
+        email: session.email,
+        name: session.name || session.email.split('@')[0],
+        voicePart: session.voicePart || 'B2',
+        sectionGroup: session.sectionGroup || 'Bass',
+        role: session.role || 'Singer',
+        phone: session.phone || '',
+        active: session.active ?? true,
+        status: session.status || 'Active',
+        ...(session.picture ? { picture: session.picture, photoUrl: session.picture } : {}),
+      };
+
+      if (canAccessPortal(fallbackSinger)) {
         return {
-          singer: {
-            ...match,
-            ...(session.picture ? { picture: session.picture, photoUrl: session.picture } : {}),
-          },
+          singer: fallbackSinger,
           isDevPreview: false,
         };
       }
@@ -271,17 +350,22 @@ export async function resolveAuthenticatedSinger(
   if (isDevPreviewEnabled(locals)) {
     const signedOut = cookies.get(DEV_SIGNOUT_COOKIE)?.value === '1';
     if (!signedOut) {
-      const requestedDevEmail = cookies.get(DEV_ROLE_EMAIL_COOKIE)?.value?.trim().toLowerCase();
-      const devSinger =
-        (requestedDevEmail
-          ? roster.find((s) => matchRosterEmail(s.email, requestedDevEmail) && canAccessPortal(s))
-          : undefined) ??
-        roster.find((s) => s.role === 'Admin' && s.active) ??
-        roster.find((s) => s.active) ??
-        null;
+      try {
+        const roster = await getRoster(locals);
+        const requestedDevEmail = cookies.get(DEV_ROLE_EMAIL_COOKIE)?.value?.trim().toLowerCase();
+        const devSinger =
+          (requestedDevEmail
+            ? roster.find((s) => matchRosterEmail(s.email, requestedDevEmail) && canAccessPortal(s))
+            : undefined) ??
+          roster.find((s) => s.role === 'Admin' && s.active) ??
+          roster.find((s) => s.active) ??
+          null;
 
-      if (devSinger) {
-        return { singer: devSinger, isDevPreview: true };
+        if (devSinger) {
+          return { singer: devSinger, isDevPreview: true };
+        }
+      } catch {
+        // Dev preview roster error tolerance
       }
     }
   }

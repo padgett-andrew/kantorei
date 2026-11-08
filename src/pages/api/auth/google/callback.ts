@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ url, cookies, locals, redirect }) => {
       return redirect('/login?error=not_on_roster');
     }
 
-    const sessionJwt = await createSessionToken(singer.email, locals, picture);
+    const sessionJwt = await createSessionToken(singer, locals, picture);
     setSessionCookie(cookies, sessionJwt, url);
 
     return redirect('/portal');

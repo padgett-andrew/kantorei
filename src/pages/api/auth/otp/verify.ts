@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request, url, cookies, locals }) => {
     }
 
     cookies.delete(OTP_CHALLENGE_COOKIE, { path: '/' });
-    const sessionJwt = await createSessionToken(singer.email, locals);
+    const sessionJwt = await createSessionToken(singer, locals);
     setSessionCookie(cookies, sessionJwt, url);
 
     return new Response(JSON.stringify({ ok: true, redirectTo: '/portal' }), {
