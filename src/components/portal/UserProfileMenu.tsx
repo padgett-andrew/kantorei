@@ -66,8 +66,21 @@ export default function UserProfileMenu({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    function handleResize() {
+      if (typeof window !== 'undefined' && window.innerWidth < 1280 && isOpen) {
+        setIsOpen(false);
+      }
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isOpen]);
+
   function handleTriggerClick() {
-    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 1279px)').matches
+    ) {
       window.dispatchEvent(new CustomEvent('kantorei:open-mobile-drawer'));
       setIsOpen(false);
     } else {

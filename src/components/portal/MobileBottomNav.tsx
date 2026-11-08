@@ -75,6 +75,17 @@ export default function MobileBottomNav({
     };
   }, []);
 
+  // Dismiss drawer automatically if viewport expands to desktop size (>= 1280px)
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth >= 1280) {
+        setShowMoreMenu(false);
+      }
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Escape key dismissal & background body scroll lock
   useEffect(() => {
     if (!showMoreMenu) return;
@@ -120,9 +131,9 @@ export default function MobileBottomNav({
 
   return (
     <>
-      {/* Unified Slide-Up Mobile Sheet in Warm Cotton-Ivory */}
+      {/* Unified Slide-Up Mobile & Tablet Sheet in Warm Cotton-Ivory */}
       {showMoreMenu && (
-        <div className="fixed inset-0 z-50 sm:hidden">
+        <div className="fixed inset-0 z-50 xl:hidden">
           {/* Backdrop */}
           <div
             onClick={() => setShowMoreMenu(false)}
@@ -135,7 +146,7 @@ export default function MobileBottomNav({
             role="dialog"
             aria-modal="true"
             aria-label="Singer Navigation & Account Menu"
-            className="fixed right-0 bottom-0 left-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-xl border-t border-stone-200 bg-[#FAF7F2] p-5 text-stone-800 shadow-2xl animate-in slide-in-from-bottom duration-200 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]"
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-xl border-t border-stone-200 bg-[#FAF7F2] p-5 text-stone-800 shadow-2xl animate-in slide-in-from-bottom duration-200 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:inset-x-4 sm:bottom-6 sm:mx-auto sm:max-w-xl sm:rounded-2xl sm:border sm:border-stone-200/90 sm:pb-6"
           >
             {/* Grab Handle */}
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-stone-300" aria-hidden="true" />
@@ -198,6 +209,62 @@ export default function MobileBottomNav({
               </div>
 
               <div className="divide-y divide-stone-200/70 border-y border-stone-200/80">
+                <a
+                  href="/portal"
+                  onClick={() => setShowMoreMenu(false)}
+                  className={rowLinkClass(isScheduleActive)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-4 w-4 shrink-0 text-copper-600" />
+                    <div>
+                      <p className="font-medium text-navy-950">Schedule &amp; Rehearsals</p>
+                      <p className="text-xs text-stone-500">Calls, times &amp; calendar feed</p>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="/portal/music"
+                  onClick={() => setShowMoreMenu(false)}
+                  className={rowLinkClass(isMusicActive)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Music className="h-4 w-4 shrink-0 text-copper-600" />
+                    <div>
+                      <p className="font-medium text-navy-950">Music Library &amp; Audio</p>
+                      <p className="text-xs text-stone-500">Score PDFs &amp; practice tracks</p>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="/portal/absences"
+                  onClick={() => setShowMoreMenu(false)}
+                  className={rowLinkClass(isAbsencesActive)}
+                >
+                  <div className="flex items-center gap-3">
+                    <UserX className="h-4 w-4 shrink-0 text-copper-600" />
+                    <div>
+                      <p className="font-medium text-navy-950">Absence Reporting</p>
+                      <p className="text-xs text-stone-500">Submit requests &amp; check standing</p>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="/portal/snacks"
+                  onClick={() => setShowMoreMenu(false)}
+                  className={rowLinkClass(isSnacksActive)}
+                >
+                  <div className="flex items-center gap-3">
+                    <CheckSquare className="h-4 w-4 shrink-0 text-copper-600" />
+                    <div>
+                      <p className="font-medium text-navy-950">Sign-Ups &amp; Duties</p>
+                      <p className="text-xs text-stone-500">Hospitality snacks &amp; concert crew</p>
+                    </div>
+                  </div>
+                </a>
+
                 <a
                   href="/portal/seating"
                   onClick={() => setShowMoreMenu(false)}
@@ -403,12 +470,12 @@ export default function MobileBottomNav({
         </div>
       )}
 
-      {/* Fixed Bottom Bar on Mobile Phones — Cohesive Warm Cotton-Ivory */}
+      {/* Fixed Bottom Bar on Mobile & Tablet — Cohesive Warm Cotton-Ivory */}
       <nav
-        aria-label="Mobile Navigation"
-        className="fixed right-0 bottom-0 left-0 z-40 border-t border-stone-200/90 bg-[#FAF7F2]/96 px-2 pt-1 shadow-[0_-4px_20px_rgba(13,24,38,0.05)] backdrop-blur-md sm:hidden pb-[calc(0.45rem+env(safe-area-inset-bottom,0px))]"
+        aria-label="Portal Navigation"
+        className="fixed right-0 bottom-0 left-0 z-40 border-t border-stone-200/90 bg-[#FAF7F2]/96 px-2 pt-1 shadow-[0_-4px_20px_rgba(13,24,38,0.05)] backdrop-blur-md xl:hidden pb-[calc(0.45rem+env(safe-area-inset-bottom,0px))] sm:py-1.5"
       >
-        <div className="flex items-center justify-around">
+        <div className="mx-auto flex max-w-xl items-center justify-around sm:px-4">
           {[
             { href: '/portal', label: 'Schedule', active: isScheduleActive, Icon: Calendar },
             { href: '/portal/music', label: 'Music', active: isMusicActive, Icon: Music },
@@ -419,16 +486,16 @@ export default function MobileBottomNav({
               key={href}
               href={href}
               aria-current={active ? 'page' : undefined}
-              className="relative flex flex-col items-center gap-0.5 px-2.5 py-1.5 text-[10px] transition"
+              className="relative flex flex-col items-center gap-0.5 px-2.5 py-1.5 text-[10px] transition sm:px-4 sm:py-2 sm:text-[11px]"
             >
               {active && (
                 <span
                   aria-hidden="true"
-                  className="absolute top-0 right-2 left-2 h-[1.5px] bg-copper-500"
+                  className="absolute top-0 right-2 left-2 h-[1.5px] bg-copper-500 sm:right-3 sm:left-3"
                 />
               )}
               <Icon
-                className={`h-4 w-4 transition-colors ${
+                className={`h-4 w-4 transition-colors sm:h-5 sm:w-5 ${
                   active ? 'text-copper-600' : 'text-stone-400'
                 }`}
               />
@@ -449,16 +516,16 @@ export default function MobileBottomNav({
             aria-expanded={showMoreMenu}
             aria-haspopup="dialog"
             onClick={() => setShowMoreMenu(true)}
-            className="relative flex cursor-pointer flex-col items-center gap-0.5 px-2.5 py-1.5 text-[10px] transition"
+            className="relative flex cursor-pointer flex-col items-center gap-0.5 px-2.5 py-1.5 text-[10px] transition sm:px-4 sm:py-2 sm:text-[11px]"
           >
             {isMoreActive && (
               <span
                 aria-hidden="true"
-                className="absolute top-0 right-2 left-2 h-[1.5px] bg-copper-500"
+                className="absolute top-0 right-2 left-2 h-[1.5px] bg-copper-500 sm:right-3 sm:left-3"
               />
             )}
             <MoreHorizontal
-              className={`h-4 w-4 transition-colors ${
+              className={`h-4 w-4 transition-colors sm:h-5 sm:w-5 ${
                 isMoreActive ? 'text-copper-600' : 'text-stone-400'
               }`}
             />

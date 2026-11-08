@@ -68,7 +68,7 @@ export default function AudioPlayer({ activeAudio, onClose }: Props) {
   if (!activeAudio) return null;
 
   return (
-    <div className="fixed right-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-0 left-0 z-45 border-t border-white/15 bg-[#0B131E] px-4 py-3 text-white shadow-2xl animate-in slide-in-from-bottom sm:px-8">
+    <div className="fixed right-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] xl:bottom-0 left-0 z-45 border-t border-white/15 bg-[#0B131E] px-4 py-3 text-white shadow-2xl animate-in slide-in-from-bottom sm:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-copper-300">
