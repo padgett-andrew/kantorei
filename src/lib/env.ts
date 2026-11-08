@@ -36,6 +36,7 @@ export const EnvSchema = z.object({
   MAILERLITE_API_KEY: z.string().optional(),
   MAILERLITE_GROUP_ID: z.string().optional(),
   TICKET_TAILOR_WEBHOOK_SECRET: z.string().optional(),
+  EMAIL_BOT_WEBHOOK_SECRET: z.string().optional(),
 });
 
 export type ValidatedEnv = z.infer<typeof EnvSchema>;
@@ -71,6 +72,7 @@ export const KNOWN_ENV_KEYS = [
   'MAILERLITE_API_KEY',
   'MAILERLITE_GROUP_ID',
   'TICKET_TAILOR_WEBHOOK_SECRET',
+  'EMAIL_BOT_WEBHOOK_SECRET',
 ] as const;
 
 export type KnownEnvKey = (typeof KNOWN_ENV_KEYS)[number] | (string & {});
@@ -91,6 +93,7 @@ export const ENV_CLASSIFICATIONS: Record<(typeof KNOWN_ENV_KEYS)[number], EnvCla
   RESEND_API_KEY: 'secret',
   MAILERLITE_API_KEY: 'secret',
   TICKET_TAILOR_WEBHOOK_SECRET: 'secret',
+  EMAIL_BOT_WEBHOOK_SECRET: 'secret',
 
   DEV_PREVIEW_BYPASS: 'config',
   ENVIRONMENT: 'config',

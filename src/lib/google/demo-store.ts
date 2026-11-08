@@ -1,6 +1,7 @@
 import type {
   AbsenceRecord,
   BoardMember,
+  BulletinMessage,
   ConcertEvent,
   GivingTier,
   LeadershipMember,
@@ -37,9 +38,113 @@ export interface DemoStore {
   warnings: SheetWarning[];
   seatingCharts: SeatingChart[];
   subscribers: SubscriberRecord[];
+  messages: BulletinMessage[];
 }
 
 export const demoStore: DemoStore = {
+  messages: [
+    {
+      id: 'msg-2026-11-07-saturday-notes',
+      timestamp: '2026-11-07T16:15:00.000Z',
+      fromName: 'Adam Reinwald',
+      fromEmail: 'adam.reinwald@kantorei.net',
+      subject: 'Quick notes for a Saturday — Sunday Rehearsal Setlist & Small Groups',
+      bodyText: `Hello folks,
+
+Quick notes for a Saturday:
+
+   1) Setlist for Sunday:
+            vocalizing with Tony - 10 mins max
+            Regem Natum - 10 mins (full chorus)
+            Rise Up Shepherd - 10 mins - focus on first two pages? 
+            Spotless Rose (Howells) - 10 mins - first & last verse notes/rhythms
+            Gaudete - 12 mins - introduce rhythmic elements
+                  -- BREAK --
+            Sectionals - Gloria (Argento) + Aer Enim OR Veni Emmanuel - 20 mins
+            Announcements - 5 mins
+            Refugee (Deignan) - 20 mins
+            Lo, How a Rose (Sandstrom) - 6 mins - part assignments, trial balance first page only
+            His Voice as the Sound - 10 mins
+
+
+   2). In the Stillness (Beamish) small group — we’ll discuss and make sure these folks are up for it.
+    Delaney + Zoey + Amanda + Lori
+    Abs + Ann + Maggie + Christine
+    Michael Cl + James + Jonathan P
+    Cory + Joe P + Bjorn + Tony
+
+   3) Lo, How a Rose — 8 voices in choir 1 (+ one more if needed for balance)
+    Melia + Molly  (+ Karin)
+    Kelly + CarlaJoy (+ Heather)
+    Travis + Sam (+ Joel)
+    Andrew + John D (+ Mark)
+    Charlotte / Genna on high G solo
+
+   4). Rise Up, Shepherd and Follow— at the beginning, just S1s, no solo
+
+Need to audition a changed voice soloist for “A Spotless Rose” (Howells)
+
+See you tomorrow at 6:30 in Shoreview!
+
+Adam Reinwald`,
+      category: 'Rehearsal_Notes',
+      pinned: true,
+      status: 'Pinned',
+      threadId: 'thread-2026-11-07-saturday-notes',
+    },
+    {
+      id: 'msg-2026-11-03-advent-markings',
+      timestamp: '2026-11-03T18:30:00.000Z',
+      fromName: 'Tony Rangel',
+      fromEmail: 'anthonyshanerangel@gmail.com',
+      subject: 'Sectional prep & breath markings for Gloria (Argento) and Aer Enim',
+      bodyText: `Hi everyone,
+
+Ahead of our 20-minute split sectionals this Sunday, please take a look at the updated PDFs in the Music Library for Dominick Argento’s "Gloria" and Linda Kachelmeier’s "Aer Enim".
+
+1) Gloria (Argento) — Tempo & Articulation:
+   mm. 1–24: Keep the eighth-note pulse crisp and buoyant (quarter = 132)
+   mm. 45–68: Staggered breathing across barlines so the long melismas never drop energy
+
+2) Aer Enim (SSAA) & Veni Emmanuel (TTBB):
+   Treble voices will meet in the Choir Room with CarlaJoy & Maryanne
+   Tenors and Basses will stay in the Main Sanctuary with me
+
+Bring a sharp pencil (or Apple Pencil) — looking forward to making great music together on Sunday!
+
+Tony`,
+      category: 'Rehearsal_Notes',
+      pinned: false,
+      status: 'Published',
+      threadId: 'thread-2026-11-03-advent-markings',
+    },
+    {
+      id: 'msg-2026-10-29-shoreview-logistics',
+      timestamp: '2026-10-29T14:10:00.000Z',
+      fromName: 'Maggie Akhavan',
+      fromEmail: 'maggieakhavan@gmail.com',
+      subject: 'Advent Cycle Venue Logistics, Fragrance-Free Reminder & Hospitality Sign-Ups',
+      bodyText: `Dear Kantorei Singers,
+
+Welcome to our Advent with Kantorei rehearsal cycle! A few quick operational notes as we settle into Sunday evenings at Shepherd of the Hills Lutheran Church in Shoreview (3920 Victoria St N):
+
+1) Arrival & North Entrance:
+   Please park in the main north lot and enter through Door B. Downbeat is promptly at 6:30 PM — aim to arrive by 6:15 PM to get settled in your row.
+
+2) Fragrance-Free Ensemble Policy:
+   As a reminder for vocal health across the choir, all rehearsals and performances are strictly fragrance-free (no perfumes, colognes, or scented lotions).
+
+3) Sunday Break Hospitality:
+   We still have open snack sign-up spots for November 15 and November 22! You can claim a spot in one tap on the Sign-Ups tab in the portal.
+
+Warmly,
+Maggie Akhavan`,
+      category: 'Logistics',
+      pinned: false,
+      status: 'Published',
+      threadId: 'thread-2026-10-29-shoreview-logistics',
+    },
+  ],
   subscribers: [
     {
       timestamp: '2026-10-15T14:22:00.000Z',

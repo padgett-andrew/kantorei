@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { sanitizeHeroImageUrl } from './utils';
 import { processConcertDates, resolveConcertStatus } from './dates';
 import {
+  BULLETIN_CATEGORIES,
   EVENT_TYPES,
   inferSectionGroup,
   MEMBER_ROLES,
@@ -11,6 +12,8 @@ import {
   VOICE_PARTS,
   type AbsenceRecord,
   type BoardMember,
+  type BulletinCategory,
+  type BulletinMessage,
   type ConcertEvent,
   type GivingTier,
   type LeadershipMember,
@@ -410,5 +413,105 @@ export const SubscribeRequestSchema = z.object({
   source: z.string().trim().max(80).optional().default('Website'),
   website_hp: z.string().optional().default(''), // Honeypot field for anti-spam
 });
+
+export function inferBulletinCategory(subject: string, bodyText: string): BulletinCategory {
+  const combined = `${subject} ${bodyText}`.toLowerCase();
+  if (
+    combined.includes('setlist') ||
+    combined.includes('rehearsal') ||
+    combined.includes('quick notes') ||
+    combined.includes('sectionals') ||
+    combined.includes('vocalizing')
+  ) {
+    return 'Rehearsal_Notes';
+  }
+  if (
+    combined.includes('small group') ||
+    combined.includes('solo') ||
+    combined.includes('part assignment') ||
+    combined.includes('choir 1') ||
+    combined.includes('voicing')
+  ) {
+    return 'Part_Assignments';
+  }
+  if (
+    combined.includes('parking') ||
+    combined.includes('attire') ||
+    combined.includes('call time') ||
+    combined.includes('doors open') ||
+    combined.includes('venue')
+  ) {
+    return 'Logistics';
+  }
+  return 'Announcement';
+}
+
+export const BulletinMessageRowSchema = z
+  .tuple([
+    trimmedString.pipe(z.string().min(1, 'Missing Message_ID')),
+    trimmedString,
+    trimmedString.pipe(z.string().min(1, 'Missing From_Name')),
+    trimmedString,
+    trimmedString.pipe(z.string().min(1, 'Missing Subject')),
+    trimmedString.pipe(z.string().min(1, 'Missing Body_Text')),
+    trimmedString,
+    trimmedString,
+    trimmedString,
+    trimmedString,
+  ])
+  .transform(
+    ([
+      id,
+      timestamp,
+      fromName,
+      fromEmail,
+      subject,
+      bodyText,
+      rawCategory,
+      rawPinned,
+      rawStatus,
+      threadId,
+    ]): BulletinMessage => {
+      const normalizedCategory =
+        BULLETIN_CATEGORIES.find(
+          (c) => c.toLowerCase() === rawCategory.replace(/\s+/g, '_').toLowerCase()
+        ) ?? inferBulletinCategory(subject, bodyText);
+
+      const normStatus = rawStatus.trim().toLowerCase();
+      const status =
+        normStatus === 'archived'
+          ? 'Archived'
+          : normStatus === 'pinned'
+          ? 'Pinned'
+          : 'Published';
+
+      const normPinned = rawPinned.trim().toLowerCase();
+      const pinned =
+        status === 'Pinned' || ['true', 'yes', '1', 'y', 'pinned'].includes(normPinned);
+
+      return {
+        id,
+        timestamp: timestamp || new Date().toISOString(),
+        fromName,
+        fromEmail: (fromEmail || 'singers@kantorei.net').toLowerCase(),
+        subject,
+        bodyText,
+        category: normalizedCategory,
+        pinned,
+        status: pinned && status === 'Published' ? 'Pinned' : status,
+        threadId: threadId || undefined,
+      };
+    }
+  );
+
+export const CreateBulletinMessageRequestSchema = z.object({
+  subject: z.string().trim().min(1, 'Subject is required').max(200, 'Subject is too long'),
+  bodyText: z.string().trim().min(1, 'Message body is required').max(15000, 'Message is too long'),
+  category: z.enum(BULLETIN_CATEGORIES).optional(),
+  pinned: z.boolean().optional().default(false),
+  fromName: z.string().trim().optional(),
+  fromEmail: z.string().trim().email().optional(),
+});
+
 
 

@@ -2,6 +2,7 @@ import {
   formatSnackEntry,
   type AbsenceRecord,
   type BoardMember,
+  type BulletinMessage,
   type ConcertEvent,
   type GivingTier,
   type LeadershipMember,
@@ -23,6 +24,7 @@ import {
 import {
   AbsenceRowSchema,
   BoardMemberRowSchema,
+  BulletinMessageRowSchema,
   ConcertRowSchema,
   GivingTierRowSchema,
   LeadershipRowSchema,
@@ -657,8 +659,61 @@ export async function getSubscribers(locals?: App.Locals): Promise<SubscriberRec
   return subscribers;
 }
 
+export async function getBulletinMessagesWithWarnings(
+  locals?: App.Locals
+): Promise<{ messages: BulletinMessage[]; warnings: SheetWarning[] }> {
+  const sortMessages = (list: BulletinMessage[]) =>
+    [...list]
+      .filter((m) => m.status !== 'Archived')
+      .sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return b.timestamp.localeCompare(a.timestamp);
+      });
+
+  if (isSandboxSheetMode(locals)) {
+    return { messages: sortMessages(demoStore.messages || []), warnings: [] };
+  }
+
+  return cachedFetchJson('messages', 60, async () => {
+    try {
+      const rows = await readSheetValues('Messages!A2:J', locals);
+      const messages: BulletinMessage[] = [];
+      const warnings: SheetWarning[] = [];
+
+      rows.forEach((rawRow, idx) => {
+        if (isBlankRow(rawRow)) return;
+        const parsed = BulletinMessageRowSchema.safeParse(padRow(rawRow, 10));
+        if (parsed.success) {
+          messages.push(parsed.data);
+        } else {
+          warnings.push({
+            tab: 'Messages',
+            rowNumber: idx + 2,
+            message: parsed.error.issues.map((i) => i.message).join('; '),
+          });
+        }
+      });
+
+      const resolved =
+        messages.length > 0
+          ? sortMessages(messages)
+          : sortMessages(demoStore.messages || []);
+
+      return { messages: resolved, warnings };
+    } catch {
+      // Tab may not exist yet in sheet; gracefully serve initial example dispatches until provisioned
+      return { messages: sortMessages(demoStore.messages || []), warnings: [] };
+    }
+  });
+}
+
+export async function getBulletinMessages(locals?: App.Locals): Promise<BulletinMessage[]> {
+  const { messages } = await getBulletinMessagesWithWarnings(locals);
+  return messages;
+}
+
 export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWarning[]> {
-  const [r, s, a, c, m, sc, b, l, gt, sub] = await Promise.all([
+  const [r, s, a, c, m, sc, b, l, gt, sub, msg] = await Promise.all([
     getRosterWithWarnings(locals),
     getScheduleWithWarnings(locals),
     getAbsencesWithWarnings(locals),
@@ -669,6 +724,7 @@ export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWar
     getLeadershipWithWarnings(locals),
     getGivingTiersWithWarnings(locals),
     getSubscribersWithWarnings(locals),
+    getBulletinMessagesWithWarnings(locals),
   ]);
   return [
     ...r.warnings,
@@ -681,6 +737,8 @@ export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWar
     ...l.warnings,
     ...gt.warnings,
     ...sub.warnings,
+    ...msg.warnings,
   ];
 }
+
 

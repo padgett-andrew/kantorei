@@ -3,6 +3,9 @@ import {
   inferSectionGroup,
   type AbsenceRecord,
   type AbsenceStatus,
+  type BulletinCategory,
+  type BulletinMessage,
+  type BulletinMessageStatus,
   type ScheduleEvent,
   type SeatingChart,
   type Singer,
@@ -10,7 +13,7 @@ import {
 } from '../../types/choir';
 import { invalidateCacheTag } from '../cache';
 import { isSandboxSheetMode } from '../env';
-import { AbsenceRowSchema } from '../schemas';
+import { AbsenceRowSchema, inferBulletinCategory } from '../schemas';
 import {
   ConflictError,
   NotFoundError,
@@ -20,7 +23,7 @@ import {
   writeSheetValues,
 } from './client';
 import { demoStore } from './demo-store';
-import { getScheduleWithWarnings } from './sheets';
+import { getBulletinMessages, getScheduleWithWarnings } from './sheets';
 
 export type SnackSlotNumber = 1 | 2 | 3 | 4;
 
@@ -697,5 +700,194 @@ export async function recordSubscriber(params: {
   await invalidateCacheTag('subscribers');
   return record;
 }
+
+/**
+ * Appends a new dispatch/email message to the Master Google Sheet `Messages` tab
+ * (either from the inbound `singers@kantorei.net` email bot webhook or the in-portal composer).
+ */
+export async function appendBulletinMessage(params: {
+  id?: string;
+  timestamp?: string;
+  fromName: string;
+  fromEmail: string;
+  subject: string;
+  bodyText: string;
+  category?: BulletinCategory;
+  pinned?: boolean;
+  threadId?: string;
+  locals?: App.Locals;
+}): Promise<BulletinMessage> {
+  const {
+    id,
+    timestamp,
+    fromName,
+    fromEmail,
+    subject,
+    bodyText,
+    category,
+    pinned = false,
+    threadId,
+    locals,
+  } = params;
+
+  const nowIso = timestamp || new Date().toISOString();
+  const resolvedId =
+    id?.trim() ||
+    `msg-${nowIso.slice(0, 10)}-${Math.random().toString(36).slice(2, 7)}`;
+  const resolvedCategory = category || inferBulletinCategory(subject, bodyText);
+  const resolvedStatus: BulletinMessageStatus = pinned ? 'Pinned' : 'Published';
+
+  const message: BulletinMessage = {
+    id: resolvedId,
+    timestamp: nowIso,
+    fromName: fromName.trim() || 'Kantorei Leadership',
+    fromEmail: fromEmail.trim().toLowerCase() || 'singers@kantorei.net',
+    subject: subject.trim(),
+    bodyText: bodyText.replace(/\r\n/g, '\n').trim(),
+    category: resolvedCategory,
+    pinned,
+    status: resolvedStatus,
+    threadId: threadId?.trim() || `thread-${resolvedId}`,
+  };
+
+  if (isSandboxSheetMode(locals)) {
+    if (!demoStore.messages) demoStore.messages = [];
+    const existingIdx = demoStore.messages.findIndex((m) => m.id === message.id);
+    if (existingIdx >= 0) {
+      demoStore.messages[existingIdx] = message;
+    } else {
+      demoStore.messages.unshift(message);
+    }
+    await invalidateCacheTag('messages');
+    return message;
+  }
+
+  const rowValues = [
+    message.id,
+    message.timestamp,
+    message.fromName,
+    message.fromEmail,
+    message.subject,
+    message.bodyText,
+    message.category,
+    message.pinned ? 'TRUE' : 'FALSE',
+    message.status,
+    message.threadId || '',
+  ];
+
+  try {
+    const allRows = await readSheetValues('Messages!A1:J', locals).catch(() => []);
+    if (allRows.length === 0) {
+      await writeSheetValues(
+        'Messages!A1:J1',
+        [[
+          'Message_ID',
+          'Timestamp',
+          'From_Name',
+          'From_Email',
+          'Subject',
+          'Body_Text',
+          'Category',
+          'Pinned',
+          'Status',
+          'Thread_ID',
+        ]],
+        locals
+      ).catch(() => {});
+    }
+    await appendSheetValues('Messages!A:J', [rowValues], locals);
+  } catch (err) {
+    console.error('[appendBulletinMessage] Failed to write to Messages tab:', err);
+    throw err;
+  }
+
+  await invalidateCacheTag('messages');
+  return message;
+}
+
+/**
+ * Updates pin or archive status of an existing message on the bulletin board.
+ */
+export async function updateBulletinMessageStatus(params: {
+  id: string;
+  pinned?: boolean;
+  status?: BulletinMessageStatus;
+  locals?: App.Locals;
+}): Promise<BulletinMessage> {
+  const { id, pinned, status, locals } = params;
+
+  if (isSandboxSheetMode(locals)) {
+    const msg = (demoStore.messages || []).find((m) => m.id === id);
+    if (!msg) {
+      throw new NotFoundError(`Bulletin message "${id}" not found.`);
+    }
+    if (typeof pinned === 'boolean') {
+      msg.pinned = pinned;
+      if (msg.status !== 'Archived') {
+        msg.status = pinned ? 'Pinned' : 'Published';
+      }
+    }
+    if (status) {
+      msg.status = status;
+      if (status === 'Pinned') msg.pinned = true;
+      if (status === 'Published' && pinned === undefined) msg.pinned = false;
+    }
+    await invalidateCacheTag('messages');
+    return msg;
+  }
+
+  const allRows = await readSheetValues('Messages!A1:J', locals);
+  const rows = allRows.slice(1);
+  const matchIdx = rows.findIndex((r) => (r[0] ?? '').trim() === id);
+
+  if (matchIdx === -1) {
+    // Check if it's one of the built-in default dispatches before the sheet tab was populated
+    const demoFallback = (demoStore.messages || []).find((m) => m.id === id);
+    if (demoFallback) {
+      const nextPinned = typeof pinned === 'boolean' ? pinned : demoFallback.pinned;
+      const nextStatus = status || (nextPinned ? 'Pinned' : 'Published');
+      return appendBulletinMessage({
+        ...demoFallback,
+        pinned: nextPinned,
+        locals,
+      }).then((created) => ({ ...created, status: nextStatus }));
+    }
+    throw new NotFoundError(`Bulletin message "${id}" not found.`);
+  }
+
+  const freshRowIndex = matchIdx + 2;
+  const currentRow = padRow(rows[matchIdx], 10);
+  const currentPinned = ['true', 'yes', '1', 'y', 'pinned'].includes(
+    (currentRow[7] || '').trim().toLowerCase()
+  );
+  const nextPinned = typeof pinned === 'boolean' ? pinned : currentPinned;
+  const nextStatus: BulletinMessageStatus =
+    status || (nextPinned ? 'Pinned' : 'Published');
+
+  await writeSheetValues(
+    `Messages!H${freshRowIndex}:I${freshRowIndex}`,
+    [[nextPinned ? 'TRUE' : 'FALSE', nextStatus]],
+    locals
+  );
+
+  await invalidateCacheTag('messages');
+  const updatedList = await getBulletinMessages(locals);
+  const found = updatedList.find((m) => m.id === id);
+  return (
+    found || {
+      id,
+      timestamp: currentRow[1],
+      fromName: currentRow[2],
+      fromEmail: currentRow[3],
+      subject: currentRow[4],
+      bodyText: currentRow[5],
+      category: (currentRow[6] as BulletinCategory) || 'Announcement',
+      pinned: nextPinned,
+      status: nextStatus,
+      threadId: currentRow[9] || undefined,
+    }
+  );
+}
+
 
 

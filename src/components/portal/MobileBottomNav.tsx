@@ -10,6 +10,7 @@ import {
   Heart,
   Layers,
   LogOut,
+  Mail,
   MoreHorizontal,
   Music,
   ShieldCheck,
@@ -47,12 +48,14 @@ export default function MobileBottomNav({
 
   // Harmonized active tab detection
   const isScheduleActive = currentPath === '/portal' || currentPath === '/portal/';
+  const isMessagesActive = currentPath.startsWith('/portal/messages');
   const isMusicActive = currentPath.startsWith('/portal/music');
   const isAbsencesActive = currentPath.startsWith('/portal/absences');
   const isSnacksActive = currentPath.startsWith('/portal/snacks');
   const isSeatingActive = currentPath.startsWith('/portal/seating');
   const isMoreActive =
     showMoreMenu ||
+    isMessagesActive ||
     currentPath.startsWith('/portal/directory') ||
     currentPath.startsWith('/portal/handbook') ||
     isSeatingActive;
@@ -219,6 +222,20 @@ export default function MobileBottomNav({
                     <div>
                       <p className="font-medium text-navy-950">Schedule &amp; Rehearsals</p>
                       <p className="text-xs text-stone-500">Calls, times &amp; calendar feed</p>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="/portal/messages"
+                  onClick={() => setShowMoreMenu(false)}
+                  className={rowLinkClass(isMessagesActive)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-4 w-4 shrink-0 text-copper-600" />
+                    <div>
+                      <p className="font-medium text-navy-950">Ensemble Bulletin Board</p>
+                      <p className="text-xs text-stone-500">Dispatches &amp; singers@kantorei.net</p>
                     </div>
                   </div>
                 </a>

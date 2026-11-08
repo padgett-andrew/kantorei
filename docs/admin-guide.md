@@ -194,5 +194,23 @@ Controls the recordings and video showcase at `/media`:
   ```bash
   npm run backup:sheets
   ```
-  This creates an instantaneous JSON snapshot of all 8 tabs in a private, timestamped `backups/` directory.
+  This creates an instantaneous JSON snapshot of all tabs in a private, timestamped `backups/` directory.
+
+---
+
+## 11. Ensemble Bulletin Board & `singers@kantorei.net` Mailing List Bot
+
+Located at `/portal/messages`, the **Ensemble Bulletin Board** archives dispatches sent to `singers@kantorei.net` and formats rehearsal setlists (with minute pacing) and small-group / Choir 1 part assignments automatically.
+
+### How Messages Are Added
+1. **Automatic Mailing List Ingestion (`bulletin-bot@kantorei.net`):**
+   * Configure a Cloudflare Email Routing rule for `bulletin-bot@kantorei.net` that forwards parsed JSON (`from`, `subject`, `text`) to `POST https://kantorei.net/api/webhooks/incoming-email` with header `x-kantorei-bot-secret`.
+   * Subscribe `bulletin-bot@kantorei.net` to the `singers@kantorei.net` Google Group.
+   * Every email sent to `singers@kantorei.net` is automatically stripped of mailing-list footers and appended to the **`Messages`** tab in the Master Google Sheet.
+2. **Direct Portal Posting:**
+   * Logged-in Section Leaders and Admins can click **Post Dispatch** directly on `/portal/messages` to paste rehearsal notes or announcements.
+3. **Pinning & Archiving:**
+   * Click **Pin to Top** on any dispatch to feature it at the top of `/portal/messages` and on the `/portal` overview dashboard.
+   * Click **Archive** (or set `Status` to `Archived` in the `Messages` sheet tab) to hide outdated messages.
+
 

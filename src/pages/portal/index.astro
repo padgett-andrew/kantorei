@@ -8,6 +8,7 @@ import { getCalendarFeedToken } from '../../lib/calendar';
 import { getCalendarId } from '../../lib/env';
 import {
   getAbsences,
+  getBulletinMessages,
   getPortalConfig,
   getRepertoire,
   getSchedule,
@@ -22,14 +23,18 @@ import {
 } from '../../lib/utils';
 
 const singer = Astro.locals.singer!;
-const [config, schedule, absences, repertoire, feedToken, seatingCharts] = await Promise.all([
-  getPortalConfig(Astro.locals),
-  getSchedule(Astro.locals),
-  getAbsences(Astro.locals),
-  getRepertoire(Astro.locals),
-  getCalendarFeedToken(Astro.locals),
-  getSeatingCharts(Astro.locals),
-]);
+const [config, schedule, absences, repertoire, feedToken, seatingCharts, bulletinMessages] =
+  await Promise.all([
+    getPortalConfig(Astro.locals),
+    getSchedule(Astro.locals),
+    getAbsences(Astro.locals),
+    getRepertoire(Astro.locals),
+    getCalendarFeedToken(Astro.locals),
+    getSeatingCharts(Astro.locals),
+    getBulletinMessages(Astro.locals),
+  ]);
+
+const latestDispatch = bulletinMessages[0];
 
 const isAdmin = singer.role === 'Admin';
 const calendarId = getCalendarId(Astro.locals);
@@ -409,6 +414,43 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
           </span>
         </a>
       </nav>
+
+      {/* Latest Mailing List Dispatch Strip (singers@kantorei.net) */}
+      {latestDispatch && (
+        <div class="border-b border-stone-300/80 bg-[#f5efe8]/55 px-4 py-5 sm:px-6">
+          <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                <span class="text-copper-600">Latest List Dispatch</span>
+                <span class="text-stone-300" aria-hidden="true">·</span>
+                <span class="text-stone-600">{latestDispatch.fromName}</span>
+                {latestDispatch.pinned && (
+                  <span class="rounded-xs border border-copper-300 bg-[#f9efe8] px-1.5 py-0.2 text-[9px] text-copper-600">
+                    Pinned
+                  </span>
+                )}
+              </div>
+              <a
+                href={`/portal/messages#${latestDispatch.id}`}
+                class="mt-1 block font-editorial text-xl font-medium text-navy-950 transition hover:text-copper-600 sm:text-2xl"
+              >
+                {latestDispatch.subject}
+              </a>
+              <p class="mt-1 line-clamp-1 text-xs text-stone-600">
+                {latestDispatch.bodyText.replace(/\s+/g, ' ').slice(0, 160)}…
+              </p>
+            </div>
+
+            <a
+              href="/portal/messages"
+              class="inline-flex shrink-0 items-center gap-1.5 self-start rounded-sm border border-stone-300 bg-white px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-navy-950 transition hover:border-copper-400 hover:text-copper-600 sm:self-center"
+            >
+              <span>Read Bulletin ({bulletinMessages.length})</span>
+              <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </div>
+      )}
     </div>
 
     {/* Engraved-Style Season Schedule Ledger */}

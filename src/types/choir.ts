@@ -287,9 +287,35 @@ export interface SheetWarning {
     | 'Board'
     | 'Leadership'
     | 'Giving_Tiers'
-    | 'Subscribers';
+    | 'Subscribers'
+    | 'Messages';
   rowNumber: number;
   message: string;
+}
+
+export const BULLETIN_CATEGORIES = [
+  'Rehearsal_Notes',
+  'Announcement',
+  'Part_Assignments',
+  'Logistics',
+  'Discussion',
+] as const;
+export type BulletinCategory = (typeof BULLETIN_CATEGORIES)[number];
+
+export const BULLETIN_MESSAGE_STATUSES = ['Published', 'Pinned', 'Archived'] as const;
+export type BulletinMessageStatus = (typeof BULLETIN_MESSAGE_STATUSES)[number];
+
+export interface BulletinMessage {
+  id: string;
+  timestamp: string;
+  fromName: string;
+  fromEmail: string;
+  subject: string;
+  bodyText: string;
+  category: BulletinCategory;
+  pinned: boolean;
+  status: BulletinMessageStatus;
+  threadId?: string;
 }
 
 export interface DriveMusicFile {

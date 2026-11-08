@@ -567,6 +567,94 @@ const SCHEMA_SPEC = {
       },
     ],
   },
+  Messages: {
+    headers: [
+      'Message_ID',
+      'Timestamp',
+      'From_Name',
+      'From_Email',
+      'Subject',
+      'Body_Text',
+      'Category',
+      'Pinned',
+      'Status',
+      'Thread_ID',
+    ],
+    sampleRows: [
+      [
+        'msg-2026-11-07-saturday-notes',
+        '2026-11-07T16:15:00.000Z',
+        'Adam Reinwald',
+        'adam.reinwald@kantorei.net',
+        'Quick notes for a Saturday — Sunday Rehearsal Setlist & Small Groups',
+        `Hello folks,
+
+Quick notes for a Saturday:
+
+   1) Setlist for Sunday:
+            vocalizing with Tony - 10 mins max
+            Regem Natum - 10 mins (full chorus)
+            Rise Up Shepherd - 10 mins - focus on first two pages? 
+            Spotless Rose (Howells) - 10 mins - first & last verse notes/rhythms
+            Gaudete - 12 mins - introduce rhythmic elements
+                  -- BREAK --
+            Sectionals - Gloria (Argento) + Aer Enim OR Veni Emmanuel - 20 mins
+            Announcements - 5 mins
+            Refugee (Deignan) - 20 mins
+            Lo, How a Rose (Sandstrom) - 6 mins - part assignments, trial balance first page only
+            His Voice as the Sound - 10 mins
+
+
+   2). In the Stillness (Beamish) small group — we’ll discuss and make sure these folks are up for it.
+    Delaney + Zoey + Amanda + Lori
+    Abs + Ann + Maggie + Christine
+    Michael Cl + James + Jonathan P
+    Cory + Joe P + Bjorn + Tony
+
+   3) Lo, How a Rose — 8 voices in choir 1 (+ one more if needed for balance)
+    Melia + Molly  (+ Karin)
+    Kelly + CarlaJoy (+ Heather)
+    Travis + Sam (+ Joel)
+    Andrew + John D (+ Mark)
+    Charlotte / Genna on high G solo
+
+   4). Rise Up, Shepherd and Follow— at the beginning, just S1s, no solo
+
+Need to audition a changed voice soloist for “A Spotless Rose” (Howells)
+
+See you tomorrow at 6:30 in Shoreview!
+
+Adam Reinwald`,
+        'Rehearsal_Notes',
+        'TRUE',
+        'Pinned',
+        'thread-2026-11-07-saturday-notes',
+      ],
+    ],
+    validations: [
+      {
+        column: 'Category',
+        options: [
+          'Rehearsal_Notes',
+          'Part_Assignments',
+          'Logistics',
+          'Announcement',
+          'Discussion',
+        ],
+        message: 'Select dispatch category',
+      },
+      {
+        column: 'Pinned',
+        options: ['TRUE', 'FALSE'],
+        message: 'Pin dispatch to top of bulletin board (TRUE / FALSE)',
+      },
+      {
+        column: 'Status',
+        options: ['Published', 'Pinned', 'Archived'],
+        message: 'Select dispatch visibility status',
+      },
+    ],
+  },
 };
 
 if (!clientEmail || !privateKeyRaw || !sheetId || sheetId === 'DEMO') {

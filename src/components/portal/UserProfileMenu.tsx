@@ -222,11 +222,18 @@ export default function UserProfileMenu({
             </section>
           )}
 
-          <section className="border-b border-stone-200/90 py-2" aria-label="Quick links">
+  <section className="border-b border-stone-200/90 py-2" aria-label="Quick links">
             <div className="px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
               Ensemble Resources
             </div>
             <div className="divide-y divide-stone-200/60">
+              <a role="menuitem" href="/portal/messages" onClick={closeMenu} className={linkClass}>
+                <BookOpen className={iconClass} aria-hidden="true" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">Ensemble Bulletin Board</span>
+                  <span className={descriptionClass}>Dispatches &amp; singers@kantorei.net archive</span>
+                </span>
+              </a>
               <a role="menuitem" href="/portal/handbook" onClick={closeMenu} className={linkClass}>
                 <BookOpen className={iconClass} aria-hidden="true" />
                 <span className="min-w-0 flex-1">

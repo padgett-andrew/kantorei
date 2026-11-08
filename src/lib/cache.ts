@@ -19,7 +19,8 @@ export type CacheTag =
   | 'seating_charts'
   | `repertoire-doc:${string}`
   | 'handbook'
-  | 'strategic-plan';
+  | 'strategic-plan'
+  | 'messages';
 
 interface MemoryCacheEntry {
   expiresAt: number;
