@@ -73,4 +73,14 @@ describe('Portal Navigation & Tablet Responsive Standards', () => {
     expect(audioPlayerContent).not.toMatch(/sm:bottom-0/);
     expect(audioPlayerContent).toMatch(/bottom-\[calc\(3\.75rem\+env\(safe-area-inset-bottom,0px\)\)\] xl:bottom-0/);
   });
+
+  it('supports swipe-to-dismiss and overscroll containment on the mobile drawer', () => {
+    // Must contain overscroll to prevent browser pull-to-refresh interference
+    expect(mobileBottomNavContent).toContain('overscroll-y-contain');
+    // Must have a draggable grab handle with pointer event handlers and touch-none
+    expect(mobileBottomNavContent).toMatch(/onPointerDown=\{.*?handlePointerDown/);
+    expect(mobileBottomNavContent).toMatch(/cursor-grab touch-none/);
+    // Must dynamically transform translateY during swipe drag and dismiss animation
+    expect(mobileBottomNavContent).toContain('sheetTransform');
+  });
 });

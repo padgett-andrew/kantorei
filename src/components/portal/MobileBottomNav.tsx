@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   BookOpen,
   Calendar,
@@ -48,6 +48,41 @@ export default function MobileBottomNav({
 }: Props) {
   const resolvedSheetUrl = sheetUrl || masterSheetUrl;
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragStartYRef = useRef(0);
+  const dragStartTimeRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const dragSourceRef = useRef<'handle' | 'header' | 'content'>('handle');
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const closeWithAnimation = useCallback(() => {
+    setIsClosing(true);
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    closeTimeoutRef.current = setTimeout(() => {
+      setShowMoreMenu(false);
+      setIsClosing(false);
+      setDragY(0);
+      setIsDragging(false);
+    }, 220);
+  }, []);
+
+  const openMenu = useCallback(() => {
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    setIsClosing(false);
+    setDragY(0);
+    setIsDragging(false);
+    setShowMoreMenu(true);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
 
   // Harmonized active tab detection
   const isScheduleActive = currentPath === '/portal' || currentPath === '/portal/';
@@ -66,10 +101,10 @@ export default function MobileBottomNav({
   // Listen for unified mobile drawer trigger from top header avatar
   useEffect(() => {
     function handleOpen() {
-      setShowMoreMenu(true);
+      openMenu();
     }
     function handleClose() {
-      setShowMoreMenu(false);
+      closeWithAnimation();
     }
 
     window.addEventListener('kantorei:open-mobile-drawer', handleOpen);
@@ -79,13 +114,16 @@ export default function MobileBottomNav({
       window.removeEventListener('kantorei:open-mobile-drawer', handleOpen);
       window.removeEventListener('kantorei:close-mobile-drawer', handleClose);
     };
-  }, []);
+  }, [openMenu, closeWithAnimation]);
 
   // Dismiss drawer automatically if viewport expands to desktop size (>= 1280px)
   useEffect(() => {
     function handleResize() {
       if (window.innerWidth >= 1280) {
         setShowMoreMenu(false);
+        setIsClosing(false);
+        setDragY(0);
+        setIsDragging(false);
       }
     }
     window.addEventListener('resize', handleResize);
@@ -98,7 +136,7 @@ export default function MobileBottomNav({
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        setShowMoreMenu(false);
+        closeWithAnimation();
       }
     }
 
@@ -110,7 +148,143 @@ export default function MobileBottomNav({
       document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showMoreMenu]);
+  }, [showMoreMenu, closeWithAnimation]);
+
+  // Pointer event handlers for Grab Handle and Header
+  const handlePointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    source: 'handle' | 'header'
+  ) => {
+    if (e.button !== 0) return;
+    dragSourceRef.current = source;
+    dragStartYRef.current = e.clientY;
+    dragStartTimeRef.current = Date.now();
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignored
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const deltaY = e.clientY - dragStartYRef.current;
+    if (deltaY > 0) {
+      setDragY(deltaY);
+    } else {
+      // Rubber band resistance when pulling up
+      setDragY(deltaY * 0.15);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // Ignored
+    }
+
+    const deltaY = e.clientY - dragStartYRef.current;
+    const elapsed = Math.max(1, Date.now() - dragStartTimeRef.current);
+    const velocity = deltaY / elapsed;
+    const isHandle = dragSourceRef.current === 'handle';
+
+    if (deltaY > 80 || velocity > 0.45) {
+      closeWithAnimation();
+    } else if (isHandle && Math.abs(deltaY) < 5 && elapsed < 250) {
+      // Tap on the handle closes it
+      closeWithAnimation();
+    } else {
+      setDragY(0);
+    }
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // Ignored
+    }
+    setDragY(0);
+  };
+
+  // Content touch drag interception when scrolled to top
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let isTrackingContent = false;
+    let startTime = 0;
+
+    function handleTouchStart(e: TouchEvent) {
+      if (e.touches.length !== 1) return;
+      if (sheet && sheet.scrollTop <= 0) {
+        touchStartY = e.touches[0].clientY;
+        touchStartX = e.touches[0].clientX;
+        startTime = Date.now();
+        isTrackingContent = true;
+      }
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+      if (!isTrackingContent || !sheet) return;
+      const currentY = e.touches[0].clientY;
+      const currentX = e.touches[0].clientX;
+      const deltaY = currentY - touchStartY;
+      const deltaX = currentX - touchStartX;
+
+      // Only engage if pulling DOWN and vertical movement is greater than horizontal
+      if (deltaY > 6 && Math.abs(deltaY) > Math.abs(deltaX) && sheet.scrollTop <= 0) {
+        if (e.cancelable) e.preventDefault();
+        dragSourceRef.current = 'content';
+        isDraggingRef.current = true;
+        setIsDragging(true);
+        setDragY(deltaY);
+      }
+    }
+
+    function handleTouchEnd(e: TouchEvent) {
+      if (!isTrackingContent) return;
+      isTrackingContent = false;
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        setIsDragging(false);
+        const touchEndY = e.changedTouches[0]?.clientY ?? touchStartY;
+        const totalDeltaY = touchEndY - touchStartY;
+        const elapsed = Math.max(1, Date.now() - startTime);
+        const velocity = totalDeltaY / elapsed;
+
+        if (totalDeltaY > 80 || velocity > 0.45) {
+          closeWithAnimation();
+        } else {
+          setDragY(0);
+        }
+      }
+    }
+
+    sheet.addEventListener('touchstart', handleTouchStart, { passive: true });
+    sheet.addEventListener('touchmove', handleTouchMove, { passive: false });
+    sheet.addEventListener('touchend', handleTouchEnd, { passive: true });
+    sheet.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      sheet.removeEventListener('touchstart', handleTouchStart);
+      sheet.removeEventListener('touchmove', handleTouchMove);
+      sheet.removeEventListener('touchend', handleTouchEnd);
+      sheet.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [showMoreMenu, closeWithAnimation]);
 
   // Singer identity normalization
   const singerDisplayName = singer?.name || singerName || 'Singer';
@@ -135,6 +309,24 @@ export default function MobileBottomNav({
         : 'text-stone-700 hover:bg-[#f5efe8] hover:text-navy-950'
     }`;
 
+  const sheetTransform = isClosing
+    ? 'translateY(120%)'
+    : isDragging
+    ? `translateY(${Math.max(0, dragY)}px)`
+    : dragY > 0
+    ? `translateY(${dragY}px)`
+    : undefined;
+
+  const sheetTransition = isDragging
+    ? 'none'
+    : 'transform 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease';
+
+  const backdropOpacity = isClosing
+    ? 0
+    : isDragging
+    ? Math.max(0.1, 1 - Math.max(0, dragY) / 320)
+    : 1;
+
   return (
     <>
       {/* Unified Slide-Up Mobile & Tablet Sheet in Warm Cotton-Ivory */}
@@ -142,23 +334,67 @@ export default function MobileBottomNav({
         <div className="fixed inset-0 z-50 xl:hidden">
           {/* Backdrop */}
           <div
-            onClick={() => setShowMoreMenu(false)}
+            onClick={closeWithAnimation}
             className="fixed inset-0 bg-navy-950/55 backdrop-blur-xs transition-opacity duration-200"
+            style={{
+              opacity: backdropOpacity,
+              transition: isDragging ? 'none' : 'opacity 200ms ease',
+            }}
             aria-hidden="true"
           />
 
           {/* Sheet Container */}
           <div
+            ref={sheetRef}
             role="dialog"
             aria-modal="true"
             aria-label="Singer Navigation & Account Menu"
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-xl border-t border-stone-200 bg-[#FAF7F2] p-5 text-stone-800 shadow-2xl animate-in slide-in-from-bottom duration-200 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:inset-x-4 sm:bottom-6 sm:mx-auto sm:max-w-xl sm:rounded-2xl sm:border sm:border-stone-200/90 sm:pb-6"
+            style={{
+              transform: sheetTransform,
+              transition: sheetTransition,
+              animation: isDragging || isClosing || dragY > 0 ? 'none' : undefined,
+            }}
+            className={`fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-y-auto overscroll-y-contain rounded-t-xl border-t border-stone-200 bg-[#FAF7F2] p-5 text-stone-800 shadow-2xl pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:inset-x-4 sm:bottom-6 sm:mx-auto sm:max-w-xl sm:rounded-2xl sm:border sm:border-stone-200/90 sm:pb-6 ${
+              !isDragging && !isClosing && dragY === 0 ? 'animate-in slide-in-from-bottom duration-200' : ''
+            }`}
           >
-            {/* Grab Handle */}
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-stone-300" aria-hidden="true" />
+            {/* Grab Handle (Draggable Target) */}
+            <div
+              onPointerDown={(e) => handlePointerDown(e, 'handle')}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerCancel}
+              className="group -mt-2 -mx-5 mb-2 flex cursor-grab touch-none items-center justify-center py-3 select-none active:cursor-grabbing"
+              aria-label="Swipe down to close menu"
+              title="Swipe down to close"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  closeWithAnimation();
+                }
+              }}
+            >
+              <div
+                className={`h-1.5 w-12 rounded-full transition-colors ${
+                  isDragging ? 'bg-copper-500' : 'bg-stone-300 group-hover:bg-stone-400'
+                }`}
+                aria-hidden="true"
+              />
+            </div>
 
-            {/* Identity Header */}
-            <div className="flex items-start justify-between border-b border-stone-200/90 pb-4">
+            {/* Identity Header (Also Draggable) */}
+            <div
+              onPointerDown={(e) => {
+                if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+                handlePointerDown(e, 'header');
+              }}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerCancel}
+              className="flex items-start justify-between border-b border-stone-200/90 pb-4 select-none touch-none cursor-grab active:cursor-grabbing"
+            >
               <div className="flex items-center gap-3 min-w-0">
                 {avatarUrl ? (
                   <img
@@ -200,7 +436,7 @@ export default function MobileBottomNav({
 
               <button
                 type="button"
-                onClick={() => setShowMoreMenu(false)}
+                onClick={closeWithAnimation}
                 aria-label="Close menu"
                 className="cursor-pointer rounded-sm p-2 text-stone-400 transition hover:bg-[#f5efe8] hover:text-navy-950"
               >
@@ -535,7 +771,7 @@ export default function MobileBottomNav({
             aria-label="More navigation options and account"
             aria-expanded={showMoreMenu}
             aria-haspopup="dialog"
-            onClick={() => setShowMoreMenu(true)}
+            onClick={openMenu}
             className="relative flex cursor-pointer flex-col items-center gap-0.5 px-2.5 py-1.5 text-[10px] transition sm:px-4 sm:py-2 sm:text-[11px]"
           >
             {isMoreActive && (
