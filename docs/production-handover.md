@@ -50,10 +50,10 @@ In your GitHub repository (`padgett-andrew/kantorei`):
    AUTH_SECRET="<generate with: openssl rand -base64 32>"
    DEV_PREVIEW_BYPASS="false"
 
-   # Google Cloud Service Account & Live Master Sheet
+   # Google Cloud Service Account & Live Choir Database Sheet
    GOOGLE_SERVICE_ACCOUNT_EMAIL="choir-bot@<kantorei-project>.iam.gserviceaccount.com"
    GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-   GOOGLE_MASTER_SHEET_ID="<your-real-master-sheet-id>"
+   GOOGLE_SHEET_ID="<your-real-choir-sheet-id>"
    REPERTOIRE_DRIVE_FOLDER_ID="1tIPYJBkibVLjQOaGSzZ2y7L9UOTNOyJc"
 
    # Resend Email (Live Domain)

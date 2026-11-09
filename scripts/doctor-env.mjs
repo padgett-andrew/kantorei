@@ -127,8 +127,9 @@ const privateKey = (env.GOOGLE_PRIVATE_KEY || '').trim();
 const hasPemHeaders = privateKey.includes('BEGIN PRIVATE KEY') && privateKey.includes('END PRIVATE KEY');
 const isPlaceholderKey = !privateKey || privateKey.includes('...') || !hasPemHeaders;
 
-const sheetId = extractId(env.GOOGLE_MASTER_SHEET_ID || '');
-const isDemoSheet = !sheetId || sheetId === 'DEMO' || sheetId === 'your-master-google-sheet-id';
+const sheetKey = env.GOOGLE_SHEET_ID ? 'GOOGLE_SHEET_ID' : 'GOOGLE_MASTER_SHEET_ID';
+const sheetId = extractId(env.GOOGLE_SHEET_ID || env.GOOGLE_MASTER_SHEET_ID || '');
+const isDemoSheet = !sheetId || sheetId === 'DEMO' || sheetId === 'your-choir-google-sheet-id' || sheetId === 'your-master-google-sheet-id';
 
 if (targetMode === 'production') {
   check('GOOGLE_SERVICE_ACCOUNT_EMAIL', !isPlaceholderEmail, {
@@ -137,8 +138,8 @@ if (targetMode === 'production') {
   check('GOOGLE_PRIVATE_KEY', !isPlaceholderKey, {
     error: 'Production requires a valid RS256 PEM private key.',
   });
-  check('GOOGLE_MASTER_SHEET_ID', !isDemoSheet, {
-    error: 'GOOGLE_MASTER_SHEET_ID cannot be "DEMO" in production.',
+  check(sheetKey, !isDemoSheet, {
+    error: `${sheetKey} cannot be "DEMO" in production.`,
   });
 } else {
   if (isPlaceholderEmail || isPlaceholderKey || isDemoSheet) {

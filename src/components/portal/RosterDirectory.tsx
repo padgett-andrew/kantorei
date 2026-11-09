@@ -14,6 +14,7 @@ import RosterToolbar from './roster/RosterToolbar';
 interface Props {
   caller: Singer;
   initialRoster: Singer[];
+  sheetUrl?: string;
   masterSheetUrl?: string;
   sheetWarnings?: SheetWarning[];
   initialViewMode?: 'cards' | 'table' | string;
@@ -22,6 +23,7 @@ interface Props {
 export default function RosterDirectory({
   caller,
   initialRoster,
+  sheetUrl,
   masterSheetUrl,
   sheetWarnings = [],
   initialViewMode = 'cards',
@@ -252,10 +254,10 @@ export default function RosterDirectory({
         setRoster((prev) =>
           prev.map((s) => (s.email.toLowerCase() === origEmail ? data.singer! : s))
         );
-        setBanner({ type: 'ok', text: `Updated ${data.singer.name} in Master Google Sheet.` });
+        setBanner({ type: 'ok', text: `Updated ${data.singer.name} in Choir Google Sheet.` });
       } else {
         setRoster((prev) => [data.singer!, ...prev]);
-        setBanner({ type: 'ok', text: `Added ${data.singer.name} to Master Google Sheet.` });
+        setBanner({ type: 'ok', text: `Added ${data.singer.name} to Choir Google Sheet.` });
       }
 
       setModalMode(null);
@@ -302,7 +304,8 @@ export default function RosterDirectory({
         setViewMode={setViewMode}
         canManageRoster={canManageRoster}
         onOpenCreateMember={openCreateMemberModal}
-        masterSheetUrl={masterSheetUrl}
+        sheetUrl={sheetUrl || masterSheetUrl}
+        masterSheetUrl={masterSheetUrl || sheetUrl}
         isAdmin={isAdmin}
         section={section}
         setSection={setSection}

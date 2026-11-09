@@ -28,6 +28,7 @@ interface Props {
   singerName?: string;
   voicePart?: string;
   repertoireDriveUrl?: string;
+  sheetUrl?: string;
   masterSheetUrl?: string;
   isSheetAdmin?: boolean;
   calendarUrl?: string;
@@ -40,10 +41,12 @@ export default function MobileBottomNav({
   singerName = '',
   voicePart: _voicePart = '',
   repertoireDriveUrl,
+  sheetUrl,
   masterSheetUrl,
   isSheetAdmin = isAdmin,
   calendarUrl,
 }: Props) {
+  const resolvedSheetUrl = sheetUrl || masterSheetUrl;
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   // Harmonized active tab detection
@@ -335,9 +338,9 @@ export default function MobileBottomNav({
                 </div>
 
                 <div className="divide-y divide-stone-200/70 border-y border-stone-200/80">
-                  {masterSheetUrl && (
+                  {resolvedSheetUrl && (
                     <a
-                      href={masterSheetUrl}
+                      href={resolvedSheetUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={rowLinkClass()}
@@ -345,7 +348,7 @@ export default function MobileBottomNav({
                       <div className="flex items-center gap-3">
                         <FileSpreadsheet className="h-4 w-4 shrink-0 text-copper-600" />
                         <div>
-                          <p className="font-medium text-navy-950">Master Google Sheet</p>
+                          <p className="font-medium text-navy-950">Choir Google Sheet</p>
                           <p className="text-xs text-stone-500">Roster, schedule &amp; configuration</p>
                         </div>
                       </div>

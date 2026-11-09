@@ -101,7 +101,7 @@ export async function mutateSnackSlot(params: {
     return schedule.find((e) => e.eventId === eventId) || ev!;
   }
 
-  // 1. Try dedicated Snacks tab (used with Google Calendar or modernized Master Sheet)
+  // 1. Try dedicated Snacks tab (used with Google Calendar or modernized Choir Sheet)
   try {
     const snackRows = await readSheetValues('Snacks!A2:E', locals);
     if (snackRows) {
@@ -633,7 +633,7 @@ export async function deleteSeatingChart(params: {
 }
 
 /**
- * Idempotently records or updates a Friend of Kantorei subscriber in the Master Google Sheet.
+ * Idempotently records or updates a Friend of Kantorei subscriber in the Choir Google Sheet.
  */
 export async function recordSubscriber(params: {
   email: string;
@@ -703,7 +703,7 @@ export async function recordSubscriber(params: {
 }
 
 /**
- * Appends a new dispatch/email message to the Master Google Sheet `Messages` tab
+ * Appends a new dispatch/email message to the Choir Google Sheet `Messages` tab
  * (either from the inbound `singers@kantorei.net` email bot webhook or the in-portal composer).
  */
 export async function appendBulletinMessage(params: {

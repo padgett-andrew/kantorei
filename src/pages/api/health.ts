@@ -16,7 +16,7 @@ export interface HealthCheckResult {
 }
 
 export const GET: APIRoute = async ({ locals }) => {
-  const isDemo = getEnv('GOOGLE_MASTER_SHEET_ID', locals) === 'DEMO' || !getEnv('GOOGLE_MASTER_SHEET_ID', locals);
+  const isDemo = getEnv('GOOGLE_SHEET_ID', locals) === 'DEMO' || !getEnv('GOOGLE_SHEET_ID', locals);
 
   const services: HealthCheckResult['services'] = {
     googleSheets: { status: 'skipped' },
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ locals }) => {
   let hasDegradedError = false;
 
   // 1. Check Google Sheets & Service Account
-  const rawSheetId = getEnv('GOOGLE_MASTER_SHEET_ID', locals);
+  const rawSheetId = getEnv('GOOGLE_SHEET_ID', locals);
   const sheetId = extractGoogleId(rawSheetId);
   const clientEmail = getEnv('GOOGLE_SERVICE_ACCOUNT_EMAIL', locals);
   const privateKey = getEnv('GOOGLE_PRIVATE_KEY', locals);

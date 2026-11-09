@@ -156,7 +156,7 @@ export async function getScheduleWithWarnings(
     return { schedule: sorted, warnings: [] };
   }
 
-  // 3. Fallback to Master Google Sheet Schedule tab
+  // 3. Fallback to Choir Google Sheet Schedule tab
   return cachedFetchJson('schedule', 60, async () => {
     const rows = await readSheetValues('Schedule!A2:K', locals);
     const schedule: ScheduleEvent[] = [];

@@ -16,6 +16,7 @@ export const EnvSchema = z.object({
 
   GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().email().optional().or(z.literal('')),
   GOOGLE_PRIVATE_KEY: z.string().optional(),
+  GOOGLE_SHEET_ID: z.string().optional(),
   GOOGLE_MASTER_SHEET_ID: z.string().optional(),
   REPERTOIRE_DRIVE_FOLDER_ID: z.string().optional(),
   GOOGLE_CALENDAR_ID: z.string().optional(),
@@ -56,6 +57,7 @@ export const KNOWN_ENV_KEYS = [
   'GOOGLE_OAUTH_CLIENT_SECRET',
   'GOOGLE_SERVICE_ACCOUNT_EMAIL',
   'GOOGLE_PRIVATE_KEY',
+  'GOOGLE_SHEET_ID',
   'GOOGLE_MASTER_SHEET_ID',
   'REPERTOIRE_DRIVE_FOLDER_ID',
   'GOOGLE_CALENDAR_ID',
@@ -95,6 +97,7 @@ export const ENV_CLASSIFICATIONS: Record<(typeof KNOWN_ENV_KEYS)[number], EnvCla
   DEV_PREVIEW_BYPASS: 'config',
   ENVIRONMENT: 'config',
   GOOGLE_OAUTH_CLIENT_ID: 'config',
+  GOOGLE_SHEET_ID: 'config',
   GOOGLE_MASTER_SHEET_ID: 'config',
   REPERTOIRE_DRIVE_FOLDER_ID: 'config',
   GOOGLE_CALENDAR_ID: 'config',
@@ -112,22 +115,37 @@ export const DEV_AUTH_SECRET_FALLBACK = 'kantorei-dev-fallback-secret-key-32char
  * (`locals.runtime.env`), Astro/Vite `import.meta.env`, and Node `process.env`.
  */
 export function getEnv(key: KnownEnvKey, locals?: App.Locals): string {
-  const runtimeVal = locals?.runtime?.env?.[key];
-  if (typeof runtimeVal === 'string' && runtimeVal.length > 0) {
-    return runtimeVal;
+  function readSingle(k: string): string {
+    const runtimeVal = locals?.runtime?.env?.[k];
+    if (typeof runtimeVal === 'string' && runtimeVal.length > 0) {
+      return runtimeVal;
+    }
+
+    const metaEnv = (import.meta as unknown as { env?: Record<string, unknown> }).env;
+    const metaVal = metaEnv?.[k];
+    if (typeof metaVal === 'string' && metaVal.length > 0) {
+      return metaVal;
+    }
+
+    const nodeEnv = (
+      globalThis as { process?: { env?: Record<string, string | undefined> } }
+    ).process?.env;
+    if (nodeEnv?.[k]) {
+      return nodeEnv[k] as string;
+    }
+
+    return '';
   }
 
-  const metaEnv = (import.meta as unknown as { env?: Record<string, unknown> }).env;
-  const metaVal = metaEnv?.[key];
-  if (typeof metaVal === 'string' && metaVal.length > 0) {
-    return metaVal;
-  }
+  const primary = readSingle(key);
+  if (primary) return primary;
 
-  const nodeEnv = (
-    globalThis as { process?: { env?: Record<string, string | undefined> } }
-  ).process?.env;
-  if (nodeEnv?.[key]) {
-    return nodeEnv[key] as string;
+  // Seamless fallback between modern GOOGLE_SHEET_ID and legacy GOOGLE_MASTER_SHEET_ID
+  if (key === 'GOOGLE_SHEET_ID') {
+    return readSingle('GOOGLE_MASTER_SHEET_ID');
+  }
+  if (key === 'GOOGLE_MASTER_SHEET_ID') {
+    return readSingle('GOOGLE_SHEET_ID');
   }
 
   return '';
@@ -215,10 +233,11 @@ export function isSandboxSheetMode(locals?: App.Locals): boolean {
   if (import.meta.env.DEV !== true) {
     return false;
   }
-  const sheetId = extractGoogleId(getEnv('GOOGLE_MASTER_SHEET_ID', locals));
+  const sheetId = extractGoogleId(getEnv('GOOGLE_SHEET_ID', locals));
   return (
     !sheetId ||
     sheetId === 'DEMO' ||
+    sheetId === 'your-choir-google-sheet-id' ||
     sheetId === 'your-master-google-sheet-id' ||
     !hasGoogleServiceAccount(locals)
   );
@@ -341,12 +360,18 @@ export function validateEnvPolicy(
         break;
       }
 
+      case 'GOOGLE_SHEET_ID':
       case 'GOOGLE_MASTER_SHEET_ID': {
         const id = extractGoogleId(rawValue);
-        if (!id || id === 'DEMO' || id === 'your-master-google-sheet-id') {
+        if (
+          !id ||
+          id === 'DEMO' ||
+          id === 'your-choir-google-sheet-id' ||
+          id === 'your-master-google-sheet-id'
+        ) {
           status = 'mock_demo';
           if (mode === 'production') {
-            errors.push('GOOGLE_MASTER_SHEET_ID cannot be "DEMO" in production.');
+            errors.push('GOOGLE_SHEET_ID cannot be "DEMO" in production.');
           } else {
             message = 'Running in DEMO sheet mode with mock choir data.';
           }

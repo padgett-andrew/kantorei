@@ -36,16 +36,16 @@ const env = { ...dotEnv, ...process.env };
 
 const clientEmail = (env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '').trim();
 const privateKeyRaw = (env.GOOGLE_PRIVATE_KEY || '').trim();
-const sheetId = extractId(env.GOOGLE_MASTER_SHEET_ID || '');
+const sheetId = extractId(env.GOOGLE_SHEET_ID || env.GOOGLE_MASTER_SHEET_ID || '');
 
 console.log('\n======================================================');
-console.log(' 💾  KANTOREI MASTER SHEET BACKUP UTILITY');
+console.log(' 💾  KANTOREI CHOIR SHEET BACKUP UTILITY');
 console.log('======================================================\n');
 
 if (!clientEmail || !privateKeyRaw || !sheetId || sheetId === 'DEMO') {
   console.log('ℹ️   Running in DEMO mode or missing Google credentials.');
   console.log('   In production, set GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY,');
-  console.log('   and GOOGLE_MASTER_SHEET_ID in .env to snapshot the live Google Sheet.\n');
+  console.log('   and GOOGLE_SHEET_ID in .env to snapshot the live Google Sheet.\n');
   process.exit(0);
 }
 

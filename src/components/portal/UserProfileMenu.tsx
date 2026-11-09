@@ -15,6 +15,7 @@ import type { Singer } from '../../types/choir';
 
 interface Props {
   singer: Singer;
+  sheetUrl?: string;
   masterSheetUrl?: string;
   isSheetAdmin?: boolean;
   repertoireDriveUrl?: string;
@@ -23,10 +24,12 @@ interface Props {
 
 export default function UserProfileMenu({
   singer,
+  sheetUrl,
   masterSheetUrl = 'https://docs.google.com/spreadsheets',
   isSheetAdmin = singer.role === 'Admin',
   repertoireDriveUrl,
 }: Props) {
+  const resolvedSheetUrl = sheetUrl || masterSheetUrl;
   const [isOpen, setIsOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -186,10 +189,10 @@ export default function UserProfileMenu({
                 <span>Leadership &amp; Workspace</span>
               </div>
               <div className="divide-y divide-stone-200/60">
-                <a role="menuitem" href={masterSheetUrl} target="_blank" rel="noopener noreferrer" onClick={closeMenu} className={linkClass}>
+                <a role="menuitem" href={resolvedSheetUrl} target="_blank" rel="noopener noreferrer" onClick={closeMenu} className={linkClass}>
                   <FileSpreadsheet className={iconClass} aria-hidden="true" />
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium">Master Google Sheet</span>
+                    <span className="block font-medium">Choir Google Sheet</span>
                     <span className={descriptionClass}>Roster, schedule, and configuration</span>
                   </span>
                   <ExternalLink className="h-3.5 w-3.5 shrink-0 text-stone-400" aria-hidden="true" />

@@ -91,6 +91,7 @@ if (isDevPreview) {
         singer={singer}
         choirName={choirName}
         currentPath={Astro.url.pathname}
+        sheetUrl={workspace.sheetUrl}
         masterSheetUrl={workspace.masterSheetUrl}
         repertoireDriveUrl={workspace.repertoireDriveUrl}
         calendarUrl={calendarUrl}
@@ -130,13 +131,13 @@ if (isDevPreview) {
             <>
               <span class="text-stone-300" aria-hidden="true">·</span>
               <a
-                href={workspace.masterSheetUrl}
+                href={workspace.sheetUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-stone-500 transition hover:text-copper-600"
-                title="Open Master Google Sheet"
+                title="Open Choir Google Sheet"
               >
-                Master Sheet ↗
+                Choir Sheet ↗
               </a>
             </>
           )}
@@ -151,6 +152,7 @@ if (isDevPreview) {
       isAdmin={singer.role === 'Admin' || singer.role === 'Section_Leader'}
       singerName={singer.name}
       voicePart={singer.voicePart}
+      sheetUrl={workspace.sheetUrl}
       masterSheetUrl={workspace.masterSheetUrl}
       repertoireDriveUrl={workspace.repertoireDriveUrl}
       isSheetAdmin={isAdmin}

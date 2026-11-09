@@ -22,7 +22,7 @@ The entire Kantorei website and Singer Portal are powered by **Google Workspace 
 
 ## 1. How the System Works
 
-* **The Master Google Sheet** is your database. Editing a cell in Google Sheets updates the website and singer portal.
+* **The Choir Google Sheet** is your database. Editing a cell in Google Sheets updates the website and singer portal.
 * **Google Drive** holds all sheet music PDFs, audio rehearsal tracks, and director markings docs.
 * **Google Calendar** (optional) allows the Artistic Director to post rehearsals directly from their phone or computer.
 * **Cloudflare Workers** caches data for fast loading worldwide. Changes appear within 60 seconds automatically on the next page refresh (or immediately if an Admin clicks the sync button).
@@ -31,7 +31,7 @@ The entire Kantorei website and Singer Portal are powered by **Google Workspace 
 
 ## 2. Managing the Singer Roster & Access
 
-Open the **`Roster`** tab in the Master Google Sheet (or use the Member Editor at `/portal/directory` if you are logged in as an Admin).
+Open the **`Roster`** tab in the Choir Google Sheet (or use the Member Editor at `/portal/directory` if you are logged in as an Admin).
 
 ### Columns & Rules
 | Column | Header | Example Value | Description |
@@ -64,7 +64,7 @@ If `GOOGLE_CALENDAR_ID` is configured, Kantorei admins can create and edit event
 * Events sync to the portal every 60 seconds.
 
 ### Option B: The `Schedule` Sheet Tab
-If not using Google Calendar, use the **`Schedule`** tab in the Master Google Sheet:
+If not using Google Calendar, use the **`Schedule`** tab in the Choir Google Sheet:
 * `Event_ID`: Unique ID (e.g. `reh-2026-11-10` or `concert-2026-12-12`).
 * `Date`: `YYYY-MM-DD` (e.g. `2026-11-10`).
 * `Time`: Display string (e.g. `7:00 PM - 9:30 PM`).
@@ -206,7 +206,7 @@ Located at `/portal/messages`, the **Ensemble Bulletin Board** archives dispatch
 1. **Automatic Mailing List Ingestion (`bulletin-bot@kantorei.net`):**
    * Configure a Cloudflare Email Routing rule for `bulletin-bot@kantorei.net` that forwards parsed JSON (`from`, `subject`, `text`) to `POST https://kantorei.net/api/webhooks/incoming-email` with header `x-kantorei-bot-secret`.
    * Subscribe `bulletin-bot@kantorei.net` to the `singers@kantorei.net` Google Group.
-   * Every email sent to `singers@kantorei.net` is automatically stripped of mailing-list footers and appended to the **`Messages`** tab in the Master Google Sheet.
+   * Every email sent to `singers@kantorei.net` is automatically stripped of mailing-list footers and appended to the **`Messages`** tab in the Choir Google Sheet.
 2. **Direct Portal Posting:**
    * Logged-in Section Leaders and Admins can click **Post Dispatch** directly on `/portal/messages` to paste rehearsal notes or announcements.
 3. **Pinning & Archiving:**

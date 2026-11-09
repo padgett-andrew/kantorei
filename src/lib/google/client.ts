@@ -121,7 +121,7 @@ export async function getGoogleAccessToken(locals?: App.Locals): Promise<string>
 }
 
 export async function readSheetValues(range: string, locals?: App.Locals): Promise<string[][]> {
-  const sheetId = extractGoogleId(getEnv('GOOGLE_MASTER_SHEET_ID', locals));
+  const sheetId = extractGoogleId(getEnv('GOOGLE_SHEET_ID', locals));
   const token = await getGoogleAccessToken(locals);
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}`;
@@ -144,7 +144,7 @@ export async function writeSheetValues(
   values: string[][],
   locals?: App.Locals
 ): Promise<void> {
-  const sheetId = extractGoogleId(getEnv('GOOGLE_MASTER_SHEET_ID', locals));
+  const sheetId = extractGoogleId(getEnv('GOOGLE_SHEET_ID', locals));
   const token = await getGoogleAccessToken(locals);
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}?valueInputOption=USER_ENTERED`;
@@ -169,7 +169,7 @@ export async function appendSheetValues(
   values: string[][],
   locals?: App.Locals
 ): Promise<void> {
-  const sheetId = extractGoogleId(getEnv('GOOGLE_MASTER_SHEET_ID', locals));
+  const sheetId = extractGoogleId(getEnv('GOOGLE_SHEET_ID', locals));
   const token = await getGoogleAccessToken(locals);
   const encodedRange = encodeURIComponent(range);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodedRange}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;

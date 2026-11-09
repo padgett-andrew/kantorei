@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const { email, name, source } = parsed.data;
 
-  // 3. Concurrently record into Master Google Sheet and sync to MailerLite
+  // 3. Concurrently record into Choir Google Sheet and sync to MailerLite
   try {
     const [sheetRes, mlRes] = await Promise.allSettled([
       recordSubscriber({

@@ -6,6 +6,7 @@ interface Props {
   singer: Singer;
   choirName: string;
   currentPath: string;
+  sheetUrl?: string;
   masterSheetUrl?: string;
   repertoireDriveUrl?: string;
   calendarUrl?: string;
@@ -16,11 +17,14 @@ const {
   singer,
   choirName,
   currentPath,
+  sheetUrl,
   masterSheetUrl = 'https://docs.google.com/spreadsheets',
   repertoireDriveUrl,
   calendarUrl,
   isSheetAdmin = singer.role === 'Admin',
 } = Astro.props;
+
+const resolvedSheetUrl = sheetUrl || masterSheetUrl;
 
 const tabs = [
   { href: '/portal', label: 'Schedule', exact: true },
@@ -105,7 +109,8 @@ const tabs = [
           client:load
           singer={singer}
           isSheetAdmin={isSheetAdmin}
-          masterSheetUrl={masterSheetUrl}
+          sheetUrl={resolvedSheetUrl}
+          masterSheetUrl={resolvedSheetUrl}
           repertoireDriveUrl={repertoireDriveUrl}
           calendarUrl={calendarUrl}
         />

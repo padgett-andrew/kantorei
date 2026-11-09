@@ -36,10 +36,10 @@ const env = { ...dotEnv, ...process.env };
 
 const clientEmail = (env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '').trim();
 const privateKeyRaw = (env.GOOGLE_PRIVATE_KEY || '').trim();
-const sheetId = extractId(env.GOOGLE_MASTER_SHEET_ID || '');
+const sheetId = extractId(env.GOOGLE_SHEET_ID || env.GOOGLE_MASTER_SHEET_ID || '');
 
 console.log('\n======================================================');
-console.log(' 🛠️   KANTOREI MASTER GOOGLE SHEET SCHEMA PROVISIONER');
+console.log(' 🛠️   KANTOREI CHOIR GOOGLE SHEET SCHEMA PROVISIONER');
 console.log('======================================================\n');
 
 const SCHEMA_SPEC = {
@@ -660,7 +660,7 @@ Adam Reinwald`,
 
 if (!clientEmail || !privateKeyRaw || !sheetId || sheetId === 'DEMO') {
   console.log('ℹ️   Running in DEMO mode or missing Google credentials.');
-  console.log('   Here is the canonical schema layout for the Master Sheet:\n');
+  console.log('   Here is the canonical schema layout for the Choir Google Sheet:\n');
   for (const [tab, spec] of Object.entries(SCHEMA_SPEC)) {
     console.log(`   📄 [${tab}]`);
     console.log(`      Columns: ${spec.headers.join(', ')}`);
@@ -726,7 +726,7 @@ async function run() {
     }
 
     const meta = await metaRes.json();
-    console.log(`   Spreadsheet Title: "${meta.properties?.title || 'Master Sheet'}"`);
+    console.log(`   Spreadsheet Title: "${meta.properties?.title || 'Choir Sheet'}"`);
 
     const existingSheets = meta.sheets || [];
     const sheetMap = new Map();
@@ -1144,10 +1144,10 @@ async function run() {
       console.warn('   ⚠️ Could not harmonize Config tab:', configHarmonizeErr.message);
     }
 
-    // Optionally synchronize full canonical Roster rows to Master Sheet (--sync-roster)
+    // Optionally synchronize full canonical Roster rows to Choir Sheet (--sync-roster)
     if (process.argv.includes('--sync-roster')) {
       try {
-        console.log('\n👥 Synchronizing full canonical Roster to Master Sheet...');
+        console.log('\n👥 Synchronizing full canonical Roster to Choir Sheet...');
         // Clear old rows first to avoid trailing stale entries
         await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(

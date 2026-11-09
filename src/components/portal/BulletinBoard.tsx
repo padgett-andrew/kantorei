@@ -883,7 +883,7 @@ export default function BulletinBoard({
                 that automatically parses emails sent to{' '}
                 <strong className="font-semibold text-navy-950">singers@kantorei.net</strong> and
                 appends them to the <strong className="font-semibold text-navy-950">Messages</strong>{' '}
-                tab in the Master Google Sheet.
+                tab in the Choir Google Sheet.
               </p>
 
               <div className="space-y-3 rounded-sm border border-stone-200/90 bg-white p-4">
@@ -920,7 +920,7 @@ export default function BulletinBoard({
                   <li>
                     <strong>Zero Maintenance Moderation:</strong> Any email sent to the list appears
                     on this board within seconds. Board members can pin or archive posts right from
-                    this page or edit rows directly in the Master Sheet’s{' '}
+                    this page or edit rows directly in the Choir Sheet’s{' '}
                     <code className="font-mono text-xs">Messages</code> tab.
                   </li>
                 </ol>

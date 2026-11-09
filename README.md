@@ -2,7 +2,7 @@
 
 A unified, zero-maintenance **Public Marketing Website + Authenticated Singer Portal** built for [Kantorei](https://kantorei.net) (501(c)(3) choral ensemble in Minnesota).
 
-Hosted on **Cloudflare Workers** (`Astro 5 + React 19 + Tailwind CSS v4`), powered entirely by a **Master Google Sheet** and **Google Drive Shared Folder** with zero SQL/NoSQL databases to manage or pay for.
+Hosted on **Cloudflare Workers** (`Astro 5 + React 19 + Tailwind CSS v4`), powered entirely by a **Choir Google Sheet** and **Google Drive Shared Folder** with zero SQL/NoSQL databases to manage or pay for.
 
 ---
 
@@ -18,7 +18,7 @@ Hosted on **Cloudflare Workers** (`Astro 5 + React 19 + Tailwind CSS v4`), power
 
 ## Core Architecture & Philosophy
 
-1. **Zero Database Maintenance:** The Master Google Sheet and a Google Shared Drive serve as the entire CMS and database via lightweight REST APIs + `jose` RS256 Web Crypto JWTs.
+1. **Zero Database Maintenance:** The Choir Google Sheet and a Google Shared Drive serve as the entire CMS and database via lightweight REST APIs + `jose` RS256 Web Crypto JWTs.
 2. **Zero Hosting Seat Tax & Zero Egress Fees:** Hosted on Cloudflare Workers ($0 free tier, unlimited board access, 0ms cold starts, and $0 egress fees for streaming rehearsal MP3s and score PDFs).
 3. **Universal Singer Login:** Supports both 1-click **"Continue with Google"** OAuth and a **stateless 6-digit Email Login Code (OTP)** via Resend, allowing singers on `@icloud.com`, `@outlook.com`, `@yahoo.com`, or university emails to log in with zero database overhead.
 4. **Resilient Edge Caching:** Cloudflare Cache API (`caches.default`) with serve-stale-on-error fallbacks and exponential backoff retries, ensuring the portal stays up even during Google API hiccups.
@@ -28,7 +28,7 @@ Hosted on **Cloudflare Workers** (`Astro 5 + React 19 + Tailwind CSS v4`), power
 
 ## Quick Start (Local Development)
 
-The repository comes pre-configured with **Interactive Sandbox Mode** (`GOOGLE_MASTER_SHEET_ID="DEMO"` and `DEV_PREVIEW_BYPASS="true"` in `.env.example`). Clone the repository and run:
+The repository comes pre-configured with **Interactive Sandbox Mode** (`GOOGLE_SHEET_ID="DEMO"` and `DEV_PREVIEW_BYPASS="true"` in `.env.example`). Clone the repository and run:
 
 ```bash
 # 1. Install dependencies
@@ -70,10 +70,10 @@ npm run doctor:env:prod  # Audits environment against strict production invarian
 npm run env:sync-dev     # Synchronizes .env -> .dev.vars for local wrangler dev
 
 # Database & Schema Management
-npm run init:sheets      # Idempotently audits & provisions all 8 Master Sheet tabs with canonical headers
-npm run sync:roster      # Idempotently appends canonical roster singer rows into Master Google Sheet
-npm run sync:board       # Idempotently appends board & leadership rows into Master Google Sheet
-npm run backup:sheets    # Creates a timestamped JSON snapshot of the entire Master Sheet in backups/
+npm run init:sheets      # Idempotently audits & provisions all 8 Choir Sheet tabs with canonical headers
+npm run sync:roster      # Idempotently appends canonical roster singer rows into Choir Google Sheet
+npm run sync:board       # Idempotently appends board & leadership rows into Choir Google Sheet
+npm run backup:sheets    # Creates a timestamped JSON snapshot of the entire Choir Sheet in backups/
 npm run setup:key        # Imports a downloaded Google Cloud Service Account JSON key into .env
 
 # Deployment & Secrets
@@ -93,12 +93,12 @@ npm run deploy           # Runs typecheck + build + Cloudflare deployment in one
 │   └── production-handover.md  # Production go-live runbook for kantorei.net
 ├── scripts/
 │   ├── doctor-env.mjs          # Environment policy auditor CLI
-│   ├── init-sheets.mjs         # Master Sheet schema auto-provisioner
+│   ├── init-sheets.mjs         # Choir Sheet schema auto-provisioner
 │   ├── backup-sheets.mjs       # Instant JSON database snapshot utility
 │   ├── sync-dev-vars.mjs       # .env -> .dev.vars synchronizer
 │   └── sync-cloudflare-secrets.mjs # Validated Cloudflare secret uploader
 ├── setup/
-│   └── kantorei-master-sheet-starter.xlsx # Starter Master Google Sheet template
+│   └── kantorei-database-sheet-starter.xlsx # Starter Choir Google Sheet template
 ├── src/
 │   ├── middleware.ts           # Route guard, singer hydration, CSRF defense & security headers
 │   ├── lib/

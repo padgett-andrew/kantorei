@@ -228,7 +228,7 @@ export async function getInstagramShowcase(
   const handleMatch = /instagram\.com\/([^/?#]+)/i.exec(profileUrl);
   const handle = handleMatch ? `@${handleMatch[1]}` : '@kantorei_mn';
 
-  // If board configured specific Instagram post/reel URLs in the Master Sheet Config tab
+  // If board configured specific Instagram post/reel URLs in the Choir Sheet Config tab
   if (config?.Instagram_Posts) {
     const customUrls = config.Instagram_Posts.split(/[\n,]+/)
       .map((u) => u.trim())

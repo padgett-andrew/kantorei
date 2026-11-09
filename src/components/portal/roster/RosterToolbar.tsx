@@ -9,6 +9,7 @@ interface Props {
   setViewMode: (mode: 'cards' | 'table') => void;
   canManageRoster: boolean;
   onOpenCreateMember: () => void;
+  sheetUrl?: string;
   masterSheetUrl?: string;
   isAdmin: boolean;
   section: 'All' | SectionGroup;
@@ -33,6 +34,7 @@ export default function RosterToolbar({
   setViewMode,
   canManageRoster,
   onOpenCreateMember,
+  sheetUrl,
   masterSheetUrl,
   isAdmin,
   section,
@@ -110,16 +112,16 @@ export default function RosterToolbar({
               </button>
             )}
 
-            {/* Master Sheet Link (Desktop) */}
-            {masterSheetUrl && (
+            {/* Choir Sheet Link (Desktop) */}
+            {(sheetUrl || masterSheetUrl) && (
               <a
-                href={masterSheetUrl}
+                href={sheetUrl || masterSheetUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden items-center gap-1.5 rounded-sm border border-stone-300 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.13em] text-stone-700 transition hover:border-navy-950 hover:text-navy-950 sm:inline-flex"
-                title={isAdmin ? 'Open Master Google Sheet (Edit Access)' : 'Open Master Google Sheet (View Access)'}
+                title={isAdmin ? 'Open Choir Google Sheet (Edit Access)' : 'Open Choir Google Sheet (View Access)'}
               >
-                <span>Master Sheet</span>
+                <span>Choir Sheet</span>
                 <ExternalLink className="h-3 w-3 text-stone-400" />
               </a>
             )}

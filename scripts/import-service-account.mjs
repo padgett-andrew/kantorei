@@ -39,5 +39,5 @@ envText = upsertEnvLine(envText, 'GOOGLE_PRIVATE_KEY', escapedKey);
 fs.writeFileSync(envPath, envText, 'utf8');
 console.log(`✅ Imported Service Account into .env:`);
 console.log(`   Email: ${raw.client_email}`);
-console.log(`\nNext: Share your Master Google Sheet (as Editor) with:\n   ${raw.client_email}`);
+console.log(`\nNext: Share your Choir Google Sheet (as Editor) with:\n   ${raw.client_email}`);
 

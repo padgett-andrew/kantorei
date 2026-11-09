@@ -8,10 +8,10 @@ You are an expert full-stack Astro, React, and Cloudflare Edge engineer building
 
 Non-technical choir board members, music librarians, and section leaders MUST be able to operate the entire site day-to-day without touching code, GitHub, or database dashboards.
 
-1. **Zero Database Maintenance:** A single **Master Google Sheet** and a **Google Drive / Shared Drive folder** (accessed via a Google Cloud Service Account over lightweight REST + `jose` Web Crypto JWTs) serve as our entire CMS and database. There is no SQL/NoSQL database to pay for, migrate, or unpause after summer hiatus.
+1. **Zero Database Maintenance:** A single **Choir Google Sheet** and a **Google Drive / Shared Drive folder** (accessed via a Google Cloud Service Account over lightweight REST + `jose` Web Crypto JWTs) serve as our entire CMS and database. There is no SQL/NoSQL database to pay for, migrate, or unpause after summer hiatus.
 3. **Zero Custom Payment Math:** All concert ticketing and Flex Season Passes use embedded **Ticket Tailor** widgets (`0%` fee on `$0` pass redemptions, `50%` charity discount on paid tickets, plus in-cart add-on donations). Standalone fundraising uses embedded **Little Green Light (LGL) Forms** with native Enhanced Checkout (Apple Pay, Google Pay, ACH, credit cards).
 5. **Sandbox / Prototype Resilience:** The codebase MUST gracefully handle missing or placeholder credentials during local/sandbox development (rendering realistic mock repertoire/schedule/roster data, interactive preview cards when `DEMO` / `DEMO_SERIES_ID` is configured, and supporting Resend's `onboarding@resend.dev` sandbox rules).
-6. **100% Dynamic Content via Google Sheets CMS (Zero Code Deploys for Copy, Contact & Staff Changes):** ALL public site copy, statements, official contact details, board of directors, artistic leadership bios, and giving tiers MUST be manageable directly from the **Master Google Sheet** (`Config`, `Board`, `Leadership`, `Giving_Tiers`) or Google Drive. Future AI instances and engineers MUST NEVER hardcode copy, statements, emails, phone numbers, or staff rosters into `.astro` or `.tsx` templates. Always read from `getPortalConfig()` or the corresponding sheet getters with safe default fallbacks and 60-second edge caching.
+6. **100% Dynamic Content via Google Sheets CMS (Zero Code Deploys for Copy, Contact & Staff Changes):** ALL public site copy, statements, official contact details, board of directors, artistic leadership bios, and giving tiers MUST be manageable directly from the **Choir Google Sheet** (`Config`, `Board`, `Leadership`, `Giving_Tiers`) or Google Drive. Future AI instances and engineers MUST NEVER hardcode copy, statements, emails, phone numbers, or staff rosters into `.astro` or `.tsx` templates. Always read from `getPortalConfig()` or the corresponding sheet getters with safe default fallbacks and 60-second edge caching.
 
 ---
 
@@ -54,7 +54,7 @@ DEV_PREVIEW_BYPASS="true"
 GOOGLE_SERVICE_ACCOUNT_EMAIL="choir-bot@your-project.iam.gserviceaccount.com"
 # Note: Code must always normalize escaped newlines via .replace(/\\n/g, '\n')
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GOOGLE_MASTER_SHEET_ID="DEMO"
+GOOGLE_SHEET_ID="DEMO"
 
 # 3. Email Notifications & Login OTP (Resend REST API)
 # For sandbox testing without DNS access, use "onboarding@resend.dev"
@@ -91,8 +91,8 @@ Kantorei operates with three clear environment tiers governed by `src/lib/env.ts
 - `npm run doctor:env`: Audits current environment against local development rules.
 - `npm run doctor:env:prod`: Audits environment against strict production invariants prior to deployment.
 - `npm run env:sync-dev`: Synchronizes `.env` into `.dev.vars` for Cloudflare Workers local preview (`wrangler dev`).
-- `npm run backup:sheets`: Creates an instantaneous JSON snapshot of all Master Sheet tabs in a git-ignored `backups/` directory for disaster recovery.
-- `npm run init:sheets`: Idempotently audits and provisions any missing Master Sheet tabs with canonical headers, frozen row 1, column styling, and in-cell Data Validation dropdowns/chips for all constrained fields.
+- `npm run backup:sheets`: Creates an instantaneous JSON snapshot of all Choir Sheet tabs in a git-ignored `backups/` directory for disaster recovery.
+- `npm run init:sheets`: Idempotently audits and provisions any missing Choir Sheet tabs with canonical headers, frozen row 1, column styling, and in-cell Data Validation dropdowns/chips for all constrained fields.
 - `npm run deploy:secrets`: Verifies production `AUTH_SECRET` entropy before uploading secrets via `wrangler secret bulk`.
 - **Live Health API (`/api/health`)**: Lightweight edge endpoint verifying live connectivity and latency for Google Sheets, Google Drive, Resend, Ticket Tailor, and MailerLite without leaking credentials. Returns HTTP 200 (healthy/degraded) or HTTP 503 (unhealthy/critical failure).
 - **Automated Health Monitor (`.github/workflows/health-check.yml`)**: Automated GitHub Actions cron that audits the live production `/api/health` endpoint every Monday morning and emails maintainers if any credentials or services fail.
@@ -107,9 +107,9 @@ Kantorei operates with three clear environment tiers governed by `src/lib/env.ts
 
 ---
 
-## 4. Master Google Sheet Schema (`GOOGLE_MASTER_SHEET_ID`)
+## 4. Choir Google Sheet Schema (`GOOGLE_SHEET_ID` / `GOOGLE_MASTER_SHEET_ID`)
 
-Recommend placing the Master Google Sheet, Repertoire folder, and Choir Handbook inside a **Google Workspace for Nonprofits Shared Drive**. Share `GOOGLE_SERVICE_ACCOUNT_EMAIL` as **Content Manager / Editor** on the Master Google Sheet and **Viewer** on the Repertoire folder and Choir Handbook Doc.
+Recommend placing the Choir Google Sheet, Repertoire folder, and Choir Handbook inside a **Google Workspace for Nonprofits Shared Drive**. Share `GOOGLE_SERVICE_ACCOUNT_EMAIL` as **Content Manager / Editor** on the Choir Google Sheet and **Viewer** on the Repertoire folder and Choir Handbook Doc.
 
 ### Tab 1: `Roster` (Range: `Roster!A2:G`)
 
@@ -125,11 +125,11 @@ Controls portal login access (both Google OAuth and Email OTP), section filterin
 | `F` | `Phone`         | `612-555-0100`       | Display string for member directory                                                |
 | `G` | `Active`        | `Active`             | Dropdown: `Active`, `On_Leave`, `Inactive` (or legacy `TRUE`/`FALSE`)              |
 
-### Tab 2: `Schedule` (Google Calendar API v3 or Master Sheet `Schedule!A2:K`)
+### Tab 2: `Schedule` (Google Calendar API v3 or Choir Sheet `Schedule!A2:K`)
 
 Powers the Singer Portal rehearsal calendar, subscribable `/api/calendar.ics` feed, Absence form date selector, and 1-tap Snack Signup.
 
-- **Hospitality, Snacks & Duties Decoupling**: For standard rehearsals (`Rehearsal`, `Sectional`, `Retreat`), all four slots standardly reflect snack sign-up spots (`Snack Spot 1` through `Snack Spot 4`). On concert calls, slots default to concert crew roles (stage setup, strike, box office, reception). Any slot can be customized directly in the Master Google Sheet—either by entering a custom duty in `Schedule!G:J` (e.g. `(Room Setup)`, `[Sound Crew]`, or `Singer Name (Custom Duty)`) or via the dedicated `Snacks` sheet tab (`Event_ID`, `Slot`, `Singer_Name`, `Item`, `Updated_At`).
+- **Hospitality, Snacks & Duties Decoupling**: For standard rehearsals (`Rehearsal`, `Sectional`, `Retreat`), all four slots standardly reflect snack sign-up spots (`Snack Spot 1` through `Snack Spot 4`). On concert calls, slots default to concert crew roles (stage setup, strike, box office, reception). Any slot can be customized directly in the Choir Google Sheet—either by entering a custom duty in `Schedule!G:J` (e.g. `(Room Setup)`, `[Sound Crew]`, or `Singer Name (Custom Duty)`) or via the dedicated `Snacks` sheet tab (`Event_ID`, `Slot`, `Singer_Name`, `Item`, `Updated_At`).
 - **Sheet Fallback Table (Legacy or Demo Mode)**:
   | Col | Header         | Example Value       | Specification                                                                  |
   | :-- | :------------- | :------------------ | :----------------------------------------------------------------------------- |
@@ -204,7 +204,7 @@ Key-value settings editable by the board without redeploying code. Structured as
 
 #### Dynamic Variable Tokens in CMS Blurbs (Automatic Cascade)
 
-Any blurb in the Master Sheet (or in site copy) can include dynamic tokens that automatically resolve to the latest master settings in `Config` at runtime (via `src/lib/config-interpolate.ts`). When an administrator updates `Contact_Email`, `Contact_Phone`, `Contact_Address`, `Choir_Name`, or `Conductor_Name`, the change immediately cascades across every blurb on the website without needing to edit each text block individually:
+Any blurb in the Choir Sheet (or in site copy) can include dynamic tokens that automatically resolve to the latest choir settings in `Config` at runtime (via `src/lib/config-interpolate.ts`). When an administrator updates `Contact_Email`, `Contact_Phone`, `Contact_Address`, `Choir_Name`, or `Conductor_Name`, the change immediately cascades across every blurb on the website without needing to edit each text block individually:
 
 - `{Choir_Name}` / `{choir}`: Organization name
 - `{Contact_Email}` / `{email}`: Primary inquiries and contact email
@@ -530,14 +530,14 @@ src/
    - Parse every non-empty row with `zod` `.safeParse()` (trimming whitespace and normalizing booleans/emails).
    - Skip blank rows silently; record malformed rows into `SheetWarning[]` so the public site and portal never crash, while Admins see exact row-number diagnostics on `/portal/admin`.
 3. **Safe Primary-Key Lookup Before Every Write (No Stale `rowIndex` Writes):**
-   - Board members may sort, filter, or insert rows in the Master Google Sheet at any time. **Never accept `rowIndex` from a client payload or rely on a cached `rowIndex` when writing.**
+   - Board members may sort, filter, or insert rows in the Choir Google Sheet at any time. **Never accept `rowIndex` from a client payload or rely on a cached `rowIndex` when writing.**
    - **Snacks (`POST /api/snacks`):** Perform an uncached read of `Schedule!A2:H`, find `eventId` (`freshRowIndex = matchIndex + 2`), verify concurrency preconditions (when claiming, target slot `G` or `H` must be empty; when releasing, target slot must match `singer.name` unless caller is `Admin`), and write to `Schedule!G${freshRowIndex}` or `Schedule!H${freshRowIndex}`. Return `409 Conflict` if another singer just claimed the slot.
    - **Roster (`POST / PUT /api/roster`):** Perform an uncached read of `Roster!A2:A` to locate the normalized `email` before updating `Roster!A${freshRowIndex}:G${freshRowIndex}` (or append if adding a new singer after confirming no duplicate email exists).
    - **Absences (`POST / DELETE /api/absences`):** Perform an uncached read of `Absences!A2:I` to find any existing row matching `(eventId, singerEmail)`. Update `Absences!A${freshRowIndex}:I${freshRowIndex}` if found, or append to `Absences!A:I` if new.
 4. **Edge Caching & Instant Invalidation (`src/lib/cache.ts`):**
    - Cache Sheet reads (`60s` TTL) and Handbook/Drive metadata (`300s` TTL) via Cloudflare's `caches.default` (falling back to an in-memory `Map` in local dev).
    - Immediately delete the relevant cache key inside `/api/snacks` (`schedule`), `/api/absences` (`absences`), and `/api/roster` (`roster`).
-   - When operating in Sandbox/Demo mode (`GOOGLE_MASTER_SHEET_ID` unset or `"DEMO"`), keep an in-memory mutable store seeded with realistic Kantorei sample data so claiming snacks, submitting absences, and editing the roster work interactively right out of the box!
+   - When operating in Sandbox/Demo mode (`GOOGLE_SHEET_ID` unset or `"DEMO"`), keep an in-memory mutable store seeded with realistic Kantorei sample data so claiming snacks, submitting absences, and editing the roster work interactively right out of the box!
 
 ### B. Dual Stateless Authentication & Live Roster Re-Hydration (`src/lib/auth.ts`, `src/middleware.ts`)
 

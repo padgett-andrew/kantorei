@@ -37,7 +37,7 @@ for (const [k, v] of Object.entries(dotEnv)) {
 }
 const clientEmail = env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
 const privateKeyRaw = env.GOOGLE_PRIVATE_KEY || '';
-const sheetId = extractId(env.GOOGLE_MASTER_SHEET_ID || '');
+const sheetId = extractId(env.GOOGLE_SHEET_ID || env.GOOGLE_MASTER_SHEET_ID || '');
 const driveFolderId = extractId(
   env.REPERTOIRE_DRIVE_FOLDER_ID || '1tIPYJBkibVLjQOaGSzZ2y7L9UOTNOyJc'
 );
@@ -118,11 +118,11 @@ if (!driveRes.ok) {
   }
 }
 
-// 3. Test Master Google Sheet
-console.log('\n3. Checking Master Google Sheet...');
+// 3. Test Choir Google Sheet
+console.log('\n3. Checking Choir Google Sheet...');
 if (!sheetId || sheetId === 'DEMO') {
-  console.log('   ℹ️  GOOGLE_MASTER_SHEET_ID is still set to "DEMO" in .env.');
-  console.log('      Upload setup/kantorei-master-sheet-starter.xlsx to Google Sheets,');
+  console.log('   ℹ️  GOOGLE_SHEET_ID is still set to "DEMO" in .env.');
+  console.log('      Upload setup/kantorei-database-sheet-starter.xlsx to Google Sheets,');
   console.log(`      share it as Editor with ${clientEmail}, and paste its URL/ID into .env.`);
 } else {
   const tabs = ['Roster!A1:G5', 'Schedule!A1:I5', 'Concerts!A1:I5', 'Config!A1:B15', 'Media!A1:F5'];

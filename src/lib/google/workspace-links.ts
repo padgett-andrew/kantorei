@@ -87,12 +87,12 @@ export function isRealGoogleId(id?: string | null): boolean {
 }
 
 /**
- * Returns the appropriate Google Sheets URL for the Master Sheet based on user role.
+ * Returns the appropriate Google Sheets URL for the Choir Database Sheet based on user role.
  * - Admins get `/edit` (full edit access to roster, schedule, absences, config)
  * - Singers / Section Leaders get `/view` (view access)
  */
-export function getMasterSheetUrl(isAdmin: boolean, locals?: App.Locals): string {
-  const raw = getEnv('GOOGLE_MASTER_SHEET_ID', locals);
+export function getChoirSheetUrl(isAdmin: boolean, locals?: App.Locals): string {
+  const raw = getEnv('GOOGLE_SHEET_ID', locals);
   const sheetId = extractGoogleId(raw);
   if (!sheetId || sheetId === 'DEMO') {
     return 'https://docs.google.com/spreadsheets';
@@ -100,6 +100,8 @@ export function getMasterSheetUrl(isAdmin: boolean, locals?: App.Locals): string
   const mode = isAdmin ? 'edit' : 'view';
   return `https://docs.google.com/spreadsheets/d/${sheetId}/${mode}`;
 }
+
+export const getMasterSheetUrl = getChoirSheetUrl;
 
 /**
  * Returns the direct Google Drive URL for a folder ID.
@@ -124,6 +126,9 @@ export interface DriveFolderTargetLink {
 }
 
 export interface WorkspaceLinks {
+  sheetUrl: string;
+  sheetMode: 'edit' | 'view';
+  sheetLabel: string;
   masterSheetUrl: string;
   masterSheetMode: 'edit' | 'view';
   masterSheetLabel: string;
@@ -137,11 +142,11 @@ export function getWorkspaceLinks(
   config?: PortalConfig | null,
   locals?: App.Locals
 ): WorkspaceLinks {
-  const masterSheetUrl = getMasterSheetUrl(isAdmin, locals);
-  const masterSheetMode = isAdmin ? 'edit' : 'view';
-  const masterSheetLabel = isAdmin
-    ? 'Master Google Sheet (Edit Access)'
-    : 'Master Google Sheet (View Access)';
+  const sheetUrl = getChoirSheetUrl(isAdmin, locals);
+  const sheetMode = isAdmin ? 'edit' : 'view';
+  const sheetLabel = isAdmin
+    ? 'Choir Google Sheet (Edit Access)'
+    : 'Choir Google Sheet (View Access)';
 
   const targets = config ? parseRepertoireFolderTargets(config) : [];
   const concertDriveFolders: DriveFolderTargetLink[] = targets.map((t, idx) => ({
@@ -157,9 +162,12 @@ export function getWorkspaceLinks(
     getDriveFolderUrl(config?.Repertoire_Drive_Folder_ID, locals);
 
   return {
-    masterSheetUrl,
-    masterSheetMode,
-    masterSheetLabel,
+    sheetUrl,
+    sheetMode,
+    sheetLabel,
+    masterSheetUrl: sheetUrl,
+    masterSheetMode: sheetMode,
+    masterSheetLabel: sheetLabel,
     repertoireDriveUrl,
     concertDriveFolders,
     isAdmin,
