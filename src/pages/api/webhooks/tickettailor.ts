@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getEnv } from '../../../lib/env';
-import { recordSubscriber } from '../../../lib/google';
+import { getPortalConfig, recordSubscriber } from '../../../lib/google';
 import { addSubscriberToMailerLite } from '../../../lib/mailerlite';
 
 export interface QuestionItem {
@@ -117,7 +117,26 @@ export async function verifyTicketTailorSignature(
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const webhookSecret = getEnv('TICKET_TAILOR_WEBHOOK_SECRET', locals);
+  let webhookSecret = getEnv('TICKET_TAILOR_WEBHOOK_SECRET', locals).trim();
+
+  // Read webhook secret from Choir Google Sheet Config tab if not in environment
+  if (!webhookSecret || webhookSecret === 'DEMO') {
+    try {
+      const config = await getPortalConfig(locals);
+      const sheetSecret =
+        (config as any).TT_Webhook_Secret ||
+        (config as any).Ticket_Tailor_Webhook_Secret ||
+        (config as any).TICKET_TAILOR_WEBHOOK_SECRET ||
+        (config as any).TicketTailor_Webhook_Secret ||
+        (config as any).TT_Secret ||
+        (config as any).Webhook_Secret;
+      if (typeof sheetSecret === 'string' && sheetSecret.trim()) {
+        webhookSecret = sheetSecret.trim();
+      }
+    } catch {
+      // Gracefully fall back if sheet config is inaccessible
+    }
+  }
 
   let rawBody = '';
   try {

@@ -404,6 +404,8 @@ const SCHEMA_SPEC = {
       ['Resend_API_Key', '', 'Resend API key for portal transactional emails (OTP login, absences, auditions) (optional: can also be set via RESEND_API_KEY secret)'],
       ['Portal_From_Email', 'Kantorei Portal <onboarding@resend.dev>', 'Verified sender email address in Resend for portal alerts'],
       ['Sandbox_Override_Email', '', 'Optional test email to redirect all outgoing Resend emails to during development/testing'],
+      ['TT_Webhook_Secret', '', 'Ticket Tailor webhook signing secret for verifying order opt-in webhooks (or set via TICKET_TAILOR_WEBHOOK_SECRET secret)'],
+      ['Ticket_Tailor_API_Key', '', 'Ticket Tailor REST API key for auto-fetching live box office events (or set via TICKET_TAILOR_API_KEY secret)'],
     ],
   },
   Board: {

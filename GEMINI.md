@@ -273,6 +273,8 @@ Standard Config Keys:
 - `Resend_API_Key`: Resend API key for portal transactional emails (OTP login, absences, auditions) (can also be set via `RESEND_API_KEY` secret)
 - `Portal_From_Email`: Verified sender email address in Resend for portal alerts (e.g. `Kantorei Portal <onboarding@resend.dev>` or `Kantorei <tickets@kantorei.net>`)
 - `Sandbox_Override_Email`: Optional test email to redirect all outgoing Resend emails to during development/testing
+- `TT_Webhook_Secret`: Ticket Tailor webhook signing secret for verifying order opt-in webhooks (can also be set via `TICKET_TAILOR_WEBHOOK_SECRET` secret)
+- `Ticket_Tailor_API_Key`: Ticket Tailor REST API key for auto-fetching live box office events (can also be set via `TICKET_TAILOR_API_KEY` secret)
 
 ### Tab 6: `Media` (Range: `Media!A2:F` or Live YouTube RSS Feed)
 
