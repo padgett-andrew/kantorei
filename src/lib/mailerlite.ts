@@ -43,10 +43,19 @@ export async function addSubscriberToMailerLite(
         }
       }
       if (!targetGroup || targetGroup === 'DEMO') {
-        const sheetGroup =
-          config.MailerLite_Group_ID ||
-          (config as any).MailerLite_Group ||
-          (config as any).MAILERLITE_GROUP_ID;
+        const isTicket = (input.source || '').toLowerCase().includes('ticket');
+        const ttEnvGroup = isTicket ? getEnv('MAILERLITE_TT_GROUP_ID', locals).trim() : '';
+        const sheetGroup = isTicket
+          ? (config as any).MailerLite_TT_Group_ID ||
+            (config as any).Ticket_Tailor_Group_ID ||
+            (config as any).TT_Group_ID ||
+            ttEnvGroup ||
+            config.MailerLite_Group_ID ||
+            (config as any).MailerLite_Group ||
+            (config as any).MAILERLITE_GROUP_ID
+          : config.MailerLite_Group_ID ||
+            (config as any).MailerLite_Group ||
+            (config as any).MAILERLITE_GROUP_ID;
         if (typeof sheetGroup === 'string' && sheetGroup.trim()) {
           targetGroup = sheetGroup.trim();
         }
