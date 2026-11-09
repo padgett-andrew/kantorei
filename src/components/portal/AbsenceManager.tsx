@@ -10,6 +10,8 @@ import {
 import type { AbsenceRecord, ScheduleEvent, SectionGroup, Singer } from '../../types/choir';
 import { SECTION_GROUPS } from '../../types/choir';
 import { formatEventDate, voicePartBadgeColor } from '../../lib/utils';
+import { enqueueOfflineMutation } from '../../lib/offline-queue';
+import { fetchWithTimeout } from '../../lib/fetch-with-timeout';
 
 interface Props {
   singer: Singer;
@@ -88,16 +90,77 @@ export default function AbsenceManager({
     setSubmitting(true);
     setFeedback(null);
 
-    try {
-      const res = await fetch('/api/absences', {
+    const targetEv = upcomingEvents.find((ev) => ev.eventId === selectedEventId);
+    const eventDate = targetEv?.date || '';
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+    // Helper for optimistic state update
+    function applyOptimisticAbsence(savedRecord: AbsenceRecord) {
+      setAbsences((prev) => {
+        const filtered = prev.filter((a) => a.eventId !== savedRecord.eventId);
+        return [savedRecord, ...filtered];
+      });
+
+      setRosterAbsences((prev) => {
+        const filtered = prev.filter(
+          (a) =>
+            !(
+              a.eventId === savedRecord.eventId &&
+              a.singerEmail.toLowerCase() === savedRecord.singerEmail.toLowerCase()
+            )
+        );
+        return [savedRecord, ...filtered];
+      });
+    }
+
+    if (isOffline) {
+      const optimisticRecord: AbsenceRecord = {
+        timestamp: new Date().toISOString(),
+        eventId: selectedEventId,
+        date: eventDate,
+        singerName: singer.name,
+        singerEmail: singer.email,
+        voicePart: singer.voicePart || '',
+        reason,
+        submittedBy: 'Self',
+        status: statusType,
+      };
+
+      applyOptimisticAbsence(optimisticRecord);
+      enqueueOfflineMutation({
+        url: '/api/absences',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           eventId: selectedEventId,
           reason,
           status: statusType,
-        }),
+        },
+        label: `${statusType} notice for ${targetEv?.title || eventDate}`,
       });
+
+      setFeedback({
+        type: 'success',
+        text: `Notice saved offline on your device. It will automatically transmit to your ${singer.sectionGroup} Section Leader as soon as your phone reconnects.`,
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await fetchWithTimeout(
+        '/api/absences',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId: selectedEventId,
+            reason,
+            status: statusType,
+          }),
+        },
+        4000
+      );
+
       const data = (await res.json()) as {
         ok?: boolean;
         error?: string;
@@ -114,32 +177,53 @@ export default function AbsenceManager({
         return;
       }
 
-      const saved = data.absence;
-      setAbsences((prev) => {
-        const filtered = prev.filter((a) => a.eventId !== saved.eventId);
-        return [saved, ...filtered];
-      });
+      applyOptimisticAbsence(data.absence);
 
-      setRosterAbsences((prev) => {
-        const filtered = prev.filter(
-          (a) =>
-            !(
-              a.eventId === saved.eventId &&
-              a.singerEmail.toLowerCase() === saved.singerEmail.toLowerCase()
-            )
-        );
-        return [saved, ...filtered];
-      });
-
-      const isLate = saved.status === 'Late';
+      const isLate = data.absence.status === 'Late';
       setFeedback({
         type: 'success',
         text: isLate
-          ? `Late notice recorded for ${formatEventDate(saved.date)}. Your ${singer.sectionGroup} Section Leader and leadership team have been notified.`
-          : `Absence recorded for ${formatEventDate(saved.date)}. Your ${singer.sectionGroup} Section Leader and leadership team have been notified.`,
+          ? `Late notice recorded for ${formatEventDate(data.absence.date)}. Your ${singer.sectionGroup} Section Leader and leadership team have been notified.`
+          : `Absence recorded for ${formatEventDate(data.absence.date)}. Your ${singer.sectionGroup} Section Leader and leadership team have been notified.`,
       });
-    } catch {
-      setFeedback({ type: 'error', text: 'Network error submitting notice.' });
+    } catch (err) {
+      const isNetworkDrop =
+        err instanceof TypeError ||
+        (err instanceof Error && err.name === 'TimeoutError') ||
+        (typeof navigator !== 'undefined' && !navigator.onLine);
+
+      if (isNetworkDrop) {
+        const optimisticRecord: AbsenceRecord = {
+          timestamp: new Date().toISOString(),
+          eventId: selectedEventId,
+          date: eventDate,
+          singerName: singer.name,
+          singerEmail: singer.email,
+          voicePart: singer.voicePart || '',
+          reason,
+          submittedBy: 'Self',
+          status: statusType,
+        };
+        applyOptimisticAbsence(optimisticRecord);
+
+        enqueueOfflineMutation({
+          url: '/api/absences',
+          method: 'POST',
+          body: {
+            eventId: selectedEventId,
+            reason,
+            status: statusType,
+          },
+          label: `${statusType} notice for ${targetEv?.title || eventDate}`,
+        });
+
+        setFeedback({
+          type: 'success',
+          text: `Notice saved offline on your device. It will automatically transmit to your ${singer.sectionGroup} Section Leader as soon as your phone reconnects.`,
+        });
+      } else {
+        setFeedback({ type: 'error', text: 'Network error submitting notice.' });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -148,12 +232,46 @@ export default function AbsenceManager({
   async function handleWithdraw(eventId: string, date: string) {
     setClearingId(eventId);
     setFeedback(null);
-    try {
-      const res = await fetch('/api/absences', {
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+    // Optimistically mark cleared
+    setAbsences((prev) =>
+      prev.map((a) => (a.eventId === eventId ? { ...a, status: 'Cleared' } : a))
+    );
+
+    setRosterAbsences((prev) =>
+      prev.map((a) =>
+        a.eventId === eventId && a.singerEmail.toLowerCase() === singer.email.toLowerCase()
+          ? { ...a, status: 'Cleared' }
+          : a
+      )
+    );
+
+    if (isOffline) {
+      enqueueOfflineMutation({
+        url: '/api/absences',
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId }),
+        body: { eventId },
+        label: `Withdraw notice for ${date}`,
       });
+      setFeedback({
+        type: 'success',
+        text: `Withdrawal saved offline. It will automatically transmit to your section leader when connection returns.`,
+      });
+      setClearingId(null);
+      return;
+    }
+
+    try {
+      const res = await fetchWithTimeout(
+        '/api/absences',
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventId }),
+        },
+        4000
+      );
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
@@ -161,29 +279,30 @@ export default function AbsenceManager({
         return;
       }
 
-      const prevRecord = absences.find((a) => a.eventId === eventId);
-      const wasLate = prevRecord?.status === 'Late';
-
-      setAbsences((prev) =>
-        prev.map((a) => (a.eventId === eventId ? { ...a, status: 'Cleared' } : a))
-      );
-
-      setRosterAbsences((prev) =>
-        prev.map((a) =>
-          a.eventId === eventId && a.singerEmail.toLowerCase() === singer.email.toLowerCase()
-            ? { ...a, status: 'Cleared' }
-            : a
-        )
-      );
-
       setFeedback({
         type: 'success',
-        text: wasLate
-          ? `Your running-late notice for ${formatEventDate(date)} has been withdrawn. Section leadership has been updated.`
-          : `Your absence notice for ${formatEventDate(date)} has been withdrawn. Section leadership has been updated.`,
+        text: `Your notice for ${formatEventDate(date)} has been withdrawn. Section leadership has been updated.`,
       });
-    } catch {
-      setFeedback({ type: 'error', text: 'Network error clearing record.' });
+    } catch (err) {
+      const isNetworkDrop =
+        err instanceof TypeError ||
+        (err instanceof Error && err.name === 'TimeoutError') ||
+        (typeof navigator !== 'undefined' && !navigator.onLine);
+
+      if (isNetworkDrop) {
+        enqueueOfflineMutation({
+          url: '/api/absences',
+          method: 'DELETE',
+          body: { eventId },
+          label: `Withdraw notice for ${date}`,
+        });
+        setFeedback({
+          type: 'success',
+          text: `Withdrawal saved offline. It will automatically transmit to your section leader when connection returns.`,
+        });
+      } else {
+        setFeedback({ type: 'error', text: 'Network error clearing record.' });
+      }
     } finally {
       setClearingId(null);
     }

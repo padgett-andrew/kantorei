@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Offline in Rehearsal — Kantorei Singer Portal</title>
+    <meta name="theme-color" content="#FAF7F2" />
+    <style>
+      :root {
+        --color-bg: #FAF7F2;
+        --color-navy: #0c1524;
+        --color-copper: #c2653a;
+        --color-stone-600: #57534e;
+        --color-stone-300: #d6d3d1;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: var(--color-bg);
+        color: var(--color-navy);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 1.5rem;
+        text-align: center;
+        -webkit-font-smoothing: antialiased;
+      }
+      .card {
+        background: #ffffff;
+        border: 1px solid var(--color-stone-300);
+        border-radius: 6px;
+        padding: 2.25rem 1.75rem;
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 4px 20px rgba(12, 21, 36, 0.05);
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--color-copper);
+        margin-bottom: 0.75rem;
+      }
+      h1 {
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 2rem;
+        font-weight: 500;
+        line-height: 1.15;
+        color: var(--color-navy);
+        margin-bottom: 0.75rem;
+      }
+      p {
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: var(--color-stone-600);
+        margin-bottom: 1.5rem;
+      }
+      .tip-box {
+        background: #fbf7f3;
+        border-left: 2px solid var(--color-copper);
+        padding: 0.75rem 1rem;
+        text-align: left;
+        margin-bottom: 1.5rem;
+        font-size: 0.75rem;
+        line-height: 1.45;
+        color: var(--color-stone-600);
+      }
+      .tip-box strong {
+        color: var(--color-navy);
+        display: block;
+        margin-bottom: 0.2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.65rem;
+      }
+      .btn {
+        display: inline-block;
+        width: 100%;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        text-decoration: none;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border: none;
+      }
+      .btn-primary {
+        background: var(--color-navy);
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+      }
+      .btn-primary:hover {
+        background: #19273c;
+      }
+      .btn-secondary {
+        background: transparent;
+        color: var(--color-stone-600);
+        border: 1px solid var(--color-stone-300);
+      }
+      .btn-secondary:hover {
+        background: #f5efe8;
+        color: var(--color-navy);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <span class="badge">Rehearsal Dead Zone</span>
+      <h1>You&rsquo;re Offline</h1>
+      <p>
+        Your phone is currently disconnected from Wi-Fi and cell signal. Previously opened schedule pages remain available in your cache.
+      </p>
+
+      <div class="tip-box">
+        <strong>Offline Pro-Tip</strong>
+        If you subscribed to the Kantorei Calendar feed, your phone&rsquo;s native Apple or Google Calendar already has tonight&rsquo;s call times, room notes, and address stored locally on your device.
+      </div>
+
+      <a href="/portal" class="btn btn-primary">Open Cached Portal Home</a>
+      <button type="button" onclick="window.location.reload()" class="btn btn-secondary">Retry Connection</button>
+    </div>
+  </body>
+</html>

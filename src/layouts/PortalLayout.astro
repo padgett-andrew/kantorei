@@ -3,6 +3,7 @@ import '../styles/global.css';
 import PortalNav from '../components/portal/PortalNav.astro';
 import DevPersonaSwitcher from '../components/portal/DevPersonaSwitcher';
 import MobileBottomNav from '../components/portal/MobileBottomNav';
+import OfflineStatusBanner from '../components/portal/OfflineStatusBanner';
 import { getCalendarId } from '../lib/env';
 import { getPortalConfig, getRoster, getWorkspaceLinks } from '../lib/google';
 
@@ -145,6 +146,8 @@ if (isDevPreview) {
       </div>
     </footer>
 
+    <OfflineStatusBanner client:load />
+
     <MobileBottomNav
       client:load
       currentPath={Astro.url.pathname}
@@ -158,5 +161,15 @@ if (isDevPreview) {
       isSheetAdmin={isAdmin}
       calendarUrl={calendarUrl}
     />
+
+    <script is:inline>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.warn('[SW Registration Failed]', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

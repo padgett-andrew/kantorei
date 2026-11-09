@@ -9,6 +9,8 @@ import { eventTypeBadgeColor, formatEventDate } from '../../lib/utils';
 import LocationDirectionsButton from '../common/LocationDirectionsButton';
 import SnackClaimModal, { type ClaimModalState, type SlotNumber } from './snacks/SnackClaimModal';
 import SnackSlotCard from './snacks/SnackSlotCard';
+import { enqueueOfflineMutation } from '../../lib/offline-queue';
+import { fetchWithTimeout } from '../../lib/fetch-with-timeout';
 
 interface Props {
   singer: Singer;
@@ -107,12 +109,31 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
       })
     );
 
-    try {
-      const res = await fetch('/api/snacks', {
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+    const targetEv = events.find((ev) => ev.eventId === eventId);
+    const actionLabel = action === 'release' ? 'Release slot' : 'Claim slot';
+
+    if (isOffline) {
+      enqueueOfflineMutation({
+        url: '/api/snacks',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId, slot, action, item }),
+        body: { eventId, slot, action, item },
+        label: `${actionLabel} (${targetEv?.title || eventId})`,
       });
+      setBusyKey(null);
+      return;
+    }
+
+    try {
+      const res = await fetchWithTimeout(
+        '/api/snacks',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventId, slot, action, item }),
+        },
+        3500
+      );
 
       const data = (await res.json()) as {
         event?: ScheduleEvent;
@@ -130,9 +151,24 @@ export default function SnackBoard({ singer, initialEvents }: Props) {
       setEvents((current) =>
         current.map((ev) => (ev.eventId === updated.eventId ? updated : ev))
       );
-    } catch {
-      setEvents(previous);
-      setErrorBanner('Network error saving your signup. Please check your connection.');
+    } catch (err) {
+      const isNetworkDrop =
+        err instanceof TypeError ||
+        (err instanceof Error && err.name === 'TimeoutError') ||
+        (typeof navigator !== 'undefined' && !navigator.onLine);
+
+      if (isNetworkDrop) {
+        enqueueOfflineMutation({
+          url: '/api/snacks',
+          method: 'POST',
+          body: { eventId, slot, action, item },
+          label: `${actionLabel} (${targetEv?.title || eventId})`,
+        });
+        // Retain optimistic UI state
+      } else {
+        setEvents(previous);
+        setErrorBanner('Network error saving your signup. Please check your connection.');
+      }
     } finally {
       setBusyKey(null);
     }

@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { AlertCircle, CheckCircle2, Clock, Send, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Send, WifiOff, X } from 'lucide-react';
 import { formatEventDate } from '../../lib/utils';
+import { enqueueOfflineMutation } from '../../lib/offline-queue';
+import { fetchWithTimeout } from '../../lib/fetch-with-timeout';
 
 interface Props {
   eventId: string;
@@ -41,6 +43,7 @@ export default function QuickLateNoticeModal({
   const [reason, setReason] = useState(LATE_OPTIONS[0].text);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isQueuedOffline, setIsQueuedOffline] = useState(false);
   const [error, setError] = useState('');
 
   function handleTypeChange(nextType: 'Late' | 'Absent') {
@@ -52,17 +55,39 @@ export default function QuickLateNoticeModal({
     if (e) e.preventDefault();
     setSubmitting(true);
     setError('');
+    setIsQueuedOffline(false);
+
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+    if (isOffline) {
+      enqueueOfflineMutation({
+        url: '/api/absences',
+        method: 'POST',
+        body: { eventId, reason, status: statusType },
+        label: `${statusType} notice for ${eventTitle}`,
+      });
+      setIsQueuedOffline(true);
+      setSuccess(true);
+      setSubmitting(false);
+      setTimeout(() => {
+        setIsOpen(false);
+      }, 2500);
+      return;
+    }
 
     try {
-      const res = await fetch('/api/absences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventId,
-          reason,
-          status: statusType,
-        }),
-      });
+      const res = await fetchWithTimeout(
+        '/api/absences',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId,
+            reason,
+            status: statusType,
+          }),
+        },
+        3500
+      );
 
       const data = await res.json();
       if (!res.ok) {
@@ -74,7 +99,26 @@ export default function QuickLateNoticeModal({
         window.location.reload();
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error sending notice.');
+      const isNetworkDrop =
+        err instanceof TypeError ||
+        (err instanceof Error && err.name === 'TimeoutError') ||
+        (typeof navigator !== 'undefined' && !navigator.onLine);
+
+      if (isNetworkDrop) {
+        enqueueOfflineMutation({
+          url: '/api/absences',
+          method: 'POST',
+          body: { eventId, reason, status: statusType },
+          label: `${statusType} notice for ${eventTitle}`,
+        });
+        setIsQueuedOffline(true);
+        setSuccess(true);
+        setTimeout(() => {
+          setIsOpen(false);
+        }, 2500);
+      } else {
+        setError(err instanceof Error ? err.message : 'Error sending notice.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -138,13 +182,23 @@ export default function QuickLateNoticeModal({
             {success ? (
               <div className="my-6 border-l-2 border-copper-500 bg-[#f5efe8] p-5">
                 <div className="flex items-center gap-2 text-navy-950">
-                  <CheckCircle2 className="h-5 w-5 text-copper-600" />
+                  {isQueuedOffline ? (
+                    <WifiOff className="h-5 w-5 text-amber-600" />
+                  ) : (
+                    <CheckCircle2 className="h-5 w-5 text-copper-600" />
+                  )}
                   <h4 className="font-editorial text-xl font-semibold">
-                    {statusType === 'Late' ? 'Late Notice Recorded' : 'Absence Notice Recorded'}
+                    {isQueuedOffline
+                      ? 'Saved to Device (Offline)'
+                      : statusType === 'Late'
+                      ? 'Late Notice Recorded'
+                      : 'Absence Notice Recorded'}
                   </h4>
                 </div>
                 <p className="mt-1.5 text-xs leading-relaxed text-stone-600">
-                  {statusType === 'Late'
+                  {isQueuedOffline
+                    ? `Your ${statusType === 'Late' ? 'late notice' : 'absence report'} is saved locally. It will automatically sync to ${sectionGroup ? `your ${sectionGroup} Section Leader and ` : ''}ensemble leadership as soon as your phone reconnects.`
+                    : statusType === 'Late'
                     ? `Travel safely—${sectionGroup ? `your ${sectionGroup} Section Leader and ` : ''}ensemble leadership have been notified.`
                     : `${sectionGroup ? `Your ${sectionGroup} Section Leader and ensemble` : 'Ensemble'} leadership have been notified.`}
                 </p>

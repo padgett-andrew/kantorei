@@ -23,6 +23,10 @@ export default defineConfig({
     },
     imageService: 'passthrough',
   }),
+  prefetch: {
+    prefetchAll: false,
+    defaultStrategy: 'hover',
+  },
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],

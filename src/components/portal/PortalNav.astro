@@ -81,6 +81,7 @@ const tabs = [
             return (
               <a
                 href={tab.href}
+                data-astro-prefetch="hover"
                 aria-current={isActive ? 'page' : undefined}
                 class:list={[
                   'relative shrink-0 py-2 text-[11px] font-medium uppercase tracking-[0.15em] transition-colors after:absolute after:right-0 after:bottom-0 after:left-0 after:h-[1.5px] after:origin-left after:bg-copper-500 after:transition-transform',

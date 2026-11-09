@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { AbsenceRecord, ScheduleEvent, SectionGroup, SeatingRow, SeatingSeat, Singer } from '../../../types/choir';
 import type { MissingSingerItem, SectionHeadcountItem } from './AttendanceStatsBar';
+import { enqueueOfflineMutation } from '../../../lib/offline-queue';
+import { fetchWithTimeout } from '../../../lib/fetch-with-timeout';
 
 interface UseAttendanceManagerParams {
   allScheduleEvents?: ScheduleEvent[];
@@ -127,57 +129,149 @@ export function useAttendanceManager({
   ) {
     if (!selectedEvent) return;
     const normEmail = targetSinger.email.toLowerCase();
+    const actionLabel = newStatus === 'Present' ? 'present' : newStatus === 'Late' ? 'running late' : 'absent';
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
 
-    try {
+    // 1. Optimistic UI update: Flip attendance state in local React state immediately
+    if (newStatus === 'Present') {
+      setAbsences((prev) =>
+        prev.map((a) =>
+          a.eventId === selectedEvent.eventId && a.singerEmail.toLowerCase() === normEmail
+            ? { ...a, status: 'Cleared' as const }
+            : a
+        )
+      );
+    } else {
+      const optimisticRecord: AbsenceRecord = {
+        timestamp: new Date().toISOString(),
+        eventId: selectedEvent.eventId,
+        date: selectedEvent.date,
+        singerName: targetSinger.name,
+        singerEmail: normEmail,
+        voicePart: targetSinger.voicePart || '',
+        reason: reason || `Marked ${actionLabel} during roll call by ${caller.name}`,
+        submittedBy: caller.name,
+        status: newStatus,
+      };
+
+      setAbsences((prev) => {
+        const filtered = prev.filter(
+          (a) => !(a.eventId === selectedEvent.eventId && a.singerEmail.toLowerCase() === normEmail)
+        );
+        return [...filtered, optimisticRecord];
+      });
+    }
+
+    // 2. Offline check: if phone is in a dead zone, queue immediately without throwing errors
+    if (isOffline) {
       if (newStatus === 'Present') {
-        const res = await fetch('/api/absences', {
+        enqueueOfflineMutation({
+          url: '/api/absences',
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: {
             eventId: selectedEvent.eventId,
             targetEmail: normEmail,
             source: 'roll_call',
-          }),
+          },
+          label: `Mark ${targetSinger.name} present (${selectedEvent.date})`,
         });
-        if (!res.ok) throw new Error('Failed to mark present.');
-
-        setAbsences((prev) =>
-          prev.map((a) =>
-            a.eventId === selectedEvent.eventId && a.singerEmail.toLowerCase() === normEmail
-              ? { ...a, status: 'Cleared' as const }
-              : a
-          )
-        );
-        setBanner({ type: 'ok', text: `Marked ${targetSinger.name} present for this rehearsal.` });
       } else {
-        const actionLabel = newStatus === 'Late' ? 'running late' : 'absent';
-        const res = await fetch('/api/absences', {
+        enqueueOfflineMutation({
+          url: '/api/absences',
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: {
             eventId: selectedEvent.eventId,
             targetEmail: normEmail,
             status: newStatus,
             reason: reason || `Marked ${actionLabel} during roll call by ${caller.name}`,
             source: 'roll_call',
-          }),
+          },
+          label: `Mark ${targetSinger.name} ${actionLabel} (${selectedEvent.date})`,
         });
-        if (!res.ok) throw new Error(`Failed to mark ${actionLabel}.`);
+      }
+      setBanner({
+        type: 'ok',
+        text: `Marked ${targetSinger.name} ${actionLabel} (saved offline · will sync when connected).`,
+      });
+      return;
+    }
 
-        const data = (await res.json()) as { absence?: AbsenceRecord; record?: AbsenceRecord };
-        const savedRecord = data.absence || data.record;
-        if (savedRecord) {
-          setAbsences((prev) => {
-            const filtered = prev.filter(
-              (a) => !(a.eventId === selectedEvent.eventId && a.singerEmail.toLowerCase() === normEmail)
-            );
-            return [...filtered, savedRecord];
-          });
-        }
+    // 3. Online fetch with fast timeout
+    try {
+      if (newStatus === 'Present') {
+        const res = await fetchWithTimeout(
+          '/api/absences',
+          {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventId: selectedEvent.eventId,
+              targetEmail: normEmail,
+              source: 'roll_call',
+            }),
+          },
+          3500
+        );
+        if (!res.ok) throw new Error('Failed to mark present.');
+        setBanner({ type: 'ok', text: `Marked ${targetSinger.name} present for this rehearsal.` });
+      } else {
+        const res = await fetchWithTimeout(
+          '/api/absences',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventId: selectedEvent.eventId,
+              targetEmail: normEmail,
+              status: newStatus,
+              reason: reason || `Marked ${actionLabel} during roll call by ${caller.name}`,
+              source: 'roll_call',
+            }),
+          },
+          3500
+        );
+        if (!res.ok) throw new Error(`Failed to mark ${actionLabel}.`);
         setBanner({ type: 'ok', text: `Marked ${targetSinger.name} ${actionLabel}.` });
       }
-    } catch {
-      setBanner({ type: 'err', text: 'Error updating attendance. Please retry.' });
+    } catch (err) {
+      const isNetworkDrop =
+        err instanceof TypeError ||
+        (err instanceof Error && err.name === 'TimeoutError') ||
+        (typeof navigator !== 'undefined' && !navigator.onLine);
+
+      if (isNetworkDrop) {
+        if (newStatus === 'Present') {
+          enqueueOfflineMutation({
+            url: '/api/absences',
+            method: 'DELETE',
+            body: {
+              eventId: selectedEvent.eventId,
+              targetEmail: normEmail,
+              source: 'roll_call',
+            },
+            label: `Mark ${targetSinger.name} present (${selectedEvent.date})`,
+          });
+        } else {
+          enqueueOfflineMutation({
+            url: '/api/absences',
+            method: 'POST',
+            body: {
+              eventId: selectedEvent.eventId,
+              targetEmail: normEmail,
+              status: newStatus,
+              reason: reason || `Marked ${actionLabel} during roll call by ${caller.name}`,
+              source: 'roll_call',
+            },
+            label: `Mark ${targetSinger.name} ${actionLabel} (${selectedEvent.date})`,
+          });
+        }
+        setBanner({
+          type: 'ok',
+          text: `Marked ${targetSinger.name} ${actionLabel} (saved offline · will sync when connected).`,
+        });
+      } else {
+        setBanner({ type: 'err', text: 'Error updating attendance. Please retry.' });
+      }
     }
   }
 
