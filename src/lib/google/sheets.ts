@@ -423,7 +423,7 @@ export async function getPortalConfig(locals?: App.Locals): Promise<PortalConfig
       Home_Spotlight_Title: 'Stay in Touch with Kantorei',
       Home_Spotlight_Description:
         "We don't have any upcoming concerts scheduled right now. Join Friends of Kantorei to receive season announcements, recording releases, and priority ticket access.",
-      Donation_Platform: 'both',
+      Donation_Platform: 'givebutter',
       LGL_Form_URL: 'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA',
       Givebutter_Account_ID: 'DEMO',
       Givebutter_Campaign_ID: 'DEMO',
