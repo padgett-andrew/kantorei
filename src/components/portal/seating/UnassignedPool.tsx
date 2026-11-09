@@ -98,7 +98,7 @@ export default function UnassignedPool({
 
       <div className="mt-4 flex max-h-56 flex-wrap gap-2 overflow-y-auto">
         {filteredSingers.map((singer) => {
-          const badgeClass = voicePartBadgeColor(singer.voicePart);
+          const badgeClass = singer.voicePart ? voicePartBadgeColor(singer.voicePart) : '';
           const isThisSingerDragging = draggingSinger?.email === singer.email;
 
           return (
@@ -122,9 +122,15 @@ export default function UnassignedPool({
               }`}
             >
               <GripVertical className="h-3.5 w-3.5 cursor-grab text-stone-400" />
-              <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${badgeClass}`}>
-                {singer.voicePart}
-              </span>
+              {singer.voicePart ? (
+                <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${badgeClass}`}>
+                  {singer.voicePart}
+                </span>
+              ) : (
+                <span className="rounded-sm border border-stone-200 bg-stone-100 px-1.5 py-0.5 text-[10px] text-stone-500">
+                  Staff
+                </span>
+              )}
               <span className="font-medium">{singer.name}</span>
               <Plus className="ml-0.5 h-3 w-3 text-stone-400" />
             </button>

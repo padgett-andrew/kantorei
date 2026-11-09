@@ -12,8 +12,8 @@ import {
 export interface MemberFormState {
   email: string;
   name: string;
-  voicePart: VoicePart;
-  sectionGroup: SectionGroup;
+  voicePart: VoicePart | '';
+  sectionGroup: SectionGroup | '';
   role: MemberRole;
   phone: string;
   status: SingerStatus;
@@ -107,15 +107,16 @@ export default function MemberModal({
               <select
                 value={formState.voicePart}
                 onChange={(e) => {
-                  const vp = e.target.value as VoicePart;
+                  const vp = e.target.value as VoicePart | '';
                   onChange({
                     ...formState,
                     voicePart: vp,
-                    sectionGroup: inferSectionGroup(vp),
+                    sectionGroup: vp ? inferSectionGroup(vp) : '',
                   });
                 }}
                 className="mt-1.5 w-full rounded-sm border border-stone-300 bg-white px-3 py-2 text-sm text-navy-950 focus:border-navy-950 focus:outline-none"
               >
+                <option value="">None / Staff (No Voice Part)</option>
                 <optgroup label="Soprano">
                   <option value="S">S — Soprano (General)</option>
                   <option value="S1">S1 — Soprano 1</option>

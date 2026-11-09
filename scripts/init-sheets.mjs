@@ -46,6 +46,9 @@ const SCHEMA_SPEC = {
   Roster: {
     headers: ['Email', 'Name', 'Voice_Part', 'Section_Group', 'Role', 'Phone', 'Active'],
     sampleRows: [
+      // Artistic Leadership & Administration
+      ['adam.reinwald@kantorei.net', 'Adam Reinwald', '', '', 'Admin', '', 'Active'],
+
       // Sopranos
       ['karin.almjeld@kantorei.net', 'Karin Almjeld', 'S1', 'Soprano', 'Singer', '', 'Active'],
       ['angela.barberg@kantorei.net', 'Angela Barberg', 'S1', 'Soprano', 'Singer', '', 'Active'],

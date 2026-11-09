@@ -50,7 +50,7 @@ if (devAvailable) {
 
   devPersonas = picked.map((s) => ({
     email: s.email,
-    shortLabel: `${s.name.split(' ')[0]} (${s.role.replace('_', ' ')} · ${s.voicePart})`,
+    shortLabel: `${s.name.split(' ')[0]} (${s.role.replace('_', ' ')}${s.voicePart ? ` · ${s.voicePart}` : ''})`,
   }));
 }
 ---

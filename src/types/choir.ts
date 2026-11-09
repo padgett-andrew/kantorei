@@ -22,8 +22,8 @@ export type ConcertStatus = (typeof CONCERT_STATUSES)[number];
 export interface Singer {
   email: string; // Primary key (normalized lowercase)
   name: string;
-  voicePart: VoicePart;
-  sectionGroup: SectionGroup;
+  voicePart?: VoicePart | '';
+  sectionGroup?: SectionGroup | '';
   role: MemberRole;
   phone: string;
   /** True only when actively singing in the current concert cycle (included in roll call & alerts) */
@@ -132,7 +132,7 @@ export interface AbsenceRecord {
   date: string;
   singerName: string;
   singerEmail: string;
-  voicePart: VoicePart;
+  voicePart: VoicePart | '';
   reason: string;
   submittedBy: string;
   status: AbsenceStatus;
@@ -338,12 +338,14 @@ export interface RepertoirePiece {
   files: DriveMusicFile[];
 }
 
-export function inferSectionGroup(voicePart: VoicePart | string): SectionGroup {
+export function inferSectionGroup(voicePart?: VoicePart | string | null): SectionGroup | '' {
   const norm = String(voicePart || '').trim().toUpperCase();
+  if (!norm) return '';
   if (norm.startsWith('S')) return 'Soprano';
   if (norm.startsWith('A')) return 'Alto';
   if (norm.startsWith('T')) return 'Tenor';
-  return 'Bass';
+  if (norm.startsWith('B')) return 'Bass';
+  return '';
 }
 
 export function formatVoicePartLabel(vp: VoicePart | string): string {

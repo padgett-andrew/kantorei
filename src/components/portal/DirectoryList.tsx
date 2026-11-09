@@ -23,7 +23,7 @@ export default function DirectoryList({ members }: Props) {
     return (
       m.name.toLowerCase().includes(q) ||
       m.email.toLowerCase().includes(q) ||
-      m.voicePart.toLowerCase().includes(q)
+      (m.voicePart || '').toLowerCase().includes(q)
     );
   });
 
@@ -90,15 +90,23 @@ export default function DirectoryList({ members }: Props) {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-semibold text-zinc-900">{m.name}</h3>
-                  <p className="text-xs text-zinc-500">{m.sectionGroup} Section</p>
+                  <p className="text-xs text-zinc-500">
+                    {m.sectionGroup ? `${m.sectionGroup} Section` : m.role === 'Admin' ? 'Staff / Admin' : m.role}
+                  </p>
                 </div>
-                <span
-                  className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${voicePartBadgeColor(
-                    m.voicePart
-                  )}`}
-                >
-                  {m.voicePart}
-                </span>
+                {m.voicePart ? (
+                  <span
+                    className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${voicePartBadgeColor(
+                      m.voicePart
+                    )}`}
+                  >
+                    {m.voicePart}
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-stone-200 bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-600">
+                    {m.role === 'Admin' ? 'Staff' : '—'}
+                  </span>
+                )}
               </div>
 
               <div className="mt-2.5 flex flex-wrap items-center gap-1.5">

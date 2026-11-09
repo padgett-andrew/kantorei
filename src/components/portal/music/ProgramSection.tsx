@@ -97,9 +97,10 @@ export default function ProgramSection({
       {/* Director's Markings Frontispiece Sheet */}
       {prog.docs.map((doc) => {
         const isExpanded = Boolean(expandedDocIds[doc.file.id]);
-        const renderedHtml = highlightMyPart
-          ? highlightVoicePartInHtml(doc.html, singer.voicePart, singer.sectionGroup)
-          : doc.html;
+        const renderedHtml =
+          highlightMyPart && singer.voicePart
+            ? highlightVoicePartInHtml(doc.html, singer.voicePart, singer.sectionGroup)
+            : doc.html;
 
         return (
           <div
@@ -183,17 +184,20 @@ export default function ProgramSection({
                   <p className="text-xs text-stone-500">
                     Tap any linked reference recording below to open the inline player.
                   </p>
-                  <button
-                    type="button"
-                    onClick={onToggleHighlight}
-                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
-                      highlightMyPart
-                        ? 'border-copper-300 bg-[#f9efe8] text-copper-600'
-                        : 'border-stone-200 bg-[#FAF7F2] text-stone-600 hover:text-navy-950'
-                    }`}
-                  >
-                    Highlight {singer.voicePart} / {singer.sectionGroup}
-                  </button>
+                  {singer.voicePart && (
+                    <button
+                      type="button"
+                      onClick={onToggleHighlight}
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
+                        highlightMyPart
+                          ? 'border-copper-300 bg-[#f9efe8] text-copper-600'
+                          : 'border-stone-200 bg-[#FAF7F2] text-stone-600 hover:text-navy-950'
+                      }`}
+                    >
+                      Highlight {singer.voicePart}
+                      {singer.sectionGroup ? ` / ${singer.sectionGroup}` : ''}
+                    </button>
+                  )}
                 </div>
 
                 <div

@@ -108,13 +108,14 @@ export default function DocMarkingsModal({
               }}
               className="handbook-prose max-w-none text-sm"
               dangerouslySetInnerHTML={{
-                __html: highlightMyPart
-                  ? highlightVoicePartInHtml(
-                      docCache[modalDocFile.file.id].html,
-                      singer.voicePart,
-                      singer.sectionGroup
-                    )
-                  : docCache[modalDocFile.file.id].html,
+                __html:
+                  highlightMyPart && singer.voicePart
+                    ? highlightVoicePartInHtml(
+                        docCache[modalDocFile.file.id].html,
+                        singer.voicePart,
+                        singer.sectionGroup
+                      )
+                    : docCache[modalDocFile.file.id].html,
               }}
             />
           ) : (

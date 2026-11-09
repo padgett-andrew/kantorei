@@ -28,7 +28,7 @@ export default function RosterCardView({
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {singers.map((m) => {
         const isSelf = caller.email.toLowerCase() === m.email.toLowerCase();
-        const badgeClass = voicePartBadgeColor(m.voicePart);
+        const badgeClass = m.voicePart ? voicePartBadgeColor(m.voicePart) : '';
         const isBusy = busyEmail === m.email;
 
         return (
@@ -57,15 +57,25 @@ export default function RosterCardView({
                     )}
                   </div>
                   <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-500">
-                    {m.sectionGroup} Section
+                    {m.sectionGroup
+                      ? `${m.sectionGroup} Section`
+                      : m.role === 'Admin'
+                        ? 'Artistic Staff / Admin'
+                        : m.role.replace('_', ' ')}
                   </p>
                 </div>
 
-                <span
-                  className={`shrink-0 rounded-sm border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${badgeClass}`}
-                >
-                  {m.voicePart}
-                </span>
+                {m.voicePart ? (
+                  <span
+                    className={`shrink-0 rounded-sm border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${badgeClass}`}
+                  >
+                    {m.voicePart}
+                  </span>
+                ) : (
+                  <span className="shrink-0 rounded-sm border border-stone-300 bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-stone-600">
+                    {m.role === 'Admin' ? 'Staff' : '—'}
+                  </span>
+                )}
               </div>
 
               {/* Status & Leadership Role */}

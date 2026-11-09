@@ -107,14 +107,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const allAbsences = await getAbsences(locals);
     const sectionEmails = new Set(
       roster
-        .filter((s) => s.sectionGroup === targetSinger.sectionGroup)
+        .filter((s) => Boolean(targetSinger.sectionGroup) && s.sectionGroup === targetSinger.sectionGroup)
         .map((s) => s.email)
     );
     const sectionRecords = allAbsences.filter(
       (a) =>
         a.eventId === event.eventId &&
         (sectionEmails.has(a.singerEmail) ||
-          a.voicePart[0] === targetSinger.voicePart[0])
+          Boolean(targetSinger.voicePart && a.voicePart && a.voicePart[0] === targetSinger.voicePart[0]))
     );
     const sectionAbsenceCount = sectionRecords.filter((a) => a.status === 'Absent').length;
     const sectionLateCount = sectionRecords.filter((a) => a.status === 'Late').length;
@@ -122,19 +122,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let emailResult = null;
     // Only send the absence notification when a singer creates one, NOT during roll call.
     if (!isRollCall) {
-      const sectionLeaders = roster.filter(
-        (s) =>
-          s.active &&
-          s.role === 'Section_Leader' &&
-          s.sectionGroup === targetSinger.sectionGroup
-      );
+      const sectionLeaders = targetSinger.sectionGroup
+        ? roster.filter(
+            (s) =>
+              s.active &&
+              s.role === 'Section_Leader' &&
+              s.sectionGroup === targetSinger.sectionGroup
+          )
+        : [];
 
       const admins = roster.filter((s) => s.active && s.role === 'Admin');
 
       emailResult = await sendAbsenceAlertEmail({
         absence,
         event,
-        sectionGroup: targetSinger.sectionGroup,
+        sectionGroup: targetSinger.sectionGroup || '',
         sectionLeaders,
         admins,
         config,
@@ -222,30 +224,32 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
         const allAbsences = await getAbsences(locals);
         const sectionEmails = new Set(
           roster
-            .filter((s) => s.sectionGroup === targetSinger.sectionGroup)
+            .filter((s) => Boolean(targetSinger.sectionGroup) && s.sectionGroup === targetSinger.sectionGroup)
             .map((s) => s.email)
         );
         const sectionRecords = allAbsences.filter(
           (a) =>
             a.eventId === parsed.data.eventId &&
             (sectionEmails.has(a.singerEmail) ||
-              a.voicePart[0] === targetSinger.voicePart[0])
+              Boolean(targetSinger.voicePart && a.voicePart && a.voicePart[0] === targetSinger.voicePart[0]))
         );
         const sectionAbsenceCount = sectionRecords.filter((a) => a.status === 'Absent').length;
         const sectionLateCount = sectionRecords.filter((a) => a.status === 'Late').length;
 
-        const sectionLeaders = roster.filter(
-          (s) =>
-            s.active &&
-            s.role === 'Section_Leader' &&
-            s.sectionGroup === targetSinger.sectionGroup
-        );
+        const sectionLeaders = targetSinger.sectionGroup
+          ? roster.filter(
+              (s) =>
+                s.active &&
+                s.role === 'Section_Leader' &&
+                s.sectionGroup === targetSinger.sectionGroup
+            )
+          : [];
         const admins = roster.filter((s) => s.active && s.role === 'Admin');
 
         emailResult = await sendAbsenceRescindedEmail({
           absence: clearedRecord,
           event,
-          sectionGroup: targetSinger.sectionGroup,
+          sectionGroup: targetSinger.sectionGroup || '',
           sectionLeaders,
           admins,
           config,

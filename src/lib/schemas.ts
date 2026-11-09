@@ -41,7 +41,7 @@ export const SingerRowSchema = z
   .tuple([
     trimmedString.pipe(z.string().email('Invalid email address')).transform((e) => e.toLowerCase()),
     trimmedString.pipe(z.string().min(1, 'Missing singer name')),
-    voicePartSchema,
+    optionalVoicePartSchema,
     trimmedString,
     trimmedString,
     trimmedString,
@@ -50,7 +50,7 @@ export const SingerRowSchema = z
   .transform(([email, name, voicePart, rawSection, rawRole, phone, rawActive]): Singer => {
     const normalizedSection =
       SECTION_GROUPS.find((s) => s.toLowerCase() === rawSection.toLowerCase()) ??
-      inferSectionGroup(voicePart);
+      (voicePart ? inferSectionGroup(voicePart) : '');
 
     const normalizedRole =
       MEMBER_ROLES.find((r) => r.toLowerCase() === rawRole.replace(/\s+/g, '_').toLowerCase()) ??
@@ -74,8 +74,8 @@ export const SingerRowSchema = z
     return {
       email,
       name,
-      voicePart,
-      sectionGroup: normalizedSection,
+      voicePart: voicePart ?? '',
+      sectionGroup: normalizedSection ?? '',
       role: normalizedRole,
       phone,
       active: status === 'Active',
@@ -126,7 +126,7 @@ export const AbsenceRowSchema = z
     trimmedString,
     trimmedString.pipe(z.string().min(1, 'Missing Singer_Name')),
     trimmedString.pipe(z.string().email('Invalid Singer_Email')).transform((e) => e.toLowerCase()),
-    voicePartSchema,
+    optionalVoicePartSchema,
     trimmedString,
     trimmedString,
     trimmedString,
@@ -148,7 +148,7 @@ export const AbsenceRowSchema = z
       date,
       singerName,
       singerEmail,
-      voicePart,
+      voicePart: voicePart ?? '',
       reason,
       submittedBy: submittedBy || 'Self',
       status: (() => {

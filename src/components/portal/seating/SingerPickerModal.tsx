@@ -55,7 +55,7 @@ export default function SingerPickerModal({
             </p>
           ) : (
             unassignedSingers.map((singer) => {
-              const badgeClass = voicePartBadgeColor(singer.voicePart);
+              const badgeClass = singer.voicePart ? voicePartBadgeColor(singer.voicePart) : '';
               return (
                 <button
                   key={singer.email}
@@ -64,9 +64,15 @@ export default function SingerPickerModal({
                   className="flex w-full cursor-pointer items-center justify-between rounded-sm border border-stone-200/90 bg-white px-3 py-2.5 text-left text-xs transition hover:border-copper-500 hover:bg-[#f9efe8]/40"
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${badgeClass}`}>
-                      {singer.voicePart}
-                    </span>
+                    {singer.voicePart ? (
+                      <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${badgeClass}`}>
+                        {singer.voicePart}
+                      </span>
+                    ) : (
+                      <span className="rounded-sm border border-stone-200 bg-stone-100 px-1.5 py-0.5 text-[10px] text-stone-500">
+                        Staff
+                      </span>
+                    )}
                     <span className="font-medium text-navy-950">{singer.name}</span>
                   </div>
                   <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-copper-600">

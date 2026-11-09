@@ -130,7 +130,11 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
     <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-copper-600">
-          {singer.sectionGroup} Section · {singer.voicePart}
+          {singer.sectionGroup && singer.voicePart
+            ? `${singer.sectionGroup} Section · ${singer.voicePart}`
+            : singer.role === 'Admin'
+              ? 'Artistic Staff & Administration'
+              : singer.role.replace('_', ' ')}
         </p>
         <h1 class="mt-2 font-editorial text-4xl font-normal tracking-tight text-navy-950 sm:text-5xl">
           Welcome back, {singer.name.split(' ')[0]}
@@ -231,7 +235,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                   eventId={nextEvent.eventId}
                   eventTitle={nextEvent.title}
                   eventDate={nextEvent.date}
-                  sectionGroup={singer.sectionGroup}
+                  sectionGroup={singer.sectionGroup || ''}
                   buttonVariant="hero"
                   buttonLabel={
                     nextEventConflict
@@ -404,7 +408,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
             </h3>
             <p class="mt-1.5 text-xs leading-relaxed text-stone-600">
               {mySeatLocation
-                ? `${mySeatLocation.chartTitle} · ${mySeatLocation.voicePart || singer.voicePart}`
+                ? `${mySeatLocation.chartTitle}${mySeatLocation.voicePart || singer.voicePart ? ` · ${mySeatLocation.voicePart || singer.voicePart}` : ''}`
                 : 'Published concert seating & standing positions.'}
             </p>
           </div>
@@ -550,7 +554,7 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                     eventId={ev.eventId}
                     eventTitle={ev.title}
                     eventDate={ev.date}
-                    sectionGroup={singer.sectionGroup}
+                    sectionGroup={singer.sectionGroup || ''}
                     buttonLabel={conflict ? 'Edit Notice' : 'Report Conflict'}
                     buttonVariant="ghost"
                   />

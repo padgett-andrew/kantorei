@@ -43,6 +43,27 @@ describe('schemas validation', () => {
       expect(parsed.status).toBe('Active');
     });
 
+    it('parses director/admin row with no voice part or section group', () => {
+      const row = [
+        'adam.reinwald@kantorei.net',
+        'Adam Reinwald',
+        '', // No voice part
+        '', // No section group
+        'Admin',
+        '',
+        'Active',
+      ];
+
+      const parsed = SingerRowSchema.parse(row);
+      expect(parsed.email).toBe('adam.reinwald@kantorei.net');
+      expect(parsed.name).toBe('Adam Reinwald');
+      expect(parsed.voicePart).toBe('');
+      expect(parsed.sectionGroup).toBe('');
+      expect(parsed.role).toBe('Admin');
+      expect(parsed.active).toBe(true);
+      expect(parsed.status).toBe('Active');
+    });
+
     it('handles On_Leave / sabbatical status', () => {
       const row = [
         'singer@example.com',

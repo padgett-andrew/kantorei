@@ -267,6 +267,17 @@ Adam Reinwald`,
     },
   ],
   roster: [
+    // Artistic Leadership & Administration
+    {
+      email: 'adam.reinwald@kantorei.net',
+      name: 'Adam Reinwald',
+      voicePart: '',
+      sectionGroup: '',
+      role: 'Admin',
+      phone: '',
+      active: true,
+      status: 'Active',
+    },
     // Sopranos
     {
       email: 'karin.almjeld@kantorei.net',

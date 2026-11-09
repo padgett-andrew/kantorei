@@ -57,7 +57,7 @@ export default function AbsenceManager({
     upcomingEvents[0]?.eventId ?? ''
   );
   const [rollCallSection, setRollCallSection] = useState<'All' | SectionGroup>(
-    isAdmin ? 'All' : singer.sectionGroup
+    isAdmin || !singer.sectionGroup ? 'All' : singer.sectionGroup
   );
 
   const [statusType, setStatusType] = useState<'Absent' | 'Late'>('Absent');
@@ -590,25 +590,26 @@ export default function AbsenceManager({
                   Section Cohort
                 </span>
                 <div className="flex flex-wrap items-center gap-1">
-                  {(isAdmin ? (['All', ...SECTION_GROUPS] as const) : [singer.sectionGroup]).map(
-                    (sec) => {
-                      const isSelected = rollCallSection === sec;
-                      return (
-                        <button
-                          key={sec}
-                          type="button"
-                          onClick={() => setRollCallSection(sec)}
-                          className={`cursor-pointer rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] transition ${
-                            isSelected
-                              ? 'border-navy-950 bg-navy-950 text-white'
-                              : 'border-stone-200/90 bg-[#FAF7F2] text-stone-700 hover:border-stone-400 hover:text-navy-950'
-                          }`}
-                        >
-                          {sec}
-                        </button>
-                      );
-                    }
-                  )}
+                  {(isAdmin || !singer.sectionGroup
+                    ? (['All', ...SECTION_GROUPS] as const)
+                    : ([singer.sectionGroup] as const)
+                  ).map((sec) => {
+                    const isSelected = rollCallSection === sec;
+                    return (
+                      <button
+                        key={sec}
+                        type="button"
+                        onClick={() => setRollCallSection(sec)}
+                        className={`cursor-pointer rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] transition ${
+                          isSelected
+                            ? 'border-navy-950 bg-navy-950 text-white'
+                            : 'border-stone-200/90 bg-[#FAF7F2] text-stone-700 hover:border-stone-400 hover:text-navy-950'
+                        }`}
+                      >
+                        {sec}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -772,13 +773,17 @@ export default function AbsenceManager({
                         <Check className="h-3.5 w-3.5 shrink-0 text-copper-600" />
                         <span className="text-navy-950">{member.name}</span>
                       </div>
-                      <span
-                        className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${voicePartBadgeColor(
-                          member.voicePart
-                        )}`}
-                      >
-                        {member.voicePart}
-                      </span>
+                      {member.voicePart ? (
+                        <span
+                          className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${voicePartBadgeColor(
+                            member.voicePart
+                          )}`}
+                        >
+                          {member.voicePart}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-stone-400">—</span>
+                      )}
                     </li>
                   ))}
                 </ul>

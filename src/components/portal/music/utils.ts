@@ -23,25 +23,30 @@ export function streamUrl(file: DriveMusicFile, download = false): string {
 
 export function highlightVoicePartInHtml(
   html: string,
-  voicePart: string,
-  sectionGroup: string
+  voicePart?: string | null,
+  sectionGroup?: string | null
 ): string {
+  if (!voicePart && !sectionGroup) return html;
   const normVoicePart = (voicePart || '').trim().toUpperCase();
   const partNum = normVoicePart.slice(1);
   const letter = normVoicePart.charAt(0);
   const comboTokens =
     letter === 'S' || letter === 'A'
       ? ['SSA', 'SSAA', 'SA', `${letter}1/${letter}2`, `${letter}1-${letter}2`]
-      : ['TTB', 'TTBB', 'TB', 'T/B', `${letter}1/${letter}2`, `${letter}1-${letter}2`];
+      : letter === 'T' || letter === 'B'
+        ? ['TTB', 'TTBB', 'TB', 'T/B', `${letter}1/${letter}2`, `${letter}1-${letter}2`]
+        : [];
 
   const rawTokens = [
     voicePart,
-    `${sectionGroup}s`,
-    `${sectionGroup}es`,
+    sectionGroup ? `${sectionGroup}s` : '',
+    sectionGroup ? `${sectionGroup}es` : '',
     sectionGroup,
-    partNum ? `${sectionGroup} ${partNum}` : '',
+    partNum && sectionGroup ? `${sectionGroup} ${partNum}` : '',
     ...comboTokens,
-  ].filter(Boolean);
+  ].filter((t): t is string => Boolean(t));
+
+  if (rawTokens.length === 0) return html;
 
   const escapedTokens = rawTokens.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 

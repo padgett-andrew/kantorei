@@ -186,13 +186,14 @@ export async function sendAbsenceAlertEmail(params: {
     resolveAbsenceRecipients({ sectionLeaders, admins, config, locals });
 
   const isLate = absence.status === 'Late';
-  const pluralSection = sectionGroup === 'Bass' ? 'Basses' : `${sectionGroup}s`;
+  const pluralSection = !sectionGroup ? 'Ensemble' : sectionGroup === 'Bass' ? 'Basses' : `${sectionGroup}s`;
   const formattedDate = formatEventDate(absence.date);
   const eventTitle = event ? `${event.title} (${event.time})` : formattedDate;
+  const partTag = absence.voicePart ? ` (${absence.voicePart})` : '';
 
   const subject = isLate
-    ? `[${config.Choir_Name || 'Kantorei'} Running Late] ${absence.singerName} (${absence.voicePart}) — ${formattedDate}`
-    : `[${config.Choir_Name || 'Kantorei'} Absence] ${absence.singerName} (${absence.voicePart}) — ${formattedDate}`;
+    ? `[${config.Choir_Name || 'Kantorei'} Running Late] ${absence.singerName}${partTag} — ${formattedDate}`
+    : `[${config.Choir_Name || 'Kantorei'} Absence] ${absence.singerName}${partTag} — ${formattedDate}`;
 
   const headerBannerLabel = isLate ? 'Running Late Notification' : 'Rehearsal Absence Notification';
   const headerSubtitleColor = isLate ? '#fcd34d' : '#dbb46e';
@@ -270,12 +271,13 @@ export async function sendAbsenceRescindedEmail(params: {
     resolveAbsenceRecipients({ sectionLeaders, admins, config, locals });
 
   const wasLate = absence.status === 'Late';
-  const pluralSection = sectionGroup === 'Bass' ? 'Basses' : `${sectionGroup}s`;
+  const pluralSection = !sectionGroup ? 'Ensemble' : sectionGroup === 'Bass' ? 'Basses' : `${sectionGroup}s`;
   const formattedDate = formatEventDate(absence.date);
   const eventTitle = event ? `${event.title} (${event.time})` : formattedDate;
+  const partTag = absence.voicePart ? ` (${absence.voicePart})` : '';
 
   const noticeTypeLabel = wasLate ? 'Running Late Notice' : 'Absence';
-  const subject = `[${config.Choir_Name || 'Kantorei'} ${noticeTypeLabel} Withdrawn] ${absence.singerName} (${absence.voicePart}) — ${formattedDate}`;
+  const subject = `[${config.Choir_Name || 'Kantorei'} ${noticeTypeLabel} Withdrawn] ${absence.singerName}${partTag} — ${formattedDate}`;
 
   const bannerText = wasLate
     ? 'Running Late Withdrawn · On Time'

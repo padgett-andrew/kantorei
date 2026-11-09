@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { hasRole } from '../../lib/auth';
 import { ConflictError, upsertRosterSinger } from '../../lib/google';
-import { voicePartSchema } from '../../lib/schemas';
+import { optionalVoicePartSchema } from '../../lib/schemas';
 import {
   inferSectionGroup,
   MEMBER_ROLES,
@@ -13,7 +13,7 @@ import {
 const RosterPayloadSchema = z.object({
   email: z.string().trim().email('Valid email address is required.'),
   name: z.string().trim().min(1, 'Full name is required.'),
-  voicePart: voicePartSchema,
+  voicePart: optionalVoicePartSchema,
   sectionGroup: z.enum(SECTION_GROUPS).optional(),
   role: z.enum(MEMBER_ROLES).default('Singer'),
   phone: z.string().trim().default(''),
@@ -51,8 +51,8 @@ async function handleRosterMutation(
       singer: {
         email: data.email.toLowerCase(),
         name: data.name,
-        voicePart: data.voicePart,
-        sectionGroup: data.sectionGroup ?? inferSectionGroup(data.voicePart),
+        voicePart: data.voicePart ?? '',
+        sectionGroup: data.sectionGroup ?? (data.voicePart ? inferSectionGroup(data.voicePart) : ''),
         role: data.role,
         phone: data.phone,
         status: resolvedStatus,

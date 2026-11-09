@@ -75,9 +75,10 @@ export function eventTypeBadgeColor(type: EventType): string {
 
 export function isSpecificVoicePartMatch(
   filename: string,
-  voicePart: VoicePart | string,
-  sectionGroup: string
+  voicePart?: VoicePart | string | null,
+  sectionGroup?: string | null
 ): boolean {
+  if (!voicePart && !sectionGroup) return false;
   const lower = filename.toLowerCase();
   const partLower = (voicePart || '').toLowerCase(); // e.g., 's', 'b2'
   const sectionLower = (sectionGroup || '').toLowerCase(); // e.g., 'soprano', 'bass'
@@ -90,7 +91,7 @@ export function isSpecificVoicePartMatch(
 
   const sectionRegex = new RegExp(`(^|[^a-z])${sectionLower}(es|s)?([^a-z]|$)`, 'i');
 
-  return partRegex.test(lower) || sectionRegex.test(lower);
+  return (partLower ? partRegex.test(lower) : false) || (sectionLower ? sectionRegex.test(lower) : false);
 }
 
 /**
@@ -103,13 +104,18 @@ export function isSpecificVoicePartMatch(
  *   2. Tenor/Bass-only repertoire (TTBB, TTB, Men's Chorus) is excluded for Sopranos and Altos.
  *   3. Specific rehearsal part tracks for a DIFFERENT voice section (e.g. an Alto 1 track for a Bass) are excluded.
  *   4. Everything else (full scores, SATB, all-parts, accompaniment, or un-restricted pieces) IS INCLUDED.
+ *   5. Artistic directors and staff without a voice part see all scores and rehearsal tracks.
  */
 export function doesFileApplyToSinger(
   filename: string,
-  voicePart: VoicePart,
-  sectionGroup: string,
+  voicePart?: VoicePart | string | null,
+  sectionGroup?: string | null,
   pieceContext?: string
 ): boolean {
+  if (!voicePart || !sectionGroup) {
+    return true; // Staff/directors without voice parts see all music
+  }
+
   const lowerFile = filename.toLowerCase();
   const lowerContext = (pieceContext || '').toLowerCase();
   const combined = `${lowerContext} ${lowerFile}`;
@@ -176,7 +182,11 @@ export function doesFileApplyToSinger(
   return true;
 }
 
-export function doesFilenameMatchSection(filename: string, voicePart: VoicePart | string, sectionGroup: string): boolean {
+export function doesFilenameMatchSection(
+  filename: string,
+  voicePart?: VoicePart | string | null,
+  sectionGroup?: string | null
+): boolean {
   return isSpecificVoicePartMatch(filename, voicePart, sectionGroup);
 }
 

@@ -145,8 +145,8 @@ export default function QuickLateNoticeModal({
                 </div>
                 <p className="mt-1.5 text-xs leading-relaxed text-stone-600">
                   {statusType === 'Late'
-                    ? `Travel safely—your ${sectionGroup} Section Leader and ensemble leadership have been notified.`
-                    : `Your ${sectionGroup} Section Leader and ensemble leadership have been notified.`}
+                    ? `Travel safely—${sectionGroup ? `your ${sectionGroup} Section Leader and ` : ''}ensemble leadership have been notified.`
+                    : `${sectionGroup ? `Your ${sectionGroup} Section Leader and ensemble` : 'Ensemble'} leadership have been notified.`}
                 </p>
               </div>
             ) : (

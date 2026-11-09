@@ -29,7 +29,7 @@ const activeRoster = rawRoster.filter((s) => s.active);
         <>
           <span class="text-stone-300" aria-hidden="true">/</span>
           <span class="text-stone-500">
-            {singer.role === 'Admin' ? 'Ensemble Roll Call Access' : `${singer.sectionGroup} Section Leader`}
+            {singer.role === 'Admin' ? 'Ensemble Roll Call Access' : singer.sectionGroup ? `${singer.sectionGroup} Section Leader` : 'Leadership Access'}
           </span>
         </>
       )}
@@ -40,7 +40,7 @@ const activeRoster = rawRoster.filter((s) => s.active);
     <p class="mt-2 max-w-2xl text-sm leading-relaxed text-stone-600">
       {isLeaderOrAdmin
         ? 'Review upcoming rehearsal roll calls, section absences, and late arrival notices, or record your own attendance.'
-        : `Notify your ${singer.sectionGroup} Section Leader, Artistic Director, and attendance administration promptly if you must miss a call or anticipate arriving late.`}
+        : `Notify your ${singer.sectionGroup ? `${singer.sectionGroup} Section Leader, ` : ''}Artistic Director, and attendance administration promptly if you must miss a call or anticipate arriving late.`}
     </p>
   </header>
 

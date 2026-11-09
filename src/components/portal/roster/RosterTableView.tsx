@@ -35,7 +35,7 @@ export default function RosterTableView({
           </thead>
           <tbody className="divide-y divide-stone-200/80">
             {singers.map((m) => {
-              const badgeClass = voicePartBadgeColor(m.voicePart);
+              const badgeClass = m.voicePart ? voicePartBadgeColor(m.voicePart) : '';
               const isBusy = busyEmail === m.email;
               const initials = m.name
                 .split(' ')
@@ -69,16 +69,20 @@ export default function RosterTableView({
 
                   {/* Voice Part */}
                   <td className="whitespace-nowrap px-3 py-3.5">
-                    <span
-                      className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${badgeClass}`}
-                    >
-                      {m.voicePart}
-                    </span>
+                    {m.voicePart ? (
+                      <span
+                        className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${badgeClass}`}
+                      >
+                        {m.voicePart}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-stone-400">—</span>
+                    )}
                   </td>
 
                   {/* Section */}
                   <td className="whitespace-nowrap px-3 py-3.5 text-stone-600">
-                    {m.sectionGroup}
+                    {m.sectionGroup || '—'}
                   </td>
 
                   {/* Role */}

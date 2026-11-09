@@ -80,7 +80,7 @@ export default function RosterDirectory({
         const matchesName = singer.name.toLowerCase().includes(q);
         const matchesEmail = singer.email.toLowerCase().includes(q);
         const matchesPhone = (singer.phone || '').toLowerCase().includes(q);
-        const matchesVoice = singer.voicePart.toLowerCase().includes(q);
+        const matchesVoice = (singer.voicePart || '').toLowerCase().includes(q);
         return matchesName || matchesEmail || matchesPhone || matchesVoice;
       }
 
@@ -213,8 +213,8 @@ export default function RosterDirectory({
     setMemberFormState({
       email: member.email,
       name: member.name,
-      voicePart: member.voicePart,
-      sectionGroup: member.sectionGroup,
+      voicePart: member.voicePart || '',
+      sectionGroup: member.sectionGroup || '',
       role: member.role,
       phone: member.phone || '',
       status: member.status,

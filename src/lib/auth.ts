@@ -136,8 +136,8 @@ export async function exchangeGoogleCodeForVerifiedEmail(params: {
 export interface SessionSingerClaims {
   email: string;
   name?: string;
-  voicePart?: VoicePart;
-  sectionGroup?: SectionGroup;
+  voicePart?: VoicePart | '';
+  sectionGroup?: SectionGroup | '';
   role?: MemberRole;
   phone?: string;
   active?: boolean;
@@ -328,8 +328,8 @@ export async function resolveAuthenticatedSinger(
       const fallbackSinger: Singer = {
         email: session.email,
         name: session.name || session.email.split('@')[0],
-        voicePart: session.voicePart || 'B2',
-        sectionGroup: session.sectionGroup || 'Bass',
+        voicePart: session.voicePart || '',
+        sectionGroup: session.sectionGroup || '',
         role: session.role || 'Singer',
         phone: session.phone || '',
         active: session.active ?? true,

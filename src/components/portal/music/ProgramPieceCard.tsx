@@ -171,13 +171,14 @@ export default function ProgramPieceCard({
             onClick={(e) => onProseClick(programTitle, e)}
             className="handbook-prose max-w-none text-xs text-stone-800"
             dangerouslySetInnerHTML={{
-              __html: highlightMyPart
-                ? highlightVoicePartInHtml(
-                    piece.notesHtml,
-                    singer.voicePart,
-                    singer.sectionGroup
-                  )
-                : piece.notesHtml,
+              __html:
+                highlightMyPart && singer.voicePart
+                  ? highlightVoicePartInHtml(
+                      piece.notesHtml,
+                      singer.voicePart,
+                      singer.sectionGroup
+                    )
+                  : piece.notesHtml,
             }}
           />
         </div>
@@ -226,7 +227,7 @@ export default function ProgramPieceCard({
                       <span className="text-sm font-medium text-navy-950">
                         {prettyTitle}
                       </span>
-                      {isHighlighted && (
+                      {isHighlighted && singer.sectionGroup && (
                         <span className="rounded-sm border border-copper-300/80 bg-[#f9efe8] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-copper-600">
                           {singer.sectionGroup}
                         </span>

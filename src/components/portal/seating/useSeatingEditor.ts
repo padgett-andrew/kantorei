@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { SeatingChart, SeatingRow, SeatingSeat, Singer } from '../../../types/choir';
+import type { SeatingChart, SeatingRow, SeatingSeat, Singer, VoicePart } from '../../../types/choir';
 import type { SeatingMode } from './types';
 import { cloneRows, createDefaultRow, reindexRowSeats } from './seatingLayoutUtils';
 
@@ -92,7 +92,7 @@ export function useSeatingEditor({
 
     seat.singerEmail = singer.email.toLowerCase();
     seat.singerName = singer.name;
-    seat.voicePart = singer.voicePart;
+    seat.voicePart = (singer.voicePart || undefined) as VoicePart | undefined;
 
     setEditableRows(nextRows);
     setHasUnsavedChanges(true);
@@ -438,7 +438,7 @@ export function useSeatingEditor({
       if (emptySeat) {
         emptySeat.singerEmail = singer.email;
         emptySeat.singerName = singer.name;
-        emptySeat.voicePart = singer.voicePart;
+        emptySeat.voicePart = (singer.voicePart || undefined) as VoicePart | undefined;
         setEditableRows(nextRows);
         setHasUnsavedChanges(true);
         setBanner({
@@ -456,7 +456,7 @@ export function useSeatingEditor({
           seatIndex: 0,
           singerEmail: singer.email,
           singerName: singer.name,
-          voicePart: singer.voicePart,
+          voicePart: (singer.voicePart || undefined) as VoicePart | undefined,
         };
 
         if (addToLeft) {
