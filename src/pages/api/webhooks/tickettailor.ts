@@ -1,8 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getEnv } from '../../../lib/env';
-import { getPortalConfig, recordSubscriber } from '../../../lib/google';
+import { recordSubscriber } from '../../../lib/google';
 import { addSubscriberToMailerLite } from '../../../lib/mailerlite';
-import { sendSubscriberWelcomeEmail } from '../../../lib/email';
 
 export interface QuestionItem {
   question?: unknown;
@@ -296,12 +295,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
-  const config = await getPortalConfig(locals).catch(() => undefined);
-
-  // Dispatch subscriptions concurrently to Google Sheet, MailerLite, and Welcome Email
+  // Dispatch subscriptions concurrently to Google Sheet and MailerLite
   const results = await Promise.allSettled(
     Array.from(subscribersToSync.values()).map(async (sub) => {
-      const [sheetRes, mlRes, emailRes] = await Promise.allSettled([
+      const [sheetRes, mlRes] = await Promise.allSettled([
         recordSubscriber({
           email: sub.email,
           name: sub.name,
@@ -316,13 +313,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
           },
           locals
         ),
-        sendSubscriberWelcomeEmail({
-          toEmail: sub.email,
-          subscriberName: sub.name,
-          source: 'Ticket_Tailor',
-          config,
-          locals,
-        }),
       ]);
 
       return {
@@ -330,10 +320,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         sheetSaved: sheetRes.status === 'fulfilled',
         mailerLiteSaved:
           mlRes.status === 'fulfilled' ? mlRes.value.success : false,
-        welcomeEmailSent:
-          emailRes.status === 'fulfilled'
-            ? emailRes.value.delivered || emailRes.value.sandboxMode
-            : false,
       };
     })
   );
