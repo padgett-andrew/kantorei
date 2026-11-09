@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Lock, ShieldCheck } from 'lucide-react';
 import type { GivingTier } from '../../types/choir';
 
@@ -13,58 +12,9 @@ export default function LGLFormEmbed({
   choirName = 'Kantorei',
   givingTiers = [],
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
-  const [iframeHeight, setIframeHeight] = useState<number>(880);
-
-  // Measure container width to handle mobile responsive scaling
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
-    };
-    updateWidth();
-    const observer = new ResizeObserver(updateWidth);
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  // Listen for LGL's cross-domain postMessage height resize events (both iFrameResizer format and plain numeric format)
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (typeof event.data === 'string' && event.origin.includes('lglforms.com')) {
-        const raw = event.data;
-        if (raw.startsWith('[iFrameSizer]')) {
-          const parts = raw.split(':');
-          const h = parseInt(parts[1], 10);
-          if (!isNaN(h) && h > 300) {
-            setIframeHeight(h + 20);
-          }
-        } else {
-          const parsed = parseInt(raw, 10);
-          if (!isNaN(parsed) && parsed > 300) {
-            setIframeHeight(parsed + 20);
-          }
-        }
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
   const cleanUrl =
     (lglFormUrl || '').trim() ||
     'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA';
-
-  // LGL form content has an intrinsic header logo width of ~567px plus padding/margins.
-  // On screens narrower than 600px, proportionally scale the iframe so the form
-  // fits mobile screens edge-to-edge without horizontal clipping or scrollbars.
-  const baseWidth = 600;
-  const isMobile = containerWidth > 0 && containerWidth < baseWidth;
-  const scale = isMobile ? containerWidth / baseWidth : 1;
-  const scaledHeight = isMobile ? Math.round(iframeHeight * scale) : iframeHeight;
 
   return (
     <div className="space-y-8">
@@ -93,38 +43,15 @@ export default function LGLFormEmbed({
           </a>
         </div>
 
-        {/* Scaled Responsive Iframe Container */}
-        <div ref={containerRef} className="relative w-full overflow-hidden bg-white">
-          <div
-            style={{
-              width: '100%',
-              height: `${scaledHeight}px`,
-              overflow: 'hidden',
-              position: 'relative',
-            }}
-          >
-            {/* Subtle background placeholder (visible only until iframe paints) */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-stone-50/50 p-6 text-center -z-10 pointer-events-none">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-navy-950 border-t-transparent" />
-              <span className="text-xs font-medium text-stone-500">Loading donation form…</span>
-            </div>
-
-            <iframe
-              src={cleanUrl}
-              title={`Donate to ${choirName}`}
-              loading="eager"
-              style={{
-                width: isMobile ? `${baseWidth}px` : '100%',
-                height: `${iframeHeight}px`,
-                transform: isMobile ? `scale(${scale})` : undefined,
-                transformOrigin: 'top left',
-                border: 0,
-                display: 'block',
-                backgroundColor: '#ffffff',
-              }}
-              allow="payment"
-            />
-          </div>
+        {/* Form Viewport: 1:1 Scale, Zero-Flicker, Full Touch Target Accuracy */}
+        <div className="relative w-full overflow-hidden bg-white">
+          <iframe
+            src={cleanUrl}
+            title={`Donate to ${choirName}`}
+            loading="eager"
+            className="w-full border-0 block bg-white min-h-[1100px] sm:min-h-[1000px] h-[1250px] sm:h-[1150px] lg:h-[1100px]"
+            allow="payment"
+          />
         </div>
 
         {/* Discreet Trust Footer */}
