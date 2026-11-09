@@ -139,27 +139,6 @@ const isLGL = queryParamPlatform === 'lgl' || (queryParamPlatform === '' && conf
             class="mt-2 text-sm sm:text-base leading-relaxed text-stone-700"
             set:html={formatRichText(rawMatchingBlurb)}
           />
-          {isLGL ? (
-            <p class="mt-3 border-t border-stone-200/80 pt-3 text-sm text-stone-600 sm:text-base">
-              Prefer 1-tap giving via Apple Pay, Google Pay, or Venmo?{' '}
-              <a
-                href="/support?platform=givebutter"
-                class="font-semibold text-navy-900 underline decoration-gold-500 underline-offset-4 hover:text-gold-600"
-              >
-                Use 1-tap checkout &rarr;
-              </a>
-            </p>
-          ) : lglFormUrl ? (
-            <p class="mt-3 border-t border-stone-200/80 pt-3 text-sm text-stone-600 sm:text-base">
-              Prefer giving through our Little Green Light constituent form?{' '}
-              <a
-                href="/support?platform=lgl"
-                class="font-semibold text-navy-900 underline decoration-gold-500 underline-offset-4 hover:text-gold-600"
-              >
-                Open LGL donation portal &rarr;
-              </a>
-            </p>
-          ) : null}
         </div>
 
         <!-- Sing With Us / Auditions Callout -->
