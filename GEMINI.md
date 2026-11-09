@@ -9,9 +9,7 @@ You are an expert full-stack Astro, React, and Cloudflare Edge engineer building
 Non-technical choir board members, music librarians, and section leaders MUST be able to operate the entire site day-to-day without touching code, GitHub, or database dashboards.
 
 1. **Zero Database Maintenance:** A single **Master Google Sheet** and a **Google Drive / Shared Drive folder** (accessed via a Google Cloud Service Account over lightweight REST + `jose` Web Crypto JWTs) serve as our entire CMS and database. There is no SQL/NoSQL database to pay for, migrate, or unpause after summer hiatus.
-2. **Zero Hosting Seat Tax & Zero Bandwidth Fees:** Hosted on **Cloudflare Workers** (`$0/month` free tier, `$0` per-seat multi-admin access for board members, `0ms` cold starts, and `$0` egress fees for streaming rehearsal MP3s and score PDFs).
-3. **Zero Custom Payment Math:** All concert ticketing and Flex Season Passes use embedded **Ticket Tailor** widgets (`0%` fee on `$0` pass redemptions, `50%` charity discount on paid tickets, plus in-cart add-on donations). Standalone fundraising uses an embedded **Givebutter** widget.
-4. **Universal Singer Login (Gmail & Non-Gmail):** Supports **both** 1-click **"Continue with Google"** OAuth _and_ a **stateless 6-digit Email Login Code (OTP)** via Resend + HMAC-signed `httpOnly` cookies (`jose`), so singers using `@icloud.com`, `@yahoo.com`, `@outlook.com`, or work/university emails can sign in seamlessly with zero database.
+3. **Zero Custom Payment Math:** All concert ticketing and Flex Season Passes use embedded **Ticket Tailor** widgets (`0%` fee on `$0` pass redemptions, `50%` charity discount on paid tickets, plus in-cart add-on donations). Standalone fundraising uses embedded **Little Green Light (LGL) Forms** with native Enhanced Checkout (Apple Pay, Google Pay, ACH, credit cards).
 5. **Sandbox / Prototype Resilience:** The codebase MUST gracefully handle missing or placeholder credentials during local/sandbox development (rendering realistic mock repertoire/schedule/roster data, interactive preview cards when `DEMO` / `DEMO_SERIES_ID` is configured, and supporting Resend's `onboarding@resend.dev` sandbox rules).
 6. **100% Dynamic Content via Google Sheets CMS (Zero Code Deploys for Copy, Contact & Staff Changes):** ALL public site copy, statements, official contact details, board of directors, artistic leadership bios, and giving tiers MUST be manageable directly from the **Master Google Sheet** (`Config`, `Board`, `Leadership`, `Giving_Tiers`) or Google Drive. Future AI instances and engineers MUST NEVER hardcode copy, statements, emails, phone numbers, or staff rosters into `.astro` or `.tsx` templates. Always read from `getPortalConfig()` or the corresponding sheet getters with safe default fallbacks and 60-second edge caching.
 
@@ -71,8 +69,7 @@ PUBLIC_TICKET_TAILOR_BOX_OFFICE_URL="https://www.tickettailor.com/events/demo"
 # Optional API key: when provided, /concerts and home page auto-fetch directly from Ticket Tailor REST API (zero Google Sheet double-entry)
 TICKET_TAILOR_API_KEY=""
 TICKET_TAILOR_WEBHOOK_SECRET=""
-PUBLIC_GIVEBUTTER_ACCOUNT_ID="DEMO"
-PUBLIC_GIVEBUTTER_CAMPAIGN_ID="DEMO"
+PUBLIC_LGL_FORM_URL="https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA"
 
 # 5. Friends of Kantorei Newsletter (MailerLite REST API)
 MAILERLITE_API_KEY=""
@@ -477,8 +474,8 @@ src/
 │   ├── public/
 │   │   ├── Navbar.astro            # Public nav with "Concerts & Tickets", "Support", and "Singer Login" CTA
 │   │   ├── Footer.astro            # 501(c)(3) info, social links, mailing list
-│   │   ├── TicketTailorEmbed.tsx   # React island for Flex Season Pass & Concert checkout + Demo Sandbox UI
-│   │   └── GivebutterEmbed.tsx     # React island for tax-deductible donations + Demo Sandbox UI
+│   │   ├── TicketTailorEmbed.tsx   # React island for Flex Season Pass & Concert checkout + in-cart donations
+│   │   └── LGLFormEmbed.tsx        # React island for Little Green Light donations + Enhanced Checkout
 │   └── portal/
 │       ├── LoginCard.tsx           # React island: Google OAuth button + 2-step 6-digit Email OTP form + Dev role switcher
 │       ├── PortalNav.astro         # Responsive header/bottom-tab nav showing Voice_Part badge & conditional Admin tab
@@ -492,7 +489,7 @@ src/
     ├── index.astro                 # Public Home: Hero, Next Concert spotlight, ensemble mission, audio samples
     ├── concerts.astro              # Season Pass 2-step Flex explainer + Individual Concert embeds
     ├── about.astro                 # Artistic Director bio, ensemble history, audition info
-    ├── support.astro               # Tax-deductible giving tiers + Givebutter embed
+    ├── support.astro               # Tax-deductible giving tiers + LGL Forms embed (Apple Pay & ACH)
     ├── login.astro                 # Singer Portal sign-in (Google OAuth + Email 6-digit OTP)
     ├── portal/
     │   ├── index.astro             # Singer Dashboard: Announcement banner, next rehearsal, .ics subscribe, quick stats
@@ -577,15 +574,17 @@ src/
 4. On `POST`, look up active `Section_Leader`s matching `targetSinger.sectionGroup`, plus `Conductor_Email` and `Manager_Email` from `Config`, and count total active absences (`status === 'Absent'`) for that `eventId` in that section.
 5. **Sandbox Email Safeguard:** If `SANDBOX_OVERRIDE_EMAIL` is set or `PORTAL_FROM_EMAIL` includes `onboarding@resend.dev`, route `to:` to the sandbox address while listing intended recipients (`[Section Leaders, Conductor, Manager]`) at the top of the email body.
 
-### F. Ticket Tailor "Flex Season Pass" + Givebutter Fundraising (`src/pages/concerts.astro`, `src/pages/support.astro`)
+### F. Ticket Tailor "Flex Season Pass" & In-Cart Giving + Little Green Light Fundraising (`src/pages/concerts.astro`, `src/pages/support.astro`)
 
 1. **Top Section of `/concerts` — "Flex Season Pass (Buy Now, Pick Your Dates Later)":**
    - Clear 2-step visual guide:
      - **Step 1: Purchase Your Season Pass:** Receive your personal **Pass Code** (valid for 1 VIP admission per concert cycle + pass-holder perks).
      - **Step 2: Reserve Your Performance Night Anytime:** Select Saturday or Sunday below and enter your Pass Code to unlock your **`$0.00` Season Pass VIP Ticket** from that night's seating capacity.
    - Mounts `<TicketTailorEmbed client:visible widgetUrl={config.Season_Pass_TT_Widget_URL} mode="season-pass" />`.
-2. **Individual Concert Cards:**
-   - Renders `On_Sale` and `Upcoming` concerts from `Concerts`. In Demo mode (`DEMO_SERIES_ID`), renders an interactive **Demo Checkout Preview Card** (performance night selector, Pass Code unlock toggle, `$0.00` Pass Holder VIP tier, General Admission tier, and add-on donation buttons).
+2. **Individual Concert Cards & In-Cart Donations:**
+   - Renders `On_Sale` and `Upcoming` concerts from `Concerts`. In Demo mode (`DEMO_SERIES_ID`), renders an interactive **Demo Checkout Preview Card** (performance night selector, Pass Code unlock toggle, `$0.00` Pass Holder VIP tier, General Admission tier, and in-cart add-on donation buttons).
+3. **Dedicated Support Page (`/support`):**
+   - Renders `<LGLFormEmbed client:load lglFormUrl={lglFormUrl} siteOrigin={Astro.url.origin} choirName={choirName} givingTiers={givingTiers} />` directly connected to Little Green Light Forms with Enhanced Checkout support (Apple Pay, Google Pay, ACH, credit card).
 
 ---
 
@@ -595,7 +594,7 @@ src/
 2. **Phase 2 (Dual Stateless Auth, Middleware & Layouts):** Build `src/lib/auth.ts` (Web Crypto PKCE Google OAuth + `jose` session & 6-digit Email OTP + Dev role switcher), `src/middleware.ts`, auth API endpoints, `/login`, `PublicLayout.astro`, and `PortalLayout.astro`.
 3. **Phase 3 (Singer Portal Core Features):** Build `/portal` (Dashboard + `.ics` calendar subscription modal), `/portal/absences` + `/api/absences` + `src/lib/email.ts`, `/portal/snacks` + `/api/snacks`, `/portal/music` + `/api/music/[fileId]`, `/portal/directory`, `/portal/handbook`, and `/api/calendar.ics`.
 4. **Phase 4 (Section Leader & Admin Dashboard):** Build `/portal/admin` + `/api/roster` with the rehearsal attendance matrix by voice part, 1-click "Mark Absent / Clear at Roll Call", "Add / Edit Singer" modal, and Google Sheet `zod` data-health alerts.
-5. **Phase 5 (Public Website, Box Office & Verification):** Build `/`, `/concerts`, `/about`, `/support`, `TicketTailorEmbed.tsx`, and `GivebutterEmbed.tsx`, then run full TypeScript & Cloudflare Worker production build verification (`astro check && npm run build`).
+5. **Phase 5 (Public Website, Box Office & Verification):** Build `/`, `/concerts`, `/about`, `/support`, `TicketTailorEmbed.tsx`, and `LGLFormEmbed.tsx`, then run full TypeScript & Cloudflare Worker production build verification (`astro check && npm run build`).
 
 ---
 

@@ -199,14 +199,10 @@ Adam Reinwald`,
     No_Concerts_Blurb:
       "We don't have any upcoming concerts scheduled at this time. Join our email list below to be notified as soon as new concert dates, programs, and tickets are announced.",
     Home_Spotlight_Type: '',
-    Home_Spotlight_Media_ID: '',
     Home_Spotlight_Title: 'Stay in Touch with Kantorei',
     Home_Spotlight_Description:
       "We don't have any upcoming concerts scheduled right now. Join Friends of Kantorei to receive season announcements, recording releases, and priority ticket access.",
-    Donation_Platform: 'givebutter',
     LGL_Form_URL: 'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA',
-    Givebutter_Account_ID: 'DEMO',
-    Givebutter_Campaign_ID: 'DEMO',
   },
   board: [
     { name: 'Michael Campana', role: 'President', order: 1, active: true },

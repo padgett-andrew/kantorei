@@ -169,13 +169,16 @@ describe('schemas validation', () => {
     });
   });
 
-  describe('Donation Platform Env Validation', () => {
-    it('validates supported donation platform flags', async () => {
+  describe('LGL Donation Form Env Validation', () => {
+    it('validates optional LGL form URL configuration', async () => {
       const { parseRawEnv } = await import('../src/lib/env');
-      expect(parseRawEnv({ PUBLIC_DONATION_PLATFORM: 'givebutter' }).success).toBe(true);
-      expect(parseRawEnv({ PUBLIC_DONATION_PLATFORM: 'lgl' }).success).toBe(true);
-      expect(parseRawEnv({ PUBLIC_DONATION_PLATFORM: 'both' }).success).toBe(true);
-      expect(parseRawEnv({ PUBLIC_DONATION_PLATFORM: 'invalid' }).success).toBe(false);
+      expect(
+        parseRawEnv({
+          PUBLIC_LGL_FORM_URL:
+            'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA',
+        }).success
+      ).toBe(true);
+      expect(parseRawEnv({}).success).toBe(true);
     });
   });
 });

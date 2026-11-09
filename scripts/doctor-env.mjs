@@ -203,10 +203,9 @@ check('Ticket Tailor Box Office URL', Boolean(ttUrl), {
   info: 'Defaulting to demo ticket checkout sandbox.',
 });
 
-const gbAccount = (env.PUBLIC_GIVEBUTTER_ACCOUNT_ID || '').trim();
-const gbCampaign = (env.PUBLIC_GIVEBUTTER_CAMPAIGN_ID || '').trim();
-check('Givebutter Widget Config', Boolean(gbAccount && gbCampaign), {
-  info: 'Defaulting to interactive donation sandbox preview.',
+const lglUrl = (env.PUBLIC_LGL_FORM_URL || '').trim();
+check('LGL Donation Form URL', Boolean(lglUrl), {
+  info: 'Defaulting to standard Kantorei LGL online donation form.',
 });
 
 // -----------------------------------------------------------------------------
