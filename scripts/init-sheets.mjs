@@ -399,6 +399,11 @@ const SCHEMA_SPEC = {
         'Callout description for the homepage spotlight card when showing the Friends of Kantorei fallback state',
       ],
       ['LGL_Form_URL', 'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA', 'Little Green Light external donor form link'],
+      ['MailerLite_API_Key', '', 'MailerLite API Bearer token for Friends of Kantorei newsletter sync (optional: can also be set via MAILERLITE_API_KEY secret)'],
+      ['MailerLite_Group_ID', 'Friends of Kantorei', 'MailerLite group name or numeric ID for newsletter subscribers (auto-discovered if left blank)'],
+      ['Resend_API_Key', '', 'Resend API key for portal transactional emails (OTP login, absences, auditions) (optional: can also be set via RESEND_API_KEY secret)'],
+      ['Portal_From_Email', 'Kantorei Portal <onboarding@resend.dev>', 'Verified sender email address in Resend for portal alerts'],
+      ['Sandbox_Override_Email', '', 'Optional test email to redirect all outgoing Resend emails to during development/testing'],
     ],
   },
   Board: {

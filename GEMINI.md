@@ -268,6 +268,11 @@ Standard Config Keys:
 - `Home_Spotlight_Type`: Homepage hero spotlight mode (`concert`, `recording`, or `friends`; leave empty for auto)
 - `Home_Spotlight_Media_ID`: Optional specific Media ID to spotlight on the homepage (e.g. `yt-dickinson`)
 - `Home_Spotlight_Title` / `Home_Spotlight_Description`: Headline and blurb for the homepage spotlight card when showing the Friends of Kantorei fallback state
+- `MailerLite_API_Key`: MailerLite API Bearer token for Friends of Kantorei newsletter sync (can also be set via `MAILERLITE_API_KEY` secret)
+- `MailerLite_Group_ID`: MailerLite group name (e.g. `Friends of Kantorei`) or numeric ID (auto-discovered if left blank)
+- `Resend_API_Key`: Resend API key for portal transactional emails (OTP login, absences, auditions) (can also be set via `RESEND_API_KEY` secret)
+- `Portal_From_Email`: Verified sender email address in Resend for portal alerts (e.g. `Kantorei Portal <onboarding@resend.dev>` or `Kantorei <tickets@kantorei.net>`)
+- `Sandbox_Override_Email`: Optional test email to redirect all outgoing Resend emails to during development/testing
 
 ### Tab 6: `Media` (Range: `Media!A2:F` or Live YouTube RSS Feed)
 
