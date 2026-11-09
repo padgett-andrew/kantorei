@@ -123,14 +123,20 @@ export async function addSubscriberToMailerLite(
       status: 'active',
     };
 
+    const fields: Record<string, string> = {
+      source: input.source || 'Website',
+    };
+
     if (normName) {
       const parts = normName.split(/\s+/);
       const lastName = parts.slice(1).join(' ');
-      payload.fields = {
-        name: normName,
-        ...(lastName ? { last_name: lastName } : {}),
-      };
+      fields.name = normName;
+      if (lastName) {
+        fields.last_name = lastName;
+      }
     }
+
+    payload.fields = fields;
 
     if (targetGroup && targetGroup !== 'DEMO') {
       const parsedGroups = targetGroup
@@ -205,6 +211,78 @@ export async function addSubscriberToMailerLite(
       message?: string;
       errors?: Record<string, string[]>;
     };
+
+    // If MailerLite reports that fields.source does not exist, automatically create it and retry!
+    if (
+      res.status === 422 &&
+      errorJson.errors &&
+      Object.keys(errorJson.errors).some((k) => k.toLowerCase().includes('source'))
+    ) {
+      try {
+        const createFieldRes = await fetch('https://connect.mailerlite.com/api/fields', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            name: 'source',
+            type: 'text',
+          }),
+        });
+
+        if (createFieldRes.ok) {
+          const retryRes = await fetch('https://connect.mailerlite.com/api/subscribers', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify(payload),
+          });
+          if (retryRes.ok) {
+            const retryData = (await retryRes.json()) as { data?: { id?: string } };
+            return {
+              success: true,
+              mode: 'live',
+              subscriberId: retryData?.data?.id,
+              message: 'Successfully subscribed to MailerLite',
+            };
+          }
+        }
+      } catch {
+        // Fall back to retrying without custom source field
+      }
+
+      // Retry without custom source field so subscriber creation never fails
+      const fallbackFields = { ...fields };
+      delete fallbackFields.source;
+      const fallbackPayload = { ...payload, fields: fallbackFields };
+      try {
+        const fallbackRes = await fetch('https://connect.mailerlite.com/api/subscribers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(fallbackPayload),
+        });
+        if (fallbackRes.ok) {
+          const fbData = (await fallbackRes.json()) as { data?: { id?: string } };
+          return {
+            success: true,
+            mode: 'live',
+            subscriberId: fbData?.data?.id,
+            message: 'Successfully subscribed to MailerLite',
+          };
+        }
+      } catch {
+        // Fall back to standard error handling below
+      }
+    }
 
     const errorMsg =
       errorJson.message ||
