@@ -6,12 +6,14 @@ import {
   Mail,
   RotateCcw,
   Send,
+  Users,
 } from 'lucide-react';
 import type { AbsenceRecord, ScheduleEvent, SectionGroup, Singer } from '../../types/choir';
 import { SECTION_GROUPS } from '../../types/choir';
 import { formatEventDate, voicePartBadgeColor } from '../../lib/utils';
 import { enqueueOfflineMutation } from '../../lib/offline-queue';
 import { fetchWithTimeout } from '../../lib/fetch-with-timeout';
+import { formatAbsenceRecipients } from '../../lib/absence-recipients';
 
 interface Props {
   singer: Singer;
@@ -19,6 +21,8 @@ interface Props {
   initialAbsences: AbsenceRecord[];
   allAbsences?: AbsenceRecord[];
   activeRoster?: Singer[];
+  sectionLeaders?: string[];
+  conductorName?: string;
 }
 
 const LATE_OPTIONS = [
@@ -42,11 +46,31 @@ export default function AbsenceManager({
   initialAbsences,
   allAbsences,
   activeRoster = [],
+  sectionLeaders = [],
+  conductorName = 'Adam Reinwald',
 }: Props) {
   const isLeaderOrAdmin =
     (singer.role === 'Section_Leader' || singer.role === 'Admin') &&
     Boolean(allAbsences && activeRoster.length > 0);
   const isAdmin = singer.role === 'Admin';
+
+  const resolvedSectionLeaders = useMemo(() => {
+    if (sectionLeaders.length > 0) return sectionLeaders;
+    if (!singer.sectionGroup || !activeRoster.length) return [];
+    return activeRoster
+      .filter(
+        (s) => s.active && s.role === 'Section_Leader' && s.sectionGroup === singer.sectionGroup
+      )
+      .map((s) => s.name);
+  }, [sectionLeaders, activeRoster, singer.sectionGroup]);
+
+  const recipientsInfo = useMemo(() => {
+    return formatAbsenceRecipients({
+      sectionGroup: singer.sectionGroup || '',
+      sectionLeaders: resolvedSectionLeaders,
+      conductorName,
+    });
+  }, [singer.sectionGroup, resolvedSectionLeaders, conductorName]);
 
   const [activeTab, setActiveTab] = useState<'my' | 'rollcall'>('my');
   const [absences, setAbsences] = useState<AbsenceRecord[]>(initialAbsences);
@@ -140,7 +164,7 @@ export default function AbsenceManager({
 
       setFeedback({
         type: 'success',
-        text: `Notice saved offline on your device. It will automatically transmit to your ${singer.sectionGroup} Section Leader as soon as your phone reconnects.`,
+        text: `Notice saved offline on your device. It will automatically transmit to ${recipientsInfo.summaryText} as soon as your phone reconnects.`,
       });
       setSubmitting(false);
       return;
@@ -167,6 +191,10 @@ export default function AbsenceManager({
         absence?: AbsenceRecord;
         sectionAbsenceCount?: number;
         sectionLateCount?: number;
+        recipients?: {
+          summaryText: string;
+          formattedList: string[];
+        };
       };
 
       if (!res.ok || !data.absence) {
@@ -180,11 +208,12 @@ export default function AbsenceManager({
       applyOptimisticAbsence(data.absence);
 
       const isLate = data.absence.status === 'Late';
+      const recipientMsg = data.recipients?.summaryText || recipientsInfo.summaryText;
       setFeedback({
         type: 'success',
         text: isLate
-          ? `Late notice recorded for ${formatEventDate(data.absence.date)}. Your ${singer.sectionGroup} Section Leader and leadership team have been notified.`
-          : `Absence recorded for ${formatEventDate(data.absence.date)}. Your ${singer.sectionGroup} Section Leader and leadership team have been notified.`,
+          ? `Late notice recorded for ${formatEventDate(data.absence.date)}. ${recipientMsg} have been notified.`
+          : `Absence recorded for ${formatEventDate(data.absence.date)}. ${recipientMsg} have been notified.`,
       });
     } catch (err) {
       const isNetworkDrop =
@@ -219,7 +248,7 @@ export default function AbsenceManager({
 
         setFeedback({
           type: 'success',
-          text: `Notice saved offline on your device. It will automatically transmit to your ${singer.sectionGroup} Section Leader as soon as your phone reconnects.`,
+          text: `Notice saved offline on your device. It will automatically transmit to ${recipientsInfo.summaryText} as soon as your phone reconnects.`,
         });
       } else {
         setFeedback({ type: 'error', text: 'Network error submitting notice.' });
@@ -279,9 +308,18 @@ export default function AbsenceManager({
         return;
       }
 
+      const data = (await res.json()) as {
+        error?: string;
+        skippedEmailBecausePastDate?: boolean;
+      };
+
+      const feedbackText = data.skippedEmailBecausePastDate
+        ? `Your notice for ${formatEventDate(date)} has been withdrawn. (No email was sent since this call date has passed).`
+        : `Your notice for ${formatEventDate(date)} has been withdrawn. Section leadership has been updated.`;
+
       setFeedback({
         type: 'success',
-        text: `Your notice for ${formatEventDate(date)} has been withdrawn. Section leadership has been updated.`,
+        text: feedbackText,
       });
     } catch (err) {
       const isNetworkDrop =
@@ -430,8 +468,7 @@ export default function AbsenceManager({
                 Report Absence or Late Arrival
               </h2>
               <p className="mt-1.5 text-sm leading-relaxed text-stone-600">
-                Submitting notifies the Artistic Director, attendance administration, and your{' '}
-                <strong className="font-semibold text-navy-950">{singer.sectionGroup}</strong> Section Leader automatically.
+                Submitting notifies {recipientsInfo.summaryText} automatically.
               </p>
 
               {feedback && (
@@ -564,6 +601,22 @@ export default function AbsenceManager({
                     }
                     className="w-full rounded-sm border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-navy-950 focus:border-navy-950 focus:outline-none"
                   />
+                </div>
+
+                {/* Who Will Be Notified Card */}
+                <div className="rounded-sm border border-stone-200/90 bg-[#FAF7F2] p-3 text-xs">
+                  <div className="flex items-center gap-1.5 font-semibold text-navy-950">
+                    <Users className="h-3.5 w-3.5 text-copper-600" />
+                    <span>Who will be notified</span>
+                  </div>
+                  <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed text-stone-600">
+                    {recipientsInfo.formattedList.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5">
+                        <span className="font-bold text-copper-600" aria-hidden="true">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <button

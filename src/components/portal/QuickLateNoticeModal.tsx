@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { AlertCircle, CheckCircle2, Clock, Send, WifiOff, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Send, Users, WifiOff, X } from 'lucide-react';
 import { formatEventDate } from '../../lib/utils';
 import { enqueueOfflineMutation } from '../../lib/offline-queue';
 import { fetchWithTimeout } from '../../lib/fetch-with-timeout';
+import { formatAbsenceRecipients } from '../../lib/absence-recipients';
 
 interface Props {
   eventId: string;
   eventTitle: string;
   eventDate: string;
   sectionGroup: string;
+  sectionLeaders?: string[];
+  conductorName?: string;
   buttonLabel?: string;
   buttonVariant?: 'hero' | 'nocturne' | 'pill' | 'danger' | 'ghost';
   className?: string;
@@ -34,6 +37,8 @@ export default function QuickLateNoticeModal({
   eventTitle,
   eventDate,
   sectionGroup,
+  sectionLeaders = [],
+  conductorName = 'Adam Reinwald',
   buttonLabel = 'Report Conflict / Late',
   buttonVariant = 'hero',
   className = '',
@@ -45,6 +50,12 @@ export default function QuickLateNoticeModal({
   const [success, setSuccess] = useState(false);
   const [isQueuedOffline, setIsQueuedOffline] = useState(false);
   const [error, setError] = useState('');
+
+  const recipientsInfo = formatAbsenceRecipients({
+    sectionGroup,
+    sectionLeaders,
+    conductorName,
+  });
 
   function handleTypeChange(nextType: 'Late' | 'Absent') {
     setStatusType(nextType);
@@ -197,10 +208,10 @@ export default function QuickLateNoticeModal({
                 </div>
                 <p className="mt-1.5 text-xs leading-relaxed text-stone-600">
                   {isQueuedOffline
-                    ? `Your ${statusType === 'Late' ? 'late notice' : 'absence report'} is saved locally. It will automatically sync to ${sectionGroup ? `your ${sectionGroup} Section Leader and ` : ''}ensemble leadership as soon as your phone reconnects.`
+                    ? `Your ${statusType === 'Late' ? 'late notice' : 'absence report'} is saved locally. It will automatically transmit to ${recipientsInfo.summaryText} as soon as your phone reconnects.`
                     : statusType === 'Late'
-                    ? `Travel safely—${sectionGroup ? `your ${sectionGroup} Section Leader and ` : ''}ensemble leadership have been notified.`
-                    : `${sectionGroup ? `Your ${sectionGroup} Section Leader and ensemble` : 'Ensemble'} leadership have been notified.`}
+                    ? `Travel safely—your late notice was delivered to ${recipientsInfo.summaryText}.`
+                    : `Your absence notice was delivered to ${recipientsInfo.summaryText}.`}
                 </p>
               </div>
             ) : (
@@ -281,6 +292,22 @@ export default function QuickLateNoticeModal({
                         : 'e.g. Work travel conflict'
                     }
                   />
+                </div>
+
+                {/* Who Will Be Notified Card */}
+                <div className="rounded-sm border border-stone-200/90 bg-[#FAF7F2] p-3 text-xs">
+                  <div className="flex items-center gap-1.5 font-semibold text-navy-950">
+                    <Users className="h-3.5 w-3.5 text-copper-600" />
+                    <span>Who will be notified</span>
+                  </div>
+                  <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed text-stone-600">
+                    {recipientsInfo.formattedList.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5">
+                        <span className="font-bold text-copper-600" aria-hidden="true">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <div className="flex items-center justify-end gap-2.5 border-t border-stone-200/90 pt-4">

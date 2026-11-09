@@ -11,6 +11,7 @@ import {
   getBulletinMessages,
   getPortalConfig,
   getRepertoire,
+  getRoster,
   getSchedule,
   getSeatingCharts,
 } from '../../lib/google';
@@ -23,7 +24,7 @@ import {
 } from '../../lib/utils';
 
 const singer = Astro.locals.singer!;
-const [config, schedule, absences, repertoire, feedToken, seatingCharts, bulletinMessages] =
+const [config, schedule, absences, repertoire, feedToken, seatingCharts, bulletinMessages, roster] =
   await Promise.all([
     getPortalConfig(Astro.locals),
     getSchedule(Astro.locals),
@@ -32,7 +33,17 @@ const [config, schedule, absences, repertoire, feedToken, seatingCharts, bulleti
     getCalendarFeedToken(Astro.locals),
     getSeatingCharts(Astro.locals),
     getBulletinMessages(Astro.locals),
+    getRoster(Astro.locals),
   ]);
+
+const sectionLeaders = singer.sectionGroup
+  ? roster
+      .filter(
+        (s) => s.active && s.role === 'Section_Leader' && s.sectionGroup === singer.sectionGroup
+      )
+      .map((s) => s.name)
+  : [];
+const conductorName = config.Conductor_Name || 'Adam Reinwald';
 
 const latestDispatch = bulletinMessages[0];
 
@@ -236,6 +247,8 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                   eventTitle={nextEvent.title}
                   eventDate={nextEvent.date}
                   sectionGroup={singer.sectionGroup || ''}
+                  sectionLeaders={sectionLeaders}
+                  conductorName={conductorName}
                   buttonVariant="hero"
                   buttonLabel={
                     nextEventConflict
@@ -555,6 +568,8 @@ const webcalFeedUrl = httpsFeedUrl.replace(/^https?:\/\//i, 'webcal://');
                     eventTitle={ev.title}
                     eventDate={ev.date}
                     sectionGroup={singer.sectionGroup || ''}
+                    sectionLeaders={sectionLeaders}
+                    conductorName={conductorName}
                     buttonLabel={conflict ? 'Edit Notice' : 'Report Conflict'}
                     buttonVariant="ghost"
                   />

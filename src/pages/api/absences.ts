@@ -11,6 +11,8 @@ import {
   NotFoundError,
   upsertAbsenceRecord,
 } from '../../lib/google';
+import { getTodayIso } from '../../lib/utils';
+import { formatAbsenceRecipients } from '../../lib/absence-recipients';
 
 const PostAbsenceSchema = z.object({
   eventId: z.string().trim().min(1, 'Please select a rehearsal or concert.'),
@@ -120,6 +122,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const sectionLateCount = sectionRecords.filter((a) => a.status === 'Late').length;
 
     let emailResult = null;
+    let recipientsInfo = null;
+
     // Only send the absence notification when a singer creates one, NOT during roll call.
     if (!isRollCall) {
       const sectionLeaders = targetSinger.sectionGroup
@@ -132,6 +136,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
         : [];
 
       const admins = roster.filter((s) => s.active && s.role === 'Admin');
+
+      recipientsInfo = formatAbsenceRecipients({
+        sectionGroup: targetSinger.sectionGroup || '',
+        sectionLeaders: sectionLeaders.map((s) => s.name),
+        conductorName: config.Conductor_Name || 'Adam Reinwald',
+      });
 
       emailResult = await sendAbsenceAlertEmail({
         absence,
@@ -154,6 +164,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         sectionAbsenceCount,
         sectionLateCount,
         emailResult,
+        recipients: recipientsInfo,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
@@ -221,45 +232,62 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
 
       if (targetSinger) {
         const event = schedule.find((e) => e.eventId === parsed.data.eventId);
-        const allAbsences = await getAbsences(locals);
-        const sectionEmails = new Set(
-          roster
-            .filter((s) => Boolean(targetSinger.sectionGroup) && s.sectionGroup === targetSinger.sectionGroup)
-            .map((s) => s.email)
-        );
-        const sectionRecords = allAbsences.filter(
-          (a) =>
-            a.eventId === parsed.data.eventId &&
-            (sectionEmails.has(a.singerEmail) ||
-              Boolean(targetSinger.voicePart && a.voicePart && a.voicePart[0] === targetSinger.voicePart[0]))
-        );
-        const sectionAbsenceCount = sectionRecords.filter((a) => a.status === 'Absent').length;
-        const sectionLateCount = sectionRecords.filter((a) => a.status === 'Late').length;
+        const eventDate = event?.date || clearedRecord.date;
+        const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
+        const isAfterCallDate = Boolean(eventDate && eventDate < today);
 
-        const sectionLeaders = targetSinger.sectionGroup
-          ? roster.filter(
-              (s) =>
-                s.active &&
-                s.role === 'Section_Leader' &&
-                s.sectionGroup === targetSinger.sectionGroup
-            )
-          : [];
-        const admins = roster.filter((s) => s.active && s.role === 'Admin');
+        if (!isAfterCallDate) {
+          const allAbsences = await getAbsences(locals);
+          const sectionEmails = new Set(
+            roster
+              .filter((s) => Boolean(targetSinger.sectionGroup) && s.sectionGroup === targetSinger.sectionGroup)
+              .map((s) => s.email)
+          );
+          const sectionRecords = allAbsences.filter(
+            (a) =>
+              a.eventId === parsed.data.eventId &&
+              (sectionEmails.has(a.singerEmail) ||
+                Boolean(targetSinger.voicePart && a.voicePart && a.voicePart[0] === targetSinger.voicePart[0]))
+          );
+          const sectionAbsenceCount = sectionRecords.filter((a) => a.status === 'Absent').length;
+          const sectionLateCount = sectionRecords.filter((a) => a.status === 'Late').length;
 
-        emailResult = await sendAbsenceRescindedEmail({
-          absence: clearedRecord,
-          event,
-          sectionGroup: targetSinger.sectionGroup || '',
-          sectionLeaders,
-          admins,
-          config,
-          sectionAbsenceCount,
-          sectionLateCount,
-          rescindedBy: clearedBy,
-          locals,
-        });
+          const sectionLeaders = targetSinger.sectionGroup
+            ? roster.filter(
+                (s) =>
+                  s.active &&
+                  s.role === 'Section_Leader' &&
+                  s.sectionGroup === targetSinger.sectionGroup
+              )
+            : [];
+          const admins = roster.filter((s) => s.active && s.role === 'Admin');
+
+          emailResult = await sendAbsenceRescindedEmail({
+            absence: clearedRecord,
+            event,
+            sectionGroup: targetSinger.sectionGroup || '',
+            sectionLeaders,
+            admins,
+            config,
+            sectionAbsenceCount,
+            sectionLateCount,
+            rescindedBy: clearedBy,
+            locals,
+          });
+        } else {
+          emailResult = {
+            delivered: false,
+            sandboxMode: false,
+            recipients: [],
+            note: `Absence withdrawn after the day of the call time (${eventDate} < ${today}); email alert skipped.`,
+          };
+        }
       }
     }
+
+    const skippedEmailBecausePastDate =
+      emailResult?.delivered === false &&
+      Boolean(emailResult?.note?.includes('after the day of the call time'));
 
     return new Response(
       JSON.stringify({
@@ -267,6 +295,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
         rescinded: true,
         clearedRecord,
         emailResult,
+        skippedEmailBecausePastDate,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );

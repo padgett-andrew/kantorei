@@ -12,13 +12,22 @@ const [config, schedule, allAbsences, rawRoster] = await Promise.all([
   getPortalConfig(Astro.locals),
   getSchedule(Astro.locals),
   getAbsences(Astro.locals),
-  isLeaderOrAdmin ? getRoster(Astro.locals) : Promise.resolve([]),
+  getRoster(Astro.locals),
 ]);
 
 const today = getTodayIso(config.Calendar_Timezone || 'America/Chicago');
 const upcomingEvents = schedule.filter((ev) => ev.date >= today);
 const myAbsences = allAbsences.filter((a) => a.singerEmail.toLowerCase() === singer.email.toLowerCase());
 const activeRoster = rawRoster.filter((s) => s.active);
+
+const sectionLeaders = singer.sectionGroup
+  ? activeRoster
+      .filter(
+        (s) => s.role === 'Section_Leader' && s.sectionGroup === singer.sectionGroup
+      )
+      .map((s) => s.name)
+  : [];
+const conductorName = config.Conductor_Name || 'Adam Reinwald';
 ---
 
 <PortalLayout title="Absence & Late Notices">
@@ -51,6 +60,8 @@ const activeRoster = rawRoster.filter((s) => s.active);
     initialAbsences={myAbsences}
     allAbsences={isLeaderOrAdmin ? allAbsences : undefined}
     activeRoster={isLeaderOrAdmin ? activeRoster : undefined}
+    sectionLeaders={sectionLeaders}
+    conductorName={conductorName}
   />
 </PortalLayout>
 
