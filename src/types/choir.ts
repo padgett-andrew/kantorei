@@ -219,6 +219,12 @@ export interface PortalConfig {
   Support_Auditions_Title?: string;
   Support_Auditions_Blurb?: string;
   Tax_Exempt_Disclaimer?: string;
+  // Donation Platform & Little Green Light Integration
+  Donation_Platform?: 'givebutter' | 'lgl' | 'both' | string;
+  LGL_Form_URL?: string;
+  Givebutter_Account_ID?: string;
+  Givebutter_Campaign_ID?: string;
+  Givebutter_Widget_ID?: string;
   // Newsletter, Email Signup & Footer Copy
   Newsletter_Category?: string;
   Newsletter_Headline?: string;

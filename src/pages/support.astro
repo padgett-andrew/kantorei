@@ -1,6 +1,6 @@
 ---
 import PublicLayout from '../layouts/PublicLayout.astro';
-import GivebutterEmbed from '../components/public/GivebutterEmbed';
+import SupportDonationManager from '../components/public/SupportDonationManager';
 import { getEnv } from '../lib/env';
 import { getGivingTiers, getPortalConfig } from '../lib/google';
 import { formatRichText } from '../lib/config-interpolate';
@@ -53,7 +53,36 @@ const campaignId =
   'DEMO';
 const lglFormUrl =
   config.LGL_Form_URL ||
+  getEnv('PUBLIC_LGL_FORM_URL', Astro.locals) ||
   'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA';
+
+// Donation Platform Feature Flag: 'givebutter' | 'lgl' | 'both'
+// Priority: 1. URL search param (?platform= / ?provider=) -> 2. Sheet Config -> 3. Environment Variable -> 4. Default 'both'
+const queryParamPlatform = (
+  Astro.url.searchParams.get('platform') ||
+  Astro.url.searchParams.get('provider') ||
+  ''
+).toLowerCase();
+
+const configuredPlatform = (
+  config.Donation_Platform ||
+  getEnv('PUBLIC_DONATION_PLATFORM', Astro.locals) ||
+  'both'
+).toLowerCase();
+
+const initialPlatform: 'givebutter' | 'lgl' | 'both' =
+  queryParamPlatform === 'lgl' || queryParamPlatform === 'givebutter' || queryParamPlatform === 'both'
+    ? (queryParamPlatform as 'givebutter' | 'lgl' | 'both')
+    : configuredPlatform === 'lgl' || configuredPlatform === 'givebutter' || configuredPlatform === 'both'
+      ? (configuredPlatform as 'givebutter' | 'lgl' | 'both')
+      : 'both';
+
+const allowToggle =
+  configuredPlatform === 'both' ||
+  Boolean(Astro.url.searchParams.get('demo')) ||
+  Boolean(Astro.url.searchParams.get('platform')) ||
+  Boolean(Astro.url.searchParams.get('provider')) ||
+  import.meta.env.DEV;
 ---
 
 <PublicLayout
@@ -82,14 +111,17 @@ const lglFormUrl =
 
   <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
     <div class="grid gap-8 lg:gap-12 lg:grid-cols-12 lg:items-start">
-      <!-- Givebutter Interactive Donation & Giving Circles -->
+      <!-- Interactive Donation Platform (Givebutter vs Little Green Light) -->
       <div class="lg:col-span-7">
-        <GivebutterEmbed
+        <SupportDonationManager
           client:load
           accountId={accountId}
           campaignId={campaignId}
           choirName={choirName}
           givingTiers={givingTiers}
+          lglFormUrl={lglFormUrl}
+          initialPlatform={initialPlatform}
+          allowToggle={allowToggle}
         />
       </div>
 

@@ -203,6 +203,10 @@ Adam Reinwald`,
     Home_Spotlight_Title: 'Stay in Touch with Kantorei',
     Home_Spotlight_Description:
       "We don't have any upcoming concerts scheduled right now. Join Friends of Kantorei to receive season announcements, recording releases, and priority ticket access.",
+    Donation_Platform: 'both',
+    LGL_Form_URL: 'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA',
+    Givebutter_Account_ID: 'DEMO',
+    Givebutter_Campaign_ID: 'DEMO',
   },
   board: [
     { name: 'Michael Campana', role: 'President', order: 1, active: true },

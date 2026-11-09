@@ -168,4 +168,15 @@ describe('schemas validation', () => {
       ).toThrow();
     });
   });
+
+  describe('Donation Platform Env Validation', () => {
+    it('validates supported donation platform flags', async () => {
+      const { parseRawEnv } = await import('../src/lib/env');
+      expect(parseRawEnv({ PUBLIC_DONATION_PLATFORM: 'givebutter' }).success).toBe(true);
+      expect(parseRawEnv({ PUBLIC_DONATION_PLATFORM: 'lgl' }).success).toBe(true);
+      expect(parseRawEnv({ PUBLIC_DONATION_PLATFORM: 'both' }).success).toBe(true);
+      expect(parseRawEnv({ PUBLIC_DONATION_PLATFORM: 'invalid' }).success).toBe(false);
+    });
+  });
 });
+

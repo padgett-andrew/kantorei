@@ -400,6 +400,7 @@ const SCHEMA_SPEC = {
       ],
       ['Givebutter_Account_ID', 'DEMO', 'Givebutter nonprofit account identifier for donation embeds'],
       ['Givebutter_Campaign_ID', 'DEMO', 'Givebutter fundraising campaign identifier'],
+      ['Donation_Platform', 'both', 'Primary donation experience on /support: "givebutter", "lgl", or "both" (tabbed presentation)'],
       ['LGL_Form_URL', 'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA', 'Little Green Light external donor form link'],
     ],
   },
