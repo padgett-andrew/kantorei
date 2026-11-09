@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
-import { recordSubscriber } from '../../lib/google';
+import { getPortalConfig, recordSubscriber } from '../../lib/google';
 import { addSubscriberToMailerLite } from '../../lib/mailerlite';
+import { sendSubscriberWelcomeEmail } from '../../lib/email';
 import { SubscribeRequestSchema } from '../../lib/schemas';
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -49,9 +50,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const { email, name, source } = parsed.data;
 
-  // 3. Concurrently record into Choir Google Sheet and sync to MailerLite
+  // 3. Concurrently record into Choir Google Sheet, sync to MailerLite, and dispatch Welcome email
   try {
-    const [sheetRes, mlRes] = await Promise.allSettled([
+    const config = await getPortalConfig(locals).catch(() => undefined);
+
+    const [sheetRes, mlRes, emailRes] = await Promise.allSettled([
       recordSubscriber({
         email,
         name,
@@ -66,6 +69,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
         },
         locals
       ),
+      sendSubscriberWelcomeEmail({
+        toEmail: email,
+        subscriberName: name,
+        source: source || 'Website',
+        config,
+        locals,
+      }),
     ]);
 
     if (sheetRes.status === 'rejected') {
@@ -73,6 +83,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
     if (mlRes.status === 'rejected') {
       console.error('[Subscribe Error] Failed to write to MailerLite:', mlRes.reason);
+    } else if (mlRes.value.success === false) {
+      console.warn('[Subscribe Warning] MailerLite sync returned error:', mlRes.value.error);
+    }
+    if (emailRes.status === 'rejected') {
+      console.warn('[Subscribe Warning] Welcome email delivery error:', emailRes.reason);
     }
 
     return new Response(

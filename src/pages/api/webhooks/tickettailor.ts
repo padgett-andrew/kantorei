@@ -1,14 +1,16 @@
 import type { APIRoute } from 'astro';
 import { getEnv } from '../../../lib/env';
-import { recordSubscriber } from '../../../lib/google';
+import { getPortalConfig, recordSubscriber } from '../../../lib/google';
 import { addSubscriberToMailerLite } from '../../../lib/mailerlite';
+import { sendSubscriberWelcomeEmail } from '../../../lib/email';
 
 export interface QuestionItem {
-  question?: string;
+  question?: unknown;
   name?: string;
   label?: string;
   title?: string;
   question_text?: string;
+  question_title?: string;
   answer?: unknown;
   value?: unknown;
   response?: unknown;
@@ -16,7 +18,23 @@ export interface QuestionItem {
 }
 
 const MARKETING_QUESTION_REGEX =
-  /(friends?|newsletter|subscribe|mailing|marketing|email.*list|email.*update|receive.*email|keep.*in.*touch|announcement|tune)/i;
+  /(friends?|newsletter|subscribe|mailing|marketing|email.*list|email.*update|receive.*(email|update|info|news)|keep.*in.*touch|announcement|tune|future.*concert)/i;
+
+export function extractQuestionText(q: QuestionItem): string {
+  if (typeof q.question === 'string') return q.question;
+  if (q.question && typeof q.question === 'object') {
+    const qObj = q.question as Record<string, unknown>;
+    return String(qObj.title || qObj.name || qObj.label || qObj.question || '');
+  }
+  return String(
+    q.title ||
+      q.label ||
+      q.name ||
+      q.question_text ||
+      q.question_title ||
+      ''
+  );
+}
 
 export function isMarketingQuestion(questionText: string): boolean {
   return MARKETING_QUESTION_REGEX.test(questionText || '');
@@ -29,6 +47,15 @@ export function isAffirmativeAnswer(rawAnswer: unknown): boolean {
     return rawAnswer.some(isAffirmativeAnswer);
   }
   if (!rawAnswer) return false;
+  if (typeof rawAnswer === 'object') {
+    const obj = rawAnswer as Record<string, unknown>;
+    return (
+      isAffirmativeAnswer(obj.value) ||
+      isAffirmativeAnswer(obj.label) ||
+      isAffirmativeAnswer(obj.text) ||
+      isAffirmativeAnswer(obj.answer)
+    );
+  }
   const str = String(rawAnswer).trim().toLowerCase();
   if (['no', 'false', '0', 'off', 'unchecked'].includes(str)) return false;
   return (
@@ -37,7 +64,8 @@ export function isAffirmativeAnswer(rawAnswer: unknown): boolean {
     str.includes('agree') ||
     str.includes('sign me up') ||
     str.includes('subscribe') ||
-    str.includes('opt in')
+    str.includes('opt in') ||
+    str.includes('please')
   );
 }
 
@@ -194,9 +222,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   let optedIn = false;
 
   for (const q of questionSources) {
-    const questionText = String(
-      q.question || q.name || q.label || q.title || q.question_text || ''
-    ).toLowerCase();
+    const questionText = extractQuestionText(q).toLowerCase();
 
     if (isMarketingQuestion(questionText)) {
       askedOptIn = true;
@@ -251,9 +277,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let attendeeOptedIn = false;
 
     for (const tq of ticketQuestions) {
-      const qText = String(
-        tq.question || tq.name || tq.label || tq.title || tq.question_text || ''
-      ).toLowerCase();
+      const qText = extractQuestionText(tq).toLowerCase();
       if (isMarketingQuestion(qText)) {
         attendeeAsked = true;
         if (isAffirmativeAnswer(tq.answer ?? tq.value ?? tq.response ?? tq.selected_options)) {
@@ -272,10 +296,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
-  // Dispatch subscriptions concurrently to Google Sheet and MailerLite
+  const config = await getPortalConfig(locals).catch(() => undefined);
+
+  // Dispatch subscriptions concurrently to Google Sheet, MailerLite, and Welcome Email
   const results = await Promise.allSettled(
     Array.from(subscribersToSync.values()).map(async (sub) => {
-      const [sheetRes, mlRes] = await Promise.allSettled([
+      const [sheetRes, mlRes, emailRes] = await Promise.allSettled([
         recordSubscriber({
           email: sub.email,
           name: sub.name,
@@ -290,6 +316,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
           },
           locals
         ),
+        sendSubscriberWelcomeEmail({
+          toEmail: sub.email,
+          subscriberName: sub.name,
+          source: 'Ticket_Tailor',
+          config,
+          locals,
+        }),
       ]);
 
       return {
@@ -297,6 +330,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
         sheetSaved: sheetRes.status === 'fulfilled',
         mailerLiteSaved:
           mlRes.status === 'fulfilled' ? mlRes.value.success : false,
+        welcomeEmailSent:
+          emailRes.status === 'fulfilled'
+            ? emailRes.value.delivered || emailRes.value.sandboxMode
+            : false,
       };
     })
   );

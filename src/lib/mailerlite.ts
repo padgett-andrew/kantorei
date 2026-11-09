@@ -26,14 +26,30 @@ export async function addSubscriberToMailerLite(
 ): Promise<MailerLiteResult> {
   const normEmail = (input.email || '').trim().toLowerCase();
   const normName = (input.name || '').trim();
-  const apiKey = getEnv('MAILERLITE_API_KEY', locals);
+  let apiKey = getEnv('MAILERLITE_API_KEY', locals).trim();
+  let targetGroup = (input.groupId || getEnv('MAILERLITE_GROUP_ID', locals)).trim();
 
-  let targetGroup = input.groupId || getEnv('MAILERLITE_GROUP_ID', locals);
-  if ((!targetGroup || targetGroup === 'DEMO') && locals) {
+  if (locals) {
     try {
       const config = await getPortalConfig(locals);
-      if (config.MailerLite_Group_ID) {
-        targetGroup = config.MailerLite_Group_ID;
+      if (!apiKey || apiKey === 'DEMO') {
+        const sheetKey =
+          (config as any).MailerLite_API_Key ||
+          (config as any).MailerLite_Key ||
+          (config as any).Mailerlite_Token ||
+          (config as any).MAILERLITE_API_KEY;
+        if (typeof sheetKey === 'string' && sheetKey.trim()) {
+          apiKey = sheetKey.trim();
+        }
+      }
+      if (!targetGroup || targetGroup === 'DEMO') {
+        const sheetGroup =
+          config.MailerLite_Group_ID ||
+          (config as any).MailerLite_Group ||
+          (config as any).MAILERLITE_GROUP_ID;
+        if (typeof sheetGroup === 'string' && sheetGroup.trim()) {
+          targetGroup = sheetGroup.trim();
+        }
       }
     } catch {
       // Gracefully fall back if sheet config is inaccessible
@@ -59,8 +75,36 @@ export async function addSubscriberToMailerLite(
       success: true,
       mode: 'demo',
       subscriberId: `demo_sub_${Date.now()}`,
-      message: 'Demo subscriber simulated successfully',
+      message: 'Demo subscriber simulated successfully (No MAILERLITE_API_KEY set)',
     };
+  }
+
+  // Auto-resolve group name to ID if targetGroup is a name, empty, or not numeric
+  if (!targetGroup || (!/^\d{8,}$/.test(targetGroup) && targetGroup !== 'DEMO')) {
+    try {
+      const groupsRes = await fetch('https://connect.mailerlite.com/api/groups?limit=50', {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'application/json',
+        },
+      });
+      if (groupsRes.ok) {
+        const groupsJson = (await groupsRes.json()) as { data?: { id: string; name: string }[] };
+        const groups = groupsJson.data || [];
+        const normTarget = (targetGroup || '').toLowerCase();
+        const found =
+          (normTarget && groups.find((g) => g.name.toLowerCase() === normTarget)) ||
+          groups.find((g) => g.name.toLowerCase().includes('friend')) ||
+          groups.find((g) => g.name.toLowerCase().includes('newsletter')) ||
+          groups.find((g) => g.name.toLowerCase().includes('kantorei')) ||
+          groups[0];
+        if (found) {
+          targetGroup = String(found.id);
+        }
+      }
+    } catch {
+      // Ignore group lookup network error
+    }
   }
 
   // 2. Live API Call
@@ -97,7 +141,7 @@ export async function addSubscriberToMailerLite(
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Bearer ${apiKey.trim()}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
@@ -113,6 +157,38 @@ export async function addSubscriberToMailerLite(
         subscriberId: data?.data?.id,
         message: 'Successfully subscribed to MailerLite',
       };
+    }
+
+    // Classic MailerLite fallback if 401 on connect.mailerlite.com
+    if (res.status === 401 && !apiKey.startsWith('ml_') && apiKey.length <= 40) {
+      try {
+        const classicUrl =
+          targetGroup && /^\d+$/.test(targetGroup)
+            ? `https://api.mailerlite.com/api/v2/groups/${targetGroup}/subscribers`
+            : 'https://api.mailerlite.com/api/v2/subscribers';
+        const classicRes = await fetch(classicUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-MailerLite-ApiKey': apiKey,
+          },
+          body: JSON.stringify({
+            email: normEmail,
+            name: normName,
+            fields: payload.fields,
+          }),
+        });
+        if (classicRes.ok) {
+          return {
+            success: true,
+            mode: 'live',
+            message: 'Successfully subscribed to MailerLite (Classic)',
+          };
+        }
+      } catch {
+        // Fall back to original error handling
+      }
     }
 
     // Handle 422 (e.g. subscriber already in list, unconfirmed, or validation issue)

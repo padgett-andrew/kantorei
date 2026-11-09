@@ -45,10 +45,30 @@ function resolveAbsenceRecipients(params: {
   useSandboxRouting: boolean;
 } {
   const { sectionLeaders, admins = [], config, locals } = params;
-  const apiKey = getEnv('RESEND_API_KEY', locals);
-  const fromEmail =
-    getEnv('PORTAL_FROM_EMAIL', locals) || 'Kantorei Portal <onboarding@resend.dev>';
-  const sandboxOverride = getEnv('SANDBOX_OVERRIDE_EMAIL', locals);
+  let apiKey = getEnv('RESEND_API_KEY', locals);
+  let fromEmail = getEnv('PORTAL_FROM_EMAIL', locals);
+  let sandboxOverride = getEnv('SANDBOX_OVERRIDE_EMAIL', locals);
+
+  if (!apiKey || apiKey === 're_123456789') {
+    const sheetKey = (config as any).Resend_API_Key || (config as any).RESEND_API_KEY;
+    if (typeof sheetKey === 'string' && sheetKey.trim()) {
+      apiKey = sheetKey.trim();
+    }
+  }
+  if (!fromEmail) {
+    const sheetFrom = (config as any).Portal_From_Email || (config as any).PORTAL_FROM_EMAIL;
+    if (typeof sheetFrom === 'string' && sheetFrom.trim()) {
+      fromEmail = sheetFrom.trim();
+    }
+  }
+  if (!sandboxOverride) {
+    const sheetSandbox = (config as any).Sandbox_Override_Email || (config as any).SANDBOX_OVERRIDE_EMAIL;
+    if (typeof sheetSandbox === 'string' && sheetSandbox.trim()) {
+      sandboxOverride = sheetSandbox.trim();
+    }
+  }
+
+  fromEmail = fromEmail || 'Kantorei Portal <onboarding@resend.dev>';
   const envAdminEmails = getEnv('ABSENCE_NOTIFICATION_EMAILS', locals);
 
   // Collect configured admin emails across config tab and env
@@ -336,13 +356,36 @@ export async function sendLoginOtpEmail(params: {
   singerName: string;
   code: string;
   choirName: string;
+  config?: PortalConfig;
   locals?: App.Locals;
 }): Promise<{ delivered: boolean; devPreviewCode?: string }> {
-  const { toEmail, singerName, code, choirName, locals } = params;
-  const apiKey = getEnv('RESEND_API_KEY', locals);
-  const fromEmail =
-    getEnv('PORTAL_FROM_EMAIL', locals) || 'Kantorei Portal <onboarding@resend.dev>';
-  const sandboxOverride = getEnv('SANDBOX_OVERRIDE_EMAIL', locals);
+  const { toEmail, singerName, code, choirName, config, locals } = params;
+  let apiKey = getEnv('RESEND_API_KEY', locals);
+  let fromEmail = getEnv('PORTAL_FROM_EMAIL', locals);
+  let sandboxOverride = getEnv('SANDBOX_OVERRIDE_EMAIL', locals);
+
+  if (config) {
+    if (!apiKey || apiKey === 're_123456789') {
+      const sheetKey = (config as any).Resend_API_Key || (config as any).RESEND_API_KEY;
+      if (typeof sheetKey === 'string' && sheetKey.trim()) {
+        apiKey = sheetKey.trim();
+      }
+    }
+    if (!fromEmail) {
+      const sheetFrom = (config as any).Portal_From_Email || (config as any).PORTAL_FROM_EMAIL;
+      if (typeof sheetFrom === 'string' && sheetFrom.trim()) {
+        fromEmail = sheetFrom.trim();
+      }
+    }
+    if (!sandboxOverride) {
+      const sheetSandbox = (config as any).Sandbox_Override_Email || (config as any).SANDBOX_OVERRIDE_EMAIL;
+      if (typeof sheetSandbox === 'string' && sheetSandbox.trim()) {
+        sandboxOverride = sheetSandbox.trim();
+      }
+    }
+  }
+
+  fromEmail = fromEmail || 'Kantorei Portal <onboarding@resend.dev>';
   const isOnboardingFrom = fromEmail.toLowerCase().includes('onboarding@resend.dev');
 
   if (!apiKey || apiKey === 're_123456789') {
@@ -418,5 +461,121 @@ export async function sendLoginOtpEmail(params: {
       devPreviewCode: import.meta.env.DEV ? code : undefined,
     };
   }
+}
+
+export async function sendSubscriberWelcomeEmail(params: {
+  toEmail: string;
+  subscriberName?: string;
+  source?: string;
+  config?: PortalConfig;
+  locals?: App.Locals;
+}): Promise<EmailSendResult> {
+  const { toEmail, subscriberName, config, locals } = params;
+  let apiKey = getEnv('RESEND_API_KEY', locals);
+  let fromEmail = getEnv('PORTAL_FROM_EMAIL', locals);
+  let sandboxOverride = getEnv('SANDBOX_OVERRIDE_EMAIL', locals);
+
+  if (config) {
+    if (!apiKey || apiKey === 're_123456789') {
+      const sheetKey = (config as any).Resend_API_Key || (config as any).RESEND_API_KEY;
+      if (typeof sheetKey === 'string' && sheetKey.trim()) {
+        apiKey = sheetKey.trim();
+      }
+    }
+    if (!fromEmail) {
+      const sheetFrom = (config as any).Portal_From_Email || (config as any).PORTAL_FROM_EMAIL;
+      if (typeof sheetFrom === 'string' && sheetFrom.trim()) {
+        fromEmail = sheetFrom.trim();
+      }
+    }
+    if (!sandboxOverride) {
+      const sheetSandbox = (config as any).Sandbox_Override_Email || (config as any).SANDBOX_OVERRIDE_EMAIL;
+      if (typeof sheetSandbox === 'string' && sheetSandbox.trim()) {
+        sandboxOverride = sheetSandbox.trim();
+      }
+    }
+  }
+
+  fromEmail = fromEmail || 'Kantorei <onboarding@resend.dev>';
+  const siteUrl = getEnv('PUBLIC_SITE_URL', locals) || 'https://kantorei.net';
+  const choirName = config?.Choir_Name || 'Kantorei';
+  const conductorName = config?.Conductor_Name || 'Adam Reinwald';
+  const youtubeUrl = config?.YouTube_URL || 'https://www.youtube.com/@kantoreiMN';
+
+  const normEmail = toEmail.trim().toLowerCase();
+  const firstName = (subscriberName || '').trim().split(/\s+/)[0] || '';
+
+  const isOnboardingFrom = fromEmail.toLowerCase().includes('onboarding@resend.dev');
+  const useSandboxRouting = Boolean(sandboxOverride) || isOnboardingFrom;
+  const finalTo = useSandboxRouting
+    ? [sandboxOverride || normEmail]
+    : [normEmail];
+
+  const subject = `Welcome to Friends of ${choirName}`;
+
+  const sandboxBannerHtml = useSandboxRouting
+    ? `<div style="background:#fef3c7;border:1px solid #f59e0b;padding:12px 16px;border-radius:8px;margin-bottom:18px;font-size:13px;color:#92400e;">
+        <strong>Sandbox Routing Active:</strong> Intended subscriber:
+        <code>${escapeHtml(normEmail)}</code>
+      </div>`
+    : '';
+
+  const greeting = firstName ? `Hi ${escapeHtml(firstName)},` : 'Hello,';
+
+  const html = `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:580px;margin:0 auto;color:#18181b;line-height:1.6;">
+      ${sandboxBannerHtml}
+      <div style="background:#101b33;color:#fcfbf8;padding:28px 32px;border-radius:12px 12px 0 0;text-align:left;">
+        <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:0.18em;color:#dbb46e;font-weight:600;">Friends of ${escapeHtml(choirName)}</p>
+        <h1 style="margin:8px 0 0;font-size:24px;font-weight:normal;letter-spacing:-0.01em;">Welcome to Our Circle</h1>
+      </div>
+      <div style="border:1px solid #e4e4e7;border-top:none;padding:32px;border-radius:0 0 12px 12px;background:#ffffff;">
+        <p style="margin:0 0 16px;font-size:16px;font-weight:500;">${greeting}</p>
+        <p style="margin:0 0 18px;color:#3f3f46;font-size:15px;">
+          Thank you for joining <strong>Friends of ${escapeHtml(choirName)}</strong>! We are delighted to welcome you into our community of listeners, patrons, and choral lovers across Minnesota and beyond.
+        </p>
+        <p style="margin:0 0 14px;color:#3f3f46;font-size:15px;">
+          As a Friend of ${escapeHtml(choirName)}, you will be the first to receive:
+        </p>
+        <ul style="margin:0 0 24px;padding-left:20px;color:#3f3f46;font-size:14px;">
+          <li style="margin-bottom:8px;"><strong>Concert Announcements &amp; Priority Tickets:</strong> Early access to our Twin Cities performances, seasonal programs, and guest appearances.</li>
+          <li style="margin-bottom:8px;"><strong>Conductor Listening Guides:</strong> Insights into repertoire and historical context curated by Artistic Director ${escapeHtml(conductorName)}.</li>
+          <li style="margin-bottom:8px;"><strong>Recordings &amp; Video Releases:</strong> First-listen access to newly mastered choral recordings and live concert videos.</li>
+        </ul>
+
+        <div style="text-align:center;margin:28px 0;">
+          <a href="${escapeHtml(siteUrl)}/concerts" style="display:inline-block;background:#101b33;color:#ffffff;padding:12px 28px;border-radius:4px;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">
+            Explore the Season
+          </a>
+        </div>
+
+        <p style="margin:24px 0 0;padding-top:20px;border-top:1px solid #f4f4f5;font-size:14px;color:#71717a;">
+          Warmly,<br />
+          <strong style="color:#18181b;">${escapeHtml(conductorName)}</strong> &amp; the Singers of ${escapeHtml(choirName)}
+        </p>
+
+        <div style="margin-top:28px;padding-top:16px;border-top:1px solid #f4f4f5;font-size:12px;color:#a1a1aa;text-align:center;">
+          <p style="margin:0 0 6px;">
+            <a href="${escapeHtml(siteUrl)}" style="color:#71717a;text-decoration:underline;">Website</a> ·
+            <a href="${escapeHtml(youtubeUrl)}" style="color:#71717a;text-decoration:underline;">YouTube</a> ·
+            <a href="${escapeHtml(siteUrl)}/support" style="color:#71717a;text-decoration:underline;">Support Our Mission</a>
+          </p>
+          <p style="margin:0;">
+            ${escapeHtml(choirName)} is a 501(c)(3) nonprofit arts organization in Minnesota. You received this email because you subscribed online or opted in at checkout.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return sendResendMail({
+    apiKey,
+    fromEmail,
+    finalTo,
+    intendedRecipients: [normEmail],
+    useSandboxRouting,
+    subject,
+    html,
+  });
 }
 

@@ -63,6 +63,7 @@ export const POST: APIRoute = async ({ request, url, cookies, locals }) => {
       singerName: singer.name,
       code,
       choirName: config.Choir_Name || 'Kantorei',
+      config,
       locals,
     });
 

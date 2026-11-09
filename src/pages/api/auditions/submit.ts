@@ -51,9 +51,30 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const conductorEmail = config.Conductor_Email || config.Contact_Email || 'adam.reinwald@kantorei.net';
 
     // Dispatch notification via Resend REST API
-    const resendApiKey = getEnv('RESEND_API_KEY', locals);
-    const fromEmail = getEnv('PORTAL_FROM_EMAIL', locals) || 'Kantorei Portal <onboarding@resend.dev>';
-    const sandboxOverride = getEnv('SANDBOX_OVERRIDE_EMAIL', locals);
+    let resendApiKey = getEnv('RESEND_API_KEY', locals);
+    let fromEmail = getEnv('PORTAL_FROM_EMAIL', locals);
+    let sandboxOverride = getEnv('SANDBOX_OVERRIDE_EMAIL', locals);
+
+    if (!resendApiKey || resendApiKey === 're_123456789') {
+      const sheetKey = (config as any).Resend_API_Key || (config as any).RESEND_API_KEY;
+      if (typeof sheetKey === 'string' && sheetKey.trim()) {
+        resendApiKey = sheetKey.trim();
+      }
+    }
+    if (!fromEmail) {
+      const sheetFrom = (config as any).Portal_From_Email || (config as any).PORTAL_FROM_EMAIL;
+      if (typeof sheetFrom === 'string' && sheetFrom.trim()) {
+        fromEmail = sheetFrom.trim();
+      }
+    }
+    if (!sandboxOverride) {
+      const sheetSandbox = (config as any).Sandbox_Override_Email || (config as any).SANDBOX_OVERRIDE_EMAIL;
+      if (typeof sheetSandbox === 'string' && sheetSandbox.trim()) {
+        sandboxOverride = sheetSandbox.trim();
+      }
+    }
+
+    fromEmail = fromEmail || 'Kantorei Portal <onboarding@resend.dev>';
     const isOnboardingFrom = fromEmail.toLowerCase().includes('onboarding@resend.dev');
 
     const destination = isOnboardingFrom

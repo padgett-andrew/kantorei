@@ -1,11 +1,36 @@
 import { describe, expect, it } from 'vitest';
 import {
+  extractQuestionText,
   isAffirmativeAnswer,
   isMarketingQuestion,
   verifyTicketTailorSignature,
 } from '../src/pages/api/webhooks/tickettailor';
 
 describe('Ticket Tailor Webhook Utilities', () => {
+  describe('extractQuestionText', () => {
+    it('handles string question field', () => {
+      expect(extractQuestionText({ question: 'Would you like to join?' })).toBe(
+        'Would you like to join?'
+      );
+    });
+
+    it('handles nested question object with title/name/label', () => {
+      expect(extractQuestionText({ question: { title: 'Join our mailing list' } })).toBe(
+        'Join our mailing list'
+      );
+      expect(extractQuestionText({ question: { name: 'Marketing opt-in' } })).toBe(
+        'Marketing opt-in'
+      );
+    });
+
+    it('falls back to title, label, question_text, or question_title', () => {
+      expect(extractQuestionText({ title: 'Newsletter Signup' })).toBe('Newsletter Signup');
+      expect(extractQuestionText({ label: 'Keep in touch' })).toBe('Keep in touch');
+      expect(extractQuestionText({ question_text: 'Email announcements' })).toBe(
+        'Email announcements'
+      );
+    });
+  });
   describe('isMarketingQuestion', () => {
     it('detects friends of kantorei questions', () => {
       expect(isMarketingQuestion('Join Friends of Kantorei?')).toBe(true);
@@ -37,8 +62,10 @@ describe('Ticket Tailor Webhook Utilities', () => {
       expect(isAffirmativeAnswer('I agree')).toBe(true);
       expect(isAffirmativeAnswer('on')).toBe(true);
       expect(isAffirmativeAnswer('checked')).toBe(true);
-      expect(isAffirmativeAnswer('opt-in')).toBe(true);
       expect(isAffirmativeAnswer(['Yes'])).toBe(true);
+      expect(isAffirmativeAnswer({ label: 'Yes, please' })).toBe(true);
+      expect(isAffirmativeAnswer({ value: 'yes' })).toBe(true);
+      expect(isAffirmativeAnswer({ text: 'opt in' })).toBe(true);
     });
 
     it('recognizes negative or empty responses', () => {
