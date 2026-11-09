@@ -1,20 +1,93 @@
+import { useState, useEffect } from 'react';
 import { ExternalLink, Lock, ShieldCheck } from 'lucide-react';
+import clsx from 'clsx';
 import type { GivingTier } from '../../types/choir';
 
 interface Props {
   lglFormUrl: string;
+  siteOrigin?: string;
   choirName?: string;
   givingTiers?: GivingTier[];
 }
 
+function parseLGLHeightMessage(data: unknown): number | null {
+  if (typeof data === 'number' && Number.isFinite(data)) {
+    return data;
+  }
+  if (typeof data === 'string') {
+    const trimmed = data.trim();
+    if (/^\d+$/.test(trimmed)) {
+      return parseInt(trimmed, 10);
+    }
+    if (trimmed.startsWith('[iFrameSizer]')) {
+      const parts = trimmed.split(':');
+      if (parts.length >= 2) {
+        const parsed = parseInt(parts[1], 10);
+        if (!Number.isNaN(parsed)) return parsed;
+      }
+    }
+  }
+  return null;
+}
+
+function buildEmbedUrl(baseUrl: string, origin: string): string {
+  const trimmed = baseUrl.trim();
+  if (!trimmed) return '';
+  if (!origin || trimmed.includes('origin=')) return trimmed;
+  const separator = trimmed.includes('?') ? '&' : '?';
+  return `${trimmed}${separator}origin=${encodeURIComponent(origin)}`;
+}
+
 export default function LGLFormEmbed({
   lglFormUrl,
+  siteOrigin = '',
   choirName = 'Kantorei',
   givingTiers = [],
 }: Props) {
-  const cleanUrl =
+  const rawBaseUrl =
     (lglFormUrl || '').trim() ||
     'https://secure.lglforms.com/form_engine/s/BM1h-KN91G0MJHiPSzPbsA';
+
+  const [currentOrigin, setCurrentOrigin] = useState<string>(siteOrigin);
+  const [iframeHeight, setIframeHeight] = useState<number | null>(null);
+
+  // Sync client origin if not provided during SSR
+  useEffect(() => {
+    if (!currentOrigin && typeof window !== 'undefined' && window.location.origin) {
+      setCurrentOrigin(window.location.origin);
+    }
+  }, [currentOrigin]);
+
+  // Listen for LGL postMessage containing exact rendered scrollHeight
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Validate origin: accept messages from secure.lglforms.com or any lglforms.com domain
+      const eventOrigin = event.origin || '';
+      const isLglOrigin =
+        eventOrigin === 'https://secure.lglforms.com' ||
+        eventOrigin.endsWith('.lglforms.com');
+
+      if (!isLglOrigin) return;
+
+      const reportedHeight = parseLGLHeightMessage(event.data);
+      if (reportedHeight !== null && reportedHeight >= 600 && reportedHeight <= 3500) {
+        // Add 16px buffer so bottom inputs/buttons have comfortable breathing room
+        const targetHeight = reportedHeight + 16;
+        setIframeHeight((prev) => {
+          // Guard against micro-jitter: only update if delta > 8px
+          if (!prev || Math.abs(prev - targetHeight) > 8) {
+            return targetHeight;
+          }
+          return prev;
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const iframeSrc = buildEmbedUrl(rawBaseUrl, currentOrigin);
 
   return (
     <div className="space-y-8">
@@ -32,7 +105,7 @@ export default function LGLFormEmbed({
           </div>
 
           <a
-            href={cleanUrl}
+            href={rawBaseUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs font-semibold text-stone-600 hover:text-navy-950 transition"
@@ -45,17 +118,25 @@ export default function LGLFormEmbed({
 
         {/* 
           Form Viewport:
-          - Tight height matching LGL form dimensions (860px desktop, 1050px mobile) to eliminate trailing white space
-          - scrolling="no": Disables internal iframe scrollbars so page scrolling stays smooth and trap-free
+          - Dynamic height driven by LGL postMessage (XD.postMessage + iFrameResizer)
+          - Safe static baseline (1240px desktop, 1280px tablet, 1340px mobile) ensures Address Line 2,
+            City, State, Zip, Country, and the Submit button are never cut off even before postMessage arrives
+          - scrolling="no" + overflow: hidden: Disables internal iframe scrollbars so page scrolling stays smooth and trap-free
         */}
         <div className="relative w-full overflow-hidden bg-white">
           <iframe
-            src={cleanUrl}
+            src={iframeSrc}
             title={`Donate to ${choirName}`}
             loading="eager"
             {...{ scrolling: 'no' }}
-            style={{ overflow: 'hidden' }}
-            className="w-full border-0 block bg-white h-[1050px] sm:h-[950px] lg:h-[860px]"
+            style={{
+              overflow: 'hidden',
+              height: iframeHeight ? `${iframeHeight}px` : undefined,
+            }}
+            className={clsx(
+              'w-full border-0 block bg-white transition-[height] duration-200 ease-out',
+              !iframeHeight && 'h-[1340px] sm:h-[1280px] lg:h-[1240px]'
+            )}
             allow="payment"
           />
         </div>

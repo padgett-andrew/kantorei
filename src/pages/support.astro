@@ -106,6 +106,7 @@ const isLGL = queryParamPlatform === 'lgl' || (queryParamPlatform === '' && conf
           <LGLFormEmbed
             client:load
             lglFormUrl={lglFormUrl}
+            siteOrigin={Astro.url.origin}
             choirName={choirName}
             givingTiers={givingTiers}
           />
