@@ -15,6 +15,14 @@ const AuditionSubmissionSchema = z.object({
   website_hp: z.string().optional(),
 });
 
+function escapeHtml(str: string): string {
+  return (str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const rawBody = (await request.json()) as Record<string, unknown>;
@@ -48,10 +56,26 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const sandboxOverride = getEnv('SANDBOX_OVERRIDE_EMAIL', locals);
     const isOnboardingFrom = fromEmail.toLowerCase().includes('onboarding@resend.dev');
 
-    const destination = isOnboardingFrom && sandboxOverride ? sandboxOverride : conductorEmail;
+    const destination = isOnboardingFrom
+      ? sandboxOverride || 'delivered@resend.dev'
+      : conductorEmail;
 
     if (resendApiKey) {
       try {
+        const safeName = escapeHtml(name);
+        const safeEmail = escapeHtml(email);
+        const safePhone = escapeHtml(phone);
+        const safeVoicePart = escapeHtml(formatVoicePartLabel(voicePart));
+        const safePreparedSelection = escapeHtml(preparedSelection);
+        const safeExperience = escapeHtml(experience);
+        const safeChoirName = escapeHtml(choirName);
+
+        const sandboxNotice = isOnboardingFrom
+          ? `<div style="background:#fef3c7;border:1px solid #f59e0b;padding:10px 14px;border-radius:6px;margin-bottom:14px;font-size:12px;color:#92400e;">
+              <strong>Sandbox Routing Active:</strong> Intended recipient: <code>${escapeHtml(conductorEmail)}</code>
+             </div>`
+          : '';
+
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -65,22 +89,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
             subject: `[${choirName} Audition] ${name} (${voicePart})`,
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1e293b;">
+                ${sandboxNotice}
                 <h2 style="color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
-                  New Audition Inquiry for ${choirName}
+                  New Audition Inquiry for ${safeChoirName}
                 </h2>
                 <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
-                  <tr><td style="padding: 6px 0; font-weight: bold; width: 140px;">Applicant:</td><td>${name}</td></tr>
-                  <tr><td style="padding: 6px 0; font-weight: bold;">Email:</td><td><a href="mailto:${email}">${email}</a></td></tr>
-                  <tr><td style="padding: 6px 0; font-weight: bold;">Phone:</td><td>${phone}</td></tr>
-                  <tr><td style="padding: 6px 0; font-weight: bold;">Voice Part:</td><td><strong style="color: #b45309;">${formatVoicePartLabel(voicePart)}</strong></td></tr>
-                  <tr><td style="padding: 6px 0; font-weight: bold;">Prepared Solo:</td><td>${preparedSelection}</td></tr>
+                  <tr><td style="padding: 6px 0; font-weight: bold; width: 140px;">Applicant:</td><td>${safeName}</td></tr>
+                  <tr><td style="padding: 6px 0; font-weight: bold;">Email:</td><td><a href="mailto:${safeEmail}">${safeEmail}</a></td></tr>
+                  <tr><td style="padding: 6px 0; font-weight: bold;">Phone:</td><td>${safePhone}</td></tr>
+                  <tr><td style="padding: 6px 0; font-weight: bold;">Voice Part:</td><td><strong style="color: #b45309;">${safeVoicePart}</strong></td></tr>
+                  <tr><td style="padding: 6px 0; font-weight: bold;">Prepared Solo:</td><td>${safePreparedSelection}</td></tr>
                 </table>
                 <div style="margin-top: 20px; padding: 14px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                   <strong style="display: block; margin-bottom: 6px;">Choral Background & Experience:</strong>
-                  <p style="margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.5;">${experience}</p>
+                  <p style="margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.5;">${safeExperience}</p>
                 </div>
                 <p style="margin-top: 24px; font-size: 12px; color: #94a3b8;">
-                  Submitted online via the ${choirName} Audition form. You can reply directly to this email to contact the applicant.
+                  Submitted online via the ${safeChoirName} Audition form. You can reply directly to this email to contact the applicant.
                 </p>
               </div>
             `,

@@ -3,20 +3,109 @@ import { getEnv } from '../../../lib/env';
 import { recordSubscriber } from '../../../lib/google';
 import { addSubscriberToMailerLite } from '../../../lib/mailerlite';
 
-interface QuestionItem {
+export interface QuestionItem {
   question?: string;
   name?: string;
   label?: string;
+  title?: string;
+  question_text?: string;
   answer?: unknown;
   value?: unknown;
+  response?: unknown;
+  selected_options?: unknown;
+}
+
+const MARKETING_QUESTION_REGEX =
+  /(friends?|newsletter|subscribe|mailing|marketing|email.*list|email.*update|receive.*email|keep.*in.*touch|announcement|tune)/i;
+
+export function isMarketingQuestion(questionText: string): boolean {
+  return MARKETING_QUESTION_REGEX.test(questionText || '');
+}
+
+export function isAffirmativeAnswer(rawAnswer: unknown): boolean {
+  if (typeof rawAnswer === 'boolean') return rawAnswer;
+  if (typeof rawAnswer === 'number') return rawAnswer === 1;
+  if (Array.isArray(rawAnswer)) {
+    return rawAnswer.some(isAffirmativeAnswer);
+  }
+  if (!rawAnswer) return false;
+  const str = String(rawAnswer).trim().toLowerCase();
+  if (['no', 'false', '0', 'off', 'unchecked'].includes(str)) return false;
+  return (
+    ['true', '1', 'on', 'yes', 'checked', 'opt-in', 'opted in', 'y'].includes(str) ||
+    str.startsWith('yes') ||
+    str.includes('agree') ||
+    str.includes('sign me up') ||
+    str.includes('subscribe') ||
+    str.includes('opt in')
+  );
+}
+
+export async function verifyTicketTailorSignature(
+  rawBody: string,
+  signatureHeader: string,
+  secret: string
+): Promise<boolean> {
+  const parts = signatureHeader.split(',').map((p) => p.trim());
+  let timestamp = '';
+  let expectedSignature = '';
+
+  for (const part of parts) {
+    if (part.startsWith('t=')) {
+      timestamp = part.slice(2);
+    } else if (part.startsWith('v1=') || part.startsWith('s=')) {
+      expectedSignature = part.split('=')[1] ?? '';
+    }
+  }
+
+  if (!expectedSignature) {
+    expectedSignature = signatureHeader.trim();
+  }
+
+  if (timestamp) {
+    const tsNumber = Number.parseInt(timestamp, 10);
+    const nowSec = Math.floor(Date.now() / 1000);
+    // Allow up to 5 minutes tolerance (300 seconds)
+    if (Number.isNaN(tsNumber) || Math.abs(nowSec - tsNumber) > 300) {
+      console.warn('[Ticket Tailor Webhook] Webhook timestamp out of tolerance (5 min).');
+      return false;
+    }
+  }
+
+  const payloadToSign = timestamp ? `${timestamp}${rawBody}` : rawBody;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signatureBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(payloadToSign));
+  const hexSignature = Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  return hexSignature.toLowerCase() === expectedSignature.toLowerCase();
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const webhookSecret = getEnv('TICKET_TAILOR_WEBHOOK_SECRET', locals);
 
-  // Optional signature verification if secret is configured
+  let rawBody = '';
+  try {
+    rawBody = await request.text();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Failed to read request body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Verify signature if secret is configured
   if (webhookSecret && webhookSecret !== 'DEMO') {
     const signature =
+      request.headers.get('tickettailor-webhook-signature') ||
       request.headers.get('tt-signature') ||
       request.headers.get('x-tickettailor-signature') ||
       request.headers.get('x-signature');
@@ -28,11 +117,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    const isValid = await verifyTicketTailorSignature(rawBody, signature, webhookSecret);
+    if (!isValid) {
+      console.warn('[Ticket Tailor Webhook] Invalid HMAC-SHA256 signature.');
+      return new Response(JSON.stringify({ error: 'Invalid webhook signature' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
   }
 
   let body: Record<string, unknown> = {};
   try {
-    body = (await request.json()) as Record<string, unknown>;
+    body = JSON.parse(rawBody) as Record<string, unknown>;
   } catch {
     return new Response(JSON.stringify({ error: 'Malformed JSON payload' }), {
       status: 400,
@@ -40,107 +138,177 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const eventName = String(body.event || body.type || 'order.created');
+  const eventName = String(body.event || body.type || body.action || 'order.created');
 
-  // We are primarily interested in order completion / creation events
-  if (!eventName.startsWith('order.') && !eventName.startsWith('issued_ticket.')) {
+  // We are primarily interested in order completion / creation / ticket issuance events
+  if (
+    !eventName.startsWith('order.') &&
+    !eventName.startsWith('issued_ticket.') &&
+    !eventName.startsWith('ticket.')
+  ) {
     return new Response(
       JSON.stringify({ received: true, ignored: true, reason: `Ignored event: ${eventName}` }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
-  const payload = (body.payload as Record<string, unknown>) || body;
-  const buyer = (payload.buyer as Record<string, unknown>) || {};
-  const email = String(buyer.email || payload.buyer_email || '').trim().toLowerCase();
-  const name = String(
+  const payload =
+    (body.payload as Record<string, unknown>) ||
+    (body.data as Record<string, unknown>) ||
+    body;
+
+  const buyer =
+    (payload.buyer as Record<string, unknown>) ||
+    (payload.customer as Record<string, unknown>) ||
+    {};
+
+  const buyerEmail = String(buyer.email || payload.buyer_email || payload.email || '')
+    .trim()
+    .toLowerCase();
+
+  const buyerName = String(
     buyer.name ||
       [buyer.first_name, buyer.last_name].filter(Boolean).join(' ') ||
       payload.buyer_name ||
+      payload.name ||
       ''
   ).trim();
 
-  if (!email || !email.includes('@')) {
+  if (!buyerEmail || !buyerEmail.includes('@')) {
     return new Response(
       JSON.stringify({ received: true, ignored: true, reason: 'No buyer email found' }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
-  // Inspect questions for marketing consent
-  const rawQuestions = (
-    (payload.custom_questions as unknown[]) ||
-    (payload.buyer_questions as unknown[]) ||
-    (buyer.questions as unknown[]) ||
-    []
-  ) as QuestionItem[];
+  // Collect questions from all potential order & buyer paths
+  const questionSources: QuestionItem[] = [
+    ...((payload.custom_questions as QuestionItem[]) || []),
+    ...((payload.questions as QuestionItem[]) || []),
+    ...((payload.buyer_questions as QuestionItem[]) || []),
+    ...((buyer.questions as QuestionItem[]) || []),
+    ...((buyer.custom_questions as QuestionItem[]) || []),
+  ];
 
   let askedOptIn = false;
   let optedIn = false;
 
-  for (const q of rawQuestions) {
-    const questionText = String(q.question || q.name || q.label || '').toLowerCase();
-    const isMarketingQuestion =
-      questionText.includes('friends') ||
-      questionText.includes('update') ||
-      questionText.includes('newsletter') ||
-      questionText.includes('subscribe') ||
-      questionText.includes('mailing') ||
-      questionText.includes('tune');
+  for (const q of questionSources) {
+    const questionText = String(
+      q.question || q.name || q.label || q.title || q.question_text || ''
+    ).toLowerCase();
 
-    if (isMarketingQuestion) {
+    if (isMarketingQuestion(questionText)) {
       askedOptIn = true;
-      const ans = String(q.answer ?? q.value ?? '').trim().toLowerCase();
-      if (
-        ans === 'true' ||
-        ans === '1' ||
-        ans === 'yes' ||
-        ans === 'checked' ||
-        ans === 'opt-in' ||
-        ans === 'opted in' ||
-        ans === 'y'
-      ) {
+      const rawAns = q.answer ?? q.value ?? q.response ?? q.selected_options;
+      if (isAffirmativeAnswer(rawAns)) {
         optedIn = true;
       }
     }
   }
 
-  // If question was asked and opted in, or if no explicit question was asked but Ticket Tailor sent the buyer
-  const shouldSubscribe = optedIn || (!askedOptIn && Boolean(email));
+  // Subscribers to record: map by lowercase email to deduplicate
+  const subscribersToSync = new Map<string, { email: string; name: string }>();
 
-  if (shouldSubscribe) {
-    try {
-      await Promise.allSettled([
+  // If question was asked and answered affirmatively, or if no explicit question was asked
+  const shouldSubscribeBuyer = optedIn || (!askedOptIn && Boolean(buyerEmail));
+  if (shouldSubscribeBuyer) {
+    subscribersToSync.set(buyerEmail, { email: buyerEmail, name: buyerName });
+  }
+
+  // Also check per-ticket attendee opt-ins (e.g. issued_tickets or line_items)
+  const tickets = (
+    (payload.issued_tickets as unknown[]) ||
+    (payload.line_items as unknown[]) ||
+    (payload.tickets as unknown[]) ||
+    []
+  ) as Record<string, unknown>[];
+
+  for (const ticket of tickets) {
+    const holder =
+      (ticket.attendee as Record<string, unknown>) ||
+      (ticket.holder as Record<string, unknown>) ||
+      ticket;
+
+    const attendeeEmail = String(holder.email || ticket.email || '').trim().toLowerCase();
+    const attendeeName = String(
+      holder.name ||
+        [holder.first_name, holder.last_name].filter(Boolean).join(' ') ||
+        ticket.name ||
+        ''
+    ).trim();
+
+    if (!attendeeEmail || !attendeeEmail.includes('@')) continue;
+
+    const ticketQuestions: QuestionItem[] = [
+      ...((ticket.custom_questions as QuestionItem[]) || []),
+      ...((ticket.questions as QuestionItem[]) || []),
+      ...((holder.questions as QuestionItem[]) || []),
+      ...((holder.custom_questions as QuestionItem[]) || []),
+    ];
+
+    let attendeeAsked = false;
+    let attendeeOptedIn = false;
+
+    for (const tq of ticketQuestions) {
+      const qText = String(
+        tq.question || tq.name || tq.label || tq.title || tq.question_text || ''
+      ).toLowerCase();
+      if (isMarketingQuestion(qText)) {
+        attendeeAsked = true;
+        if (isAffirmativeAnswer(tq.answer ?? tq.value ?? tq.response ?? tq.selected_options)) {
+          attendeeOptedIn = true;
+        }
+      }
+    }
+
+    if (attendeeOptedIn || (!attendeeAsked && shouldSubscribeBuyer)) {
+      if (!subscribersToSync.has(attendeeEmail)) {
+        subscribersToSync.set(attendeeEmail, {
+          email: attendeeEmail,
+          name: attendeeName || buyerName,
+        });
+      }
+    }
+  }
+
+  // Dispatch subscriptions concurrently to Google Sheet and MailerLite
+  const results = await Promise.allSettled(
+    Array.from(subscribersToSync.values()).map(async (sub) => {
+      const [sheetRes, mlRes] = await Promise.allSettled([
         recordSubscriber({
-          email,
-          name,
+          email: sub.email,
+          name: sub.name,
           source: 'Ticket_Tailor',
           locals,
         }),
         addSubscriberToMailerLite(
           {
-            email,
-            name,
+            email: sub.email,
+            name: sub.name,
             source: 'Ticket_Tailor',
           },
           locals
         ),
       ]);
 
-      if (import.meta.env.DEV) {
-        console.log(`[Ticket Tailor Webhook] Added subscriber: "${email}" (${name})`);
-      }
-    } catch (err) {
-      console.error('[Ticket Tailor Webhook Error]', err);
-    }
-  }
+      return {
+        email: sub.email,
+        sheetSaved: sheetRes.status === 'fulfilled',
+        mailerLiteSaved:
+          mlRes.status === 'fulfilled' ? mlRes.value.success : false,
+      };
+    })
+  );
 
   return new Response(
     JSON.stringify({
       received: true,
       event: eventName,
-      buyerEmail: email,
-      subscribed: shouldSubscribe,
+      buyerEmail,
+      subscribedCount: subscribersToSync.size,
+      subscribers: Array.from(subscribersToSync.keys()),
+      details: results,
     }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   );

@@ -1,4 +1,5 @@
 import { getEnv } from './env';
+import { getPortalConfig } from './google';
 
 export interface MailerLiteSubscriberInput {
   email: string;
@@ -26,8 +27,18 @@ export async function addSubscriberToMailerLite(
   const normEmail = (input.email || '').trim().toLowerCase();
   const normName = (input.name || '').trim();
   const apiKey = getEnv('MAILERLITE_API_KEY', locals);
-  const configuredGroup = getEnv('MAILERLITE_GROUP_ID', locals);
-  const targetGroup = input.groupId || configuredGroup;
+
+  let targetGroup = input.groupId || getEnv('MAILERLITE_GROUP_ID', locals);
+  if ((!targetGroup || targetGroup === 'DEMO') && locals) {
+    try {
+      const config = await getPortalConfig(locals);
+      if (config.MailerLite_Group_ID) {
+        targetGroup = config.MailerLite_Group_ID;
+      }
+    } catch {
+      // Gracefully fall back if sheet config is inaccessible
+    }
+  }
 
   if (!normEmail) {
     return {
@@ -60,13 +71,22 @@ export async function addSubscriberToMailerLite(
     };
 
     if (normName) {
+      const parts = normName.split(/\s+/);
+      const lastName = parts.slice(1).join(' ');
       payload.fields = {
         name: normName,
+        ...(lastName ? { last_name: lastName } : {}),
       };
     }
 
     if (targetGroup && targetGroup !== 'DEMO') {
-      payload.groups = [targetGroup];
+      const parsedGroups = targetGroup
+        .split(/[,;\s]+/)
+        .map((g) => g.trim())
+        .filter(Boolean);
+      if (parsedGroups.length > 0) {
+        payload.groups = parsedGroups;
+      }
     }
 
     const controller = new AbortController();
@@ -106,8 +126,11 @@ export async function addSubscriberToMailerLite(
       (errorJson.errors ? Object.values(errorJson.errors).flat().join(', ') : `HTTP ${res.status}`);
 
     // If already subscribed, MailerLite frequently returns a 200 on create-or-update,
-    // but if it returned 422 with an existing subscriber notice, treat it gently
-    if (res.status === 422 && /already.*(exists|subscribed)/i.test(errorMsg)) {
+    // but if it returned 422 or 409 with an existing subscriber notice, treat it gently
+    if (
+      (res.status === 422 || res.status === 409) &&
+      /(already.*(exists|subscribed|taken|added)|email.*taken|member.*already)/i.test(errorMsg)
+    ) {
       return {
         success: true,
         mode: 'live',
