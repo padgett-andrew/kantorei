@@ -12,7 +12,6 @@ import type {
   SeatingChart,
   SheetWarning,
   Singer,
-  SubscriberRecord,
 } from '../../types/choir';
 
 export interface SnackClaim {
@@ -37,7 +36,6 @@ export interface DemoStore {
   repertoire: RepertoirePiece[];
   warnings: SheetWarning[];
   seatingCharts: SeatingChart[];
-  subscribers: SubscriberRecord[];
   messages: BulletinMessage[];
 }
 
@@ -91,22 +89,6 @@ Adam Reinwald`,
       pinned: true,
       status: 'Pinned',
       threadId: 'thread-2026-11-07-saturday-notes',
-    },
-  ],
-  subscribers: [
-    {
-      timestamp: '2026-10-15T14:22:00.000Z',
-      email: 'patron@example.com',
-      name: 'Eleanor Vance',
-      source: 'Website_Footer',
-      status: 'Active',
-    },
-    {
-      timestamp: '2026-10-28T19:10:00.000Z',
-      email: 'choralfan@gmail.com',
-      name: 'David Miller',
-      source: 'Ticket_Tailor',
-      status: 'Active',
     },
   ],
   snacks: [

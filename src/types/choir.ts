@@ -289,7 +289,6 @@ export interface SheetWarning {
     | 'Board'
     | 'Leadership'
     | 'Giving_Tiers'
-    | 'Subscribers'
     | 'Messages';
   rowNumber: number;
   message: string;

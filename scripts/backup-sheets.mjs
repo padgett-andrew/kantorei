@@ -116,7 +116,6 @@ async function run() {
       'Media!A1:F',
       'Seating_Charts!A1:I',
       'Snacks!A1:E',
-      'Subscribers!A1:E',
       'Messages!A1:J',
     ];
 

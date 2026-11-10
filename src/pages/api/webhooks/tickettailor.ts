@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getEnv } from '../../../lib/env';
-import { getPortalConfig, recordSubscriber } from '../../../lib/google';
+import { getPortalConfig } from '../../../lib/google';
 import { addSubscriberToMailerLite } from '../../../lib/mailerlite';
 
 export interface QuestionItem {
@@ -314,31 +314,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
-  // Dispatch subscriptions concurrently to Google Sheet and MailerLite
+  // Dispatch subscriptions directly to MailerLite
   const results = await Promise.allSettled(
     Array.from(subscribersToSync.values()).map(async (sub) => {
-      const [sheetRes, mlRes] = await Promise.allSettled([
-        recordSubscriber({
+      const mlRes = await addSubscriberToMailerLite(
+        {
           email: sub.email,
           name: sub.name,
           source: 'Ticket_Tailor',
-          locals,
-        }),
-        addSubscriberToMailerLite(
-          {
-            email: sub.email,
-            name: sub.name,
-            source: 'Ticket_Tailor',
-          },
-          locals
-        ),
-      ]);
+        },
+        locals
+      );
 
       return {
         email: sub.email,
-        sheetSaved: sheetRes.status === 'fulfilled',
-        mailerLiteSaved:
-          mlRes.status === 'fulfilled' ? mlRes.value.success : false,
+        mailerLiteSaved: mlRes.success,
       };
     })
   );

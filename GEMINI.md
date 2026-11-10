@@ -347,17 +347,16 @@ Powers the Annual Giving Circles list on `/support`.
 | `D` | `Order`        | `1`                           | Integer sorting rank (ascending)  |
 | `E` | `Active`       | `TRUE`                        | `"TRUE"` or `"FALSE"`             |
 
-### Tab 11: `Subscribers` (Range: `Subscribers!A2:E`)
+### Tab 11: `Subscribers` (Deprecated — Handled 100% via MailerLite)
 
-Stores audience patrons and "Friends of Kantorei" subscribers collected from the website footer, home spotlight, ticket purchases, or auditions. Synchronized concurrently with MailerLite.
+Patron audience and "Friends of Kantorei" subscribers (collected via website footer, concert ticket purchases on Ticket Tailor, or audition forms) are managed **100% inside MailerLite**. 
 
-| Col | Header      | Example Value              | Specification                                                                |
-| :-- | :---------- | :------------------------- | :--------------------------------------------------------------------------- |
-| `A` | `Timestamp` | `2026-11-03T20:00:00.000Z` | ISO timestamp of signup                                                      |
-| `B` | `Email`     | `patron@example.com`       | Subscriber email (normalized lowercase)                                      |
-| `C` | `Name`      | `Eleanor Vance`            | Optional subscriber display name                                             |
-| `D` | `Source`    | `Website_Footer`           | Source tag (`Website_Footer`, `Home_Page`, `Concerts_Page`, `Ticket_Tailor`) |
-| `E` | `Status`    | `Active`                   | Dropdown: `Active`, `Unsubscribed`                                           |
+No Google Sheet `Subscribers` tab is maintained or required. This eliminates list desynchronization, protects patron privacy, and guarantees that patron unsubscribe requests are honored immediately in MailerLite without manual sheet hygiene.
+
+- **MailerLite Group**: All subscribers belong to the single primary group (`Friends of Kantorei` / `MAILERLITE_GROUP_ID`).
+- **Source Custom Field**: Each subscriber record is tagged with a custom field `source` (`Website`, `Ticket_Tailor`, etc.).
+- **Ticket Buyer Email Suppression**: Welcome email automations in MailerLite can conditionally suppress sending if `source == "Ticket_Tailor"`, preventing ticket buyers from receiving redundant welcome emails alongside their order confirmation.
+- **Self-Healing Integration**: The MailerLite API client automatically detects and creates missing fields (such as `source`) via the MailerLite REST API.
 
 ---
 

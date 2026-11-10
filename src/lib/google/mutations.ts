@@ -9,7 +9,6 @@ import {
   type ScheduleEvent,
   type SeatingChart,
   type Singer,
-  type SubscriberRecord,
 } from '../../types/choir';
 import { invalidateCacheTag } from '../cache';
 import { isSandboxSheetMode } from '../env';
@@ -632,75 +631,7 @@ export async function deleteSeatingChart(params: {
   return { ok: true, chartId };
 }
 
-/**
- * Idempotently records or updates a Friend of Kantorei subscriber in the Choir Google Sheet.
- */
-export async function recordSubscriber(params: {
-  email: string;
-  name?: string;
-  source?: string;
-  locals?: App.Locals;
-}): Promise<SubscriberRecord> {
-  const { email, name = '', source = 'Website', locals } = params;
-  const normEmail = email.trim().toLowerCase();
-  const normName = name.trim();
-  const normSource = source.trim() || 'Website';
-  const nowIso = new Date().toISOString();
 
-  const record: SubscriberRecord = {
-    timestamp: nowIso,
-    email: normEmail,
-    name: normName || undefined,
-    source: normSource,
-    status: 'Active',
-  };
-
-  if (isSandboxSheetMode(locals)) {
-    if (!demoStore.subscribers) demoStore.subscribers = [];
-    const existingIdx = demoStore.subscribers.findIndex(
-      (s) => s.email.toLowerCase() === normEmail
-    );
-    if (existingIdx >= 0) {
-      demoStore.subscribers[existingIdx] = {
-        ...demoStore.subscribers[existingIdx],
-        name: normName || demoStore.subscribers[existingIdx].name,
-        timestamp: nowIso,
-        status: 'Active',
-      };
-    } else {
-      demoStore.subscribers.push(record);
-    }
-    await invalidateCacheTag('subscribers');
-    return record;
-  }
-
-  try {
-    const allRows = await readSheetValues('Subscribers!A1:E', locals).catch(() => []);
-    const rows = allRows.slice(1);
-    const existingIdx = rows.findIndex((r) => (r[1] ?? '').trim().toLowerCase() === normEmail);
-    const rowValues = [nowIso, normEmail, normName, normSource, 'Active'];
-
-    if (existingIdx >= 0) {
-      const freshRowIndex = existingIdx + 2;
-      await writeSheetValues(`Subscribers!A${freshRowIndex}:E${freshRowIndex}`, [rowValues], locals);
-    } else {
-      if (allRows.length === 0) {
-        // Tab exists or auto-created; ensure row 1 has headers
-        await writeSheetValues(
-          'Subscribers!A1:E1',
-          [['Timestamp', 'Email', 'Name', 'Source', 'Status']],
-          locals
-        ).catch(() => {});
-      }
-      await appendSheetValues('Subscribers!A:E', [rowValues], locals);
-    }
-  } catch (err) {
-    console.error('Failed to append subscriber to Google Sheet:', err);
-  }
-
-  await invalidateCacheTag('subscribers');
-  return record;
-}
 
 /**
  * Appends a new dispatch/email message to the Choir Google Sheet `Messages` tab

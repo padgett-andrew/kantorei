@@ -37,10 +37,11 @@ describe('Absence withdrawal past-date suppression logic', () => {
     const todayIso = getTodayIso(timezone);
     expect(todayIso).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
-    // Call from yesterday
-    const yesterdayDate = new Date();
-    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    const yesterdayIso = yesterdayDate.toISOString().slice(0, 10);
+    // Call from yesterday (relative to todayIso date)
+    const [y, m, d] = todayIso.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+    dateObj.setUTCDate(dateObj.getUTCDate() - 1);
+    const yesterdayIso = dateObj.toISOString().slice(0, 10);
 
     expect(shouldSuppressWithdrawalEmail(yesterdayIso, todayIso)).toBe(true);
   });

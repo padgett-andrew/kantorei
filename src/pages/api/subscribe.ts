@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { recordSubscriber } from '../../lib/google';
 import { addSubscriberToMailerLite } from '../../lib/mailerlite';
 import { SubscribeRequestSchema } from '../../lib/schemas';
 
@@ -49,32 +48,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const { email, name, source } = parsed.data;
 
-  // 3. Concurrently record into Choir Google Sheet and sync to MailerLite
+  // 3. Dispatch subscriber directly to MailerLite
   try {
-    const [sheetRes, mlRes] = await Promise.allSettled([
-      recordSubscriber({
+    const mlRes = await addSubscriberToMailerLite(
+      {
         email,
         name,
         source: source || 'Website',
-        locals,
-      }),
-      addSubscriberToMailerLite(
-        {
-          email,
-          name,
-          source: source || 'Website',
-        },
-        locals
-      ),
-    ]);
+      },
+      locals
+    );
 
-    if (sheetRes.status === 'rejected') {
-      console.error('[Subscribe Error] Failed to write to Google Sheet:', sheetRes.reason);
-    }
-    if (mlRes.status === 'rejected') {
-      console.error('[Subscribe Error] Failed to write to MailerLite:', mlRes.reason);
-    } else if (mlRes.value.success === false) {
-      console.warn('[Subscribe Warning] MailerLite sync returned error:', mlRes.value.error);
+    if (mlRes.success === false) {
+      console.warn('[Subscribe Warning] MailerLite sync returned error:', mlRes.error);
     }
 
     return new Response(

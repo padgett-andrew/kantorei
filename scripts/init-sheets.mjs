@@ -550,32 +550,6 @@ const SCHEMA_SPEC = {
       },
     ],
   },
-  Subscribers: {
-    headers: ['Timestamp', 'Email', 'Name', 'Source', 'Status'],
-    sampleRows: [
-      [
-        '2026-10-15T14:22:00.000Z',
-        'patron@example.com',
-        'Eleanor Vance',
-        'Website_Footer',
-        'Active',
-      ],
-      [
-        '2026-10-28T19:10:00.000Z',
-        'choralfan@gmail.com',
-        'David Miller',
-        'Ticket_Tailor',
-        'Active',
-      ],
-    ],
-    validations: [
-      {
-        column: 'Status',
-        options: ['Active', 'Unsubscribed'],
-        message: 'Select subscriber status (Active, Unsubscribed)',
-      },
-    ],
-  },
   Messages: {
     headers: [
       'Message_ID',

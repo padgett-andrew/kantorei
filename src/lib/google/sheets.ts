@@ -12,7 +12,6 @@ import {
   type SeatingChart,
   type SheetWarning,
   type Singer,
-  type SubscriberRecord,
 } from '../../types/choir';
 import { cachedFetchJson } from '../cache';
 import {
@@ -32,7 +31,6 @@ import {
   ScheduleRowSchema,
   SeatingChartRowSchema,
   SingerRowSchema,
-  SubscriberRowSchema,
 } from '../schemas';
 import { fetchGoogleCalendarEvents } from './calendar';
 import { isBlankRow, padRow, readSheetValues } from './client';
@@ -615,51 +613,6 @@ export async function getGivingTiers(locals?: App.Locals): Promise<GivingTier[]>
   return givingTiers;
 }
 
-export async function getSubscribersWithWarnings(
-  locals?: App.Locals
-): Promise<{ subscribers: SubscriberRecord[]; warnings: SheetWarning[] }> {
-  if (isSandboxSheetMode(locals)) {
-    return { subscribers: [...(demoStore.subscribers || [])], warnings: [] };
-  }
-
-  const cacheKey = 'subscribers_with_warnings';
-  return cachedFetchJson(cacheKey, 60, async () => {
-    try {
-      const allRows = await readSheetValues('Subscribers!A1:E', locals);
-      const rows = allRows.slice(1);
-      const subscribers: SubscriberRecord[] = [];
-      const warnings: SheetWarning[] = [];
-
-      rows.forEach((row, idx) => {
-        if (isBlankRow(row)) return;
-        const padded = padRow(row, 5);
-        const parsed = SubscriberRowSchema.safeParse(padded);
-        if (parsed.success) {
-          subscribers.push(parsed.data);
-        } else {
-          warnings.push({
-            tab: 'Subscribers',
-            rowNumber: idx + 2,
-            message: parsed.error.issues.map((i) => i.message).join('; '),
-          });
-        }
-      });
-
-      return {
-        subscribers: subscribers.length > 0 ? subscribers : (import.meta.env.DEV ? [...demoStore.subscribers] : []),
-        warnings,
-      };
-    } catch {
-      return { subscribers: import.meta.env.DEV ? [...demoStore.subscribers] : [], warnings: [] };
-    }
-  });
-}
-
-export async function getSubscribers(locals?: App.Locals): Promise<SubscriberRecord[]> {
-  const { subscribers } = await getSubscribersWithWarnings(locals);
-  return subscribers;
-}
-
 export async function getBulletinMessagesWithWarnings(
   locals?: App.Locals
 ): Promise<{ messages: BulletinMessage[]; warnings: SheetWarning[] }> {
@@ -714,7 +667,7 @@ export async function getBulletinMessages(locals?: App.Locals): Promise<Bulletin
 }
 
 export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWarning[]> {
-  const [r, s, a, c, m, sc, b, l, gt, sub, msg] = await Promise.all([
+  const [r, s, a, c, m, sc, b, l, gt, msg] = await Promise.all([
     getRosterWithWarnings(locals),
     getScheduleWithWarnings(locals),
     getAbsencesWithWarnings(locals),
@@ -724,7 +677,6 @@ export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWar
     getBoardMembersWithWarnings(locals),
     getLeadershipWithWarnings(locals),
     getGivingTiersWithWarnings(locals),
-    getSubscribersWithWarnings(locals),
     getBulletinMessagesWithWarnings(locals),
   ]);
   return [
@@ -737,7 +689,6 @@ export async function getAllSheetWarnings(locals?: App.Locals): Promise<SheetWar
     ...b.warnings,
     ...l.warnings,
     ...gt.warnings,
-    ...sub.warnings,
     ...msg.warnings,
   ];
 }

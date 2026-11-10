@@ -217,7 +217,7 @@ console.log('\n5. Friends of Kantorei & Newsletter (MailerLite)');
 const mlApiKey = (env.MAILERLITE_API_KEY || '').trim();
 if (!mlApiKey) {
   check('MAILERLITE_API_KEY', false, {
-    info: 'Unset: Newsletter signups will log in sandbox mode and save to Google Sheet "Subscribers" tab.',
+    info: 'Unset: Newsletter signups will log to console in sandbox mode without calling MailerLite API.',
   });
 } else {
   check('MAILERLITE_API_KEY', true);
